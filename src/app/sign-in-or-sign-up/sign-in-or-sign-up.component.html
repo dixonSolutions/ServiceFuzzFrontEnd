@@ -1,0 +1,99 @@
+<!-- Only show cards-container if welcome message is hidden -->
+<div class="auth-container">
+  <!-- Profile Display -->
+  <mat-card class="profile-card" *ngIf="isAuthenticated && serviceFuzzUser">
+    <mat-card-header>
+      <img mat-card-avatar [src]="userInfo?.picture" [alt]="serviceFuzzUser.name">
+      <mat-card-title>Welcome, {{serviceFuzzUser.name}}!</mat-card-title>
+      <mat-card-subtitle>{{serviceFuzzUser.email}}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="profile-details">
+        <p><strong>Full Name:</strong> {{serviceFuzzUser.name}}</p>
+        <p><strong>Email:</strong> {{serviceFuzzUser.email}}</p>
+      </div>
+      <div class="profile-actions">
+        <button mat-raised-button color="primary" routerLink="/home">
+          <mat-icon>home</mat-icon>
+          Go to Dashboard
+        </button>
+        <button mat-stroked-button color="warn" (click)="signOut()">
+          <mat-icon>exit_to_app</mat-icon>
+          Sign Out
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Auth Card -->
+  <mat-card class="auth-card" *ngIf="!isAuthenticated">
+    <mat-card-header>
+      <mat-card-title>{{ isSignIn ? 'Sign In' : 'Sign Up' }}</mat-card-title>
+      <mat-card-subtitle>{{ isSignIn ? 'Welcome back!' : 'Create your account' }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="authForm" (ngSubmit)="onSubmit()">
+        <div class="form-field">
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" placeholder="Enter your email">
+            <mat-error *ngIf="authForm.get('email')?.hasError('required')">Email is required</mat-error>
+            <mat-error *ngIf="authForm.get('email')?.hasError('email')">Please enter a valid email</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-field">
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput type="password" formControlName="password" placeholder="Enter your password">
+            <mat-error *ngIf="authForm.get('password')?.hasError('required')">Password is required</mat-error>
+            <mat-error *ngIf="authForm.get('password')?.hasError('minlength')">Password must be at least 6 characters</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!authForm.valid || isLoading">
+            <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+            <span *ngIf="!isLoading">{{ isSignIn ? 'Sign In' : 'Sign Up' }}</span>
+          </button>
+        </div>
+      </form>
+
+      <div class="divider">
+        <span>OR</span>
+      </div>
+
+      <div class="social-login">
+        <!-- Google Sign-In button will be initialized here by TypeScript -->
+      </div>
+
+      <div class="toggle-mode">
+        <p>
+          {{ isSignIn ? "Don't have an account?" : 'Already have an account?' }}
+          <button mat-button color="primary" (click)="toggleMode()">
+            {{ isSignIn ? 'Sign Up' : 'Sign In' }}
+          </button>
+        </p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+        <div id="google-signin-container" class="google-signin-container">
+          <script src="https://accounts.google.com/gsi/client" async></script>
+          <div id="g_id_onload"
+               data-client_id="763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com"
+               data-context="signin"
+               data-ux_mode="popup"
+               data-callback="handleCredentialResponse"
+               data-auto_prompt="false">
+          </div>
+          <div class="g_id_signin"
+               data-type="standard"
+               data-shape="rectangular"
+               data-theme="outline"
+               data-text="signin_with"
+               data-size="large"
+               data-logo_alignment="left">
+          </div>
+        

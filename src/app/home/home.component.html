@@ -1,0 +1,112 @@
+<div class="home-container">
+  <!-- Hero Carousel Section -->
+  <div class="carousel-container">
+    <mat-card class="carousel-card">
+      <div class="carousel-content">
+        <div class="slide" *ngFor="let slide of slides; let i = index" [class.active]="currentSlide === i">
+          <div class="slide-content">
+            <img src="https://lh3.googleusercontent.com/a/ACg8ocLaJxexuHa88Q1viRsHMpdLIEIUjbiNlBs-asm8Pk02NoVN0Sk=s288-c-no" alt="servicefuzzlogo">
+            <h1>{{slide.title}}</h1>
+            <p>{{slide.description}}</p>
+          </div>
+          <img [src]="slide.image" [alt]="slide.title">
+        </div>
+      </div>
+      <div class="carousel-indicators">
+        <button mat-mini-fab *ngFor="let slide of slides; let i = index" 
+                [class.active]="currentSlide === i"
+                (click)="setSlide(i)">
+          {{i + 1}}
+        </button>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <h2>Our Platform at a Glance</h2>
+    <div class="features-grid">
+      <mat-card *ngFor="let feature of features">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>{{feature.icon}}</mat-icon>
+          <mat-card-title>{{feature.title}}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>{{feature.description}}</p>
+        </mat-card-content>
+        <p>✅</p>
+      </mat-card>
+    </div>
+  </section>
+
+  <!-- Benefits Section -->
+  <section class="benefits-section">
+    <mat-tab-group mat-align-tabs="center" animationDuration="500ms">
+      <mat-tab label="For Business Owners">
+        <div class="benefits-content">
+          <mat-list>
+            <mat-list-item *ngFor="let benefit of businessBenefits">
+              <p>✅</p>
+              <mat-icon matListItemIcon>check_circle</mat-icon>
+              <div matListItemTitle>{{benefit}}</div>
+            </mat-list-item>
+          </mat-list>
+        </div>
+      </mat-tab>
+      <mat-tab label="For Your Customers">
+        <div class="benefits-content">
+          <mat-list>
+            <mat-list-item *ngFor="let benefit of customerBenefits">
+              <mat-icon matListItemIcon>star</mat-icon>
+              <div matListItemTitle>{{benefit}}</div>
+            </mat-list-item>
+          </mat-list>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </section>
+
+  <!-- Security & Integration Section -->
+  <section class="info-section">
+    <div class="info-grid">
+      <mat-card class="security-card">
+        <mat-card-header>
+          <mat-card-title>Security and Reliability</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list>
+            <mat-list-item *ngFor="let item of securityFeatures">
+              <mat-icon matListItemIcon>security</mat-icon>
+              <div matListItemTitle>{{item}}</div>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="integration-card">
+        <mat-card-header>
+          <mat-card-title>Integration Capabilities</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list>
+            <mat-list-item *ngFor="let item of integrationFeatures">
+              <mat-icon matListItemIcon>integration_instructions</mat-icon>
+              <div matListItemTitle>{{item}}</div>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="cta-section">
+    <mat-card>
+      <mat-card-content>
+        <h2>Ready to Transform Your Business?</h2>
+        <p>Join thousands of successful businesses already using ServiceFuzz</p>
+        <button mat-raised-button color="primary">Get Started Now</button>
+      </mat-card-content>
+    </mat-card>
+  </section>
+</div>

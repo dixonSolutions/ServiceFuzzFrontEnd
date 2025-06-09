@@ -1,0 +1,84 @@
+<!-- src/app/components/business-registration/business-registration.component.html -->
+<div class="business-registration-container">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Register Your Business</mat-card-title>
+      </mat-card-header>
+  
+      <mat-card-content>
+        <form [formGroup]="businessForm" (ngSubmit)="onSubmit()" class="business-form">
+          <!-- Business Name -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Business Name</mat-label>
+            <input matInput formControlName="bussinessName" placeholder="Enter your business name">
+            <mat-error *ngIf="businessForm.get('bussinessName')?.hasError('required')">
+              Business name is required
+            </mat-error>
+            <mat-error *ngIf="businessForm.get('bussinessName')?.hasError('minlength')">
+              Business name must be at least 2 characters
+            </mat-error>
+          </mat-form-field>
+  
+          <!-- Business Description -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Business Description</mat-label>
+            <textarea matInput formControlName="bussinessDescription" 
+                      placeholder="Describe your business" rows="4">
+            </textarea>
+            <mat-error *ngIf="businessForm.get('bussinessDescription')?.hasError('required')">
+              Business description is required
+            </mat-error>
+            <mat-error *ngIf="businessForm.get('bussinessDescription')?.hasError('minlength')">
+              Description must be at least 10 characters
+            </mat-error>
+          </mat-form-field>
+  
+          <!-- Business Phone -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Business Phone</mat-label>
+            <input matInput formControlName="bussinessPhone" 
+                   placeholder="Enter business phone number">
+            <mat-error *ngIf="businessForm.get('bussinessPhone')?.hasError('required')">
+              Phone number is required
+            </mat-error>
+            <mat-error *ngIf="businessForm.get('bussinessPhone')?.hasError('pattern')">
+              Please enter a valid phone number
+            </mat-error>
+          </mat-form-field>
+  
+          <!-- Business Email -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Business Email</mat-label>
+            <input matInput formControlName="bussinessEmail" 
+                   placeholder="Enter business email">
+            <mat-error *ngIf="businessForm.get('bussinessEmail')?.hasError('required')">
+              Business email is required
+            </mat-error>
+            <mat-error *ngIf="businessForm.get('bussinessEmail')?.hasError('email')">
+              Please enter a valid email address
+            </mat-error>
+          </mat-form-field>
+  
+          <!-- Owner Email (disabled, auto-filled) -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Owner Email</mat-label>
+            <input matInput formControlName="ownerEmail" [ngModel]="this.data.currentUser?.email">
+          </mat-form-field>
+  
+          <!-- Error Message -->
+          <div class="error-message" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
+  
+          <!-- Submit Button -->
+          <button mat-raised-button color="primary" 
+                  type="submit" 
+                  [disabled]="businessForm.invalid || isSubmitting"
+                  class="submit-button">
+            <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+            <span *ngIf="!isSubmitting">Register Business</span>
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>

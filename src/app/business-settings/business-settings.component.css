@@ -1,0 +1,198 @@
+.settings-container {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Message Card Styles */
+.message-card {
+  max-width: 400px;
+  margin: 48px auto;
+  text-align: center;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.message-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #666;
+}
+
+.message-content h2 {
+  font-size: 24px;
+  margin: 0;
+  color: #333;
+}
+
+.message-content p {
+  color: #666;
+  margin: 0;
+}
+
+.message-content button {
+  margin-top: 16px;
+}
+
+/* Trial Card Styles */
+.trial-section {
+  margin-top: 32px;
+}
+
+.trial-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.trial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+mat-card-header {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.02), rgba(116, 239, 255, 0.05));
+  padding: 16px;
+}
+
+[mat-card-avatar] {
+  background: linear-gradient(135deg, #000000, #74efff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[mat-card-avatar] mat-icon {
+  color: white;
+}
+
+.active-trial {
+  color: #4CAF50 !important;
+}
+
+mat-card-title {
+  font-size: 24px !important;
+  margin-bottom: 8px !important;
+  color: #333;
+}
+
+mat-card-subtitle {
+  color: #666 !important;
+}
+
+/* Trial Info Styles */
+.trial-info {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #666;
+}
+
+.info-row mat-icon {
+  color: #999;
+}
+
+/* No Trial Message Styles */
+.no-trial-message {
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.no-trial-message mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #666;
+}
+
+.no-trial-message p {
+  color: #666;
+  margin: 0;
+}
+
+/* Card Actions Styles */
+mat-card-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 16px !important;
+  background: rgba(0, 0, 0, 0.02);
+  margin: 0 !important;
+}
+
+mat-card-actions button {
+  flex: 1;
+  margin: 0 8px !important;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+  .settings-container {
+    padding: 16px;
+  }
+
+  mat-card-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  mat-card-actions button {
+    width: 100%;
+  }
+}
+
+.payment-options {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.divider {
+  margin: 16px 0;
+  color: #666;
+  font-size: 14px;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: #ddd;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+mat-card-actions {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  gap: 16px;
+}

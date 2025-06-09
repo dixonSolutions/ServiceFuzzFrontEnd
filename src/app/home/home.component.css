@@ -1,0 +1,299 @@
+.home-container {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+mat-form-field {
+  width: 100%;
+  max-width: 300px;
+}
+
+p {
+  margin-top: 1rem;
+  color: #666;
+}
+
+/* Carousel Styles */
+.carousel-container {
+  margin: -20px -20px 40px -20px;
+}
+
+.carousel-card {
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ffffff, #000000);
+  color: white;
+}
+
+.carousel-content {
+  position: relative;
+  height: 500px;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  display: flex;
+  align-items: center;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.slide-content {
+  flex: 1;
+  padding: 60px;
+  z-index: 2;
+  position: relative;
+}
+
+.slide-content img {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  margin-bottom: 20px;
+  object-fit: cover;
+  position: relative;
+  z-index: 3;
+}
+
+.slide-content h1 {
+  font-size: 3em;
+  margin-bottom: 20px;
+  font-weight: 300;
+  color: white;
+}
+
+.slide-content p {
+  font-size: 1.2em;
+  max-width: 600px;
+  line-height: 1.6;
+  color: white;
+}
+
+.slide > img {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  object-fit: cover;
+  opacity: 0.3;
+  z-index: 1;
+}
+
+.carousel-indicators {
+  position: absolute;
+  bottom: 20px;
+  left: 60px;
+  z-index: 2;
+}
+
+.carousel-indicators button {
+  margin: 0 5px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.carousel-indicators button.active {
+  background: white;
+}
+
+/* Features Section */
+.features-section {
+  padding: 60px 0;
+}
+
+.features-section h2 {
+  text-align: center;
+  font-size: 2.5em;
+  margin-bottom: 40px;
+  color: #1a237e;
+  font-weight: 300;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.features-grid mat-card {
+  padding: 20px;
+  transition: transform 0.3s ease;
+}
+
+.features-grid mat-card:hover {
+  transform: translateY(-5px);
+}
+
+.features-grid mat-card-header {
+  margin-bottom: 15px;
+}
+
+.features-grid mat-icon {
+  color: #1a237e;
+  font-size: 2em;
+  width: 40px;
+  height: 40px;
+}
+
+/* Benefits Section */
+.benefits-section {
+  padding: 60px 0;
+  background: #f5f5f5;
+  margin: 40px -20px;
+}
+
+.benefits-content {
+  padding: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+mat-list-item {
+  margin-bottom: 15px;
+}
+
+mat-icon {
+  color: #1a237e;
+}
+
+/* Info Section */
+.info-section {
+  padding: 60px 20px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.security-card, .integration-card {
+  height: 100%;
+}
+
+/* Call to Action */
+.cta-section {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #1a237e, #0d47a1);
+  margin: 40px -20px -20px -20px;
+}
+
+.cta-section mat-card {
+  background: transparent;
+  color: white;
+  box-shadow: none;
+}
+
+.cta-section h2 {
+  font-size: 2.5em;
+  margin-bottom: 20px;
+  font-weight: 300;
+}
+
+.cta-section button {
+  font-size: 1.2em;
+  padding: 10px 30px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .carousel-content {
+    height: 600px;
+  }
+
+  .slide-content {
+    padding: 30px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide-content img {
+    width: 150px;
+    height: 150px;
+    margin-bottom: 30px;
+  }
+
+  .slide-content h1 {
+    font-size: 2em;
+    text-align: center;
+  }
+
+  .slide-content p {
+    font-size: 1.1em;
+    text-align: center;
+  }
+
+  .slide > img {
+    width: 100%;
+    opacity: 0.2;
+  }
+
+  .carousel-indicators {
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .carousel-content {
+    height: 500px;
+  }
+
+  .slide-content {
+    padding: 20px;
+  }
+
+  .slide-content img {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 20px;
+  }
+
+  .slide-content h1 {
+    font-size: 1.8em;
+    margin-bottom: 15px;
+  }
+
+  .slide-content p {
+    font-size: 1em;
+    line-height: 1.4;
+  }
+
+  .carousel-indicators button {
+    transform: scale(0.8);
+  }
+}

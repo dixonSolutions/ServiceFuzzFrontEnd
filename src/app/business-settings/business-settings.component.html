@@ -1,0 +1,80 @@
+<div class="settings-container">
+  <!-- Not Signed In Message -->
+  <mat-card class="message-card" *ngIf="!data.currentUser">
+    <mat-card-content class="message-content">
+      <mat-icon class="message-icon">account_circle</mat-icon>
+      <h2>Please Sign In</h2>
+      <p>You need to be signed in to view your business settings.</p>
+      <button mat-raised-button color="primary" routerLink="/sign">
+        <mat-icon>login</mat-icon>
+        Sign In
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Free Trial Information -->
+  <div class="trial-section" *ngIf="data.currentUser">
+    <mat-card class="trial-card">
+      <mat-card-header>
+        <div mat-card-avatar>
+          <mat-icon [class.active-trial]="data.freeTrialDetails?.isActive">
+            {{ data.freeTrialDetails?.isActive ? 'verified' : 'hourglass_empty' }}
+          </mat-icon>
+        </div>
+        <mat-card-title>Free Trial Status</mat-card-title>
+        <mat-card-subtitle>
+          {{ data.freeTrialDetails?.isActive ? 'Active Trial' : 'Trial Status' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="trial-info" *ngIf="data.freeTrialDetails">
+          <div class="info-row">
+            <mat-icon>event_available</mat-icon>
+            <span>Start Date: {{ data.freeTrialDetails.startDate | date:'mediumDate' }}</span>
+          </div>
+          <div class="info-row">
+            <mat-icon>event</mat-icon>
+            <span>End Date: {{ data.freeTrialDetails.endDate | date:'mediumDate' }}</span>
+          </div>
+          <div class="info-row">
+            <mat-icon>timer</mat-icon>
+            <span>Days Remaining: {{ data.freeTrialDetails.daysRemaining }}</span>
+          </div>
+          <div class="info-row">
+            <mat-icon>check_circle</mat-icon>
+            <span>Trial Status: {{ data.freeTrialDetails.isActive ? 'Active' : 'Expired' }}</span>
+          </div>
+        </div>
+
+        <div class="no-trial-message" *ngIf="!data.freeTrialDetails">
+          <mat-icon>info</mat-icon>
+          <p>No free trial information found. Would you like to start your free trial?</p>
+          <button mat-raised-button color="primary">
+            <mat-icon>add</mat-icon>
+            Start Free Trial
+          </button>
+          <div class="payment-options">
+            <h1>Subscribe to ServiceFuzz</h1>
+            <mat-divider></mat-divider>
+            <button mat-raised-button color="accent" (click)="redirectToStripeCheckout()">
+              <mat-icon>shopping_cart</mat-icon>
+              Subscribe Now
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions *ngIf="data.freeTrialDetails?.isActive">
+        <button mat-button color="primary">
+          <mat-icon>upgrade</mat-icon>
+          Upgrade to Premium
+        </button>
+        <button mat-button color="accent">
+          <mat-icon>help</mat-icon>
+          Trial FAQ
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

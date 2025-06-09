@@ -1,0 +1,51 @@
+<mat-toolbar class="fancy-toolbar">
+  <div class="toolbar-left">
+    <button mat-icon-button>
+      <mat-icon>menu</mat-icon>
+    </button>
+    <a class="app-title">✨ServiceFuzz✨</a>
+    <img src="https://lh3.googleusercontent.com/a/ACg8ocLaJxexuHa88Q1viRsHMpdLIEIUjbiNlBs-asm8Pk02NoVN0Sk=s288-c-no" alt="servicefuzzlogo">
+  </div>
+
+  <div class="toolbar-center">
+    <button mat-button routerLink="/">
+      <mat-icon>home</mat-icon>
+      Home
+    </button>
+    <button mat-button [matMenuTriggerFor]="businessMenu" class="business-button">
+      <mat-icon>business</mat-icon>
+      Business
+    </button>
+    <mat-menu #businessMenu="matMenu" class="business-menu">
+      <button mat-menu-item routerLink="/business/add">
+        <mat-icon>add_business</mat-icon>
+        <span>Add Business</span>
+      </button>
+      <button mat-menu-item routerLink="/business/manage">
+        <mat-icon>manage_accounts</mat-icon>
+        <span>Manage Businesses</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/business/settings">
+        <mat-icon>settings</mat-icon>
+        <span>Business Settings</span>
+      </button>
+    </mat-menu>
+    <button mat-button routerLink="/analytics">
+      <mat-icon>analytics</mat-icon>
+      Analytics
+    </button>
+  </div>
+
+  <div class="toolbar-right">
+    <button mat-icon-button>
+      <mat-icon>notifications</mat-icon>
+    </button>
+    <button mat-icon-button>
+      <mat-icon>settings</mat-icon>
+    </button>
+    <button mat-icon-button routerLink="/sign">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
