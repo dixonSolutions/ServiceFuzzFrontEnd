@@ -51,7 +51,6 @@ export class SignInOrSignUpComponent implements OnInit {
   }
 
   ngOnInit() {
-    
     // First check if we already have a user in the service
     const currentUser = this.data.currentUser;
     if (currentUser) {
@@ -99,7 +98,7 @@ export class SignInOrSignUpComponent implements OnInit {
       const gsiContainer = document.createElement('div');
       gsiContainer.id = 'g_id_onload';
       gsiContainer.setAttribute('data-client_id', this.CLIENT_ID);
-      gsiContainer.setAttribute('data-context', 'signin');
+      gsiContainer.setAttribute('data-context', this.isSignIn ? 'signin' : 'signup');
       gsiContainer.setAttribute('data-ux_mode', 'popup');
       gsiContainer.setAttribute('data-callback', 'handleCredentialResponse');
       gsiContainer.setAttribute('data-auto_prompt', 'false');
@@ -109,7 +108,7 @@ export class SignInOrSignUpComponent implements OnInit {
       googleSignIn.setAttribute('data-type', 'standard');
       googleSignIn.setAttribute('data-shape', 'rectangular');
       googleSignIn.setAttribute('data-theme', 'outline');
-      googleSignIn.setAttribute('data-text', 'signin_with');
+      googleSignIn.setAttribute('data-text', this.isSignIn ? 'signin_with' : 'signup_with');
       googleSignIn.setAttribute('data-size', 'large');
       googleSignIn.setAttribute('data-logo_alignment', 'left');
       
@@ -133,9 +132,13 @@ export class SignInOrSignUpComponent implements OnInit {
             sub: decodedToken.sub
           };
           
-          // Verify with backend
-          this.data.verifyGoogleUser(response.credential).subscribe({
-            next: (response) => {
+          // Choose the appropriate method based on isSignIn flag
+          const authMethod = this.isSignIn ? 
+            this.data.verifyGoogleUser(response.credential) : 
+            this.data.CreateUserWithGoogleToken(response.credential);
+
+          authMethod.subscribe({
+            next: (response: { user: ServiceFuzzAccount; token: string }) => {
               this.isAuthenticated = true;
               this.serviceFuzzUser = response.user;
               this.data.currentUser = response.user;
@@ -143,8 +146,8 @@ export class SignInOrSignUpComponent implements OnInit {
               // Navigate to home after successful authentication
               this.router.navigate(['/home']);
             },
-            error: (error) => {
-              console.error('Error verifying user:', error);
+            error: (error: any) => {
+              console.error(`Error ${this.isSignIn ? 'verifying' : 'creating'} user:`, error);
               this.isAuthenticated = false;
               this.serviceFuzzUser = undefined;
               this.data.clearState();
@@ -161,14 +164,11 @@ export class SignInOrSignUpComponent implements OnInit {
     }
   }
 
-  decodeJwtToken(token: string): any {
+  private decodeJwtToken(token: string): any {
     try {
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      return JSON.parse(jsonPayload);
+      return JSON.parse(window.atob(base64));
     } catch (error) {
       console.error('Error decoding JWT token:', error);
       return null;
@@ -177,6 +177,8 @@ export class SignInOrSignUpComponent implements OnInit {
 
   toggleMode() {
     this.isSignIn = !this.isSignIn;
+    // Reinitialize Google Sign-In button with updated mode
+    setTimeout(() => this.initializeGoogleSignIn(), 100);
   }
 
   onSubmit() {

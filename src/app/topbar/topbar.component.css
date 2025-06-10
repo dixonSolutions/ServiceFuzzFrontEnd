@@ -127,3 +127,44 @@ button:hover {
 ::ng-deep .business-menu .mat-divider {
   margin: 8px 0;
 }
+
+/* Active Route Styles */
+.toolbar-center button.active {
+  position: relative;
+}
+
+.toolbar-center button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: rgb(255, 255, 255);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Right Toolbar Active Styles */
+.toolbar-right button.active {
+  position: relative;
+}
+
+.toolbar-right button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: white;
+  animation: slideIn 0.3s ease-out;
+}

@@ -8,11 +8,11 @@
   </div>
 
   <div class="toolbar-center">
-    <button mat-button routerLink="/">
+    <button mat-button routerLink="/" [class.active]="isRouteActive('/')">
       <mat-icon>home</mat-icon>
       Home
     </button>
-    <button mat-button [matMenuTriggerFor]="businessMenu" class="business-button">
+    <button mat-button [matMenuTriggerFor]="businessMenu" class="business-button" [class.active]="isRouteActive('/business')">
       <mat-icon>business</mat-icon>
       Business
     </button>
@@ -31,11 +31,11 @@
         <span>Business Settings</span>
       </button>
     </mat-menu>
-    <button mat-button routerLink="/analytics">
+    <button mat-button routerLink="/analytics" [class.active]="isRouteActive('/analytics')">
       <mat-icon>analytics</mat-icon>
       Analytics
     </button>
-    <button mat-button routerLink="/chat">
+    <button mat-button routerLink="/chat" [class.active]="isRouteActive('/chat')">
       <mat-icon>chat</mat-icon>
       Chat
     </button>
@@ -49,7 +49,7 @@
     <button mat-icon-button>
       <mat-icon>settings</mat-icon>
     </button>
-    <button mat-icon-button routerLink="/sign">
+    <button mat-icon-button routerLink="/sign" [class.active]="isRouteActive('/sign')">
       <mat-icon>account_circle</mat-icon>
     </button>
   </div>

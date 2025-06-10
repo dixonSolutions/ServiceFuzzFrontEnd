@@ -17,7 +17,7 @@ export class DataSvrService {
   private static instance: DataSvrService;
   public geminiResponse: string = '';
   private readonly instanceId = Math.random();
-  private apiUrl = 'https://localhost:44327';
+  private apiUrl = 'https://servicefuzzapi-atf8b4dqawc8dsa9.australiaeast-01.azurewebsites.net';
   private _currentUser = new BehaviorSubject<ServiceFuzzAccount | undefined>(undefined);
   private _jwtToken = new BehaviorSubject<string | undefined>(undefined);
   public businesses: BusinessBasicInfo[] = [];
@@ -61,6 +61,24 @@ export class DataSvrService {
   verifyGoogleUser(googleToken: string): Observable<{ user: ServiceFuzzAccount; token: string }> {
     return this.http.post<{ user: ServiceFuzzAccount; token: string }>(
       `${this.apiUrl}/api/User/VerifyUserViaGoogle/verify-google`,
+      JSON.stringify(googleToken), 
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    ).pipe(
+      map(response => {
+        this.jwtToken = response.token;
+        this.currentUser = response.user;
+        return response;
+      })
+    );
+  }
+
+  CreateUserWithGoogleToken(googleToken: string): Observable<{ user: ServiceFuzzAccount; token: string }> {
+    return this.http.post<{ user: ServiceFuzzAccount; token: string }>(
+      `${this.apiUrl}/api/User/create-google`,
       JSON.stringify(googleToken), 
       {
         headers: {
