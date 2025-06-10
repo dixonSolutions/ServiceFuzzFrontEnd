@@ -1,16 +1,35 @@
 <!-- src/app/components/business-registration/business-registration.component.html -->
 <div class="business-registration-container">
+  <div *ngIf="!data.currentUser" class="sign-in-message">
     <mat-card>
-      <mat-card-header>
-        <mat-card-title>Register Your Business</mat-card-title>
-      </mat-card-header>
-  
       <mat-card-content>
-        <form [formGroup]="businessForm" (ngSubmit)="onSubmit()" class="business-form">
+        <div class="message-content">
+          <mat-icon class="warning-icon">info</mat-icon>
+          <h2>Please Sign In</h2>
+          <p>You need to be signed in to register your business.</p>
+          <button mat-raised-button color="primary" routerLink="/sign">
+            Sign In
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card *ngIf="data.currentUser" class="form-card">
+    <mat-card-header>
+      <mat-card-title>Register Your Business</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="businessForm" (ngSubmit)="onSubmit()" class="business-form">
+        <!-- Business Information Section -->
+        <div class="form-section">
+          <h3 class="section-title">Business Information</h3>
           <!-- Business Name -->
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field class="full-width">
             <mat-label>Business Name</mat-label>
             <input matInput formControlName="bussinessName" placeholder="Enter your business name">
+            <mat-icon matSuffix>business</mat-icon>
             <mat-error *ngIf="businessForm.get('bussinessName')?.hasError('required')">
               Business name is required
             </mat-error>
@@ -18,13 +37,14 @@
               Business name must be at least 2 characters
             </mat-error>
           </mat-form-field>
-  
+    
           <!-- Business Description -->
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field class="full-width">
             <mat-label>Business Description</mat-label>
             <textarea matInput formControlName="bussinessDescription" 
                       placeholder="Describe your business" rows="4">
             </textarea>
+            <mat-icon matSuffix>description</mat-icon>
             <mat-error *ngIf="businessForm.get('bussinessDescription')?.hasError('required')">
               Business description is required
             </mat-error>
@@ -32,12 +52,13 @@
               Description must be at least 10 characters
             </mat-error>
           </mat-form-field>
-  
+    
           <!-- Business Phone -->
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field class="full-width">
             <mat-label>Business Phone</mat-label>
             <input matInput formControlName="bussinessPhone" 
                    placeholder="Enter business phone number">
+            <mat-icon matSuffix>phone</mat-icon>
             <mat-error *ngIf="businessForm.get('bussinessPhone')?.hasError('required')">
               Phone number is required
             </mat-error>
@@ -45,12 +66,13 @@
               Please enter a valid phone number
             </mat-error>
           </mat-form-field>
-  
+    
           <!-- Business Email -->
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field class="full-width">
             <mat-label>Business Email</mat-label>
             <input matInput formControlName="bussinessEmail" 
-                   placeholder="Enter business email">
+                   placeholder="Enter business email" type="email">
+            <mat-icon matSuffix>email</mat-icon>
             <mat-error *ngIf="businessForm.get('bussinessEmail')?.hasError('required')">
               Business email is required
             </mat-error>
@@ -58,27 +80,143 @@
               Please enter a valid email address
             </mat-error>
           </mat-form-field>
-  
+    
           <!-- Owner Email (disabled, auto-filled) -->
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field class="full-width">
             <mat-label>Owner Email</mat-label>
-            <input matInput formControlName="ownerEmail" [ngModel]="this.data.currentUser?.email">
+            <input matInput formControlName="ownerEmail" [ngModel]="this.data.currentUser?.email" readonly>
+            <mat-icon matSuffix>person</mat-icon>
           </mat-form-field>
-  
-          <!-- Error Message -->
-          <div class="error-message" *ngIf="errorMessage">
-            {{ errorMessage }}
+        </div>
+
+        <!-- Services Section -->
+        <div class="form-section">
+          <div class="section-header">
+            <h3 class="section-title">Services</h3>
+            <button mat-raised-button color="accent" type="button" (click)="addService()" class="add-service-btn">
+              <mat-icon>add</mat-icon>
+              Add Service
+            </button>
           </div>
+
+          <div formArrayName="services" class="services-container">
+            <mat-accordion>
+              <mat-expansion-panel *ngFor="let service of services.controls; let i=index" 
+                                 [formGroupName]="i" 
+                                 class="service-panel"
+                                 [expanded]="i === services.length - 1">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <mat-icon class="service-icon">spa</mat-icon>
+                    Service #{{i + 1}}: {{service.get('serviceName')?.value || 'New Service'}}
+                  </mat-panel-title>
+                  <mat-panel-description *ngIf="service.get('servicePrice')?.value">
+                    {{service.get('servicePrice')?.value}} {{service.get('servicePriceCurrencyUnit')?.value}}
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+
+                <div class="service-content">
+                  <div class="service-header">
+                    <button mat-icon-button color="warn" type="button" 
+                            (click)="removeService(i)" 
+                            *ngIf="services.length > 1"
+                            class="remove-service-btn">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+
+                  <!-- Service Name -->
+                  <mat-form-field appearance="fill" class="full-width" color="primary">
+                    <mat-label>Service Name</mat-label>
+                    <input matInput formControlName="serviceName" placeholder="Enter service name">
+                    <mat-icon matSuffix>spa</mat-icon>
+                    <mat-error *ngIf="service.get('serviceName')?.hasError('required')">
+                      Service name is required
+                    </mat-error>
+                  </mat-form-field>
+
+                  <!-- Service Description -->
+                  <mat-form-field appearance="fill" class="full-width" color="primary">
+                    <mat-label>Service Description</mat-label>
+                    <textarea matInput formControlName="serviceDescription" 
+                              placeholder="Describe the service" rows="3">
+                    </textarea>
+                    <mat-icon matSuffix>description</mat-icon>
+                    <mat-error *ngIf="service.get('serviceDescription')?.hasError('required')">
+                      Service description is required
+                    </mat-error>
+                  </mat-form-field>
+
+                  <!-- Duration and Price Row -->
+                  <div class="form-row">
+                    <mat-form-field appearance="fill" class="half-width" color="primary">
+                      <mat-label>Duration (minutes)</mat-label>
+                      <input matInput type="number" formControlName="duration" 
+                             (input)="updateEstimatedTime(i)" min="5">
+                      <mat-icon matSuffix>schedule</mat-icon>
+                      <mat-error *ngIf="service.get('duration')?.hasError('required')">
+                        Duration is required
+                      </mat-error>
+                      <mat-error *ngIf="service.get('duration')?.hasError('min')">
+                        Minimum duration is 5 minutes
+                      </mat-error>
+                    </mat-form-field>
+
+                    <div class="price-group">
+                      <mat-form-field appearance="fill" class="price-input" color="primary">
+                        <mat-label>Price</mat-label>
+                        <input matInput type="number" formControlName="servicePrice" min="0">
+                        <mat-icon matSuffix>attach_money</mat-icon>
+                        <mat-error *ngIf="service.get('servicePrice')?.hasError('required')">
+                          Price is required
+                        </mat-error>
+                        <mat-error *ngIf="service.get('servicePrice')?.hasError('min')">
+                          Price cannot be negative
+                        </mat-error>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="fill" class="currency-select" color="primary">
+                        <mat-label>Currency</mat-label>
+                        <mat-select formControlName="servicePriceCurrencyUnit">
+                          <mat-option *ngFor="let currency of currencies" [value]="currency">
+                            {{currency}}
+                          </mat-option>
+                        </mat-select>
+                        <mat-icon matSuffix>monetization_on</mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+
+                  <!-- Service Image URL -->
+                  <mat-form-field appearance="fill" class="full-width" color="primary">
+                    <mat-label>Service Image URL</mat-label>
+                    <input matInput formControlName="serviceImageUrl" 
+                           placeholder="Enter image URL for the service">
+                    <mat-icon matSuffix>image</mat-icon>
+                    <mat-error *ngIf="service.get('serviceImageUrl')?.hasError('required')">
+                      Service image URL is required
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+              </mat-expansion-panel>
+            </mat-accordion>
+          </div>
+        </div>
   
-          <!-- Submit Button -->
-          <button mat-raised-button color="primary" 
-                  type="submit" 
-                  [disabled]="businessForm.invalid || isSubmitting"
-                  class="submit-button">
-            <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
-            <span *ngIf="!isSubmitting">Register Business</span>
-          </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
-  </div>
+        <!-- Error Message -->
+        <div class="error-message" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
+  
+        <!-- Submit Button -->
+        <button mat-raised-button color="primary" 
+                type="submit" 
+                [disabled]="businessForm.invalid || isSubmitting"
+                class="submit-button">
+          <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+          <span *ngIf="!isSubmitting">Register Business</span>
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

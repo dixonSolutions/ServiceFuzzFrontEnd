@@ -16,6 +16,9 @@ import { MatListModule } from '@angular/material/list';
 import { SocialLoginModule, SocialAuthServiceConfig, GoogleLoginProvider } from '@abacritt/angularx-social-login';
 import { HttpClientModule } from '@angular/common/http';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
@@ -26,6 +29,9 @@ import { BusinessComponent } from './business/business.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { ManagebusinessesComponent } from './managebusinesses/managebusinesses.component';
 import { BusinessSettingsComponent } from './business-settings/business-settings.component';
+import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
+import { AnalyticsComponent } from './analytics/analytics.component';
+import { StaffportalComponent } from './staffportal/staffportal.component';
 
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
@@ -38,7 +44,10 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     SignInOrSignUpComponent,
     BusinessComponent,
     ManagebusinessesComponent,
-    BusinessSettingsComponent
+    BusinessSettingsComponent,
+    ChatWithAiAboutServiceFuzzComponent,
+    AnalyticsComponent,
+    StaffportalComponent
   ],
   imports: [
     BrowserModule,
@@ -60,7 +69,10 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     HttpClientModule,
     AppRoutingModule,
     MatSnackBarModule,
-    MatMenuModule
+    MatMenuModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatExpansionModule
   ],
   providers: [
     {

@@ -1,0 +1,33 @@
+.chat-container {
+  // ... existing code ...
+
+  .chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    border-radius: 8px 8px 0 0;
+
+    h2 {
+      margin: 0;
+      color: #333;
+    }
+
+    .clear-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      mat-icon {
+        font-size: 20px;
+      }
+    }
+  }
+
+  .messages-container {
+    // ... existing code ...
+  }
+}
+// ... existing code ... 

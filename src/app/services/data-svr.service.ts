@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
-import { map, Observable, BehaviorSubject } from 'rxjs';
+import { map, Observable, BehaviorSubject, of } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BusinessBasicInfo } from '../models/businessbasicinfo';
 import confetti from 'canvas-confetti';
 import { ServiceFuzzFreeTrialSubscriptions } from '../models/FreeTrialDetails';
 import JSConfetti from 'js-confetti'; // Import the JSConfetti class
+import { ChatMessage } from '../models/chat-message';
 
 
 @Injectable({
@@ -14,6 +15,7 @@ import JSConfetti from 'js-confetti'; // Import the JSConfetti class
 })
 export class DataSvrService {
   private static instance: DataSvrService;
+  public geminiResponse: string = '';
   private readonly instanceId = Math.random();
   private apiUrl = 'https://localhost:44327';
   private _currentUser = new BehaviorSubject<ServiceFuzzAccount | undefined>(undefined);
@@ -22,13 +24,15 @@ export class DataSvrService {
   public freeTrialDetails: ServiceFuzzFreeTrialSubscriptions | undefined;
   public jsConfetti: JSConfetti = new JSConfetti();
 
+  // Chat related properties
+  private _chatMessages = new BehaviorSubject<ChatMessage[]>([]);
+  public chatMessages$ = this._chatMessages.asObservable();
 
   constructor(private http: HttpClient, private snackBar: MatSnackBar) {
     if (DataSvrService.instance) {
       console.warn('Attempting to create a second instance of DataSvrService');
       return DataSvrService.instance;
     }
-    console.log('Creating DataSvrService instance with ID:', this.instanceId);
     DataSvrService.instance = this;
   }
 
@@ -38,7 +42,6 @@ export class DataSvrService {
   }
 
   set currentUser(user: ServiceFuzzAccount | undefined) {
-    console.log('Setting user in service instance:', this.instanceId);
     this._currentUser.next(user);
   }
 
@@ -56,7 +59,6 @@ export class DataSvrService {
   }
   
   verifyGoogleUser(googleToken: string): Observable<{ user: ServiceFuzzAccount; token: string }> {
-    console.log('Verifying user in service instance:', this.instanceId);
     return this.http.post<{ user: ServiceFuzzAccount; token: string }>(
       `${this.apiUrl}/api/User/VerifyUserViaGoogle/verify-google`,
       JSON.stringify(googleToken), 
@@ -69,7 +71,6 @@ export class DataSvrService {
       map(response => {
         this.jwtToken = response.token;
         this.currentUser = response.user;
-        console.log('User verified in service instance:', this.instanceId);
         return response;
       })
     );
@@ -103,6 +104,113 @@ export class DataSvrService {
     );
   }
 
+  // Chat methods
+  get messages(): ChatMessage[] {
+    return this._chatMessages.value;
+  }
+
+  private addMessage(message: ChatMessage) {
+    const currentMessages = this._chatMessages.value;
+    this._chatMessages.next([...currentMessages, message]);
+  }
+
+  clearChatMessages() {
+    this._chatMessages.next([]);
+    this.openSnackBar('Conversation cleared successfully', 'Close', 3000);
+  }
+
+  SendGeminiRequest(request: string): Observable<string> {
+    // Add user message to history
+    this.addMessage({
+      content: request,
+      timestamp: new Date(),
+      isUser: true
+    });
+
+    // Add placeholder for AI response
+    const loadingMessage: ChatMessage = {
+      content: '',
+      timestamp: new Date(),
+      isUser: false,
+      isLoading: true
+    };
+    this.addMessage(loadingMessage);
+
+    // Format conversation history
+    const conversationHistory = this.messages
+      .filter(m => !m.isLoading)
+      .map(m => `${m.isUser ? 'User' : 'Assistant'} (${new Date(m.timestamp).toLocaleTimeString()}): ${m.content}`)
+      .join('\n');
+
+    // ServiceFuzz context for the AI
+    const serviceFuzzContext = `You are a helpful assistant that can answer questions about ServiceFuzz. You must follow these rules strictly:
+1. Only answer questions related to ServiceFuzz
+2. If a user asks about something unrelated to ServiceFuzz, politely remind them that you can only help with ServiceFuzz-related questions
+3. If asked about conversation history or context, provide specific details from the conversation history below
+4. Be accurate about the conversation history - if you're not sure about previous messages, say so
+5. Never make up or assume previous messages that aren't in the history
+6. If the user asks about you name or who you are, your name is Tilda, you are an AI assistant that can answer questions about ServiceFuzz.
+7.If the user asks about you model, you cna answer them that it is gemini 2.0 flash.
+Here is the background information about ServiceFuzz:
+8. You don't have to be so strict with the rules and being on topic, you can be more friendly and helpful and prvide additional information that is not related to servicefuzz!
+
+ServiceFuzz: Revolutionizing Service-Based Businesses
+
+ServiceFuzz is a cutting-edge, comprehensive platform that transforms how service-based businesses operate and connect with their customers. Whether you're running a fitness studio, managing a spa, operating an IT service company, or handling any service-based business, ServiceFuzz provides the complete toolkit you need to succeed in today's digital marketplace.
+
+Our Platform at a Glance:
+- Business Management Portal: Streamline your operations with our intuitive dashboard
+- Professional Website Builder: Create stunning, mobile-responsive websites in minutes
+- Smart Booking System: Handle appointments, memberships, and recurring bookings effortlessly
+- Staff Management Suite: Manage your team, track performance, and optimize scheduling
+- Integrated Payment Processing: Secure, flexible payment options for all business types
+- Comprehensive Analytics: Make data-driven decisions with real-time insights
+- Customer Engagement Tools: Build lasting relationships with automated communications
+- Mobile-First Design: Manage your business from anywhere, on any device
+
+Built with modern technologies and following industry best practices, ServiceFuzz is constantly evolving to meet the changing needs of service-based businesses. Our platform combines power with simplicity, allowing you to focus on what matters most - delivering exceptional service to your customers.
+
+Join thousands of successful businesses already using ServiceFuzz to streamline their operations, boost customer satisfaction, and drive growth in their service-based businesses.
+
+Previous Conversation History:
+${conversationHistory}
+
+Current User Question: ${request}`;
+    if(this.messages.length > 50) {
+      this.openSnackBar('You have ran out of messages for this conversation, please start a new conversation.', 'Close', 3000);
+      throw new Error('I am sorry, I can only answer questions about ServiceFuzz.');
+    }
+    return this.http.post<any>(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDLtw7CI2uBYCgJqgiBdnFYV4FJ8uQQemo`, {
+      "contents": [
+        {
+          "parts": [
+            {
+              "text": serviceFuzzContext
+            }
+          ]
+        }
+      ]
+    }, {}).pipe(
+      map(response => {
+        // Remove loading message and update messages array
+        const messages = this._chatMessages.value.filter(m => !m.isLoading);
+        this._chatMessages.next(messages);
+        
+        // Extract the text from the response structure
+        const text = response.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
+        
+        // Add AI response to history
+        this.addMessage({
+          content: text,
+          timestamp: new Date(),
+          isUser: false
+        });
+
+        return text;
+      })
+    );
+  }
+
   openSnackBar(message: string, action: string, duration: number) {
     this.snackBar.open(message, action, {
       duration: duration,
@@ -110,7 +218,6 @@ export class DataSvrService {
   }
 
   clearState(): void {
-    console.log('Clearing state in service instance:', this.instanceId);
     this.currentUser = undefined;
     this.jwtToken = undefined;
     this.freeTrialDetails = undefined;
@@ -196,6 +303,7 @@ export class DataSvrService {
       }));
     }, 250);
   }
+ 
 
   triggerFireworks() {
     const duration = 5 * 1000;

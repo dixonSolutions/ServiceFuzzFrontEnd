@@ -1,0 +1,63 @@
+<!-- Chat Container -->
+<h1 *ngIf="!this.data.currentUser" style="text-align: center; color: #000000;">Hello, I am Tilda, an AI assistant that can answer questions about ServiceFuzz!</h1>
+<h1 *ngIf="this.data.currentUser" style="text-align: center; color: #000000;">Hello {{this.data.currentUser.name}}, I am Tilda!!</h1>
+<div class="chat-container">
+  <div class="chat-header">
+    <button mat-raised-button color="warn" (click)="clearConversation()" class="clear-btn">
+      <mat-icon>delete_sweep</mat-icon>
+      Clear Conversation
+    </button>
+  </div>
+
+  <!-- Messages Display -->
+  <div class="messages-container" #messagesContainer>
+    <div class="message-list">
+      <div *ngFor="let message of messages" 
+           class="message" 
+           [class.user-message]="message.isUser"
+           [class.ai-message]="!message.isUser">
+        
+        <!-- Loading Message -->
+        <div *ngIf="message.isLoading" class="loading-message">
+          <mat-spinner diameter="20"></mat-spinner>
+          <span>AI is thinking...</span>
+        </div>
+
+        <!-- Regular Message -->
+        <div *ngIf="!message.isLoading" class="message-content">
+          <div class="message-header">
+            <span class="sender">{{ message.isUser ? 'You' : 'Tilda' }}</span>
+            <span class="timestamp">{{ formatTimestamp(message.timestamp) }}</span>
+          </div>
+          <p class="message-text">{{ message.content }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Input -->
+  <div class="input-container">
+    <mat-form-field appearance="fill" class="message-input" [color]="isWordLimitExceeded ? 'warn' : 'primary'">
+      <mat-label>Ask about ServiceFuzz</mat-label>
+      <input matInput 
+             #messageInput
+             [(ngModel)]="userMessage" 
+             (input)="onInput()"
+             (keypress)="onKeyPress($event)"
+             (keyup.enter)="sendMessage()" 
+             placeholder="Type your message..."
+             [readonly]="isWordLimitExceeded">
+      <mat-hint align="end" [class.error-hint]="isWordLimitExceeded">
+        {{wordCount}}/{{MAX_WORDS}} words
+      </mat-hint>
+      <mat-error *ngIf="isWordLimitExceeded">
+        Maximum {{MAX_WORDS}} words allowed. Please remove some text to continue.
+      </mat-error>
+      <button mat-icon-button matSuffix 
+              (click)="sendMessage()" 
+              [disabled]="!userMessage || isLoading || isWordLimitExceeded">
+        <mat-icon>send</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+</div>

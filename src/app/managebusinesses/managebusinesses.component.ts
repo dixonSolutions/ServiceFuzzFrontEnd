@@ -12,7 +12,6 @@ export class ManagebusinessesComponent {
     if(this.data.currentUser?.email){
       this.data.getBusinessesForUser(this.data.currentUser.email).subscribe((businesses) => {
         this.data.businesses = businesses;
-        console.log("businesses",this.data.businesses);
       });
     }
   }

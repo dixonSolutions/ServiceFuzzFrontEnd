@@ -51,7 +51,6 @@ export class SignInOrSignUpComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log('SignInComponent using service instance:', this.data.getInstanceId());
     
     // First check if we already have a user in the service
     const currentUser = this.data.currentUser;
@@ -64,7 +63,6 @@ export class SignInOrSignUpComponent implements OnInit {
     // Then subscribe to auth state changes
     this.authService.authState.subscribe((user) => {
       if (user) {
-        console.log('Logged in user:', user);
         this.userInfo = {
           email: user.email,
           name: user.name,
@@ -187,10 +185,8 @@ export class SignInOrSignUpComponent implements OnInit {
       try {
         if (this.isSignIn) {
           // Handle sign in
-          console.log('Sign in:', this.authForm.value);
         } else {
           // Handle sign up
-          console.log('Sign up:', this.authForm.value);
         }
       } finally {
         this.isLoading = false;

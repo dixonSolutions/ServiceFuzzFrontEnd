@@ -10,12 +10,11 @@ import {MatMenuModule} from '@angular/material/menu';
   selector: 'app-topbar',
   standalone: false,
   templateUrl: './topbar.component.html',
-  styleUrl: './topbar.component.css'
+  styleUrls: ['./topbar.component.css']
 })
 export class TopbarComponent implements OnInit {
   constructor(private data: DataSvrService) {}
 
   ngOnInit(): void {
-    console.log('Current user:', this.data.currentUser);
   }
 }

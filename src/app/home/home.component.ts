@@ -99,12 +99,12 @@ export class HomeComponent implements OnInit {
     'CRM systems'
   ];
 
-  constructor(private data: DataSvrService) {
+  constructor(public data: DataSvrService) {
     this.startCarousel();
   }
 
   ngOnInit(): void {
-    console.log('Current user:', this.data.currentUser);
+   
   }
 
   setSlide(index: number): void {
