@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SocialAuthService, GoogleLoginProvider } from '@abacritt/angularx-social-login';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { DataSvrService } from '../services/data-svr.service';
 import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
 
@@ -38,6 +38,7 @@ export class SignInOrSignUpComponent implements OnInit {
     private formBuilder: FormBuilder,
     private authService: SocialAuthService,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private data: DataSvrService
   ) {
@@ -57,7 +58,17 @@ export class SignInOrSignUpComponent implements OnInit {
       this.isAuthenticated = true;
       this.serviceFuzzUser = currentUser;
       this.cdr.detectChanges();
+      return;
     }
+
+    // Check for magic link verification (userId parameter)
+    this.route.queryParams.subscribe(params => {
+      const userId = params['userId'];
+      if (userId) {
+        this.handleMagicLinkVerification(userId);
+        return;
+      }
+    });
 
     // Then subscribe to auth state changes
     this.authService.authState.subscribe((user) => {
@@ -81,6 +92,35 @@ export class SignInOrSignUpComponent implements OnInit {
 
     // Initialize Google Sign-In button
     setTimeout(() => this.initializeGoogleSignIn(), 100);
+  }
+
+  private handleMagicLinkVerification(userId: string) {
+    this.isLoading = true;
+    
+    this.data.getUserByID(userId).subscribe({
+      next: (user: ServiceFuzzAccount) => {
+        this.isAuthenticated = true;
+        this.serviceFuzzUser = user;
+        this.data.currentUser = user;
+        this.cdr.detectChanges();
+        
+        // Show success message
+        this.data.openSnackBar('Successfully signed in via magic link!', 'Close', 3000);
+        
+        // Clear the URL parameters and navigate to home
+        this.router.navigate(['/home'], { replaceUrl: true });
+      },
+      error: (error: any) => {
+        console.error('Error verifying magic link:', error);
+        this.data.openSnackBar('Invalid or expired magic link. Please try again.', 'Close', 5000);
+        
+        // Clear the URL parameters
+        this.router.navigate(['/sign'], { replaceUrl: true });
+      },
+      complete: () => {
+        this.isLoading = false;
+      }
+    });
   }
 
   private initializeGoogleSignIn() {
@@ -194,6 +234,43 @@ export class SignInOrSignUpComponent implements OnInit {
         this.isLoading = false;
       }
     }
+  }
+
+  sendMagicLink() {
+    const email = this.authForm.get('email')?.value;
+    if (!email || !this.authForm.get('email')?.valid) {
+      this.data.openSnackBar('Please enter a valid email address', 'Close', 3000);
+      return;
+    }
+
+    this.isLoading = true;
+
+    const magicLinkMethod = this.isSignIn ?
+      this.data.GenerateAndSendMagicLinkForLogIn(email) :
+      this.data.GenerateAndSendMagicLinkForSignUp(email);
+
+    magicLinkMethod.subscribe({
+      next: (response: { message: string }) => {
+        this.data.openSnackBar(response.message, 'Close', 5000);
+        this.isLoading = false;
+      },
+      error: (error: any) => {
+        console.error(`Error sending magic link for ${this.isSignIn ? 'sign in' : 'sign up'}:`, error);
+        this.data.openSnackBar(
+          `Failed to send magic link. Please try again.`, 
+          'Close', 
+          3000
+        );
+        this.isLoading = false;
+      }
+    });
+  }
+
+  getFirstLetter(name: string | undefined): string {
+    if (!name || name.trim() === '') {
+      return '?';
+    }
+    return name.trim().charAt(0).toUpperCase();
   }
 
   signOut() {

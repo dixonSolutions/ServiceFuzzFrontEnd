@@ -57,6 +57,74 @@ export class DataSvrService {
   getInstanceId(): number {
     return this.instanceId;
   }
+  getUserByID(id: string): Observable<ServiceFuzzAccount> {
+    return this.http.get<{ user: ServiceFuzzAccount; token: any }>(
+      `${this.apiUrl}/api/User/GetUserById/${id}`,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    ).pipe(
+      map(response => {
+        console.log("response", response);
+        
+        // Extract the user object from the response
+        const user = response.user;
+        
+        // Trim whitespace from user fields
+        const cleanUser: ServiceFuzzAccount = {
+          ...user,
+          email: user.email?.trim() || '',
+          name: user.name?.trim() || '',
+          userID: user.userID?.trim() || ''
+        };
+        
+        // Extract and set the JWT token
+        if (response.token && response.token.result) {
+          this.jwtToken = response.token.result;
+        }
+        
+        // Set the cleaned user as current user
+        this.currentUser = cleanUser;
+        
+        console.log("cleaned user", cleanUser);
+        console.log("extracted token", this.jwtToken);
+        
+        return cleanUser;
+      })
+    );
+  }
+  GenerateAndSendMagicLinkForLogIn(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+        `${this.apiUrl}/api/UserVerification/generate-magic-link`,
+        JSON.stringify(email),
+        {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    ).pipe(
+      map(response => {
+        return response;
+      })
+    );
+  }
+  GenerateAndSendMagicLinkForSignUp(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+        `${this.apiUrl}/api/UserVerification/generate-signup-magic-link`,
+        { email: email },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      ).pipe(
+        map(response => {
+          return response;
+        })
+      );
+  }
   
   verifyGoogleUser(googleToken: string): Observable<{ user: ServiceFuzzAccount; token: string }> {
     return this.http.post<{ user: ServiceFuzzAccount; token: string }>(
@@ -78,7 +146,7 @@ export class DataSvrService {
 
   CreateUserWithGoogleToken(googleToken: string): Observable<{ user: ServiceFuzzAccount; token: string }> {
     return this.http.post<{ user: ServiceFuzzAccount; token: string }>(
-      `${this.apiUrl}/api/User/create-google`,
+      `${this.apiUrl}/api/User/CreateUserViaGoogle/create-google`,
       JSON.stringify(googleToken), 
       {
         headers: {

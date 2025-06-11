@@ -3,7 +3,13 @@
   <!-- Profile Display -->
   <mat-card class="profile-card" *ngIf="isAuthenticated && serviceFuzzUser">
     <mat-card-header>
-      <img mat-card-avatar [src]="userInfo?.picture" [alt]="serviceFuzzUser.name">
+      <!-- Profile Avatar - either image or letter circle -->
+      <div mat-card-avatar class="profile-avatar">
+        <img *ngIf="userInfo && userInfo.picture" [src]="userInfo.picture" [alt]="serviceFuzzUser.name || ''" class="profile-image">
+        <div *ngIf="!userInfo || !userInfo.picture" class="letter-avatar">
+          {{ getFirstLetter(serviceFuzzUser?.name) }}
+        </div>
+      </div>
       <mat-card-title>Welcome, {{serviceFuzzUser.name}}!</mat-card-title>
       <mat-card-subtitle>{{serviceFuzzUser.email}}</mat-card-subtitle>
     </mat-card-header>
@@ -56,6 +62,15 @@
           <button mat-raised-button color="primary" type="submit" [disabled]="!authForm.valid || isLoading">
             <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
             <span *ngIf="!isLoading">{{ isSignIn ? 'Sign In' : 'Sign Up' }}</span>
+          </button>
+
+          <button mat-stroked-button color="accent" type="button" 
+                  [disabled]="!authForm.get('email')?.valid || isLoading" 
+                  (click)="sendMagicLink()" 
+                  class="magic-link-button">
+            <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+            <mat-icon *ngIf="!isLoading">email</mat-icon>
+            <span *ngIf="!isLoading">{{ isSignIn ? 'Sign In With Magic Link' : 'Sign Up With Magic Link' }}</span>
           </button>
         </div>
       </form>

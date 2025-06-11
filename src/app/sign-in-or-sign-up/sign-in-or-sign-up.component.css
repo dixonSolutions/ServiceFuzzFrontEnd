@@ -24,12 +24,45 @@
   margin-bottom: 20px;
 }
 
+.profile-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.letter-avatar {
+  width: 100%;
+  height: 100%;
+  background-color: #2196F3;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 500;
+  text-transform: uppercase;
+  border-radius: 50%;
+}
+
 .profile-card img[mat-card-avatar] {
   width: 60px;
   height: 60px;
   border-radius: 50%;
   object-fit: cover;
   margin-right: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .profile-details {
@@ -86,6 +119,9 @@ mat-form-field {
 .form-actions {
   margin-top: 24px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .form-actions button {
@@ -96,6 +132,16 @@ mat-form-field {
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.magic-link-button {
+  margin-top: 8px;
+}
+
+.magic-link-button mat-icon {
+  font-size: 20px;
+  height: 20px;
+  width: 20px;
 }
 
 .divider {
