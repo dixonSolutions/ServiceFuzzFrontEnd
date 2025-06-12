@@ -19,6 +19,10 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatStepperModule } from '@angular/material/stepper';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatBadgeModule } from '@angular/material/badge';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
@@ -32,7 +36,7 @@ import { BusinessSettingsComponent } from './business-settings/business-settings
 import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { StaffportalComponent } from './staffportal/staffportal.component';
-
+import { MatDividerModule } from '@angular/material/divider';
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
 
@@ -72,7 +76,12 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     MatMenuModule,
     MatProgressSpinnerModule,
     MatSelectModule,
-    MatExpansionModule
+    MatExpansionModule,
+    MatStepperModule,
+    DragDropModule,
+    MatChipsModule,
+    MatBadgeModule,
+    MatDividerModule
   ],
   providers: [
     {
@@ -84,7 +93,10 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
             id: GoogleLoginProvider.PROVIDER_ID,
             provider: new GoogleLoginProvider(GOOGLE_CLIENT_ID)
           }
-        ]
+        ],
+        onError: (err) => {
+          console.error(err);
+        }
       } as SocialAuthServiceConfig
     }
   ],

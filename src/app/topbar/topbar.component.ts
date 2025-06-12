@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 })
 export class TopbarComponent implements OnInit {
   constructor(
-    private data: DataSvrService,
+    public data: DataSvrService,
     private router: Router
   ) {}
 
@@ -27,5 +27,23 @@ export class TopbarComponent implements OnInit {
       return this.router.url === '/' || this.router.url === '/home';
     }
     return this.router.url === route || this.router.url.startsWith(route + '/');
+  }
+
+  getUserInitials(): string {
+    const user = this.data.currentUser;
+    if (!user || !user.name) {
+      return '?';
+    }
+    
+    const nameParts = user.name.trim().split(' ');
+    if (nameParts.length === 1) {
+      // Single name, return first letter
+      return nameParts[0].charAt(0).toUpperCase();
+    } else {
+      // Multiple names, return first letter of first and last name
+      const firstInitial = nameParts[0].charAt(0).toUpperCase();
+      const lastInitial = nameParts[nameParts.length - 1].charAt(0).toUpperCase();
+      return firstInitial + lastInitial;
+    }
   }
 }

@@ -1,5 +1,6 @@
 <!-- src/app/components/business-registration/business-registration.component.html -->
 <div class="business-registration-container">
+  <!-- Not Signed In Message -->
   <div *ngIf="!data.currentUser" class="sign-in-message">
     <mat-card>
       <mat-card-content>
@@ -15,208 +16,424 @@
     </mat-card>
   </div>
 
-  <mat-card *ngIf="data.currentUser" class="form-card">
-    <mat-card-header>
-      <mat-card-title>Register Your Business</mat-card-title>
-    </mat-card-header>
+  <!-- Business Registration Stepper -->
+  <div *ngIf="data.currentUser" class="registration-content">
+    <mat-card class="stepper-card">
+      <mat-card-header>
+        <mat-card-title>Business Registration</mat-card-title>
+        <mat-card-subtitle>Complete all steps to register your business</mat-card-subtitle>
+      </mat-card-header>
 
-    <mat-card-content>
-      <form [formGroup]="businessForm" (ngSubmit)="onSubmit()" class="business-form">
-        <!-- Business Information Section -->
-        <div class="form-section">
-          <h3 class="section-title">Business Information</h3>
-          <!-- Business Name -->
-          <mat-form-field class="full-width">
-            <mat-label>Business Name</mat-label>
-            <input matInput formControlName="bussinessName" placeholder="Enter your business name">
-            <mat-icon matSuffix>business</mat-icon>
-            <mat-error *ngIf="businessForm.get('bussinessName')?.hasError('required')">
-              Business name is required
-            </mat-error>
-            <mat-error *ngIf="businessForm.get('bussinessName')?.hasError('minlength')">
-              Business name must be at least 2 characters
-            </mat-error>
-          </mat-form-field>
-    
-          <!-- Business Description -->
-          <mat-form-field class="full-width">
-            <mat-label>Business Description</mat-label>
-            <textarea matInput formControlName="bussinessDescription" 
-                      placeholder="Describe your business" rows="4">
-            </textarea>
-            <mat-icon matSuffix>description</mat-icon>
-            <mat-error *ngIf="businessForm.get('bussinessDescription')?.hasError('required')">
-              Business description is required
-            </mat-error>
-            <mat-error *ngIf="businessForm.get('bussinessDescription')?.hasError('minlength')">
-              Description must be at least 10 characters
-            </mat-error>
-          </mat-form-field>
-    
-          <!-- Business Phone -->
-          <mat-form-field class="full-width">
-            <mat-label>Business Phone</mat-label>
-            <input matInput formControlName="bussinessPhone" 
-                   placeholder="Enter business phone number">
-            <mat-icon matSuffix>phone</mat-icon>
-            <mat-error *ngIf="businessForm.get('bussinessPhone')?.hasError('required')">
-              Phone number is required
-            </mat-error>
-            <mat-error *ngIf="businessForm.get('bussinessPhone')?.hasError('pattern')">
-              Please enter a valid phone number
-            </mat-error>
-          </mat-form-field>
-    
-          <!-- Business Email -->
-          <mat-form-field class="full-width">
-            <mat-label>Business Email</mat-label>
-            <input matInput formControlName="bussinessEmail" 
-                   placeholder="Enter business email" type="email">
-            <mat-icon matSuffix>email</mat-icon>
-            <mat-error *ngIf="businessForm.get('bussinessEmail')?.hasError('required')">
-              Business email is required
-            </mat-error>
-            <mat-error *ngIf="businessForm.get('bussinessEmail')?.hasError('email')">
-              Please enter a valid email address
-            </mat-error>
-          </mat-form-field>
-    
-          <!-- Owner Email (disabled, auto-filled) -->
-          <mat-form-field class="full-width">
-            <mat-label>Owner Email</mat-label>
-            <input matInput formControlName="ownerEmail" [ngModel]="this.data.currentUser?.email" readonly>
-            <mat-icon matSuffix>person</mat-icon>
-          </mat-form-field>
-        </div>
+      <mat-card-content>
+        <mat-stepper #stepper [selectedIndex]="currentStep" orientation="horizontal" linear="false">
+          
+          <!-- Step 1: Basic Information -->
+          <mat-step [completed]="basicInfoForm.valid" label="Basic Information">
+            <form [formGroup]="basicInfoForm" class="step-form">
+              <h3>Business Information</h3>
+              <div class="form-row">
+                <mat-form-field class="full-width">
+                  <mat-label>Business Name</mat-label>
+                  <input matInput formControlName="bussinessName" placeholder="Enter your business name">
+                  <mat-icon matSuffix>business</mat-icon>
+                  <mat-error *ngIf="basicInfoForm.get('bussinessName')?.hasError('required')">
+                    Business name is required
+                  </mat-error>
+                  <mat-error *ngIf="basicInfoForm.get('bussinessName')?.hasError('minlength')">
+                    Business name must be at least 2 characters
+                  </mat-error>
+                </mat-form-field>
+              </div>
 
-        <!-- Services Section -->
-        <div class="form-section">
-          <div class="section-header">
-            <h3 class="section-title">Services</h3>
-            <button mat-raised-button color="accent" type="button" (click)="addService()" class="add-service-btn">
-              <mat-icon>add</mat-icon>
-              Add Service
-            </button>
-          </div>
+              <div class="form-row">
+                <mat-form-field class="full-width">
+                  <mat-label>Business Description</mat-label>
+                  <textarea matInput formControlName="bussinessDescription" 
+                            placeholder="Describe your business" rows="4">
+                  </textarea>
+                  <mat-icon matSuffix>description</mat-icon>
+                  <mat-error *ngIf="basicInfoForm.get('bussinessDescription')?.hasError('required')">
+                    Business description is required
+                  </mat-error>
+                  <mat-error *ngIf="basicInfoForm.get('bussinessDescription')?.hasError('minlength')">
+                    Description must be at least 10 characters
+                  </mat-error>
+                </mat-form-field>
+              </div>
 
-          <div formArrayName="services" class="services-container">
-            <mat-accordion>
-              <mat-expansion-panel *ngFor="let service of services.controls; let i=index" 
-                                 [formGroupName]="i" 
-                                 class="service-panel"
-                                 [expanded]="i === services.length - 1">
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    <mat-icon class="service-icon">spa</mat-icon>
-                    Service #{{i + 1}}: {{service.get('serviceName')?.value || 'New Service'}}
-                  </mat-panel-title>
-                  <mat-panel-description *ngIf="service.get('servicePrice')?.value">
-                    {{service.get('servicePrice')?.value}} {{service.get('servicePriceCurrencyUnit')?.value}}
-                  </mat-panel-description>
-                </mat-expansion-panel-header>
+              <div class="form-row">
+                <mat-form-field class="half-width">
+                  <mat-label>Business Phone</mat-label>
+                  <input matInput formControlName="bussinessPhone" 
+                         placeholder="Enter business phone number">
+                  <mat-icon matSuffix>phone</mat-icon>
+                  <mat-error *ngIf="basicInfoForm.get('bussinessPhone')?.hasError('required')">
+                    Phone number is required
+                  </mat-error>
+                  <mat-error *ngIf="basicInfoForm.get('bussinessPhone')?.hasError('pattern')">
+                    Please enter a valid phone number
+                  </mat-error>
+                </mat-form-field>
 
-                <div class="service-content">
-                  <div class="service-header">
-                    <button mat-icon-button color="warn" type="button" 
-                            (click)="removeService(i)" 
-                            *ngIf="services.length > 1"
-                            class="remove-service-btn">
-                      <mat-icon>delete</mat-icon>
-                    </button>
-                  </div>
+                <mat-form-field class="half-width">
+                  <mat-label>Business Email</mat-label>
+                  <input matInput formControlName="bussinessEmail" 
+                         placeholder="Enter business email" type="email">
+                  <mat-icon matSuffix>email</mat-icon>
+                  <mat-error *ngIf="basicInfoForm.get('bussinessEmail')?.hasError('required')">
+                    Business email is required
+                  </mat-error>
+                  <mat-error *ngIf="basicInfoForm.get('bussinessEmail')?.hasError('email')">
+                    Please enter a valid email address
+                  </mat-error>
+                </mat-form-field>
+              </div>
 
-                  <!-- Service Name -->
-                  <mat-form-field appearance="fill" class="full-width" color="primary">
-                    <mat-label>Service Name</mat-label>
-                    <input matInput formControlName="serviceName" placeholder="Enter service name">
-                    <mat-icon matSuffix>spa</mat-icon>
-                    <mat-error *ngIf="service.get('serviceName')?.hasError('required')">
-                      Service name is required
-                    </mat-error>
-                  </mat-form-field>
+              <div class="form-row">
+                <mat-form-field class="full-width">
+                  <mat-label>Owner Email</mat-label>
+                  <input matInput formControlName="ownerEmail" readonly>
+                  <mat-icon matSuffix>person</mat-icon>
+                </mat-form-field>
+              </div>
+            </form>
+          </mat-step>
 
-                  <!-- Service Description -->
-                  <mat-form-field appearance="fill" class="full-width" color="primary">
-                    <mat-label>Service Description</mat-label>
-                    <textarea matInput formControlName="serviceDescription" 
-                              placeholder="Describe the service" rows="3">
-                    </textarea>
-                    <mat-icon matSuffix>description</mat-icon>
-                    <mat-error *ngIf="service.get('serviceDescription')?.hasError('required')">
-                      Service description is required
-                    </mat-error>
-                  </mat-form-field>
-
-                  <!-- Duration and Price Row -->
-                  <div class="form-row">
-                    <mat-form-field appearance="fill" class="half-width" color="primary">
-                      <mat-label>Duration (minutes)</mat-label>
-                      <input matInput type="number" formControlName="duration" 
-                             (input)="updateEstimatedTime(i)" min="5">
-                      <mat-icon matSuffix>schedule</mat-icon>
-                      <mat-error *ngIf="service.get('duration')?.hasError('required')">
-                        Duration is required
-                      </mat-error>
-                      <mat-error *ngIf="service.get('duration')?.hasError('min')">
-                        Minimum duration is 5 minutes
-                      </mat-error>
-                    </mat-form-field>
-
-                    <div class="price-group">
-                      <mat-form-field appearance="fill" class="price-input" color="primary">
-                        <mat-label>Price</mat-label>
-                        <input matInput type="number" formControlName="servicePrice" min="0">
-                        <mat-icon matSuffix>attach_money</mat-icon>
-                        <mat-error *ngIf="service.get('servicePrice')?.hasError('required')">
-                          Price is required
-                        </mat-error>
-                        <mat-error *ngIf="service.get('servicePrice')?.hasError('min')">
-                          Price cannot be negative
+          <!-- Step 2: Services -->
+          <mat-step [completed]="registration.services.length > 0" label="Services">
+            <div class="services-section">
+              <h3>Business Services</h3>
+              
+              <!-- Service Form -->
+              <mat-card class="form-card">
+                <mat-card-header>
+                  <mat-card-title>{{ editingServiceId ? 'Edit Service' : 'Add New Service' }}</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <form [formGroup]="serviceForm" class="service-form">
+                    <div class="form-row">
+                      <mat-form-field class="half-width">
+                        <mat-label>Service Name</mat-label>
+                        <input matInput formControlName="serviceName" placeholder="e.g., Hair Cut">
+                        <mat-error *ngIf="serviceForm.get('serviceName')?.hasError('required')">
+                          Service name is required
                         </mat-error>
                       </mat-form-field>
 
-                      <mat-form-field appearance="fill" class="currency-select" color="primary">
+                      <mat-form-field class="half-width">
+                        <mat-label>Duration (minutes)</mat-label>
+                        <input matInput type="number" formControlName="duration" placeholder="30">
+                        <mat-error *ngIf="serviceForm.get('duration')?.hasError('required')">
+                          Duration is required
+                        </mat-error>
+                        <mat-error *ngIf="serviceForm.get('duration')?.hasError('min')">
+                          Duration must be at least 5 minutes
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field class="full-width">
+                        <mat-label>Service Description</mat-label>
+                        <textarea matInput formControlName="serviceDescription" 
+                                  placeholder="Describe the service" rows="3">
+                        </textarea>
+                        <mat-error *ngIf="serviceForm.get('serviceDescription')?.hasError('required')">
+                          Service description is required
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field class="half-width">
+                        <mat-label>Price</mat-label>
+                        <input matInput type="number" formControlName="servicePrice" placeholder="0.00">
+                        <mat-error *ngIf="serviceForm.get('servicePrice')?.hasError('required')">
+                          Price is required
+                        </mat-error>
+                        <mat-error *ngIf="serviceForm.get('servicePrice')?.hasError('min')">
+                          Price must be 0 or greater
+                        </mat-error>
+                      </mat-form-field>
+
+                      <mat-form-field class="half-width">
                         <mat-label>Currency</mat-label>
                         <mat-select formControlName="servicePriceCurrencyUnit">
                           <mat-option *ngFor="let currency of currencies" [value]="currency">
-                            {{currency}}
+                            {{ currency }}
                           </mat-option>
                         </mat-select>
-                        <mat-icon matSuffix>monetization_on</mat-icon>
                       </mat-form-field>
                     </div>
-                  </div>
 
-                  <!-- Service Image URL -->
-                  <mat-form-field appearance="fill" class="full-width" color="primary">
-                    <mat-label>Service Image URL</mat-label>
-                    <input matInput formControlName="serviceImageUrl" 
-                           placeholder="Enter image URL for the service">
-                    <mat-icon matSuffix>image</mat-icon>
-                    <mat-error *ngIf="service.get('serviceImageUrl')?.hasError('required')">
-                      Service image URL is required
-                    </mat-error>
-                  </mat-form-field>
+                    <div class="form-row">
+                      <mat-form-field class="full-width">
+                        <mat-label>Image URL (optional)</mat-label>
+                        <input matInput formControlName="serviceImageUrl" placeholder="https://example.com/image.jpg">
+                      </mat-form-field>
+                    </div>
+                  </form>
+                </mat-card-content>
+                <mat-card-actions>
+                  <button mat-raised-button color="primary" (click)="addService()" 
+                          [disabled]="!serviceForm.valid">
+                    {{ editingServiceId ? 'Update Service' : 'Add Service' }}
+                  </button>
+                  <button mat-button *ngIf="editingServiceId" (click)="editingServiceId = null; serviceForm.reset()">
+                    Cancel
+                  </button>
+                </mat-card-actions>
+              </mat-card>
+
+              <!-- Services List -->
+              <div class="services-list" *ngIf="registration.services.length > 0">
+                <h4>Added Services ({{ registration.services.length }})</h4>
+                <div class="services-grid">
+                  <mat-card *ngFor="let service of registration.services" class="service-card">
+                    <mat-card-header>
+                      <mat-card-title>{{ service.serviceName }}</mat-card-title>
+                      <mat-card-subtitle>{{ service.serviceEstimatedTime }} • {{ service.servicePrice }} {{ service.servicePriceCurrencyUnit }}</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <p>{{ service.serviceDescription }}</p>
+                    </mat-card-content>
+                    <mat-card-actions>
+                      <button mat-icon-button color="primary" (click)="editService(service)">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button color="warn" (click)="deleteService(service.serviceID)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </mat-card-actions>
+                  </mat-card>
                 </div>
-              </mat-expansion-panel>
-            </mat-accordion>
-          </div>
+              </div>
+            </div>
+          </mat-step>
+
+          <!-- Step 3: Places -->
+          <mat-step [completed]="registration.places.length > 0" label="Places">
+            <div class="places-section">
+              <h3>Business Locations</h3>
+              
+              <!-- Place Form -->
+              <mat-card class="form-card">
+                <mat-card-header>
+                  <mat-card-title>{{ editingPlaceId ? 'Edit Place' : 'Add New Place' }}</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                  <form [formGroup]="placeForm" class="place-form">
+                    <div class="form-row">
+                      <mat-form-field class="half-width">
+                        <mat-label>Place Name</mat-label>
+                        <input matInput formControlName="placeName" placeholder="e.g., Main Location">
+                        <mat-error *ngIf="placeForm.get('placeName')?.hasError('required')">
+                          Place name is required
+                        </mat-error>
+                      </mat-form-field>
+
+                      <mat-form-field class="half-width">
+                        <mat-label>Country</mat-label>
+                        <mat-select formControlName="placeCountry">
+                          <mat-option *ngFor="let country of countries" [value]="country">
+                            {{ country }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field class="full-width">
+                        <mat-label>Place Description</mat-label>
+                        <textarea matInput formControlName="placeDescription" 
+                                  placeholder="Describe this location" rows="2">
+                        </textarea>
+                        <mat-error *ngIf="placeForm.get('placeDescription')?.hasError('required')">
+                          Place description is required
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field class="full-width">
+                        <mat-label>Address</mat-label>
+                        <input matInput formControlName="placeAddress" placeholder="Street address">
+                        <mat-error *ngIf="placeForm.get('placeAddress')?.hasError('required')">
+                          Address is required
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field class="third-width">
+                        <mat-label>City</mat-label>
+                        <input matInput formControlName="placeCity" placeholder="City">
+                        <mat-error *ngIf="placeForm.get('placeCity')?.hasError('required')">
+                          City is required
+                        </mat-error>
+                      </mat-form-field>
+
+                      <mat-form-field class="third-width">
+                        <mat-label>State/Province</mat-label>
+                        <input matInput formControlName="placeState" placeholder="State">
+                        <mat-error *ngIf="placeForm.get('placeState')?.hasError('required')">
+                          State is required
+                        </mat-error>
+                      </mat-form-field>
+
+                      <mat-form-field class="third-width">
+                        <mat-label>Zip Code</mat-label>
+                        <input matInput formControlName="placeZipCode" placeholder="12345">
+                        <mat-error *ngIf="placeForm.get('placeZipCode')?.hasError('required')">
+                          Zip code is required
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field class="half-width">
+                        <mat-label>Phone (optional)</mat-label>
+                        <input matInput formControlName="placePhone" placeholder="Location phone">
+                      </mat-form-field>
+
+                      <mat-form-field class="half-width">
+                        <mat-label>Email (optional)</mat-label>
+                        <input matInput formControlName="placeEmail" placeholder="Location email">
+                        <mat-error *ngIf="placeForm.get('placeEmail')?.hasError('email')">
+                          Please enter a valid email
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+                  </form>
+                </mat-card-content>
+                <mat-card-actions>
+                  <button mat-raised-button color="primary" (click)="addPlace()" 
+                          [disabled]="!placeForm.valid">
+                    {{ editingPlaceId ? 'Update Place' : 'Add Place' }}
+                  </button>
+                  <button mat-button *ngIf="editingPlaceId" (click)="editingPlaceId = null; placeForm.reset()">
+                    Cancel
+                  </button>
+                </mat-card-actions>
+              </mat-card>
+
+              <!-- Places List -->
+              <div class="places-list" *ngIf="registration.places.length > 0">
+                <h4>Added Places ({{ registration.places.length }})</h4>
+                <div class="places-grid">
+                  <mat-card *ngFor="let place of registration.places" class="place-card">
+                    <mat-card-header>
+                      <mat-card-title>{{ place.placeName }}</mat-card-title>
+                      <mat-card-subtitle>{{ place.placeCity }}, {{ place.placeState }}</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <p>{{ place.placeDescription }}</p>
+                      <p class="address">{{ place.placeAddress }}, {{ place.placeCity }}, {{ place.placeState }} {{ place.placeZipCode }}</p>
+                    </mat-card-content>
+                    <mat-card-actions>
+                      <button mat-icon-button color="primary" (click)="editPlace(place)">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button color="warn" (click)="deletePlace(place.placeID)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </mat-card-actions>
+                  </mat-card>
+                </div>
+              </div>
+            </div>
+          </mat-step>
+
+          <!-- Step 4: Service Assignment -->
+          <mat-step label="Service Assignment">
+            <div class="assignment-section">
+              <h3>Assign Services to Places</h3>
+              <p>Drag and drop services to assign them to specific locations.</p>
+              
+              <div class="assignment-container">
+                <!-- Unassigned Services -->
+                <div class="unassigned-services">
+                  <h4>Available Services</h4>
+                  <div class="services-pool" 
+                       cdkDropList 
+                       [cdkDropListData]="unassignedServiceIds"
+                       [cdkDropListConnectedTo]="placeDropListIds"
+                       class="service-list">
+                    <div *ngFor="let service of getUnassignedServices()" 
+                         class="service-item" 
+                         cdkDrag 
+                         [cdkDragData]="service.serviceID">
+                      <mat-card class="draggable-service">
+                        <mat-card-content>
+                          <h5>{{ service.serviceName }}</h5>
+                          <p>{{ service.serviceEstimatedTime }} • {{ service.servicePrice }} {{ service.servicePriceCurrencyUnit }}</p>
+                        </mat-card-content>
+                      </mat-card>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Places with Assigned Services -->
+                <div class="places-assignment">
+                  <h4>Locations</h4>
+                  <div class="places-list">
+                    <div *ngFor="let place of registration.places" class="place-assignment">
+                      <mat-card class="place-card">
+                        <mat-card-header>
+                          <mat-card-title>{{ place.placeName }}</mat-card-title>
+                          <mat-card-subtitle>{{ place.placeCity }}, {{ place.placeState }}</mat-card-subtitle>
+                        </mat-card-header>
+                        <mat-card-content>
+                          <div class="assigned-services"
+                               cdkDropList
+                               [id]="'assigned-services-' + place.placeID"
+                               [cdkDropListData]="place.assignedServiceIDs"
+                               [cdkDropListConnectedTo]="['services-pool']"
+                               (cdkDropListDropped)="onServiceDrop($event, place.placeID)">
+                            <div *ngFor="let service of getAssignedServices(place.placeID)" 
+                                 class="assigned-service"
+                                 cdkDrag
+                                 [cdkDragData]="service.serviceID">
+                              <mat-chip color="primary" selected>
+                                {{ service.serviceName }}
+                                <mat-icon matChipRemove (click)="data.unassignServiceFromPlace(service.serviceID, place.placeID)">
+                                  cancel
+                                </mat-icon>
+                              </mat-chip>
+                            </div>
+                            <div *ngIf="getAssignedServices(place.placeID).length === 0" class="drop-zone">
+                              Drop services here
+                            </div>
+                          </div>
+                        </mat-card-content>
+                      </mat-card>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-step>
+        </mat-stepper>
+
+        <!-- Navigation Buttons -->
+        <div class="navigation-buttons">
+          <button mat-button (click)="previousStep()" [disabled]="currentStep === 0">
+            Previous
+          </button>
+          
+          <button mat-raised-button color="primary" (click)="nextStep()" 
+                  *ngIf="currentStep < maxSteps - 1">
+            Next
+          </button>
+          
+          <button mat-raised-button color="accent" (click)="onSubmit()" 
+                  *ngIf="currentStep === maxSteps - 1"
+                  [disabled]="isSubmitting || !isRegistrationCompletePublic()">
+            <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+            <span *ngIf="!isSubmitting">Complete Registration</span>
+          </button>
         </div>
-  
-        <!-- Error Message -->
-        <div class="error-message" *ngIf="errorMessage">
-          {{ errorMessage }}
-        </div>
-  
-        <!-- Submit Button -->
-        <button mat-raised-button color="primary" 
-                type="submit" 
-                [disabled]="businessForm.invalid || isSubmitting"
-                class="submit-button">
-          <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
-          <span *ngIf="!isSubmitting">Register Business</span>
-        </button>
-      </form>
-    </mat-card-content>
-  </mat-card>
+      </mat-card-content>
+    </mat-card>
+  </div>
 </div>

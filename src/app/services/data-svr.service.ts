@@ -8,7 +8,9 @@ import confetti from 'canvas-confetti';
 import { ServiceFuzzFreeTrialSubscriptions } from '../models/FreeTrialDetails';
 import JSConfetti from 'js-confetti'; // Import the JSConfetti class
 import { ChatMessage } from '../models/chat-message';
-
+import { BusinessRegistration, ServicePlaceAssignment } from '../models/business-registration';
+import { ServicesForBusiness } from '../models/services-for-business';
+import { BusinessPlace } from '../models/business-place';
 
 @Injectable({
   providedIn: 'root'
@@ -24,6 +26,16 @@ export class DataSvrService {
   public freeTrialDetails: ServiceFuzzFreeTrialSubscriptions | undefined;
   public jsConfetti: JSConfetti = new JSConfetti();
 
+  // Business Registration State
+  private _businessRegistration = new BehaviorSubject<BusinessRegistration>({
+    basicInfo: {} as BusinessBasicInfo,
+    services: [],
+    places: [],
+    currentStep: 0,
+    isCompleted: false
+  });
+  public businessRegistration$ = this._businessRegistration.asObservable();
+
   // Chat related properties
   private _chatMessages = new BehaviorSubject<ChatMessage[]>([]);
   public chatMessages$ = this._chatMessages.asObservable();
@@ -34,6 +46,141 @@ export class DataSvrService {
       return DataSvrService.instance;
     }
     DataSvrService.instance = this;
+  }
+
+  // Business Registration Methods
+  get currentBusinessRegistration(): BusinessRegistration {
+    return this._businessRegistration.value;
+  }
+
+  updateBasicInfo(basicInfo: BusinessBasicInfo) {
+    const current = this._businessRegistration.value;
+    this._businessRegistration.next({
+      ...current,
+      basicInfo: basicInfo
+    });
+  }
+
+  addService(service: ServicesForBusiness) {
+    const current = this._businessRegistration.value;
+    service.serviceID = this.generateId();
+    this._businessRegistration.next({
+      ...current,
+      services: [...current.services, service]
+    });
+  }
+
+  updateService(serviceId: string, updatedService: ServicesForBusiness) {
+    const current = this._businessRegistration.value;
+    const services = current.services.map(service => 
+      service.serviceID === serviceId ? { ...updatedService, serviceID: serviceId } : service
+    );
+    this._businessRegistration.next({
+      ...current,
+      services: services
+    });
+  }
+
+  removeService(serviceId: string) {
+    const current = this._businessRegistration.value;
+    const services = current.services.filter(service => service.serviceID !== serviceId);
+    // Also remove from places
+    const places = current.places.map(place => ({
+      ...place,
+      assignedServiceIDs: place.assignedServiceIDs.filter(id => id !== serviceId)
+    }));
+    this._businessRegistration.next({
+      ...current,
+      services: services,
+      places: places
+    });
+  }
+
+  addPlace(place: BusinessPlace) {
+    const current = this._businessRegistration.value;
+    place.placeID = this.generateId();
+    place.assignedServiceIDs = [];
+    this._businessRegistration.next({
+      ...current,
+      places: [...current.places, place]
+    });
+  }
+
+  updatePlace(placeId: string, updatedPlace: BusinessPlace) {
+    const current = this._businessRegistration.value;
+    const places = current.places.map(place => 
+      place.placeID === placeId ? { ...updatedPlace, placeID: placeId } : place
+    );
+    this._businessRegistration.next({
+      ...current,
+      places: places
+    });
+  }
+
+  removePlace(placeId: string) {
+    const current = this._businessRegistration.value;
+    const places = current.places.filter(place => place.placeID !== placeId);
+    this._businessRegistration.next({
+      ...current,
+      places: places
+    });
+  }
+
+  assignServiceToPlace(serviceId: string, placeId: string) {
+    const current = this._businessRegistration.value;
+    const places = current.places.map(place => {
+      if (place.placeID === placeId) {
+        const assignedServices = [...place.assignedServiceIDs];
+        if (!assignedServices.includes(serviceId)) {
+          assignedServices.push(serviceId);
+        }
+        return { ...place, assignedServiceIDs: assignedServices };
+      }
+      return place;
+    });
+    this._businessRegistration.next({
+      ...current,
+      places: places
+    });
+  }
+
+  unassignServiceFromPlace(serviceId: string, placeId: string) {
+    const current = this._businessRegistration.value;
+    const places = current.places.map(place => {
+      if (place.placeID === placeId) {
+        return {
+          ...place,
+          assignedServiceIDs: place.assignedServiceIDs.filter(id => id !== serviceId)
+        };
+      }
+      return place;
+    });
+    this._businessRegistration.next({
+      ...current,
+      places: places
+    });
+  }
+
+  setCurrentStep(step: number) {
+    const current = this._businessRegistration.value;
+    this._businessRegistration.next({
+      ...current,
+      currentStep: step
+    });
+  }
+
+  resetBusinessRegistration() {
+    this._businessRegistration.next({
+      basicInfo: {} as BusinessBasicInfo,
+      services: [],
+      places: [],
+      currentStep: 0,
+      isCompleted: false
+    });
+  }
+
+  private generateId(): string {
+    return 'temp_' + Math.random().toString(36).substr(2, 9);
   }
 
   // Public getters and setters for state management
@@ -57,6 +204,7 @@ export class DataSvrService {
   getInstanceId(): number {
     return this.instanceId;
   }
+
   getUserByID(id: string): Observable<ServiceFuzzAccount> {
     return this.http.get<{ user: ServiceFuzzAccount; token: any }>(
       `${this.apiUrl}/api/User/GetUserById/${id}`,

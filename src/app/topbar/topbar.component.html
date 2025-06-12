@@ -49,8 +49,12 @@
     <button mat-icon-button>
       <mat-icon>settings</mat-icon>
     </button>
-    <button mat-icon-button routerLink="/sign" [class.active]="isRouteActive('/sign')">
-      <mat-icon>account_circle</mat-icon>
+    <button mat-icon-button routerLink="/sign" [class.active]="isRouteActive('/sign')" class="profile-button">
+      <!-- Show user initials if signed in, otherwise show default icon -->
+      <div *ngIf="data.currentUser" class="user-avatar">
+        {{ getUserInitials() }}
+      </div>
+      <mat-icon *ngIf="!data.currentUser">account_circle</mat-icon>
     </button>
   </div>
 </mat-toolbar>
