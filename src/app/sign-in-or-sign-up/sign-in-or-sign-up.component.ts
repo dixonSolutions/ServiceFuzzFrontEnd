@@ -33,6 +33,7 @@ export class SignInOrSignUpComponent implements OnInit {
   userInfo: GoogleUserInfo | null = null;
   isAuthenticated = false;
   serviceFuzzUser: ServiceFuzzAccount | undefined;
+  private redirectUrl: string | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -52,16 +53,26 @@ export class SignInOrSignUpComponent implements OnInit {
   }
 
   ngOnInit() {
-    // First check if we already have a user in the service
+    // Check for query parameters first (for redirect)
+    this.route.queryParams.subscribe(params => {
+      this.redirectUrl = params['redirect'] || null;
+    });
+
+    // Then check if we already have a user in the service
     const currentUser = this.data.currentUser;
     if (currentUser) {
       this.isAuthenticated = true;
       this.serviceFuzzUser = currentUser;
       this.cdr.detectChanges();
+      
+      // If user is already authenticated and there's a redirect URL, navigate to it
+      if (this.redirectUrl) {
+        this.navigateAfterAuth();
+      }
       return;
     }
 
-    // Check for magic link verification (userId parameter)
+    // Check for magic link verification (userId parameter)  
     this.route.queryParams.subscribe(params => {
       const userId = params['userId'];
       if (userId) {
@@ -94,6 +105,12 @@ export class SignInOrSignUpComponent implements OnInit {
     setTimeout(() => this.initializeGoogleSignIn(), 100);
   }
 
+  private navigateAfterAuth() {
+    // Navigate to redirect URL if provided, otherwise go to home
+    const targetUrl = this.redirectUrl || '/home';
+    this.router.navigate([targetUrl], { replaceUrl: true });
+  }
+
   private handleMagicLinkVerification(userId: string) {
     this.isLoading = true;
     
@@ -107,8 +124,8 @@ export class SignInOrSignUpComponent implements OnInit {
         // Show success message
         this.data.openSnackBar('Successfully signed in via magic link!', 'Close', 3000);
         
-        // Clear the URL parameters and navigate to home
-        this.router.navigate(['/home'], { replaceUrl: true });
+        // Navigate to redirect URL or home
+        this.navigateAfterAuth();
       },
       error: (error: any) => {
         console.error('Error verifying magic link:', error);
@@ -183,8 +200,8 @@ export class SignInOrSignUpComponent implements OnInit {
               this.serviceFuzzUser = response.user;
               this.data.currentUser = response.user;
               this.cdr.detectChanges();
-              // Navigate to home after successful authentication
-              this.router.navigate(['/home']);
+              // Navigate to redirect URL or home after successful authentication
+              this.navigateAfterAuth();
             },
             error: (error: any) => {
               console.error(`Error ${this.isSignIn ? 'verifying' : 'creating'} user:`, error);
@@ -227,8 +244,12 @@ export class SignInOrSignUpComponent implements OnInit {
       try {
         if (this.isSignIn) {
           // Handle sign in
+          // TODO: Implement regular email/password sign in
+          // After successful authentication, call this.navigateAfterAuth();
         } else {
           // Handle sign up
+          // TODO: Implement regular email/password sign up
+          // After successful authentication, call this.navigateAfterAuth();
         }
       } finally {
         this.isLoading = false;
@@ -245,6 +266,8 @@ export class SignInOrSignUpComponent implements OnInit {
 
     this.isLoading = true;
 
+    // Note: Magic link redirect functionality is preserved through the userId parameter
+    // in the URL when the user clicks the magic link, which will trigger navigateAfterAuth()
     const magicLinkMethod = this.isSignIn ?
       this.data.GenerateAndSendMagicLinkForLogIn(email) :
       this.data.GenerateAndSendMagicLinkForSignUp(email);

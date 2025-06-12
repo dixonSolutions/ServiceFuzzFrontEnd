@@ -5,7 +5,7 @@
       <mat-icon class="message-icon">account_circle</mat-icon>
       <h2>Please Sign In</h2>
       <p>You need to be signed in to view your businesses.</p>
-      <button mat-raised-button color="primary" routerLink="/sign">
+      <button mat-raised-button color="primary" [routerLink]="['/sign']" [queryParams]="{redirect: '/business/manage'}">
         <mat-icon>login</mat-icon>
         Sign In
       </button>
