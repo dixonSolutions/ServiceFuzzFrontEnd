@@ -72,6 +72,28 @@ export class SignInOrSignUpComponent implements OnInit {
       return;
     }
 
+    // Check if user session exists in cookie but not in memory
+    if (!currentUser && this.data.hasUserSession()) {
+      console.log('Sign-in component: User session exists in cookie, waiting for restoration...');
+      // Subscribe to user changes to detect when session is restored
+      const userSubscription = this.data.businessRegistration$.subscribe(() => {
+        const restoredUser = this.data.currentUser;
+        if (restoredUser) {
+          this.isAuthenticated = true;
+          this.serviceFuzzUser = restoredUser;
+          this.cdr.detectChanges();
+          
+          // If there's a redirect URL, navigate to it
+          if (this.redirectUrl) {
+            this.navigateAfterAuth();
+          }
+          
+          // Unsubscribe after successful restoration
+          userSubscription.unsubscribe();
+        }
+      });
+    }
+
     // Check for magic link verification (userId parameter)  
     this.route.queryParams.subscribe(params => {
       const userId = params['userId'];
@@ -301,7 +323,7 @@ export class SignInOrSignUpComponent implements OnInit {
     this.userInfo = null;
     this.isAuthenticated = false;
     this.serviceFuzzUser = undefined;
-    this.data.clearState();
+    this.data.clearState(); // This will also clear the cookie via the currentUser setter
     
     // Navigate back to sign-in page
     this.router.navigate(['/sign']);

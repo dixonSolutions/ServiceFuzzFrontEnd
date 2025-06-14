@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { DataSvrService } from '../services/data-svr.service';
+import { MatDialog } from '@angular/material/dialog';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-home',
@@ -99,7 +101,10 @@ export class HomeComponent implements OnInit {
     'CRM systems'
   ];
 
-  constructor(public data: DataSvrService) {
+  constructor(
+    public data: DataSvrService,
+    private dialog: MatDialog
+  ) {
     this.startCarousel();
   }
 
@@ -116,4 +121,50 @@ export class HomeComponent implements OnInit {
       this.currentSlide = (this.currentSlide + 1) % this.slides.length;
     }, 2000);
   }
+
+  openVideoDialog(): void {
+    this.dialog.open(VideoDialogComponent, {
+      width: '80%',
+      maxWidth: '800px',
+      panelClass: 'video-dialog'
+    });
+  }
 }
+
+// Video Dialog Component
+@Component({
+  selector: 'app-video-dialog',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="video-dialog-container">
+      <iframe 
+        width="100%" 
+        height="100%" 
+        src="https://www.youtube.com/embed/f2LXCW-bdGY" 
+        title="ServiceFuzz Platform Overview"
+        frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+        allowfullscreen>
+      </iframe>
+    </div>
+  `,
+  styles: [`
+    .video-dialog-container {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+      height: 0;
+      overflow: hidden;
+    }
+    .video-dialog-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+    }
+  `]
+})
+export class VideoDialogComponent {}

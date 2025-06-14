@@ -23,6 +23,13 @@
   </div>
 
   <!-- Features Section -->
+  <div class="video-section">
+    <button mat-raised-button color="primary" (click)="openVideoDialog()">
+      <mat-icon>play_circle</mat-icon>
+      Watch Overview
+    </button>
+  </div>
+
   <section class="features-section">
     <h2>Our Platform at a Glance</h2>
     <div class="features-grid">
@@ -104,7 +111,7 @@
     <mat-card>
       <mat-card-content>
         <h2>Ready to Transform Your Business?</h2>
-        <p>Join thousands of successful businesses already using ServiceFuzz</p>
+        <p style="color: white;">Join thousands of successful businesses already using ServiceFuzz</p>
         <button mat-raised-button color="primary">Get Started Now</button>
       </mat-card-content>
     </mat-card>
@@ -113,3 +120,18 @@
   <!-- Gemini Response Section -->
   
 </div>
+
+<!-- Video Dialog -->
+<ng-template #videoDialog>
+  <div class="video-dialog-container">
+    <iframe 
+      width="560" 
+      height="315" 
+      src="https://www.youtube.com/embed/f2LXCW-bdGY" 
+      title="ServiceFuzz Platform Overview"
+      frameborder="0" 
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+      allowfullscreen>
+    </iframe>
+  </div>
+</ng-template>

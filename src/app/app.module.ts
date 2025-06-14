@@ -23,6 +23,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
+import { CookieService } from 'ngx-cookie-service';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
@@ -37,6 +38,7 @@ import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-servic
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { StaffportalComponent } from './staffportal/staffportal.component';
 import { MatDividerModule } from '@angular/material/divider';
+import { VideoDialogComponent } from './home/home.component';
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
 
@@ -81,9 +83,11 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     DragDropModule,
     MatChipsModule,
     MatBadgeModule,
-    MatDividerModule
+    MatDividerModule,
+    VideoDialogComponent
   ],
   providers: [
+    CookieService,
     {
       provide: 'SocialAuthServiceConfig',
       useValue: {

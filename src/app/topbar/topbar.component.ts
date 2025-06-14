@@ -19,6 +19,11 @@ export class TopbarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Check if user session exists in cookie and restore if needed
+    if (!this.data.currentUser && this.data.hasUserSession()) {
+      console.log('Topbar: User not in memory but session exists in cookie, attempting to restore...');
+      // The restoration is handled automatically by the DataSvrService constructor
+    }
   }
 
   isRouteActive(route: string): boolean {

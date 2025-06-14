@@ -24,11 +24,34 @@
         <mat-card-subtitle style="color: white;">Complete all steps to register your business</mat-card-subtitle>
       </mat-card-header>
 
+      <!-- AI Form Filling Section (now inside the card, above the stepper) -->
+      <div class="ai-section">
+        <button mat-raised-button color="primary" (click)="toggleAISection()">
+          {{ showAISection ? 'Hide AI Assistant' : '✨AI Assistant✨' }}
+        </button>
+        <div class="ai-input-container" *ngIf="showAISection">
+          <mat-form-field class="full-width">
+            <mat-label>Describe what you want for this section</mat-label>
+            <textarea matInput [(ngModel)]="aiDescription" 
+                      [placeholder]="getAIPlaceholder()"
+                      rows="3">
+            </textarea>
+          </mat-form-field>
+          <button mat-raised-button color="primary" 
+                  (click)="fillFormWithAI()" 
+                  [disabled]="isAILoading || !aiDescription.trim()">
+            <mat-spinner diameter="20" *ngIf="isAILoading"></mat-spinner>
+            <span *ngIf="!isAILoading">{{ getAIButtonText() }}</span>
+          </button>
+        </div>
+        <mat-divider *ngIf="showAISection"></mat-divider>
+      </div>
+
       <mat-card-content>
         <mat-stepper #stepper [selectedIndex]="currentStep" orientation="horizontal" linear="false">
           
           <!-- Step 1: Basic Information -->
-          <mat-step [completed]="basicInfoForm.valid" label="Basic Information">
+          <mat-step [completed]="basicInfoForm.valid" label="Basic Information" [class.current-step]="currentStep === 0">
             <form [formGroup]="basicInfoForm" class="step-form">
               <h3>Business Information</h3>
               <div class="form-row">
@@ -191,17 +214,19 @@
                 <div class="services-grid">
                   <mat-card *ngFor="let service of registration.services" class="service-card">
                     <mat-card-header>
-                      <mat-card-title>{{ service.serviceName }}</mat-card-title>
-                      <mat-card-subtitle>{{ service.serviceEstimatedTime }} • {{ service.servicePrice }} {{ service.servicePriceCurrencyUnit }}</mat-card-subtitle>
+                      <mat-card-title>{{ service.serviceName || 'Unnamed Service' }}</mat-card-title>
+                      <mat-card-subtitle>
+                        {{ service.serviceEstimatedTime || '30 minutes' }} • {{ service.servicePrice !== undefined && service.servicePrice !== null ? service.servicePrice : 0 }} {{ service.servicePriceCurrencyUnit || 'USD' }}
+                      </mat-card-subtitle>
                     </mat-card-header>
                     <mat-card-content>
-                      <p>{{ service.serviceDescription }}</p>
+                      <p>{{ service.serviceDescription || 'No description provided.' }}</p>
                     </mat-card-content>
                     <mat-card-actions>
                       <button mat-icon-button color="primary" (click)="editService(service)">
                         <mat-icon>edit</mat-icon>
                       </button>
-                      <button mat-icon-button color="warn" (click)="deleteService(service.serviceID)">
+                      <button mat-icon-button color="warn" (click)="deleteService(service.serviceID!)">
                         <mat-icon>delete</mat-icon>
                       </button>
                     </mat-card-actions>
@@ -222,119 +247,120 @@
                   <mat-card-title>{{ editingPlaceId ? 'Edit Place' : 'Add New Place' }}</mat-card-title>
                 </mat-card-header>
                 <mat-card-content>
-                  <form [formGroup]="placeForm" class="place-form">
+                  <mat-form-field class="full-width">
+                    <mat-label>Place Type</mat-label>
+                    <mat-select [(ngModel)]="placeType" name="placeType">
+                      <mat-option value="specific">Specific Address</mat-option>
+                      <mat-option value="area">Area Specification</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <form [formGroup]="specificPlaceForm" class="place-form" *ngIf="placeType === 'specific'">
                     <div class="form-row">
                       <mat-form-field class="half-width">
-                        <mat-label>Place Name</mat-label>
-                        <input matInput formControlName="placeName" placeholder="e.g., Main Location">
-                        <mat-error *ngIf="placeForm.get('placeName')?.hasError('required')">
-                          Place name is required
-                        </mat-error>
+                        <mat-label>Street Address</mat-label>
+                        <input matInput formControlName="streetAdr" placeholder="Street address">
                       </mat-form-field>
-
+                      <mat-form-field class="half-width">
+                        <mat-label>City</mat-label>
+                        <input matInput formControlName="city" placeholder="City">
+                      </mat-form-field>
+                    </div>
+                    <div class="form-row">
+                      <mat-form-field class="half-width">
+                        <mat-label>State/Province</mat-label>
+                        <input matInput formControlName="state" placeholder="State">
+                      </mat-form-field>
                       <mat-form-field class="half-width">
                         <mat-label>Country</mat-label>
-                        <mat-select formControlName="placeCountry">
-                          <mat-option *ngFor="let country of countries" [value]="country">
-                            {{ country }}
-                          </mat-option>
+                        <mat-select formControlName="country">
+                          <mat-option *ngFor="let country of countries" [value]="country">{{ country }}</mat-option>
                         </mat-select>
                       </mat-form-field>
                     </div>
-
                     <div class="form-row">
-                      <mat-form-field class="full-width">
-                        <mat-label>Place Description</mat-label>
-                        <textarea matInput formControlName="placeDescription" 
-                                  placeholder="Describe this location" rows="2">
-                        </textarea>
-                        <mat-error *ngIf="placeForm.get('placeDescription')?.hasError('required')">
-                          Place description is required
-                        </mat-error>
+                      <mat-form-field class="half-width">
+                        <mat-label>Suburb/Postcode</mat-label>
+                        <input matInput formControlName="suburbPostcode" placeholder="Suburb or Postcode">
                       </mat-form-field>
                     </div>
-
+                  </form>
+                  <form [formGroup]="areaPlaceForm" class="place-form" *ngIf="placeType === 'area'">
                     <div class="form-row">
-                      <mat-form-field class="full-width">
-                        <mat-label>Address</mat-label>
-                        <input matInput formControlName="placeAddress" placeholder="Street address">
-                        <mat-error *ngIf="placeForm.get('placeAddress')?.hasError('required')">
-                          Address is required
-                        </mat-error>
+                      <mat-form-field class="half-width">
+                        <mat-label>Country</mat-label>
+                        <mat-select formControlName="country">
+                          <mat-option *ngFor="let country of countries" [value]="country">{{ country }}</mat-option>
+                        </mat-select>
                       </mat-form-field>
-                    </div>
-
-                    <div class="form-row">
-                      <mat-form-field class="third-width">
-                        <mat-label>City</mat-label>
-                        <input matInput formControlName="placeCity" placeholder="City">
-                        <mat-error *ngIf="placeForm.get('placeCity')?.hasError('required')">
-                          City is required
-                        </mat-error>
-                      </mat-form-field>
-
-                      <mat-form-field class="third-width">
+                      <mat-form-field class="half-width">
                         <mat-label>State/Province</mat-label>
-                        <input matInput formControlName="placeState" placeholder="State">
-                        <mat-error *ngIf="placeForm.get('placeState')?.hasError('required')">
-                          State is required
-                        </mat-error>
-                      </mat-form-field>
-
-                      <mat-form-field class="third-width">
-                        <mat-label>Zip Code</mat-label>
-                        <input matInput formControlName="placeZipCode" placeholder="12345">
-                        <mat-error *ngIf="placeForm.get('placeZipCode')?.hasError('required')">
-                          Zip code is required
-                        </mat-error>
+                        <input matInput formControlName="state" placeholder="State">
                       </mat-form-field>
                     </div>
-
                     <div class="form-row">
                       <mat-form-field class="half-width">
-                        <mat-label>Phone (optional)</mat-label>
-                        <input matInput formControlName="placePhone" placeholder="Location phone">
+                        <mat-label>City</mat-label>
+                        <input matInput formControlName="city" placeholder="City">
                       </mat-form-field>
-
                       <mat-form-field class="half-width">
-                        <mat-label>Email (optional)</mat-label>
-                        <input matInput formControlName="placeEmail" placeholder="Location email">
-                        <mat-error *ngIf="placeForm.get('placeEmail')?.hasError('email')">
-                          Please enter a valid email
-                        </mat-error>
+                        <mat-label>Suburb/Postcode</mat-label>
+                        <input matInput formControlName="suburbPostcode" placeholder="Suburb or Postcode">
                       </mat-form-field>
                     </div>
                   </form>
                 </mat-card-content>
                 <mat-card-actions>
                   <button mat-raised-button color="primary" (click)="addPlace()" 
-                          [disabled]="!placeForm.valid">
+                          [disabled]="(placeType === 'specific' && !specificPlaceForm.valid) || (placeType === 'area' && !areaPlaceForm.valid)">
                     {{ editingPlaceId ? 'Update Place' : 'Add Place' }}
                   </button>
-                  <button mat-button *ngIf="editingPlaceId" (click)="editingPlaceId = null; placeForm.reset()">
+                  <button mat-button *ngIf="editingPlaceId" (click)="editingPlaceId = null; specificPlaceForm.reset(); areaPlaceForm.reset()">
                     Cancel
                   </button>
                 </mat-card-actions>
               </mat-card>
 
-              <!-- Places List -->
-              <div class="places-list" *ngIf="registration.places.length > 0">
-                <h4>Added Places ({{ registration.places.length }})</h4>
-                <div class="places-grid">
-                  <mat-card *ngFor="let place of registration.places" class="place-card">
+              <!-- Places List (Step 3) -->
+              <div class="places-list-section">
+                <h4>Specific Address Locations</h4>
+                <div class="places-list">
+                  <mat-card *ngFor="let place of getSpecificLocationPlaces()" class="place-card">
                     <mat-card-header>
                       <mat-card-title>{{ place.placeName }}</mat-card-title>
                       <mat-card-subtitle>{{ place.placeCity }}, {{ place.placeState }}</mat-card-subtitle>
                     </mat-card-header>
                     <mat-card-content>
-                      <p>{{ place.placeDescription }}</p>
-                      <p class="address">{{ place.placeAddress }}, {{ place.placeCity }}, {{ place.placeState }} {{ place.placeZipCode }}</p>
+                      <p>{{ place.placeZipCode }}</p>
                     </mat-card-content>
                     <mat-card-actions>
-                      <button mat-icon-button color="primary" (click)="editPlace(place)">
+                      <button mat-icon-button color="primary" (click)="editSpecificPlace(getSpecificPlaceById(place.placeID)!)" 
+                              [disabled]="!getSpecificPlaceById(place.placeID)">
                         <mat-icon>edit</mat-icon>
                       </button>
-                      <button mat-icon-button color="warn" (click)="deletePlace(place.placeID)">
+                      <button mat-icon-button color="warn" (click)="deleteSpecificPlace(getSpecificPlaceById(place.placeID)!)"
+                              [disabled]="!getSpecificPlaceById(place.placeID)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </mat-card-actions>
+                  </mat-card>
+                </div>
+                <h4>Area Specification Locations</h4>
+                <div class="places-list">
+                  <mat-card *ngFor="let place of getAreaSpecificationPlaces()" class="place-card">
+                    <mat-card-header>
+                      <mat-card-title>{{ place.placeName }}</mat-card-title>
+                      <mat-card-subtitle>{{ place.placeCity }}, {{ place.placeState }}</mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                      <p>{{ place.placeZipCode }}</p>
+                    </mat-card-content>
+                    <mat-card-actions>
+                      <button mat-icon-button color="primary" (click)="editAreaPlace(getAreaPlaceById(place.placeID)!)"
+                              [disabled]="!getAreaPlaceById(place.placeID)">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button color="warn" (click)="deleteAreaPlace(getAreaPlaceById(place.placeID)!)"
+                              [disabled]="!getAreaPlaceById(place.placeID)">
                         <mat-icon>delete</mat-icon>
                       </button>
                     </mat-card-actions>
@@ -356,13 +382,17 @@
                   <h4>Available Services</h4>
                   <div class="services-pool" 
                        cdkDropList 
+                       id="services-pool"
                        [cdkDropListData]="unassignedServiceIds"
                        [cdkDropListConnectedTo]="placeDropListIds"
+                       (cdkDropListDropped)="onServiceDrop($event, '')"
                        class="service-list">
-                    <div *ngFor="let service of getUnassignedServices()" 
+                    <div *ngFor="let service of getUnassignedServices(); let i = index" 
                          class="service-item" 
                          cdkDrag 
-                         [cdkDragData]="service.serviceID">
+                         [cdkDragData]="service.serviceID"
+                         [attr.data-service-id]="service.serviceID"
+                         [attr.data-service-name]="service.serviceName">
                       <mat-card class="draggable-service">
                         <mat-card-content>
                           <h5>{{ service.serviceName }}</h5>
@@ -373,11 +403,11 @@
                   </div>
                 </div>
 
-                <!-- Places with Assigned Services -->
+                <!-- Places with Service Assignment -->
                 <div class="places-assignment">
-                  <h4>Locations</h4>
+                  <h4>Specific Address Locations</h4>
                   <div class="places-list">
-                    <div *ngFor="let place of registration.places" class="place-assignment">
+                    <div *ngFor="let place of getSpecificLocationPlaces()" class="place-assignment">
                       <mat-card class="place-card">
                         <mat-card-header>
                           <mat-card-title>{{ place.placeName }}</mat-card-title>
@@ -390,13 +420,52 @@
                                [cdkDropListData]="place.assignedServiceIDs"
                                [cdkDropListConnectedTo]="['services-pool']"
                                (cdkDropListDropped)="onServiceDrop($event, place.placeID)">
-                            <div *ngFor="let service of getAssignedServices(place.placeID)" 
+                            <div *ngFor="let service of getAssignedServices(place.placeID); let i = index" 
                                  class="assigned-service"
                                  cdkDrag
-                                 [cdkDragData]="service.serviceID">
+                                 [cdkDragData]="service.serviceID"
+                                 [attr.data-service-id]="service.serviceID"
+                                 [attr.data-service-name]="service.serviceName">
                               <mat-chip color="primary" selected>
                                 {{ service.serviceName }}
-                                <mat-icon matChipRemove (click)="data.unassignServiceFromPlace(service.serviceID, place.placeID)">
+                                <mat-icon matChipRemove (click)="removeServiceFromPlace(service.serviceID!, place.placeID)">
+                                  cancel
+                                </mat-icon>
+                              </mat-chip>
+                            </div>
+                            <div *ngIf="getAssignedServices(place.placeID).length === 0" class="drop-zone">
+                              Drop services here
+                            </div>
+                          </div>
+                        </mat-card-content>
+                      </mat-card>
+                    </div>
+                  </div>
+
+                  <h4>Area Specification Locations</h4>
+                  <div class="places-list">
+                    <div *ngFor="let place of getAreaSpecificationPlaces()" class="place-assignment">
+                      <mat-card class="place-card">
+                        <mat-card-header>
+                          <mat-card-title>{{ place.placeName }}</mat-card-title>
+                          <mat-card-subtitle>{{ place.placeCity }}, {{ place.placeState }}</mat-card-subtitle>
+                        </mat-card-header>
+                        <mat-card-content>
+                          <div class="assigned-services"
+                               cdkDropList
+                               [id]="'assigned-services-' + place.placeID"
+                               [cdkDropListData]="place.assignedServiceIDs"
+                               [cdkDropListConnectedTo]="['services-pool']"
+                               (cdkDropListDropped)="onServiceDrop($event, place.placeID)">
+                            <div *ngFor="let service of getAssignedServices(place.placeID); let i = index" 
+                                 class="assigned-service"
+                                 cdkDrag
+                                 [cdkDragData]="service.serviceID"
+                                 [attr.data-service-id]="service.serviceID"
+                                 [attr.data-service-name]="service.serviceName">
+                              <mat-chip color="primary" selected>
+                                {{ service.serviceName }}
+                                <mat-icon matChipRemove (click)="removeServiceFromPlace(service.serviceID!, place.placeID)">
                                   cancel
                                 </mat-icon>
                               </mat-chip>

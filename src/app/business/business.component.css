@@ -430,3 +430,82 @@
 ::ng-deep .mat-chip .mat-chip-remove:hover {
     color: white;
 }
+
+/* AI Form Filling Section */
+.ai-section {
+  margin: 0 0 8px 0;
+  padding: 0 0 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.ai-section button {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ai-input-container {
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+  max-width: 100%;
+  gap: 8px;
+}
+
+.ai-input-container textarea {
+  min-height: 60px;
+}
+
+mat-divider {
+  margin: 8px 0 0 0;
+}
+
+/* Current Step Highlighting */
+::ng-deep .mat-step-header.current-step {
+  background-color: rgba(103, 126, 234, 0.1);
+  border-radius: 8px;
+}
+
+::ng-deep .mat-step-header.current-step .mat-step-icon {
+  background-color: #667eea;
+  color: white;
+}
+
+::ng-deep .mat-step-header.current-step .mat-step-label {
+  color: #667eea;
+  font-weight: 500;
+}
+
+/* Make the stepper more compact */
+::ng-deep .mat-stepper-horizontal {
+  margin: 16px 0;
+}
+
+::ng-deep .mat-step-header {
+  padding: 8px 16px;
+  margin: 0 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ai-section {
+    margin: 12px 16px;
+  }
+  
+  .ai-input-container {
+    padding: 12px;
+  }
+}
+
+mat-card-content {
+  margin-top: 32px;
+}
