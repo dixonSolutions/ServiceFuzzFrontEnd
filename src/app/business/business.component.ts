@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataSvrService } from '../services/data-svr.service';
+import { RegisterBusinessService, RegisterBusinessResponse } from '../services/register-business.service';
 import { BusinessRegistration } from '../models/business-registration';
 import { ServicesForBusiness } from '../models/services-for-business';
 import { BusinessPlace } from '../models/business-place';
@@ -51,7 +52,19 @@ export class BusinessComponent implements OnInit, OnDestroy {
   specificPlaces: BusinessSpecificAdr[] = [];
   areaPlaces: S2CareaSpecification[] = [];
 
-  constructor(private fb: FormBuilder, public data: DataSvrService) {
+  // Location type selection
+  locationType: 'specific' | 'area' | 'both' = 'specific';
+  locationTypeOptions = this.registerService.getLocationTypeOptions();
+
+  // Registration state
+  isRegistering = false;
+  registrationError: string | null = null;
+
+  constructor(
+    private fb: FormBuilder, 
+    public data: DataSvrService,
+    private registerService: RegisterBusinessService
+  ) {
     this.initializeForms();
     this.registration = this.data.currentBusinessRegistration;
   }
@@ -411,24 +424,110 @@ export class BusinessComponent implements OnInit, OnDestroy {
 
   onSubmit(): void {
     if (this.isRegistrationComplete()) {
-      this.isSubmitting = true;
-      console.log('Complete Registration:', this.registration);
-      
-      setTimeout(() => {
-        this.isSubmitting = false;
-        this.data.openSnackBar('Business registered successfully!', 'Close', 5000);
-        this.data.resetBusinessRegistration();
-        this.currentStep = 0;
-      }, 2000);
+      this.submitBusinessRegistration();
     } else {
       this.data.openSnackBar('Please complete all steps', 'Close', 3000);
     }
+  }
+
+  /**
+   * Submit business registration to the RegisterCompleteBusiness endpoint
+   */
+  submitBusinessRegistration(): void {
+    this.isSubmitting = true;
+    this.isRegistering = true;
+    this.registrationError = null;
+
+    console.log('Submitting complete registration with location type:', this.locationType);
+    console.log('Registration data:', this.registration);
+
+    this.registerService.registerCompleteBusiness(this.locationType).subscribe({
+      next: (response: RegisterBusinessResponse) => {
+        console.log('Registration successful:', response);
+        this.isSubmitting = false;
+        this.isRegistering = false;
+        
+        if (response.success) {
+          this.data.openSnackBar(
+            response.message || 'Business registered successfully!', 
+            'Close', 
+            5000
+          );
+          this.data.triggerSuccessConfetti();
+          
+          // Reset form after successful registration
+          setTimeout(() => {
+            this.data.resetBusinessRegistration();
+            this.currentStep = 0;
+            this.locationType = 'specific';
+            this.specificPlaces = [];
+            this.areaPlaces = [];
+          }, 2000);
+        } else {
+          this.handleRegistrationError(response.message || 'Registration failed');
+        }
+      },
+      error: (error: any) => {
+        console.error('Registration error:', error);
+        this.isSubmitting = false;
+        this.isRegistering = false;
+        
+        let errorMessage = 'Registration failed. Please try again.';
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+        
+        this.handleRegistrationError(errorMessage);
+        
+        // Show individual errors if available
+        if (error.errors && Array.isArray(error.errors)) {
+          error.errors.forEach((err: string, index: number) => {
+            setTimeout(() => {
+              this.data.openSnackBar(`Error ${index + 1}: ${err}`, 'Close', 4000);
+            }, index * 1000);
+          });
+        }
+      }
+    });
+  }
+
+  /**
+   * Handle registration errors
+   */
+  private handleRegistrationError(errorMessage: string): void {
+    this.registrationError = errorMessage;
+    this.data.openSnackBar(errorMessage, 'Close', 5000);
+  }
+
+  /**
+   * Set the location type and update form visibility
+   */
+  setLocationType(type: 'specific' | 'area' | 'both'): void {
+    this.locationType = type;
+    console.log('Location type changed to:', type);
+    
+    // Update form visibility based on location type
+    if (type === 'specific') {
+      this.placeType = 'specific';
+    } else if (type === 'area') {
+      this.placeType = 'area';
+    }
+    // For 'both', keep current placeType or allow user to switch
   }
 
   private isRegistrationComplete(): boolean {
     return this.basicInfoForm.valid &&
            this.registration.services.length > 0 &&
            (this.specificPlaces.length > 0 || this.areaPlaces.length > 0);
+  }
+
+  /**
+   * Public method to check if registration is complete (for template)
+   */
+  isRegistrationCompletePublic(): boolean {
+    return this.isRegistrationComplete();
   }
 
   // Public getter methods for template
@@ -440,10 +539,6 @@ export class BusinessComponent implements OnInit, OnDestroy {
 
   get placeDropListIds(): string[] {
     return this.registration.places.map(p => 'assigned-services-' + p.placeID);
-  }
-
-  public isRegistrationCompletePublic(): boolean {
-    return this.isRegistrationComplete();
   }
 
   fillFormWithAI() {

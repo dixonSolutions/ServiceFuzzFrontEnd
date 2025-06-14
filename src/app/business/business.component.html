@@ -241,6 +241,24 @@
             <div class="places-section">
               <h3>Business Locations</h3>
               
+              <!-- Location Type Selection -->
+              <mat-card class="form-card location-type-card">
+                <mat-card-header>
+                  <mat-card-title>Location Type</mat-card-title>
+                  <mat-card-subtitle>Choose how you provide services to customers</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <mat-radio-group [(ngModel)]="locationType" (ngModelChange)="setLocationType($event)" class="location-type-group">
+                    <mat-radio-button *ngFor="let option of locationTypeOptions" [value]="option.value" class="location-type-option">
+                      <div class="location-option-content">
+                        <h4>{{ option.label }}</h4>
+                        <p>{{ option.description }}</p>
+                      </div>
+                    </mat-radio-button>
+                  </mat-radio-group>
+                </mat-card-content>
+              </mat-card>
+              
               <!-- Place Form -->
               <mat-card class="form-card">
                 <mat-card-header>
@@ -484,22 +502,37 @@
           </mat-step>
         </mat-stepper>
 
+        <!-- Registration Status -->
+        <div class="registration-status" *ngIf="registrationError || isRegistering">
+          <div class="registration-error" *ngIf="registrationError">
+            <mat-icon>error</mat-icon>
+            <span>{{ registrationError }}</span>
+          </div>
+          
+          <div class="registration-progress" *ngIf="isRegistering && !registrationError">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <p>Registering your business...</p>
+          </div>
+        </div>
+
         <!-- Navigation Buttons -->
         <div class="navigation-buttons">
-          <button mat-button (click)="previousStep()" [disabled]="currentStep === 0">
+          <button mat-button (click)="previousStep()" [disabled]="currentStep === 0 || isRegistering">
             Previous
           </button>
           
           <button mat-raised-button color="primary" (click)="nextStep()" 
-                  *ngIf="currentStep < maxSteps - 1">
+                  *ngIf="currentStep < maxSteps - 1"
+                  [disabled]="isRegistering">
             Next
           </button>
           
           <button mat-raised-button color="accent" (click)="onSubmit()" 
                   *ngIf="currentStep === maxSteps - 1"
-                  [disabled]="isSubmitting || !isRegistrationCompletePublic()">
-            <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
-            <span *ngIf="!isSubmitting">Complete Registration</span>
+                  [disabled]="isSubmitting || isRegistering || !isRegistrationCompletePublic()">
+            <mat-spinner diameter="20" *ngIf="isSubmitting || isRegistering"></mat-spinner>
+            <span *ngIf="!isSubmitting && !isRegistering">Complete Registration</span>
+            <span *ngIf="isRegistering">Registering...</span>
           </button>
         </div>
       </mat-card-content>

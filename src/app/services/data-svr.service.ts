@@ -9,7 +9,7 @@ import confetti from 'canvas-confetti';
 import { ServiceFuzzFreeTrialSubscriptions } from '../models/FreeTrialDetails';
 import JSConfetti from 'js-confetti'; // Import the JSConfetti class
 import { ChatMessage } from '../models/chat-message';
-import { BusinessRegistration, ServicePlaceAssignment } from '../models/business-registration';
+import { BusinessRegistration, BusinessPlaceAndServicesJunction } from '../models/business-registration';
 import { ServicesForBusiness } from '../models/services-for-business';
 import { BusinessPlace } from '../models/business-place';
 
@@ -32,6 +32,7 @@ export class DataSvrService {
     basicInfo: {} as BusinessBasicInfo,
     services: [],
     places: [],
+    serviceAssignments: [],
     currentStep: 0,
     isCompleted: false
   });
@@ -157,11 +158,28 @@ export class DataSvrService {
     });
   }
 
-  assignServiceToPlace(serviceId: string, placeId: string) {
+  assignServiceToPlace(serviceId: string, placeId: string, serviceType?: string) {
     const current = this._businessRegistration.value;
     console.log('Assigning service:', { serviceId, placeId });
     console.log('Current places before assignment:', current.places.map(p => ({ id: p.placeID, name: p.placeName, services: p.assignedServiceIDs })));
     
+    // Update the junction table
+    const businessId = current.basicInfo.businessID || '';
+    const existingAssignment = current.serviceAssignments.find(
+      sa => sa.serviceID === serviceId && sa.placeId === placeId
+    );
+    
+    if (!existingAssignment) {
+      const newAssignment: BusinessPlaceAndServicesJunction = {
+        businessID: businessId,
+        serviceID: serviceId,
+        placeId: placeId,
+        serviceType: serviceType
+      };
+      current.serviceAssignments.push(newAssignment);
+    }
+    
+    // Also update the existing assignedServiceIDs approach for backward compatibility
     const places = current.places.map(place => {
       if (place.placeID === placeId) {
         const assignedServices = [...place.assignedServiceIDs];
@@ -178,7 +196,8 @@ export class DataSvrService {
     
     this._businessRegistration.next({
       ...current,
-      places: places
+      places: places,
+      serviceAssignments: current.serviceAssignments
     });
     
     console.log('Places after assignment:', places.map(p => ({ id: p.placeID, name: p.placeName, services: p.assignedServiceIDs })));
@@ -186,6 +205,13 @@ export class DataSvrService {
 
   unassignServiceFromPlace(serviceId: string, placeId: string) {
     const current = this._businessRegistration.value;
+    
+    // Remove from junction table
+    const updatedAssignments = current.serviceAssignments.filter(
+      sa => !(sa.serviceID === serviceId && sa.placeId === placeId)
+    );
+    
+    // Also remove from existing assignedServiceIDs approach for backward compatibility
     const places = current.places.map(place => {
       if (place.placeID === placeId) {
         return {
@@ -195,10 +221,28 @@ export class DataSvrService {
       }
       return place;
     });
+    
     this._businessRegistration.next({
       ...current,
-      places: places
+      places: places,
+      serviceAssignments: updatedAssignments
     });
+  }
+
+  // Helper methods for working with the junction table
+  getServiceAssignmentsForPlace(placeId: string): BusinessPlaceAndServicesJunction[] {
+    const current = this._businessRegistration.value;
+    return current.serviceAssignments.filter(sa => sa.placeId === placeId);
+  }
+
+  getPlaceAssignmentsForService(serviceId: string): BusinessPlaceAndServicesJunction[] {
+    const current = this._businessRegistration.value;
+    return current.serviceAssignments.filter(sa => sa.serviceID === serviceId);
+  }
+
+  isServiceAssignedToPlace(serviceId: string, placeId: string): boolean {
+    const current = this._businessRegistration.value;
+    return current.serviceAssignments.some(sa => sa.serviceID === serviceId && sa.placeId === placeId);
   }
 
   setCurrentStep(step: number) {
@@ -214,6 +258,7 @@ export class DataSvrService {
       basicInfo: {} as BusinessBasicInfo,
       services: [],
       places: [],
+      serviceAssignments: [],
       currentStep: 0,
       isCompleted: false
     });

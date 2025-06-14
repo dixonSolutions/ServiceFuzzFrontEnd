@@ -96,7 +96,128 @@ button:hover {
   width: 24px;
 }
 
-/* Menu Styling */
+/* Hamburger Menu Styling */
+.hamburger-menu {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.hamburger-menu:hover {
+  transform: translateY(-2px);
+  background-color: rgba(255,255,255,0.2) !important;
+}
+
+.hamburger-menu mat-icon {
+  transition: transform 0.3s ease;
+}
+
+.hamburger-menu:hover mat-icon {
+  transform: rotate(90deg);
+}
+
+/* Hamburger Menu Dropdown Styling */
+::ng-deep .hamburger-menu-dropdown {
+  margin-top: 8px !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+}
+
+::ng-deep .hamburger-menu-dropdown .mat-mdc-menu-panel {
+  border-radius: 12px !important;
+  overflow: hidden;
+  min-width: 200px !important;
+}
+
+::ng-deep .hamburger-menu-dropdown .mat-menu-content {
+  padding: 12px 0 !important;
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+}
+
+::ng-deep .hamburger-menu-dropdown .mat-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+::ng-deep .hamburger-menu-dropdown .mat-menu-item mat-icon {
+  color: #667eea;
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  transition: all 0.3s ease;
+}
+
+::ng-deep .hamburger-menu-dropdown .mat-menu-item:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white;
+  transform: translateX(8px);
+}
+
+::ng-deep .hamburger-menu-dropdown .mat-menu-item:hover mat-icon {
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Active Menu Item Styling */
+::ng-deep .hamburger-menu-dropdown .mat-menu-item.active-menu-item {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white;
+  position: relative;
+}
+
+::ng-deep .hamburger-menu-dropdown .mat-menu-item.active-menu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(135deg, #fff 0%, #f0f2ff 100%);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+::ng-deep .hamburger-menu-dropdown .mat-menu-item.active-menu-item mat-icon {
+  color: white;
+  animation: iconBounce 0.6s ease-out;
+}
+
+::ng-deep .hamburger-menu-dropdown .mat-menu-item.active-menu-item span {
+  font-weight: 600;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scaleY(0.8);
+  }
+}
+
+@keyframes iconBounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Business Menu Styling */
 ::ng-deep .business-menu {
   margin-top: 8px !important;
 }
@@ -189,4 +310,44 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .hamburger-menu {
+    margin-right: 8px;
+  }
+  
+  ::ng-deep .hamburger-menu-dropdown .mat-mdc-menu-panel {
+    min-width: 180px !important;
+  }
+  
+  ::ng-deep .hamburger-menu-dropdown .mat-menu-item {
+    height: 52px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+  
+  ::ng-deep .hamburger-menu-dropdown .mat-menu-item mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .toolbar-left {
+    gap: 8px;
+  }
+  
+  .app-title {
+    font-size: 1.2rem;
+    margin-left: 4px;
+  }
+  
+  .toolbar-left img {
+    height: 32px;
+    width: 32px;
+    margin-left: 8px;
+  }
 }

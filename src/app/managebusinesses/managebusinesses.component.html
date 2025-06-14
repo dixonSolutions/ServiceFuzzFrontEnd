@@ -13,7 +13,7 @@
   </mat-card>
 
   <!-- No Businesses Message -->
-  <mat-card class="message-card" *ngIf="data.currentUser && (!data.businesses || data.businesses.length === 0)">
+  <mat-card class="message-card" *ngIf="data.currentUser && (!allBusinesses || allBusinesses.length === 0)">
     <mat-card-content class="message-content">
       <mat-icon class="message-icon">business_center</mat-icon>
       <h2>No Businesses Found</h2>
@@ -26,11 +26,53 @@
   </mat-card>
 
   <!-- Businesses Grid -->
-  <div class="businesses-grid" *ngIf="data.currentUser && data.businesses && data.businesses.length > 0">
+  <div class="businesses-grid" *ngIf="data.currentUser && allBusinesses && allBusinesses.length > 0">
     <h1 class="section-title">Your Businesses</h1>
     
-    <div class="grid-container">
-      <mat-card class="business-card" *ngFor="let business of data.businesses">
+    <!-- Search Bar -->
+    <div class="search-container">
+      <mat-form-field class="search-field" appearance="outline">
+        <mat-label>Search businesses</mat-label>
+        <input matInput 
+               [(ngModel)]="searchQuery" 
+               (input)="onSearchChange()"
+               placeholder="Search by name, description, email, or phone"
+               autocomplete="off">
+        <mat-icon matPrefix>search</mat-icon>
+        <button matSuffix 
+                mat-icon-button 
+                *ngIf="searchQuery" 
+                (click)="clearSearch()"
+                aria-label="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <!-- Search Results Info -->
+    <div class="search-results-info" *ngIf="searchQuery">
+      <p>
+        <span *ngIf="filteredBusinesses.length === 1">{{ filteredBusinesses.length }} business found</span>
+        <span *ngIf="filteredBusinesses.length !== 1">{{ filteredBusinesses.length }} businesses found</span>
+        for "{{ searchQuery }}"
+      </p>
+    </div>
+
+    <!-- No Search Results -->
+    <mat-card class="message-card no-results-card" *ngIf="searchQuery && filteredBusinesses.length === 0">
+      <mat-card-content class="message-content">
+        <mat-icon class="message-icon">search_off</mat-icon>
+        <h3>No businesses found</h3>
+        <p>No businesses match your search for "{{ searchQuery }}"</p>
+        <button mat-button color="primary" (click)="clearSearch()">
+          <mat-icon>clear</mat-icon>
+          Clear search
+        </button>
+      </mat-card-content>
+    </mat-card>
+    
+    <div class="grid-container" *ngIf="filteredBusinesses.length > 0">
+      <mat-card class="business-card" *ngFor="let business of businessesToDisplay">
         <mat-card-header>
           <div mat-card-avatar class="business-avatar">
             <mat-icon>business</mat-icon>

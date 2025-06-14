@@ -1,8 +1,14 @@
 <mat-toolbar class="fancy-toolbar">
   <div class="toolbar-left">
-    <button mat-icon-button>
+    <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-menu">
       <mat-icon>menu</mat-icon>
     </button>
+    <mat-menu #menu="matMenu" class="hamburger-menu-dropdown">
+      <button mat-menu-item routerLink="/staff" [class.active-menu-item]="isRouteActive('/staff')">
+        <mat-icon>people</mat-icon>
+        <span>Staff portal</span>
+      </button>
+    </mat-menu>
     <a class="app-title">✨ServiceFuzz✨</a>
     <img src="https://lh3.googleusercontent.com/a/ACg8ocLaJxexuHa88Q1viRsHMpdLIEIUjbiNlBs-asm8Pk02NoVN0Sk=s96-c-rg-br100" alt="servicefuzzlogo">
   </div>

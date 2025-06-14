@@ -6,6 +6,7 @@ import { BusinessComponent } from './business/business.component';
 import { ManagebusinessesComponent } from './managebusinesses/managebusinesses.component';
 import { BusinessSettingsComponent } from './business-settings/business-settings.component';
 import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
+import { StaffportalComponent } from './staffportal/staffportal.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -15,6 +16,7 @@ const routes: Routes = [
   { path: 'business/manage', component: ManagebusinessesComponent },
   { path: 'business/settings', component: BusinessSettingsComponent },
   { path: 'chat', component: ChatWithAiAboutServiceFuzzComponent },
+  { path: 'staff', component: StaffportalComponent },
 ];
 
 @NgModule({
