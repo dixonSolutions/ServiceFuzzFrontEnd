@@ -48,33 +48,113 @@
         </div>
 
         <div class="no-trial-message" *ngIf="!data.freeTrialDetails">
-          <mat-icon>info</mat-icon>
-          <p>No free trial information found. Would you like to start your free trial?</p>
+          <h1>Start your free trial</h1>
           <button mat-raised-button color="primary">
             <mat-icon>add</mat-icon>
             Start Free Trial
           </button>
+          <h1>or</h1>
           <div class="payment-options">
             <h1>Subscribe to ServiceFuzz</h1>
             <mat-divider></mat-divider>
-            <button mat-raised-button color="accent" (click)="redirectToStripeCheckout()">
+            <button mat-raised-button color="accent" class="fancy-subscribe-button" (click)="redirectToStripeCheckout()">
               <mat-icon>shopping_cart</mat-icon>
               Subscribe Now
             </button>
           </div>
-        </div>
-      </mat-card-content>
 
-      <mat-card-actions *ngIf="data.freeTrialDetails?.isActive">
-        <button mat-button color="primary">
-          <mat-icon>upgrade</mat-icon>
-          Upgrade to Premium
-        </button>
-        <button mat-button color="accent">
-          <mat-icon>help</mat-icon>
-          Trial FAQ
-        </button>
-      </mat-card-actions>
-    </mat-card>
+          <!-- Business Package Card -->
+          <mat-card class="business-package-card">
+            <mat-card-header class="package-header">
+              <div mat-card-avatar class="package-avatar">
+                <mat-icon>business</mat-icon>
+              </div>
+              <mat-card-title class="package-title">ServiceFuzz Complete</mat-card-title>
+              <mat-card-subtitle class="package-subtitle">All-in-One Service Business Platform</mat-card-subtitle>
+            </mat-card-header>
+          
+            <mat-card-content class="package-content">
+              <div class="pricing-section">
+                <div class="price-display">
+                  <span class="currency">$</span>
+                  <span class="price">49.99</span>
+                  <span class="period">/month</span>
+                </div>
+                <div class="price-note">Complete platform • 99.9% uptime guarantee</div>
+              </div>
+          
+              <mat-divider class="benefits-divider"></mat-divider>
+          
+              <div class="benefits-section">
+                <h3 class="benefits-title">Complete Business Solution:</h3>
+                <div class="benefits-grid">
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">dashboard</mat-icon>
+                    <span class="benefit-text">Business Management Portal</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">web</mat-icon>
+                    <span class="benefit-text">Professional Website Builder</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">event</mat-icon>
+                    <span class="benefit-text">Smart Booking & Scheduling System</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">people</mat-icon>
+                    <span class="benefit-text">Staff Management Suite</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">payment</mat-icon>
+                    <span class="benefit-text">Integrated Payment Processing</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">analytics</mat-icon>
+                    <span class="benefit-text">Comprehensive Analytics & Reports</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">sms</mat-icon>
+                    <span class="benefit-text">Customer Engagement Tools</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">mobile_friendly</mat-icon>
+                    <span class="benefit-text">Mobile-First Design</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">location_city</mat-icon>
+                    <span class="benefit-text">Multiple Location Management</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">inventory</mat-icon>
+                    <span class="benefit-text">Inventory & Cost Tracking</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">integration_instructions</mat-icon>
+                    <span class="benefit-text">CRM & Accounting Integration</span>
+                  </div>
+                  <div class="benefit-item">
+                    <mat-icon class="benefit-icon">security</mat-icon>
+                    <span class="benefit-text">Enterprise-Grade Security</span>
+                  </div>
+                </div>
+              </div>
+          
+              <div class="additional-features">
+                <h4>Customer Features:</h4>
+                <div class="feature-chips">
+                  <mat-chip-list>
+                    <mat-chip>24/7 Online Booking</mat-chip>
+                    <mat-chip>Mobile App Access</mat-chip>
+                    <mat-chip>Automated Reminders</mat-chip>
+                    <mat-chip>Loyalty Programs</mat-chip>
+                  </mat-chip-list>
+                </div>
+              </div>
+          
+              <div class="guarantee-section">
+                <mat-icon class="guarantee-icon">verified_user</mat-icon>
+                <span class="guarantee-text">GDPR Compliant • Regular Security Audits</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
   </div>
-</div>

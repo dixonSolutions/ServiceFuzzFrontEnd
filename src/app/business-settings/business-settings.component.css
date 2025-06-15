@@ -196,3 +196,315 @@ mat-card-actions {
   padding: 16px;
   gap: 16px;
 }
+
+/* Fancy Subscribe Button Styles */
+.fancy-subscribe-button {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FFEAA7) !important;
+  background-size: 400% 400% !important;
+  border: none !important;
+  border-radius: 25px !important;
+  color: white !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  padding: 12px 32px !important;
+  box-shadow: 0 8px 32px rgba(255, 107, 107, 0.4) !important;
+  transform: scale(1) !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+  animation: gradientShift 3s ease-in-out infinite, pulse 2s ease-in-out infinite alternate !important;
+}
+
+.fancy-subscribe-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s;
+}
+
+.fancy-subscribe-button:hover::before {
+  left: 100%;
+}
+
+.fancy-subscribe-button:hover {
+  transform: scale(1.05) translateY(-2px) !important;
+  box-shadow: 0 12px 40px rgba(255, 107, 107, 0.6) !important;
+  animation-duration: 1.5s !important;
+}
+
+.fancy-subscribe-button:active {
+  transform: scale(0.98) !important;
+  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4) !important;
+}
+
+.fancy-subscribe-button mat-icon {
+  margin-right: 8px !important;
+  animation: bounce 2s ease-in-out infinite !important;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulse {
+  0% { 
+    box-shadow: 0 8px 32px rgba(255, 107, 107, 0.4), 0 0 0 0 rgba(255, 107, 107, 0.7);
+  }
+  70% { 
+    box-shadow: 0 8px 32px rgba(255, 107, 107, 0.4), 0 0 0 20px rgba(255, 107, 107, 0);
+  }
+  100% { 
+    box-shadow: 0 8px 32px rgba(255, 107, 107, 0.4), 0 0 0 0 rgba(255, 107, 107, 0);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 60%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  80% {
+    transform: translateY(-1px);
+  }
+}
+
+/* Enhanced glow effect for the button */
+.fancy-subscribe-button {
+  position: relative;
+}
+
+.fancy-subscribe-button::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FFEAA7);
+  background-size: 400% 400%;
+  border-radius: 27px;
+  z-index: -1;
+  animation: gradientShift 3s ease-in-out infinite;
+  opacity: 0.8;
+  filter: blur(8px);
+}
+
+/* Business Package Card Styles */
+.business-package-card {
+  margin-top: 32px;
+  border-radius: 20px !important;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+}
+
+.business-package-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+}
+
+.business-package-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 30px 60px rgba(102, 126, 234, 0.4);
+}
+
+.package-header {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+  padding: 24px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.package-avatar {
+  background: linear-gradient(135deg, #FF6B6B, #4ECDC4) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.package-avatar mat-icon {
+  color: white;
+  font-size: 24px;
+}
+
+.package-title {
+  color: white !important;
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  margin-bottom: 8px !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.package-subtitle {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+}
+
+.package-content {
+  padding: 32px !important;
+}
+
+/* Pricing Section */
+.pricing-section {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.price-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.currency {
+  font-size: 24px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-right: 4px;
+}
+
+.price {
+  font-size: 56px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  animation: priceGlow 3s ease-in-out infinite alternate;
+}
+
+.period {
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 4px;
+}
+
+.price-note {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-style: italic;
+}
+
+@keyframes priceGlow {
+  0% { text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); }
+  100% { text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.3); }
+}
+
+/* Benefits Section */
+.benefits-divider {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  margin: 24px 0 !important;
+}
+
+.benefits-title {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.benefit-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(8px);
+}
+
+.benefit-icon {
+  color: #4ECDC4 !important;
+  font-size: 20px !important;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.benefit-text {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Guarantee Section */
+.guarantee-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.guarantee-icon {
+  color: #96CEB4 !important;
+  font-size: 24px !important;
+  animation: guaranteePulse 2s ease-in-out infinite;
+}
+
+.guarantee-text {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes guaranteePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .price {
+    font-size: 48px;
+  }
+  
+  .package-title {
+    font-size: 24px !important;
+  }
+  
+  .package-content {
+    padding: 24px !important;
+  }
+}
