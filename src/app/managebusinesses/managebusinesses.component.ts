@@ -12,13 +12,22 @@ export class ManagebusinessesComponent {
   searchQuery: string = '';
   allBusinesses: BusinessBasicInfo[] = [];
   filteredBusinesses: BusinessBasicInfo[] = [];
+  isLoading: boolean = false;
 
   constructor(public data: DataSvrService) {
     if(this.data.currentUser?.email){
-      this.data.getBusinessesForUser(this.data.currentUser.email).subscribe((businesses) => {
-        this.data.businesses = businesses;
-        this.allBusinesses = businesses;
-        this.filteredBusinesses = businesses;
+      this.isLoading = true;
+      this.data.getBusinessesForUser(this.data.currentUser.email).subscribe({
+        next: (businesses) => {
+          this.data.businesses = businesses;
+          this.allBusinesses = businesses;
+          this.filteredBusinesses = businesses;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error fetching businesses:', error);
+          this.isLoading = false;
+        }
       });
     }
   }

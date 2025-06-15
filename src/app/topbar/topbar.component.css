@@ -1,3 +1,171 @@
+/* Container Styles */
+.topbar-container {
+  position: relative;
+}
+
+/* Mobile Sidenav Styles */
+.mobile-sidenav-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.mobile-sidenav-container .mat-drawer-backdrop {
+  pointer-events: auto;
+}
+
+.mobile-sidenav {
+  width: 280px;
+  background: #ffffff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+}
+
+.mobile-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+.mobile-nav-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+}
+
+.close-button {
+  color: #666;
+  width: 40px;
+  height: 40px;
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.mobile-nav-list {
+  padding: 8px 0;
+}
+
+.mobile-nav-list a[mat-list-item] {
+  height: 56px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  color: #333;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-radius: 0;
+  margin: 0;
+}
+
+.mobile-nav-list a[mat-list-item]:hover {
+  background-color: #f5f5f5;
+}
+
+.mobile-nav-list a[mat-list-item].active-nav-item {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border-right: 4px solid #1976d2;
+}
+
+.mobile-nav-list a[mat-list-item] mat-icon[matListIcon] {
+  color: #666;
+  margin-right: 16px;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.mobile-nav-list a[mat-list-item].active-nav-item mat-icon[matListIcon] {
+  color: #1976d2;
+}
+
+.mobile-nav-list a[mat-list-item] span[matLine] {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.business-nav-item {
+  position: relative;
+}
+
+.business-nav-item .expand-icon {
+  position: absolute;
+  right: 20px;
+  color: #666;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Mobile Business Submenu */
+.mobile-business-submenu {
+  margin-top: 8px;
+}
+
+.mobile-business-submenu .mat-menu-content {
+  background: #ffffff;
+  padding: 8px 0;
+}
+
+.mobile-business-submenu a[mat-menu-item] {
+  height: 48px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  color: #333;
+  text-decoration: none;
+}
+
+.mobile-business-submenu a[mat-menu-item]:hover {
+  background-color: #f5f5f5;
+}
+
+.mobile-business-submenu a[mat-menu-item] mat-icon {
+  margin-right: 16px;
+  color: #666;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Mobile Toolbar */
+.mobile-toolbar {
+  background: linear-gradient(135deg, #000000, #74efff);
+  color: white;
+  height: 56px;
+  padding: 0 16px;
+  position: relative;
+  z-index: 1001;
+}
+
+/* Desktop Toolbar */
+.desktop-toolbar {
+  background: linear-gradient(135deg, #000000, #74efff);
+  color: white;
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
 .fancy-toolbar {
   background: linear-gradient(135deg, #000000, #74efff);
   color: white;
@@ -20,6 +188,21 @@
   gap: 16px;
 }
 
+.toolbar-left {
+  flex: 0 0 auto;
+}
+
+.toolbar-center {
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.toolbar-right {
+  flex: 0 0 auto;
+}
+
 .app-title {
   font-size: 1.5rem;
   font-weight: 500;
@@ -27,6 +210,12 @@
   margin-left: 8px;
   text-decoration: none;
   text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  white-space: nowrap;
+}
+
+.mobile-title {
+  font-size: 1.1rem;
+  margin-left: 4px;
 }
 
 .toolbar-left img {
@@ -36,6 +225,12 @@
   object-fit: cover;
   margin-left: 16px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.mobile-logo {
+  height: 32px !important;
+  width: 32px !important;
+  margin-left: 8px !important;
 }
 
 /* Button Styles */
@@ -54,6 +249,7 @@ button:hover {
   height: 36px;
   border-radius: 18px;
   font-weight: 500;
+  min-width: 44px; /* Ensure touch target size */
 }
 
 .toolbar-center button mat-icon {
@@ -61,6 +257,15 @@ button:hover {
   font-size: 20px;
   height: 20px;
   width: 20px;
+}
+
+.toolbar-center button span {
+  transition: opacity 0.3s ease;
+}
+
+/* Hide text on smaller screens */
+.hide-text {
+  display: none !important;
 }
 
 /* Business Button Specific Styles */
@@ -100,6 +305,8 @@ button:hover {
 .hamburger-menu {
   transition: all 0.3s ease;
   position: relative;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .hamburger-menu:hover {
@@ -146,6 +353,7 @@ button:hover {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  min-height: 44px; /* Touch target size */
 }
 
 ::ng-deep .hamburger-menu-dropdown .mat-menu-item mat-icon {
@@ -201,7 +409,7 @@ button:hover {
   }
   50% {
     opacity: 0.7;
-    transform: scaleY(0.8);
+    transform: scaleY(0.95);
   }
 }
 
@@ -223,7 +431,7 @@ button:hover {
 }
 
 ::ng-deep .business-menu .mat-menu-content {
-  padding: 8px 0 !important;
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
 }
 
 ::ng-deep .business-menu .mat-menu-item {
@@ -233,99 +441,143 @@ button:hover {
   height: 48px;
   padding: 0 16px;
   font-size: 14px;
-  font-weight: 500;
+  color: #333;
+  min-height: 44px;
 }
 
 ::ng-deep .business-menu .mat-menu-item mat-icon {
-  margin-right: 8px;
-  color: #666;
+  color: #667eea;
+  font-size: 20px;
 }
 
 ::ng-deep .business-menu .mat-menu-item:hover {
-  background-color: rgba(0,0,0,0.04);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white;
 }
 
 ::ng-deep .business-menu .mat-divider {
   margin: 8px 0;
+  background-color: rgba(0,0,0,0.1);
 }
 
-/* Active Route Styles */
+/* Active States */
 .toolbar-center button.active {
-  position: relative;
+  background-color: rgba(255,255,255,0.2);
 }
 
 .toolbar-center button.active::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
   height: 2px;
-  background-color: rgb(255, 255, 255);
+  background: white;
+  border-radius: 1px;
   animation: slideIn 0.3s ease-out;
 }
 
 @keyframes slideIn {
   from {
-    transform: scaleX(0);
+    width: 0;
   }
   to {
-    transform: scaleX(1);
+    width: 20px;
   }
 }
 
-/* Right Toolbar Active Styles */
 .toolbar-right button.active {
-  position: relative;
+  background-color: rgba(255,255,255,0.2);
 }
 
 .toolbar-right button.active::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
   height: 2px;
-  background-color: white;
+  background: white;
+  border-radius: 1px;
   animation: slideIn 0.3s ease-out;
 }
 
-/* User Avatar Styles */
+/* User Avatar */
 .user-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   width: 32px;
   height: 32px;
-  background-color: #2196F3;
-  color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .profile-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  overflow: visible;
 }
 
-/* Responsive Styles */
+/* Responsive Design */
+
+/* Tablet and Small Desktop (768px - 1024px) */
+@media (max-width: 1024px) {
+  .toolbar-center {
+    gap: 8px;
+  }
+  
+  .toolbar-center button {
+    padding: 0 12px;
+  }
+  
+  .toolbar-center button mat-icon {
+    margin-right: 4px;
+  }
+}
+
+/* Small Tablet (768px and below) */
 @media (max-width: 768px) {
+  .desktop-toolbar {
+    padding: 0 12px;
+    height: 56px;
+  }
+  
+  .toolbar-left, .toolbar-right {
+    gap: 8px;
+  }
+  
+  .toolbar-center button {
+    padding: 0 8px;
+    min-width: 40px;
+  }
+  
+  .toolbar-center button span {
+    display: none;
+  }
+  
+  .toolbar-center button mat-icon {
+    margin-right: 0;
+  }
+  
   .hamburger-menu {
-    margin-right: 8px;
+    width: 40px;
+    height: 40px;
   }
   
   ::ng-deep .hamburger-menu-dropdown .mat-mdc-menu-panel {
-    min-width: 180px !important;
+    min-width: 250px !important;
   }
   
   ::ng-deep .hamburger-menu-dropdown .mat-menu-item {
     height: 52px;
     padding: 0 16px;
-    font-size: 14px;
   }
   
   ::ng-deep .hamburger-menu-dropdown .mat-menu-item mat-icon {
@@ -335,19 +587,100 @@ button:hover {
   }
 }
 
+/* Mobile Specific Styles */
 @media (max-width: 480px) {
-  .toolbar-left {
-    gap: 8px;
+  .mobile-sidenav {
+    width: 300px;
+    max-width: 85vw;
   }
   
-  .app-title {
-    font-size: 1.2rem;
-    margin-left: 4px;
+  .mobile-nav-header {
+    padding: 12px 16px;
   }
   
-  .toolbar-left img {
-    height: 32px;
-    width: 32px;
-    margin-left: 8px;
+  .mobile-nav-header h2 {
+    font-size: 18px;
+  }
+  
+  .mobile-nav-list a[mat-list-item] {
+    height: 52px;
+    padding: 0 16px;
+  }
+  
+  .mobile-nav-list a[mat-list-item] mat-icon[matListIcon] {
+    margin-right: 12px;
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+  
+  .mobile-nav-list a[mat-list-item] span[matLine] {
+    font-size: 15px;
+  }
+}
+
+/* Extra Small Mobile (360px and below) */
+@media (max-width: 360px) {
+  .mobile-sidenav {
+    width: calc(100vw - 56px);
+  }
+  
+  .mobile-nav-header {
+    padding: 10px 12px;
+  }
+  
+  .mobile-nav-header h2 {
+    font-size: 16px;
+  }
+  
+  .mobile-nav-list a[mat-list-item] {
+    height: 48px;
+    padding: 0 12px;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .mobile-sidenav {
+    background: #fff;
+    border-right: 2px solid #000;
+  }
+  
+  .mobile-nav-header {
+    background: #f0f0f0;
+    border-bottom: 2px solid #000;
+  }
+  
+  .mobile-nav-list a[mat-list-item] {
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .mobile-nav-list a[mat-list-item].active-nav-item {
+    background: #000;
+    color: #fff;
+  }
+  
+  .fancy-toolbar, .mobile-toolbar, .desktop-toolbar {
+    background: #000;
+    border-bottom: 2px solid #fff;
+  }
+  
+  button {
+    border: 1px solid #fff;
+  }
+  
+  .user-avatar {
+    background: #fff;
+    color: #000;
+    border: 2px solid #000;
   }
 }

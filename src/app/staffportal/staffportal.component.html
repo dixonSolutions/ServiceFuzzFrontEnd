@@ -1,1 +1,386 @@
-<p>staffportal works!</p>
+<div class="staff-portal-container" 
+     [style.--sidebar-width.px]="sidebarWidth">
+  <!-- Header Component -->
+  <mat-toolbar class="staff-header" 
+               color="primary"
+               [style.margin-left.px]="(isHandset$ | async) ? 0 : sidebarWidth"
+               [style.width]="(isHandset$ | async) ? '100%' : 'calc(100% - ' + sidebarWidth + 'px)'">
+    <button
+      type="button"
+      aria-label="Toggle sidenav"
+      mat-icon-button
+      (click)="drawer.toggle()"
+      *ngIf="isHandset$ | async">
+      <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+    </button>
+    
+    <!-- Business Logo and Location -->
+    <div class="header-brand">
+        <img src="https://lh3.googleusercontent.com/a/ACg8ocLaJxexuHa88Q1viRsHMpdLIEIUjbiNlBs-asm8Pk02NoVN0Sk=s96-c-rg-br100" alt="servicefuzzlogo">
+        <mat-select [(value)]="selectedLocation" class="location-selector">
+        <mat-option *ngFor="let location of businessLocations" [value]="location">
+          {{location.name}}
+        </mat-option>
+      </mat-select>
+      
+      <!-- Time Period Selector -->
+      <mat-select [(value)]="selectedTimePeriod" class="time-period-selector" matTooltip="Select time period for data view">
+        <mat-option *ngFor="let period of timePeriods" [value]="period">
+          <mat-icon>{{period.icon}}</mat-icon>
+          {{period.label}}
+        </mat-option>
+      </mat-select>
+    </div>
+
+    <span class="spacer"></span>
+
+    <!-- Quick Actions -->
+    <div class="header-actions">
+      <!-- Clock In/Out Button -->
+      <button mat-raised-button 
+              [color]="staffMember.clockedIn ? 'warn' : 'accent'"
+              (click)="toggleClockStatus()"
+              class="clock-button">
+        <mat-icon>{{staffMember.clockedIn ? 'schedule' : 'play_arrow'}}</mat-icon>
+        {{staffMember.clockedIn ? 'Clock Out' : 'Clock In'}}
+      </button>
+
+      <!-- Emergency Contact -->
+      <button mat-icon-button 
+              color="warn" 
+              (click)="emergencyContact()"
+              matTooltip="Emergency Contact">
+        <mat-icon>emergency</mat-icon>
+      </button>
+
+      <!-- Notifications -->
+      <button mat-icon-button (click)="openNotifications()" matTooltip="Notifications">
+        <mat-icon matBadge="{{notificationCount}}" matBadgeColor="warn">notifications</mat-icon>
+      </button>
+
+      <!-- Staff Profile -->
+      <div class="staff-profile" [matTooltip]="staffMember.email || 'No email available'">
+        <img [src]="staffMember.photo" [alt]="staffMember.name" class="staff-avatar">
+        <div class="staff-info" *ngIf="!(isHandset$ | async)" style="color: rgb(0, 0, 0);">
+          <span class="staff-name">{{staffMember.name}}</span>
+          <span class="staff-position">{{staffMember.position}}</span>
+          <span class="staff-email" *ngIf="staffMember.email">{{staffMember.email}}</span>
+        </div>
+      </div>
+    </div>
+  </mat-toolbar>
+
+  <!-- Sidenav Container -->
+  <mat-sidenav-container class="sidenav-container">
+    <!-- Sidebar Navigation -->
+    <mat-sidenav #drawer 
+                 class="sidenav" 
+                 fixedInViewport
+                 [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+                 [mode]="(isHandset$ | async) ? 'over' : 'side'"
+                 [opened]="(isHandset$ | async) === false"
+                 [style.width.px]="(isHandset$ | async) ? null : sidebarWidth">
+      
+      <mat-nav-list class="nav-list">
+        <a mat-list-item 
+           *ngFor="let item of navigationItems"
+           (click)="navigateTo(item)"
+           [class.active-nav-item]="item.active">
+          <mat-icon matListIcon>{{item.icon}}</mat-icon>
+          <span matLine>{{item.name}}</span>
+        </a>
+      </mat-nav-list>
+
+      <!-- Clock Status in Sidebar -->
+      <div class="sidebar-footer" *ngIf="!(isHandset$ | async)">
+        <mat-card class="clock-status-card">
+          <mat-card-content>
+            <div class="clock-status">
+              <mat-icon [color]="staffMember.clockedIn ? 'primary' : 'warn'">
+                {{staffMember.clockedIn ? 'schedule' : 'schedule_off'}}
+              </mat-icon>
+              <span>{{staffMember.clockedIn ? 'Clocked In' : 'Clocked Out'}}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      
+      <!-- Resize Handle -->
+      <div class="resize-handle" 
+           *ngIf="!(isHandset$ | async)"
+           (mousedown)="onResizeStart($event)"
+           (dblclick)="onResizeHandleDoubleClick()"
+           [class.resizing]="isResizing"
+           [matTooltip]="'Drag to resize sidebar • Double-click to reset'">
+        <div class="resize-handle-line"></div>
+      </div>
+      
+      <!-- Width Indicator -->
+      <div class="width-indicator" 
+           *ngIf="showWidthIndicator && !(isHandset$ | async)"
+           [style.left.px]="sidebarWidth / 2 - 25">
+        {{sidebarWidth}}px
+      </div>
+    </mat-sidenav>
+
+    <!-- Main Content Area -->
+    <mat-sidenav-content class="main-content">
+      <!-- Dashboard View -->
+      <div *ngIf="currentView === 'dashboard'" class="content-section">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+          <p>Welcome back, {{staffMember.name}}! 
+            <span *ngIf="staffMember.clockedIn" class="status-indicator clocked-in">● Clocked In</span>
+            <span *ngIf="!staffMember.clockedIn" class="status-indicator clocked-out">● Clocked Out</span>
+          </p>
+        </div>
+
+        <!-- Quick Stats Cards -->
+        <div class="stats-grid">
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-icon mat-card-avatar color="primary">event</mat-icon>
+              <mat-card-title>Today's Appointments</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-number">8</div>
+              <div class="stat-label">Scheduled</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-icon mat-card-avatar color="accent">attach_money</mat-icon>
+              <mat-card-title>Today's Revenue</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-number">$1,240</div>
+              <div class="stat-label">Earned</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-icon mat-card-avatar color="warn">people</mat-icon>
+              <mat-card-title>New Customers</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-number">3</div>
+              <div class="stat-label">This Week</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <mat-card-header>
+              <mat-icon mat-card-avatar color="primary">star</mat-icon>
+              <mat-card-title>Rating</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="stat-number">4.9</div>
+              <div class="stat-label">Average</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Today's Appointments -->
+        <mat-card class="appointments-card">
+          <mat-card-header>
+            <mat-card-title>Today's Appointments</mat-card-title>
+            <mat-card-subtitle>{{getCurrentDate() | date:'fullDate'}}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-list>
+              <mat-list-item>
+                <mat-icon matListIcon color="primary">schedule</mat-icon>
+                <div matLine>9:00 AM - Hair Cut & Style</div>
+                <div matLine>Jessica Smith</div>
+                <mat-chip-list>
+                  <mat-chip color="primary" selected>Confirmed</mat-chip>
+                </mat-chip-list>
+              </mat-list-item>
+              <mat-divider></mat-divider>
+              
+              <mat-list-item>
+                <mat-icon matListIcon color="accent">schedule</mat-icon>
+                <div matLine>11:30 AM - Color Treatment</div>
+                <div matLine>Michael Johnson</div>
+                <mat-chip-list>
+                  <mat-chip color="warn" selected>Pending</mat-chip>
+                </mat-chip-list>
+              </mat-list-item>
+              <mat-divider></mat-divider>
+              
+              <mat-list-item>
+                <mat-icon matListIcon color="primary">schedule</mat-icon>
+                <div matLine>2:00 PM - Manicure</div>
+                <div matLine>Sarah Davis</div>
+                <mat-chip-list>
+                  <mat-chip color="primary" selected>Confirmed</mat-chip>
+                </mat-chip-list>
+              </mat-list-item>
+            </mat-list>
+          </mat-card-content>
+          <mat-card-actions>
+            <button mat-button color="primary">View All Appointments</button>
+          </mat-card-actions>
+        </mat-card>
+
+        <!-- Quick Actions Toolbar -->
+        <mat-card class="quick-actions-card">
+          <mat-card-header>
+            <mat-card-title>Quick Actions</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="quick-actions-grid">
+              <button mat-raised-button color="primary">
+                <mat-icon>add</mat-icon>
+                New Appointment
+              </button>
+              <button mat-raised-button color="accent">
+                <mat-icon>person_add</mat-icon>
+                Add Customer
+              </button>
+              <button mat-raised-button>
+                <mat-icon>payment</mat-icon>
+                Process Payment
+              </button>
+              <button mat-raised-button>
+                <mat-icon>note_add</mat-icon>
+                Add Note
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Schedule View -->
+      <div *ngIf="currentView === 'myschedule'" class="content-section">
+        <div class="page-header">
+          <h1>My Schedule</h1>
+          <mat-button-toggle-group value="week">
+            <mat-button-toggle value="day">Day</mat-button-toggle>
+            <mat-button-toggle value="week">Week</mat-button-toggle>
+            <mat-button-toggle value="month">Month</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+        
+        <mat-card class="schedule-card">
+          <mat-card-content>
+            <div class="schedule-placeholder">
+              <mat-icon>calendar_today</mat-icon>
+              <h3>Schedule View</h3>
+              <p>Calendar component would be integrated here</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Appointments View -->
+      <div *ngIf="currentView === 'appointments'" class="content-section">
+        <div class="page-header">
+          <h1>Appointments</h1>
+          <button mat-raised-button color="primary">
+            <mat-icon>add</mat-icon>
+            New Appointment
+          </button>
+        </div>
+        
+        <mat-card class="appointments-table-card">
+          <mat-card-content>
+            <div class="table-placeholder">
+              <mat-icon>event</mat-icon>
+              <h3>Appointments Table</h3>
+              <p>Data table with sorting and filtering would be here</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Customers View -->
+      <div *ngIf="currentView === 'customers'" class="content-section">
+        <div class="page-header">
+          <h1>Customers</h1>
+          <mat-form-field class="search-field">
+            <mat-label>Search customers</mat-label>
+            <input matInput placeholder="Enter customer name or phone">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+        
+        <mat-card class="customers-card">
+          <mat-card-content>
+            <div class="customers-placeholder">
+              <mat-icon>people</mat-icon>
+              <h3>Customer Management</h3>
+              <p>Customer list and management interface would be here</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Payments View -->
+      <div *ngIf="currentView === 'payments'" class="content-section">
+        <div class="page-header">
+          <h1>Payments</h1>
+          <button mat-raised-button color="primary">
+            <mat-icon>payment</mat-icon>
+            Process Payment
+          </button>
+        </div>
+        
+        <mat-card class="payments-card">
+          <mat-card-content>
+            <div class="payments-placeholder">
+              <mat-icon>payment</mat-icon>
+              <h3>Payment Processing</h3>
+              <p>Payment interface and transaction history would be here</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Reports View -->
+      <div *ngIf="currentView === 'reports'" class="content-section">
+        <div class="page-header">
+          <h1>Reports</h1>
+          <mat-form-field>
+            <mat-label>Report Period</mat-label>
+            <mat-select value="week">
+              <mat-option value="day">Today</mat-option>
+              <mat-option value="week">This Week</mat-option>
+              <mat-option value="month">This Month</mat-option>
+              <mat-option value="year">This Year</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
+        <mat-card class="reports-card">
+          <mat-card-content>
+            <div class="reports-placeholder">
+              <mat-icon>analytics</mat-icon>
+              <h3>Performance Reports</h3>
+              <p>Charts and analytics would be displayed here</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Settings View -->
+      <div *ngIf="currentView === 'settings'" class="content-section">
+        <div class="page-header">
+          <h1>Settings</h1>
+        </div>
+        
+        <mat-card class="settings-card">
+          <mat-card-content>
+            <div class="settings-placeholder">
+              <mat-icon>settings</mat-icon>
+              <h3>Staff Settings</h3>
+              <p>Profile settings and preferences would be here</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

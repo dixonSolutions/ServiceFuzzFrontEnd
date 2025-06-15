@@ -38,8 +38,11 @@ import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-servic
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { StaffportalComponent } from './staffportal/staffportal.component';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { LayoutModule } from '@angular/cdk/layout';
 import { VideoDialogComponent } from './home/home.component';
-import { HeaderComponent } from './staff-portal/header/header.component';
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
 
@@ -54,8 +57,7 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     BusinessSettingsComponent,
     ChatWithAiAboutServiceFuzzComponent,
     AnalyticsComponent,
-    StaffportalComponent,
-    HeaderComponent
+    StaffportalComponent
   ],
   imports: [
     BrowserModule,
@@ -86,6 +88,10 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     MatChipsModule,
     MatBadgeModule,
     MatDividerModule,
+    MatSidenavModule,
+    MatButtonToggleModule,
+    MatTooltipModule,
+    LayoutModule,
     VideoDialogComponent
   ],
   providers: [

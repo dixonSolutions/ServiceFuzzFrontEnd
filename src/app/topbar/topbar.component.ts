@@ -1,10 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import { DataSvrService } from '../services/data-svr.service';
 import {MatMenuModule} from '@angular/material/menu'; 
 import { Router } from '@angular/router';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { Observable } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
+import { MatSidenav } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-topbar',
@@ -13,9 +17,37 @@ import { Router } from '@angular/router';
   styleUrls: ['./topbar.component.css']
 })
 export class TopbarComponent implements OnInit {
+  @ViewChild('mobileDrawer') mobileDrawer!: MatSidenav;
+
+  // Responsive breakpoints
+  isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
+    .pipe(
+      map(result => result.matches),
+      shareReplay()
+    );
+
+  isTablet$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Tablet)
+    .pipe(
+      map(result => result.matches),
+      shareReplay()
+    );
+
+  isSmallScreen$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 768px)')
+    .pipe(
+      map(result => result.matches),
+      shareReplay()
+    );
+
+  isMediumScreen$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 1024px)')
+    .pipe(
+      map(result => result.matches),
+      shareReplay()
+    );
+
   constructor(
     public data: DataSvrService,
-    private router: Router
+    private router: Router,
+    private breakpointObserver: BreakpointObserver
   ) {}
 
   ngOnInit(): void {
@@ -49,6 +81,13 @@ export class TopbarComponent implements OnInit {
       const firstInitial = nameParts[0].charAt(0).toUpperCase();
       const lastInitial = nameParts[nameParts.length - 1].charAt(0).toUpperCase();
       return firstInitial + lastInitial;
+    }
+  }
+
+  // Method to close mobile drawer when navigating
+  closeMobileDrawer(): void {
+    if (this.mobileDrawer) {
+      this.mobileDrawer.close();
     }
   }
 }

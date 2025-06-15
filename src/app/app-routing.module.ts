@@ -17,10 +17,15 @@ const routes: Routes = [
   { path: 'business/settings', component: BusinessSettingsComponent },
   { path: 'chat', component: ChatWithAiAboutServiceFuzzComponent },
   { path: 'staff', component: StaffportalComponent },
+  { path: '**', redirectTo: '', pathMatch: 'full' } // Wildcard route for 404 cases
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, { onSameUrlNavigation: 'reload' })],
+  imports: [RouterModule.forRoot(routes, { 
+    onSameUrlNavigation: 'reload',
+    useHash: false,
+    enableTracing: false 
+  })],
   exports: [RouterModule]
 })
 export class AppRoutingModule { } 

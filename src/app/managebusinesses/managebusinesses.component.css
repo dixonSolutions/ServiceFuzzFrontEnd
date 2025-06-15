@@ -43,6 +43,30 @@
   margin-top: 16px;
 }
 
+/* Loading Card Specific Styles */
+.loading-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid rgba(0, 123, 255, 0.1);
+}
+
+.loading-card .message-content {
+  gap: 20px;
+}
+
+.loading-card h2 {
+  color: #007bff;
+  font-weight: 500;
+}
+
+.loading-card p {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.loading-card mat-spinner {
+  margin-bottom: 8px;
+}
+
 /* Businesses Grid */
 .section-title {
   font-size: 32px;
@@ -256,5 +280,19 @@ mat-card-actions button {
 
   mat-card-actions button {
     width: 100%;
+  }
+
+  /* Mobile loading card adjustments */
+  .loading-card {
+    margin: 24px auto;
+    padding: 24px;
+  }
+
+  .loading-card h2 {
+    font-size: 20px;
+  }
+
+  .loading-card p {
+    font-size: 14px;
   }
 }
