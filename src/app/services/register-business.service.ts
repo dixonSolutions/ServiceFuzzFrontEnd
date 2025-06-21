@@ -13,7 +13,8 @@ import {
   ServicesForBusinessDto, 
   BusinessSpecificAdrDto, 
   S2CareaSpecificationDto,
-  ServiceToPlaceAssignmentDto
+  ServiceToPlaceAssignmentDto,
+  StaffMemberDto
 } from '../models/business-registration-dto';
 import { DataSvrService } from './data-svr.service';
 
@@ -123,17 +124,30 @@ export interface RegisterBusinessResponse {
       const specificAddresses: BusinessSpecificAdrDto[] = [];
       const areaSpecifications: S2CareaSpecificationDto[] = [];
 
+      console.log('Transform DTO - Location type:', locationType);
+      console.log('Transform DTO - Business places:', business.places);
+
       // Transform places based on location type
       if (locationType === 'specific' || locationType === 'both') {
         // Add specific addresses from places
         business.places.forEach(place => {
+          console.log('Processing place for specific address:', place);
           if (place.placeAddress && place.placeCity && place.placeState && place.placeCountry) {
-            specificAddresses.push({
+            const specificAddress = {
               streetAddress: place.placeAddress,
               city: place.placeCity,
               state: place.placeState,
               country: place.placeCountry,
               postalCode: place.placeZipCode || ''
+            };
+            console.log('Adding specific address:', specificAddress);
+            specificAddresses.push(specificAddress);
+          } else {
+            console.log('Place does not meet specific address criteria:', {
+              hasAddress: !!place.placeAddress,
+              hasCity: !!place.placeCity,
+              hasState: !!place.placeState,
+              hasCountry: !!place.placeCountry
             });
           }
         });
@@ -142,12 +156,20 @@ export interface RegisterBusinessResponse {
       if (locationType === 'area' || locationType === 'both') {
         // Add area specifications from places
         business.places.forEach(place => {
+          console.log('Processing place for area specification:', place);
           if (place.placeCountry && !place.placeAddress) {
-            areaSpecifications.push({
+            const areaSpec = {
               country: place.placeCountry,
               state: place.placeState,
               city: place.placeCity,
               postalCode: place.placeZipCode
+            };
+            console.log('Adding area specification:', areaSpec);
+            areaSpecifications.push(areaSpec);
+          } else {
+            console.log('Place does not meet area specification criteria:', {
+              hasCountry: !!place.placeCountry,
+              hasNoAddress: !place.placeAddress
             });
           }
         });
@@ -159,14 +181,37 @@ export interface RegisterBusinessResponse {
         // Don't include serviceID and placeID as they will be auto-generated
       }));
 
-      return {
+      // Transform staff data if present
+      const staffDto: StaffMemberDto[] = [];
+      if (business.operationType === 'with_staff' && business.staff) {
+        business.staff.forEach(staff => {
+          staffDto.push({
+            firstName: staff.firstName,
+            lastName: staff.lastName,
+            email: staff.email,
+            role: staff.role,
+            accessAll: staff.accessAll,
+            isActive: staff.isActive
+          });
+        });
+      }
+
+      const dto = {
         basicInfo: basicInfoDto,
         services: servicesDto,
         specificAddresses: specificAddresses,
         areaSpecifications: areaSpecifications,
         unifiedPlaces: [], // Not using unified places for now
-        servicePlaceAssignments: servicePlaceAssignments
+        servicePlaceAssignments: servicePlaceAssignments,
+        operationType: business.operationType || 'solo',
+        staff: business.operationType === 'with_staff' ? staffDto : undefined
       };
+
+      console.log('Final DTO:', dto);
+      console.log('DTO has specific addresses:', dto.specificAddresses.length);
+      console.log('DTO has area specifications:', dto.areaSpecifications.length);
+
+      return dto;
     }
 
     /**
@@ -222,8 +267,8 @@ export interface RegisterBusinessResponse {
       // Validate specific addresses
       if (hasSpecificAddresses) {
         for (const address of dto.specificAddresses) {
-          if (!address.streetAddress || !address.city || !address.state || !address.country || !address.postalCode) {
-            return 'All specific address fields are required.';
+          if (!address.streetAddress || !address.city || !address.state || !address.country) {
+            return 'Street address, city, state, and country are required for specific addresses.';
           }
           if (!['USA', 'Canada', 'UK', 'Australia'].includes(address.country)) {
             return 'Country must be one of: USA, Canada, UK, Australia.';

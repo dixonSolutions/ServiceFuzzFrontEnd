@@ -34,7 +34,9 @@ export class DataSvrService {
     places: [],
     serviceAssignments: [],
     currentStep: 0,
-    isCompleted: false
+    isCompleted: false,
+    operationType: 'solo',
+    staff: []
   });
   public businessRegistration$ = this._businessRegistration.asObservable();
 
@@ -260,7 +262,9 @@ export class DataSvrService {
       places: [],
       serviceAssignments: [],
       currentStep: 0,
-      isCompleted: false
+      isCompleted: false,
+      operationType: 'solo',
+      staff: []
     });
   }
 

@@ -9,6 +9,7 @@ import { CdkDragDrop, moveItemInArray, transferArrayItem, copyArrayItem } from '
 import { Subscription } from 'rxjs';
 import { BusinessSpecificAdr } from '../models/business-specific-adr';
 import { S2CareaSpecification } from '../models/s2c-area-specification';
+import { StaffMember, defaultStaffMember } from '../models/staff-member';
 
 @Component({
   selector: 'app-business',
@@ -23,6 +24,7 @@ export class BusinessComponent implements OnInit, OnDestroy {
   placeForm!: FormGroup;
   specificPlaceForm!: FormGroup;
   areaPlaceForm!: FormGroup;
+  staffForm!: FormGroup;
 
   // Registration state
   currentStep = 0;
@@ -60,6 +62,12 @@ export class BusinessComponent implements OnInit, OnDestroy {
   isRegistering = false;
   registrationError: string | null = null;
 
+  // Staff management
+  operationType: 'solo' | 'with_staff' = 'solo';
+  staffMembers: StaffMember[] = [];
+  editingStaffIndex: number | null = null;
+  showStaffSection = false;
+
   constructor(
     private fb: FormBuilder, 
     public data: DataSvrService,
@@ -79,6 +87,17 @@ export class BusinessComponent implements OnInit, OnDestroy {
         this.specificPlaces = (registration as any).specificPlaces || [];
         this.areaPlaces = (registration as any).areaPlaces || [];
         
+        // Sync staff data
+        this.operationType = registration.operationType || 'solo';
+        this.staffMembers = registration.staff || [];
+        this.showStaffSection = this.operationType === 'with_staff';
+        
+        // Update form control with current operation type
+        this.basicInfoForm.patchValue({ operationType: this.operationType }, { emitEvent: false });
+        
+        console.log('Synced operation type:', this.operationType);
+        console.log('Show staff section on load:', this.showStaffSection);
+        
         // Ensure all services have proper IDs
         this.ensureServiceIDs();
       })
@@ -89,6 +108,15 @@ export class BusinessComponent implements OnInit, OnDestroy {
         ownerEmail: this.data.currentUser.email
       });
     }
+
+    // Subscribe to operation type changes
+    this.subscription.add(
+      this.basicInfoForm.get('operationType')?.valueChanges.subscribe(value => {
+        if (value && value !== this.operationType) {
+          this.setOperationType(value);
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -101,7 +129,8 @@ export class BusinessComponent implements OnInit, OnDestroy {
       bussinessDescription: ['', [Validators.required, Validators.minLength(10)]],
       bussinessPhone: ['', [Validators.required, Validators.pattern('^[0-9+ -]{8,}$')]],
       bussinessEmail: ['', [Validators.required, Validators.email]],
-      ownerEmail: [{ value: '', disabled: true }]
+      ownerEmail: [{ value: '', disabled: true }],
+      operationType: ['solo', [Validators.required]]
     });
 
     this.serviceForm = this.fb.group({
@@ -143,6 +172,15 @@ export class BusinessComponent implements OnInit, OnDestroy {
       businessID: [''],
       placeID: ['']
     });
+
+    this.staffForm = this.fb.group({
+      firstName: ['', [Validators.required, Validators.maxLength(2000)]],
+      lastName: ['', [Validators.required, Validators.maxLength(2000)]],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(2000)]],
+      role: ['', [Validators.required]],
+      accessAll: [false],
+      isActive: [true]
+    });
   }
 
   nextStep(): void {
@@ -166,7 +204,9 @@ export class BusinessComponent implements OnInit, OnDestroy {
 
   private isCurrentStepValid(): boolean {
     switch (this.currentStep) {
-      case 0: return this.basicInfoForm.valid;
+      case 0: 
+        // Basic info must be valid and operation type must be selected
+        return this.basicInfoForm.valid && (this.operationType === 'solo' || this.operationType === 'with_staff');
       case 1: return this.registration.services.length > 0;
       case 2: return this.specificPlaces.length > 0 || this.areaPlaces.length > 0;
       case 3: return true;
@@ -177,6 +217,14 @@ export class BusinessComponent implements OnInit, OnDestroy {
   private saveCurrentStep(): void {
     if (this.currentStep === 0 && this.basicInfoForm.valid) {
       this.data.updateBasicInfo(this.basicInfoForm.value);
+      // Save operation type and staff data
+      this.registration.operationType = this.operationType;
+      if (this.operationType === 'with_staff') {
+        this.registration.staff = [...this.staffMembers];
+      } else {
+        this.registration.staff = [];
+      }
+      this.data.updateBusinessRegistration(this.registration);
     }
     // Sync places into registration.places when saving step 2
     if (this.currentStep === 2) {
@@ -438,10 +486,35 @@ export class BusinessComponent implements OnInit, OnDestroy {
     this.isRegistering = true;
     this.registrationError = null;
 
-    console.log('Submitting complete registration with location type:', this.locationType);
-    console.log('Registration data:', this.registration);
+    // Ensure places are synced before submission
+    this.syncPlacesToRegistration();
 
-    this.registerService.registerCompleteBusiness(this.locationType).subscribe({
+    // Auto-detect location type based on the places we have
+    const hasSpecificPlaces = this.specificPlaces.length > 0 || 
+                             this.registration.places.some(p => p.placeAddress && p.placeAddress.trim() !== '');
+    const hasAreaPlaces = this.areaPlaces.length > 0 || 
+                         this.registration.places.some(p => (!p.placeAddress || p.placeAddress.trim() === '') && p.placeCountry);
+
+    let actualLocationType: 'specific' | 'area' | 'both';
+    if (hasSpecificPlaces && hasAreaPlaces) {
+      actualLocationType = 'both';
+    } else if (hasAreaPlaces) {
+      actualLocationType = 'area';
+    } else {
+      actualLocationType = 'specific';
+    }
+
+    console.log('Auto-detected location type:', actualLocationType);
+    console.log('Original location type:', this.locationType);
+    console.log('Has specific places:', hasSpecificPlaces);
+    console.log('Has area places:', hasAreaPlaces);
+    console.log('Submitting complete registration with location type:', actualLocationType);
+    console.log('Registration data:', this.registration);
+    console.log('Specific places:', this.specificPlaces);
+    console.log('Area places:', this.areaPlaces);
+    console.log('Synced registration places:', this.registration.places);
+
+    this.registerService.registerCompleteBusiness(actualLocationType).subscribe({
       next: (response: RegisterBusinessResponse) => {
         console.log('Registration successful:', response);
         this.isSubmitting = false;
@@ -751,5 +824,94 @@ export class BusinessComponent implements OnInit, OnDestroy {
       this.registration.services = updatedServices;
       this.data.updateBusinessRegistration(this.registration);
     }
+  }
+
+  // Staff Management Methods
+  setOperationType(type: 'solo' | 'with_staff'): void {
+    console.log('Setting operation type to:', type);
+    this.operationType = type;
+    this.showStaffSection = type === 'with_staff';
+    
+    // Update the form control
+    this.basicInfoForm.patchValue({ operationType: type });
+    
+    // Update the registration object
+    this.registration.operationType = type;
+    
+    console.log('Show staff section:', this.showStaffSection);
+    
+    if (type === 'solo') {
+      this.staffMembers = [];
+      this.registration.staff = [];
+    } else {
+      this.registration.staff = this.staffMembers;
+    }
+    
+    this.data.updateBusinessRegistration(this.registration);
+  }
+
+  addStaffMember(): void {
+    if (this.staffForm.valid) {
+      const newStaff: StaffMember = {
+        ...this.staffForm.value,
+        isActive: true
+      };
+
+      if (this.editingStaffIndex !== null) {
+        this.staffMembers[this.editingStaffIndex] = newStaff;
+        this.editingStaffIndex = null;
+        this.data.openSnackBar('Staff member updated successfully', 'Close', 2000);
+      } else {
+        this.staffMembers.push(newStaff);
+        this.data.openSnackBar('Staff member added successfully', 'Close', 2000);
+      }
+
+      this.registration.staff = [...this.staffMembers];
+      this.data.updateBusinessRegistration(this.registration);
+      this.resetStaffForm();
+    } else {
+      this.data.openSnackBar('Please fill in all required staff fields', 'Close', 3000);
+    }
+  }
+
+  editStaffMember(index: number): void {
+    this.editingStaffIndex = index;
+    const staff = this.staffMembers[index];
+    this.staffForm.patchValue(staff);
+  }
+
+  deleteStaffMember(index: number): void {
+    this.staffMembers.splice(index, 1);
+    this.registration.staff = [...this.staffMembers];
+    this.data.updateBusinessRegistration(this.registration);
+    this.data.openSnackBar('Staff member removed', 'Close', 2000);
+  }
+
+  resetStaffForm(): void {
+    this.staffForm.reset({
+      firstName: '',
+      lastName: '',
+      email: '',
+      role: '',
+      accessAll: false,
+      isActive: true
+    });
+    this.editingStaffIndex = null;
+  }
+
+  cancelStaffEdit(): void {
+    this.resetStaffForm();
+  }
+
+  toggleStaffActive(index: number): void {
+    this.staffMembers[index].isActive = !this.staffMembers[index].isActive;
+    this.registration.staff = [...this.staffMembers];
+    this.data.updateBusinessRegistration(this.registration);
+  }
+
+  getStaffSummary(): string {
+    const activeStaff = this.staffMembers.filter(s => s.isActive).length;
+    const totalStaff = this.staffMembers.length;
+    return `${activeStaff} active staff member${activeStaff !== 1 ? 's' : ''} (${totalStaff} total)`;
   }
 }

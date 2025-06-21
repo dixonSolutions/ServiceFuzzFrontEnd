@@ -119,6 +119,151 @@
                   <mat-icon matSuffix>person</mat-icon>
                 </mat-form-field>
               </div>
+
+              <!-- Business Type Selection -->
+              <div class="form-row">
+                <div class="form-field-wrapper">
+                  <label class="form-label">Business Operation Type</label>
+                  <mat-radio-group formControlName="operationType" class="operation-type-selection">
+                    <mat-radio-button value="solo">I work alone</mat-radio-button>
+                    <mat-radio-button value="with_staff">I work with staff</mat-radio-button>
+                  </mat-radio-group>
+                  <mat-hint class="form-hint">Choose whether you work alone or have team members</mat-hint>
+                </div>
+              </div>
+
+              <!-- Staff Section (Conditional) -->
+              <div *ngIf="showStaffSection" class="staff-section">
+                <mat-divider></mat-divider>
+                <h4>Staff Management</h4>
+                <p class="staff-description">Add team members who will help provide services. You can manage their access levels and roles.</p>
+
+                <!-- Staff Form -->
+                <mat-card class="staff-form-card">
+                  <mat-card-header>
+                    <mat-card-title>{{ editingStaffIndex !== null ? 'Edit Staff Member' : 'Add Staff Member' }}</mat-card-title>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <form [formGroup]="staffForm" class="staff-form">
+                      <div class="form-row">
+                        <mat-form-field class="half-width">
+                          <mat-label>First Name</mat-label>
+                          <input matInput formControlName="firstName" placeholder="Enter first name" maxlength="2000">
+                          <mat-icon matSuffix>person</mat-icon>
+                          <mat-error *ngIf="staffForm.get('firstName')?.hasError('required')">
+                            First name is required
+                          </mat-error>
+                          <mat-error *ngIf="staffForm.get('firstName')?.hasError('maxlength')">
+                            First name cannot exceed 2000 characters
+                          </mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field class="half-width">
+                          <mat-label>Last Name</mat-label>
+                          <input matInput formControlName="lastName" placeholder="Enter last name" maxlength="2000">
+                          <mat-icon matSuffix>person</mat-icon>
+                          <mat-error *ngIf="staffForm.get('lastName')?.hasError('required')">
+                            Last name is required
+                          </mat-error>
+                          <mat-error *ngIf="staffForm.get('lastName')?.hasError('maxlength')">
+                            Last name cannot exceed 2000 characters
+                          </mat-error>
+                        </mat-form-field>
+                      </div>
+
+                      <div class="form-row">
+                        <mat-form-field class="half-width">
+                          <mat-label>Email</mat-label>
+                          <input matInput formControlName="email" placeholder="Enter email address" type="email" maxlength="2000">
+                          <mat-icon matSuffix>email</mat-icon>
+                          <mat-error *ngIf="staffForm.get('email')?.hasError('required')">
+                            Email is required
+                          </mat-error>
+                          <mat-error *ngIf="staffForm.get('email')?.hasError('email')">
+                            Please enter a valid email address
+                          </mat-error>
+                          <mat-error *ngIf="staffForm.get('email')?.hasError('maxlength')">
+                            Email cannot exceed 2000 characters
+                          </mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field class="half-width">
+                          <mat-label>Role</mat-label>
+                          <input matInput formControlName="role" placeholder="e.g., Stylist, Receptionist, Manager">
+                          <mat-icon matSuffix>work</mat-icon>
+                          <mat-error *ngIf="staffForm.get('role')?.hasError('required')">
+                            Role is required
+                          </mat-error>
+                        </mat-form-field>
+                      </div>
+
+                      <div class="form-row">
+                        <mat-checkbox formControlName="accessAll" class="access-checkbox">
+                          <strong>Full Access</strong>
+                          <p class="checkbox-description">Allow this staff member to access all business functions and data</p>
+                        </mat-checkbox>
+                      </div>
+                    </form>
+                  </mat-card-content>
+                  <mat-card-actions>
+                    <button mat-raised-button color="primary" (click)="addStaffMember()" 
+                            [disabled]="!staffForm.valid">
+                      {{ editingStaffIndex !== null ? 'Update Staff Member' : 'Add Staff Member' }}
+                    </button>
+                    <button mat-button *ngIf="editingStaffIndex !== null" (click)="cancelStaffEdit()">
+                      Cancel
+                    </button>
+                  </mat-card-actions>
+                </mat-card>
+
+                <!-- Staff List -->
+                <div class="staff-list" *ngIf="staffMembers.length > 0">
+                  <h4>Staff Members ({{ getStaffSummary() }})</h4>
+                  <div class="staff-grid">
+                    <mat-card *ngFor="let staff of staffMembers; let i = index" class="staff-card" 
+                              [class.inactive]="!staff.isActive">
+                      <mat-card-header>
+                        <mat-card-title>{{ staff.firstName }} {{ staff.lastName }}</mat-card-title>
+                        <mat-card-subtitle>{{ staff.role }}</mat-card-subtitle>
+                      </mat-card-header>
+                      <mat-card-content>
+                        <p><mat-icon class="inline-icon">email</mat-icon> {{ staff.email }}</p>
+                        <div class="staff-badges">
+                          <mat-chip-set>
+                            <mat-chip [color]="staff.accessAll ? 'primary' : 'accent'" [selected]="staff.accessAll">
+                              {{ staff.accessAll ? 'Full Access' : 'Limited Access' }}
+                            </mat-chip>
+                            <mat-chip [color]="staff.isActive ? 'primary' : 'warn'" [selected]="staff.isActive">
+                              {{ staff.isActive ? 'Active' : 'Inactive' }}
+                            </mat-chip>
+                          </mat-chip-set>
+                        </div>
+                      </mat-card-content>
+                      <mat-card-actions>
+                        <button mat-icon-button color="primary" (click)="editStaffMember(i)" 
+                                matTooltip="Edit staff member">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button [color]="staff.isActive ? 'warn' : 'primary'" 
+                                (click)="toggleStaffActive(i)"
+                                [matTooltip]="staff.isActive ? 'Deactivate staff member' : 'Activate staff member'">
+                          <mat-icon>{{ staff.isActive ? 'person_off' : 'person' }}</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="deleteStaffMember(i)" 
+                                matTooltip="Remove staff member">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </mat-card-actions>
+                    </mat-card>
+                  </div>
+                </div>
+
+                <div *ngIf="staffMembers.length === 0" class="no-staff-message">
+                  <mat-icon>group_add</mat-icon>
+                  <p>No staff members added yet. Add your first team member above.</p>
+                  <p class="note">You can add staff members later if you're unsure right now.</p>
+                </div>
+              </div>
             </form>
           </mat-step>
 

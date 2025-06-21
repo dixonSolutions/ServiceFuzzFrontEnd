@@ -36,11 +36,12 @@ import { ManagebusinessesComponent } from './managebusinesses/managebusinesses.c
 import { BusinessSettingsComponent } from './business-settings/business-settings.component';
 import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
-import { StaffportalComponent } from './staffportal/staffportal.component';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LayoutModule } from '@angular/cdk/layout';
 import { VideoDialogComponent } from './home/home.component';
 
@@ -57,7 +58,6 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     BusinessSettingsComponent,
     ChatWithAiAboutServiceFuzzComponent,
     AnalyticsComponent,
-    StaffportalComponent
   ],
   imports: [
     BrowserModule,
@@ -91,6 +91,8 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     MatSidenavModule,
     MatButtonToggleModule,
     MatTooltipModule,
+    MatRadioModule,
+    MatCheckboxModule,
     LayoutModule,
     VideoDialogComponent
   ],
