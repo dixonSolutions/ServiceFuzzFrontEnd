@@ -116,13 +116,21 @@
         <mat-card-title>Service Assignments ({{ getTotalServiceAssignments() }})</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div class="assignments-grid">
-          <div class="assignment-item" *ngFor="let assignment of business.servicePlaceAssignments">
-            <mat-icon>link</mat-icon>
-            <div class="assignment-content">
-              <p><strong>Service ID:</strong> {{ assignment.serviceID }}</p>
-              <p><strong>Place ID:</strong> {{ assignment.placeID }}</p>
-              <p><strong>Type:</strong> {{ assignment.serviceType }}</p>
+        <div class="assignments-container">
+          <!-- Group assignments by place -->
+          <div class="place-group" *ngFor="let place of getPlacesWithServices()">
+            <div class="place-header">
+              <mat-icon>location_on</mat-icon>
+              <h3>{{ getPlaceDisplayName(place) }}</h3>
+            </div>
+            <div class="services-list">
+              <div class="service-assignment" *ngFor="let service of getServicesForPlace(place)">
+                <mat-icon>category</mat-icon>
+                <div class="service-info">
+                  <p class="service-name">{{ service.serviceName }}</p>
+                  <p class="service-details">{{ service.serviceDescription }}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -135,14 +143,6 @@
         <mat-card-title>Staff Members ({{ getTotalStaff() }})</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <!-- Debug Info -->
-        <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
-          <p><strong>Debug:</strong> Operation Type: {{ business.operationType }}</p>
-          <p><strong>Debug:</strong> Staff Array: {{ business.staff ? 'Exists' : 'Null/Undefined' }}</p>
-          <p><strong>Debug:</strong> Staff Length: {{ business.staff?.length || 0 }}</p>
-          <p><strong>Debug:</strong> Has Staff Method: {{ hasStaff() }}</p>
-        </div>
-        
         <div class="staff-grid">
           <div class="staff-item" *ngFor="let member of business.staff; let i = index">
             <div class="staff-header">

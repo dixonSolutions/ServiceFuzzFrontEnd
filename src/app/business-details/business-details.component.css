@@ -204,7 +204,7 @@
 }
 
 .assignment-content p {
-  margin: 2px 0;
+  margin: 4px 0;
   color: #333;
   font-size: 0.875rem;
 }
@@ -333,4 +333,80 @@
     align-items: flex-start;
     gap: 10px;
   }
+}
+
+/* New Service Assignments Styles */
+.assignments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.place-group {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.place-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.place-header mat-icon {
+  color: #1976d2;
+}
+
+.place-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.services-list {
+  padding: 16px;
+}
+
+.service-assignment {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background-color: #fafafa;
+}
+
+.service-assignment:last-child {
+  margin-bottom: 0;
+}
+
+.service-assignment mat-icon {
+  color: #4caf50;
+  margin-top: 2px;
+}
+
+.service-info {
+  flex: 1;
+}
+
+.service-name {
+  margin: 0 0 4px 0;
+  color: #333;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.service-details {
+  margin: 0;
+  color: #666;
+  font-size: 0.875rem;
+  line-height: 1.4;
 } 

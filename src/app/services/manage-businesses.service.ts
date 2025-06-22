@@ -82,4 +82,32 @@ export class ManageBusinessesService {
   hasBusinessesInstance(): boolean {
     return this.businessesInstance.length > 0;
   }
+
+  /**
+   * Delete a business by ID
+   * @param businessId - The ID of the business to delete
+   * @returns Observable of any response
+   */
+  deleteBusiness(businessId: string): Observable<any> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+    
+    const url = `${this.apiUrl}/api/ManagesBusinesses/DeleteBusiness?businessId=${businessId}`;
+    
+    // Debug logging
+    console.log('Delete business API call:', {
+      url: url,
+      businessId: businessId,
+      hasJwtToken: !!jwtToken
+    });
+    
+    return this.http.delete(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`
+      }
+    });
+  }
 } 

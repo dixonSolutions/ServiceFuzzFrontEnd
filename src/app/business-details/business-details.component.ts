@@ -108,4 +108,65 @@ export class BusinessDetailsComponent implements OnInit {
     console.log('Has staff:', hasStaff);
     return hasStaff;
   }
+
+  /**
+   * Get all places that have services assigned to them
+   */
+  getPlacesWithServices(): any[] {
+    if (!this.business?.servicePlaceAssignments) return [];
+    
+    const placeIds = [...new Set(this.business.servicePlaceAssignments.map(a => a.placeID))];
+    const places: any[] = [];
+    
+    // Get specific addresses
+    if (this.business.specificAddresses) {
+      places.push(...this.business.specificAddresses.filter(addr => 
+        placeIds.includes(addr.placeID)
+      ));
+    }
+    
+    // Get area specifications
+    if (this.business.areaSpecifications) {
+      places.push(...this.business.areaSpecifications.filter(area => 
+        placeIds.includes(area.placeID)
+      ));
+    }
+    
+    return places;
+  }
+
+  /**
+   * Get display name for a place
+   */
+  getPlaceDisplayName(place: any): string {
+    if (place.streetAddress) {
+      // Specific address
+      return `${place.streetAddress}, ${place.city}`;
+    } else {
+      // Area specification
+      if (place.city && place.state) {
+        return `${place.city}, ${place.state}`;
+      } else if (place.state) {
+        return place.state;
+      } else {
+        return place.country;
+      }
+    }
+  }
+
+  /**
+   * Get services assigned to a specific place
+   */
+  getServicesForPlace(place: any): any[] {
+    if (!this.business?.servicePlaceAssignments || !this.business?.services) return [];
+    
+    const placeAssignments = this.business.servicePlaceAssignments.filter(
+      assignment => assignment.placeID === place.placeID
+    );
+    
+    return placeAssignments.map(assignment => {
+      const service = this.business?.services?.find(s => s.serviceID === assignment.serviceID);
+      return service || { serviceName: 'Unknown Service', serviceDescription: 'Service details not available' };
+    });
+  }
 } 
