@@ -177,8 +177,9 @@ export interface RegisterBusinessResponse {
 
       // Transform service assignments using the new junction table
       const servicePlaceAssignments: ServiceToPlaceAssignmentDto[] = business.serviceAssignments.map(assignment => ({
+        serviceID: assignment.serviceID,
+        placeID: assignment.placeId,
         serviceType: assignment.serviceType || 'standard'
-        // Don't include serviceID and placeID as they will be auto-generated
       }));
 
       // Transform staff data if present

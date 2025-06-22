@@ -33,6 +33,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { BusinessComponent } from './business/business.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { ManagebusinessesComponent } from './managebusinesses/managebusinesses.component';
+import { BusinessDetailsComponent } from './business-details/business-details.component';
 import { BusinessSettingsComponent } from './business-settings/business-settings.component';
 import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
@@ -55,6 +56,7 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     SignInOrSignUpComponent,
     BusinessComponent,
     ManagebusinessesComponent,
+    BusinessDetailsComponent,
     BusinessSettingsComponent,
     ChatWithAiAboutServiceFuzzComponent,
     AnalyticsComponent,

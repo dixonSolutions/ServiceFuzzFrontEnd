@@ -12,6 +12,7 @@ import { ChatMessage } from '../models/chat-message';
 import { BusinessRegistration, BusinessPlaceAndServicesJunction } from '../models/business-registration';
 import { ServicesForBusiness } from '../models/services-for-business';
 import { BusinessPlace } from '../models/business-place';
+import { BusinessRegistrationDto } from '../models/business-registration-dto';
 
 @Injectable({
   providedIn: 'root'
@@ -43,6 +44,9 @@ export class DataSvrService {
   // Chat related properties
   private _chatMessages = new BehaviorSubject<ChatMessage[]>([]);
   public chatMessages$ = this._chatMessages.asObservable();
+
+  // Temporary business details storage
+  private _tempBusinessDetails = new BehaviorSubject<BusinessRegistrationDto | null>(null);
 
   constructor(private http: HttpClient, private snackBar: MatSnackBar, private cookieService: CookieService) {
     if (DataSvrService.instance) {
@@ -299,6 +303,20 @@ export class DataSvrService {
   // Method to verify instance
   getInstanceId(): number {
     return this.instanceId;
+  }
+
+  // Temporary business details storage
+  setTempBusinessDetails(business: BusinessRegistrationDto): void {
+    this._tempBusinessDetails.next(business);
+  }
+
+  getTempBusinessDetails(): BusinessRegistrationDto | null {
+    const business = this._tempBusinessDetails.value;
+    if (business) {
+      // Clear after getting
+      this._tempBusinessDetails.next(null);
+    }
+    return business;
   }
 
   getUserByID(id: string): Observable<ServiceFuzzAccount> {

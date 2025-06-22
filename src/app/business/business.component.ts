@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataSvrService } from '../services/data-svr.service';
 import { RegisterBusinessService, RegisterBusinessResponse } from '../services/register-business.service';
-import { BusinessRegistration } from '../models/business-registration';
+import { BusinessRegistration, BusinessPlaceAndServicesJunction } from '../models/business-registration';
 import { ServicesForBusiness } from '../models/services-for-business';
 import { BusinessPlace } from '../models/business-place';
 import { CdkDragDrop, moveItemInArray, transferArrayItem, copyArrayItem } from '@angular/cdk/drag-drop';
@@ -489,6 +489,9 @@ export class BusinessComponent implements OnInit, OnDestroy {
     // Ensure places are synced before submission
     this.syncPlacesToRegistration();
 
+    // Build service assignments from places' assignedServiceIDs
+    this.buildServiceAssignments();
+
     // Auto-detect location type based on the places we have
     const hasSpecificPlaces = this.specificPlaces.length > 0 || 
                              this.registration.places.some(p => p.placeAddress && p.placeAddress.trim() !== '');
@@ -513,6 +516,7 @@ export class BusinessComponent implements OnInit, OnDestroy {
     console.log('Specific places:', this.specificPlaces);
     console.log('Area places:', this.areaPlaces);
     console.log('Synced registration places:', this.registration.places);
+    console.log('Service assignments:', this.registration.serviceAssignments);
 
     this.registerService.registerCompleteBusiness(actualLocationType).subscribe({
       next: (response: RegisterBusinessResponse) => {
@@ -913,5 +917,64 @@ export class BusinessComponent implements OnInit, OnDestroy {
     const activeStaff = this.staffMembers.filter(s => s.isActive).length;
     const totalStaff = this.staffMembers.length;
     return `${activeStaff} active staff member${activeStaff !== 1 ? 's' : ''} (${totalStaff} total)`;
+  }
+
+  private buildServiceAssignments(): void {
+    console.log('Building service assignments...');
+    console.log('Current registration places:', this.registration.places);
+    console.log('Current registration serviceAssignments:', this.registration.serviceAssignments);
+    
+    // Get current assignments from data service
+    const currentAssignments = this.data.currentBusinessRegistration.serviceAssignments;
+    console.log('Current assignments from data service:', currentAssignments);
+    
+    // If we already have service assignments, use them
+    if (currentAssignments && currentAssignments.length > 0) {
+      console.log('Using existing service assignments from data service:', currentAssignments);
+      this.registration.serviceAssignments = [...currentAssignments];
+      return;
+    }
+    
+    // Clear existing assignments
+    this.registration.serviceAssignments = [];
+    
+    // Build assignments from places' assignedServiceIDs
+    this.registration.places.forEach(place => {
+      console.log(`Processing place ${place.placeID} (${place.placeName}) with assigned services:`, place.assignedServiceIDs);
+      place.assignedServiceIDs.forEach(serviceId => {
+        const assignment: BusinessPlaceAndServicesJunction = {
+          businessID: this.registration.basicInfo.businessID || '',
+          serviceID: serviceId,
+          placeId: place.placeID,
+          serviceType: 'standard'
+        };
+        this.registration.serviceAssignments.push(assignment);
+        console.log(`Created assignment:`, assignment);
+      });
+    });
+    
+    // If no assignments were created from assignedServiceIDs, create assignments for all services to all places
+    if (this.registration.serviceAssignments.length === 0 && 
+        this.registration.services.length > 0 && 
+        this.registration.places.length > 0) {
+      console.log('No assignments found, creating assignments for all services to all places');
+      this.registration.services.forEach(service => {
+        this.registration.places.forEach(place => {
+          const assignment: BusinessPlaceAndServicesJunction = {
+            businessID: this.registration.basicInfo.businessID || '',
+            serviceID: service.serviceID,
+            placeId: place.placeID,
+            serviceType: 'standard'
+          };
+          this.registration.serviceAssignments.push(assignment);
+          console.log(`Created fallback assignment:`, assignment);
+        });
+      });
+    }
+    
+    console.log('Final service assignments:', this.registration.serviceAssignments);
+    
+    // Update the data service with the new assignments
+    this.data.updateBusinessRegistration(this.registration);
   }
 }

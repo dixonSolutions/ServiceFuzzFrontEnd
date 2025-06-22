@@ -1,0 +1,193 @@
+<div class="business-details-container">
+  <!-- Loading Spinner -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="48" color="primary"></mat-spinner>
+    <h2>Loading Business Details...</h2>
+  </div>
+
+  <!-- Business Details -->
+  <div class="details-content" *ngIf="!isLoading && business">
+    <!-- Header with Back Button -->
+    <div class="header-section">
+      <button mat-icon-button (click)="goBack()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1 class="business-title">{{ business.basicInfo.businessName }}</h1>
+    </div>
+
+    <!-- Basic Information Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>Basic Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <mat-icon>description</mat-icon>
+            <div class="info-content">
+              <label>Description</label>
+              <p>{{ business.basicInfo.businessDescription }}</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <mat-icon>phone</mat-icon>
+            <div class="info-content">
+              <label>Phone</label>
+              <p>{{ business.basicInfo.phone }}</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <mat-icon>email</mat-icon>
+            <div class="info-content">
+              <label>Email</label>
+              <p>{{ business.basicInfo.email }}</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <mat-icon>business</mat-icon>
+            <div class="info-content">
+              <label>Operation Type</label>
+              <p>{{ business.operationType === 'solo' ? 'Solo Operation' : 'With Staff' }}</p>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Services Card -->
+    <mat-card class="info-card" *ngIf="business.services && business.services.length > 0">
+      <mat-card-header>
+        <mat-card-title>Services ({{ business.services.length }})</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="services-grid">
+          <div class="service-item" *ngFor="let service of business.services">
+            <div class="service-header">
+              <h3>{{ service.serviceName }}</h3>
+              <span class="service-price">{{ service.price | currency:service.currency }}</span>
+            </div>
+            <p class="service-description">{{ service.serviceDescription }}</p>
+            <div class="service-details">
+              <span class="duration">{{ service.duration }} minutes</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Locations Card -->
+    <mat-card class="info-card" *ngIf="getTotalLocations() > 0">
+      <mat-card-header>
+        <mat-card-title>Locations ({{ getTotalLocations() }})</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <!-- Specific Addresses -->
+        <div class="location-section" *ngIf="business.specificAddresses && business.specificAddresses.length > 0">
+          <h3>Physical Addresses</h3>
+          <div class="location-item" *ngFor="let address of business.specificAddresses">
+            <mat-icon>location_on</mat-icon>
+            <div class="location-content">
+              <p>{{ address.streetAddress }}</p>
+              <p>{{ address.city }}, {{ address.state }} {{ address.postalCode }}</p>
+              <p>{{ address.country }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Area Specifications -->
+        <div class="location-section" *ngIf="business.areaSpecifications && business.areaSpecifications.length > 0">
+          <h3>Service Areas</h3>
+          <div class="location-item" *ngFor="let area of business.areaSpecifications">
+            <mat-icon>map</mat-icon>
+            <div class="location-content">
+              <p *ngIf="area.city">{{ area.city }}, {{ area.state }}</p>
+              <p *ngIf="!area.city && area.state">{{ area.state }}</p>
+              <p>{{ area.country }}</p>
+              <p *ngIf="area.postalCode">{{ area.postalCode }}</p>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Service Assignments Card -->
+    <mat-card class="info-card" *ngIf="getTotalServiceAssignments() > 0">
+      <mat-card-header>
+        <mat-card-title>Service Assignments ({{ getTotalServiceAssignments() }})</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="assignments-grid">
+          <div class="assignment-item" *ngFor="let assignment of business.servicePlaceAssignments">
+            <mat-icon>link</mat-icon>
+            <div class="assignment-content">
+              <p><strong>Service ID:</strong> {{ assignment.serviceID }}</p>
+              <p><strong>Place ID:</strong> {{ assignment.placeID }}</p>
+              <p><strong>Type:</strong> {{ assignment.serviceType }}</p>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Staff Card -->
+    <mat-card class="info-card" *ngIf="hasStaff()">
+      <mat-card-header>
+        <mat-card-title>Staff Members ({{ getTotalStaff() }})</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <!-- Debug Info -->
+        <div class="debug-info" style="background: #f0f0f0; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+          <p><strong>Debug:</strong> Operation Type: {{ business.operationType }}</p>
+          <p><strong>Debug:</strong> Staff Array: {{ business.staff ? 'Exists' : 'Null/Undefined' }}</p>
+          <p><strong>Debug:</strong> Staff Length: {{ business.staff?.length || 0 }}</p>
+          <p><strong>Debug:</strong> Has Staff Method: {{ hasStaff() }}</p>
+        </div>
+        
+        <div class="staff-grid">
+          <div class="staff-item" *ngFor="let member of business.staff; let i = index">
+            <div class="staff-header">
+              <h3>{{ member.firstName }} {{ member.lastName }}</h3>
+              <span class="staff-role">{{ member.role }}</span>
+            </div>
+            <p class="staff-email">{{ member.email }}</p>
+            <div class="staff-details">
+              <span class="access-level">{{ member.accessAll ? 'Full Access' : 'Limited Access' }}</span>
+              <span class="status" [class.active]="member.isActive">
+                {{ member.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- No Staff Message -->
+    <mat-card class="info-card" *ngIf="!hasStaff() && business.operationType === 'with_staff'">
+      <mat-card-header>
+        <mat-card-title>Staff Members</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>No staff members have been added to this business yet.</p>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button mat-raised-button color="primary" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back to Businesses
+      </button>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="!isLoading && !business">
+    <mat-icon class="error-icon">error</mat-icon>
+    <h2>Business Not Found</h2>
+    <p>The business details could not be loaded.</p>
+    <button mat-raised-button color="primary" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to Businesses
+    </button>
+  </div>
+</div> 

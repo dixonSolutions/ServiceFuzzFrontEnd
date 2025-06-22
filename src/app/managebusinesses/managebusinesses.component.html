@@ -56,6 +56,15 @@
           <mat-icon>close</mat-icon>
         </button>
       </mat-form-field>
+      
+      <!-- Refresh Button -->
+      <button mat-icon-button 
+              (click)="refreshBusinesses()" 
+              class="refresh-button"
+              [disabled]="isLoading"
+              matTooltip="Refresh businesses">
+        <mat-icon>{{ isLoading ? 'hourglass_empty' : 'refresh' }}</mat-icon>
+      </button>
     </div>
 
     <!-- Search Results Info -->
@@ -86,21 +95,31 @@
           <div mat-card-avatar class="business-avatar">
             <mat-icon>business</mat-icon>
           </div>
-          <mat-card-title>{{business.bussinessName}}</mat-card-title>
-          <mat-card-subtitle>{{business.bussinessEmail}}</mat-card-subtitle>
+          <mat-card-title>{{business.basicInfo.businessName}}</mat-card-title>
+          <mat-card-subtitle>{{business.basicInfo.email}}</mat-card-subtitle>
         </mat-card-header>
         
         <mat-card-content>
           <div class="business-info">
-            <p class="description">{{business.bussinessDescription}}</p>
+            <p class="description">{{business.basicInfo.businessDescription}}</p>
             <div class="contact-info">
               <p>
                 <mat-icon>phone</mat-icon>
-                {{business.bussinessPhone}}
+                {{business.basicInfo.phone}}
               </p>
               <p>
                 <mat-icon>email</mat-icon>
-                {{business.bussinessEmail}}
+                {{business.basicInfo.email}}
+              </p>
+            </div>
+            <div class="business-stats">
+              <p>
+                <mat-icon>category</mat-icon>
+                {{business.services?.length || 0}} Services
+              </p>
+              <p>
+                <mat-icon>location_on</mat-icon>
+                {{(business.specificAddresses?.length || 0) + (business.areaSpecifications?.length || 0)}} Locations
               </p>
             </div>
           </div>
@@ -115,7 +134,7 @@
             <mat-icon>delete</mat-icon>
             Delete
           </button>
-          <button mat-button color="accent">
+          <button mat-button color="accent" (click)="viewBusinessDetails(business)">
             <mat-icon>visibility</mat-icon>
             View Details
           </button>
