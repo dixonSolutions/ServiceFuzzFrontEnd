@@ -1,11 +1,12 @@
 <!-- Debug Information (temporary) -->
-<div style="position: fixed; top: 100px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 9999;">
+<div style="position: fixed; top: 100px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 9999;" *ngIf="!(isContentHidden$ | async)">
   <div>Screen Width: {{ window.innerWidth }}px</div>
-  <div>Breakpoint: {{ window.innerWidth > 700 ? 'Desktop' : window.innerWidth > 400 ? 'Mobile' : 'Hidden' }}</div>
+  <div>Sidebar Visible: {{ (isSidebarVisible$ | async) ? 'Yes' : 'No' }}</div>
+  <div>Content Hidden: {{ (isContentHidden$ | async) ? 'Yes' : 'No' }}</div>
 </div>
 
 <!-- Mobile Sidenav (only the drawer, not the container) -->
-<mat-sidenav-container class="mobile-sidenav-container">
+<mat-sidenav-container class="mobile-sidenav-container" *ngIf="(isSidebarVisible$ | async) && !(isContentHidden$ | async)">
   <mat-sidenav #mobileDrawer mode="over" class="mobile-sidenav" position="start">
     <div class="mobile-nav-header">
       <h2>Menu</h2>
@@ -65,7 +66,7 @@
 </mat-sidenav-container>
 
 <!-- Mobile Toolbar -->
-<mat-toolbar class="fancy-toolbar mobile-toolbar">
+<mat-toolbar class="fancy-toolbar mobile-toolbar" *ngIf="(isSidebarVisible$ | async) && !(isContentHidden$ | async)">
   <div class="toolbar-left">
     <button mat-icon-button (click)="mobileDrawer.toggle()" class="hamburger-menu">
       <mat-icon>menu</mat-icon>
@@ -88,7 +89,7 @@
 </mat-toolbar>
 
 <!-- Desktop Toolbar -->
-<mat-toolbar class="fancy-toolbar desktop-toolbar">
+<mat-toolbar class="fancy-toolbar desktop-toolbar" *ngIf="!(isSidebarVisible$ | async) && !(isContentHidden$ | async)">
   <div class="toolbar-left">
     <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-menu">
       <mat-icon>menu</mat-icon>

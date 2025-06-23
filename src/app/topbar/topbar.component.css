@@ -682,24 +682,32 @@ button:hover {
   }
 }
 
-/* BREAKPOINT 1: Sidebar appears below 700px */
+/* BREAKPOINT 1: Sidebar appears at 700px maximum (700px and below) */
 @media (max-width: 700px) {
+  .desktop-toolbar {
+    display: none !important;
+  }
+  
+  .mobile-toolbar {
+    display: flex !important;
+  }
+  
   .mobile-sidenav-container {
     display: block !important;
   }
 }
 
 /* BREAKPOINT 2: Content disappears below 400px */
-@media (max-width: 400px) {
-  .desktop-toolbar {
-    display: none !important;
-  }
-  
+@media (max-width: 399px) {
   .mobile-toolbar {
     display: none !important;
   }
   
   .mobile-sidenav-container {
+    display: none !important;
+  }
+  
+  .desktop-toolbar {
     display: none !important;
   }
 }

@@ -22,7 +22,7 @@ export class TopbarComponent implements OnInit {
   // Window reference for debug info
   window = window;
 
-  // Sidebar appears below 700px
+  // Sidebar appears at 700px maximum (700px and below)
   isSidebarVisible$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 700px)')
     .pipe(
       map(result => result.matches),
@@ -30,7 +30,7 @@ export class TopbarComponent implements OnInit {
     );
 
   // Content disappears below 400px
-  isContentHidden$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 400px)')
+  isContentHidden$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 399px)')
     .pipe(
       map(result => result.matches),
       shareReplay()
