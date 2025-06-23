@@ -2,7 +2,6 @@
   padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
-  min-height: 100vh;
   background-color: #f5f5f5;
 }
 
@@ -231,6 +230,9 @@ mat-form-field textarea {
 @media (max-width: 768px) {
   .business-edit-container {
     padding: 16px;
+    min-height: calc(100vh - 56px); /* Account for mobile topbar */
+    width: 100%;
+    overflow-x: hidden;
   }
 
   .form-header {
@@ -265,6 +267,7 @@ mat-form-field textarea {
 
   .action-buttons button {
     width: 100%;
+    min-height: 44px; /* Ensure touch target size */
   }
 
   .service-item,
@@ -276,6 +279,11 @@ mat-form-field textarea {
 
   .form-section-card mat-card-content {
     padding: 16px;
+  }
+
+  /* Ensure form sections are visible */
+  .form-section-card {
+    min-height: 100px;
   }
 }
 
@@ -290,6 +298,10 @@ mat-form-field textarea {
 
   .form-header p {
     font-size: 14px;
+  }
+
+  .form-section-card {
+    min-height: 80px;
   }
 }
 

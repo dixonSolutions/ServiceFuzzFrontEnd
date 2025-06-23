@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DataSvrService } from '../services/data-svr.service';
 import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -103,7 +104,8 @@ export class HomeComponent implements OnInit {
 
   constructor(
     public data: DataSvrService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private router: Router
   ) {
     this.startCarousel();
   }
@@ -118,8 +120,12 @@ export class HomeComponent implements OnInit {
 
   private startCarousel(): void {
     setInterval(() => {
-      this.currentSlide = (this.currentSlide + 1) % this.slides.length;
+      this.currentSlide = (this.currentSlide + 1) % this.slides.length; 
     }, 2000);
+  }
+
+  navigateToSignup(): void {
+    this.router.navigate(['/signup']);
   }
 
   openVideoDialog(): void {

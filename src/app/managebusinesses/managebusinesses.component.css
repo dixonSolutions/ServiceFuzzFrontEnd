@@ -1,7 +1,24 @@
 .manage-businesses-container {
   padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Desktop layout - use more width */
+@media (min-width: 1200px) {
+  .manage-businesses-container {
+    padding: 24px 48px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .manage-businesses-container {
+    padding: 24px 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 }
 
 /* Message Cards */
@@ -78,7 +95,7 @@
 
 /* Search Bar */
 .search-container {
-  max-width: 600px;
+  max-width: 100%;
   margin: 0 auto 24px auto;
   padding: 0 16px;
   display: flex;
@@ -270,59 +287,83 @@ mat-card-actions button {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 600px) {
+@media (max-width: 400px) {
   .manage-businesses-container {
     padding: 16px;
+    width: 100%;
+    max-width: 100%;
   }
-
+  
   .grid-container {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-
+  
   .section-title {
     font-size: 24px;
   }
-
+  
   .search-container {
-    flex-direction: column;
-    gap: 8px;
+    padding: 0 8px;
   }
-
+  
   .search-field {
-    width: 100%;
+    font-size: 14px;
   }
-
+  
   .search-results-info {
     padding: 0 8px;
   }
-
+  
   .search-results-info p {
     font-size: 12px;
   }
-
+  
   .no-results-card {
     margin: 16px auto;
   }
-
+  
   mat-card-actions {
-    flex-direction: column;
+    padding: 8px;
     gap: 8px;
   }
-
+  
   mat-card-actions button {
-    width: 100%;
+    font-size: 12px;
+    padding: 8px 12px;
   }
-
+  
   .loading-card {
-    margin: 24px auto;
+    margin: 32px auto;
   }
-
+  
   .loading-card h2 {
     font-size: 20px;
   }
-
+  
   .loading-card p {
     font-size: 14px;
+  }
+  
+  .business-card {
+    margin-bottom: 8px;
+  }
+  
+  mat-card-content {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 412px) {
+  .manage-businesses-container {
+    padding: 12px;
+  }
+  
+  .section-title {
+    font-size: 20px;
+  }
+  
+  .business-card {
+    margin-bottom: 6px;
   }
 }

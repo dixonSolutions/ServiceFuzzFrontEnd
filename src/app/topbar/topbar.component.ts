@@ -19,26 +19,25 @@ import { MatSidenav } from '@angular/material/sidenav';
 export class TopbarComponent implements OnInit {
   @ViewChild('mobileDrawer') mobileDrawer!: MatSidenav;
 
-  // Responsive breakpoints
-  isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
+  // Window reference for debug info
+  window = window;
+
+  // Sidebar appears below 700px
+  isSidebarVisible$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 700px)')
     .pipe(
       map(result => result.matches),
       shareReplay()
     );
 
-  isTablet$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Tablet)
+  // Content disappears below 400px
+  isContentHidden$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 400px)')
     .pipe(
       map(result => result.matches),
       shareReplay()
     );
 
+  // Legacy breakpoints for existing functionality
   isSmallScreen$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 768px)')
-    .pipe(
-      map(result => result.matches),
-      shareReplay()
-    );
-
-  isMediumScreen$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 1024px)')
     .pipe(
       map(result => result.matches),
       shareReplay()

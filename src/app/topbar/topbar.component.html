@@ -1,5 +1,11 @@
+<!-- Debug Information (temporary) -->
+<div style="position: fixed; top: 100px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 9999;">
+  <div>Screen Width: {{ window.innerWidth }}px</div>
+  <div>Breakpoint: {{ window.innerWidth > 700 ? 'Desktop' : window.innerWidth > 400 ? 'Mobile' : 'Hidden' }}</div>
+</div>
+
 <!-- Mobile Sidenav (only the drawer, not the container) -->
-<mat-sidenav-container class="mobile-sidenav-container" *ngIf="isHandset$ | async">
+<mat-sidenav-container class="mobile-sidenav-container">
   <mat-sidenav #mobileDrawer mode="over" class="mobile-sidenav" position="start">
     <div class="mobile-nav-header">
       <h2>Menu</h2>
@@ -59,7 +65,7 @@
 </mat-sidenav-container>
 
 <!-- Mobile Toolbar -->
-<mat-toolbar class="fancy-toolbar mobile-toolbar" *ngIf="isHandset$ | async">
+<mat-toolbar class="fancy-toolbar mobile-toolbar">
   <div class="toolbar-left">
     <button mat-icon-button (click)="mobileDrawer.toggle()" class="hamburger-menu">
       <mat-icon>menu</mat-icon>
@@ -81,71 +87,71 @@
   </div>
 </mat-toolbar>
 
-  <!-- Desktop Toolbar -->
-  <mat-toolbar class="fancy-toolbar desktop-toolbar" *ngIf="!(isHandset$ | async)">
-    <div class="toolbar-left">
-      <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-menu">
-        <mat-icon>menu</mat-icon>
+<!-- Desktop Toolbar -->
+<mat-toolbar class="fancy-toolbar desktop-toolbar">
+  <div class="toolbar-left">
+    <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-menu">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <mat-menu #menu="matMenu" class="hamburger-menu-dropdown">
+      <button >
+        <mat-icon>people</mat-icon>
+        <span href="http://localhost:54142">Staff portal</span>
       </button>
-      <mat-menu #menu="matMenu" class="hamburger-menu-dropdown">
-        <button >
-          <mat-icon>people</mat-icon>
-          <span href="http://localhost:54142">Staff portal</span>
-        </button>
-      </mat-menu>
+    </mat-menu>
 
-      <a class="app-title">✨ServiceFuzz✨</a>
-      <img src="https://lh3.googleusercontent.com/a/ACg8ocLaJxexuHa88Q1viRsHMpdLIEIUjbiNlBs-asm8Pk02NoVN0Sk=s96-c-rg-br100" 
-           alt="servicefuzzlogo">
-    </div>
+    <a class="app-title">✨ServiceFuzz✨</a>
+    <img src="https://lh3.googleusercontent.com/a/ACg8ocLaJxexuHa88Q1viRsHMpdLIEIUjbiNlBs-asm8Pk02NoVN0Sk=s96-c-rg-br100" 
+         alt="servicefuzzlogo">
+  </div>
 
-    <div class="toolbar-center">
-      <button mat-button routerLink="/" [class.active]="isRouteActive('/')">
-        <mat-icon>home</mat-icon>
-        <span [class.hide-text]="isSmallScreen$ | async">Home</span>
+  <div class="toolbar-center">
+    <button mat-button routerLink="/" [class.active]="isRouteActive('/')">
+      <mat-icon>home</mat-icon>
+      <span [class.hide-text]="isSmallScreen$ | async">Home</span>
+    </button>
+    <button mat-button [matMenuTriggerFor]="businessMenu" class="business-button" [class.active]="isRouteActive('/business')">
+      <mat-icon>business</mat-icon>
+      <span [class.hide-text]="isSmallScreen$ | async">Business</span>
+    </button>
+    <mat-menu #businessMenu="matMenu" class="business-menu">
+      <button mat-menu-item routerLink="/business/add">
+        <mat-icon>add_business</mat-icon>
+        <span>Add Business</span>
       </button>
-      <button mat-button [matMenuTriggerFor]="businessMenu" class="business-button" [class.active]="isRouteActive('/business')">
-        <mat-icon>business</mat-icon>
-        <span [class.hide-text]="isSmallScreen$ | async">Business</span>
+      <button mat-menu-item routerLink="/business/manage">
+        <mat-icon>manage_accounts</mat-icon>
+        <span>Manage Businesses</span>
       </button>
-      <mat-menu #businessMenu="matMenu" class="business-menu">
-        <button mat-menu-item routerLink="/business/add">
-          <mat-icon>add_business</mat-icon>
-          <span>Add Business</span>
-        </button>
-        <button mat-menu-item routerLink="/business/manage">
-          <mat-icon>manage_accounts</mat-icon>
-          <span>Manage Businesses</span>
-        </button>
-        <mat-divider></mat-divider>
-        <button mat-menu-item routerLink="/business/settings">
-          <mat-icon>settings</mat-icon>
-          <span>Business Settings</span>
-        </button>
-      </mat-menu>
-      <button mat-button routerLink="/analytics" [class.active]="isRouteActive('/analytics')">
-        <mat-icon>analytics</mat-icon>
-        <span [class.hide-text]="isSmallScreen$ | async">Analytics</span>
-      </button>
-      <button mat-button routerLink="/chat" [class.active]="isRouteActive('/chat')">
-        <mat-icon>chat</mat-icon>
-        <span [class.hide-text]="isSmallScreen$ | async">Chat</span>
-      </button>
-    </div>
-   
-    <div class="toolbar-right">
-      <button mat-icon-button *ngIf="!(isSmallScreen$ | async)" matTooltip="Notifications">
-        <mat-icon>notifications</mat-icon>
-      </button>
-      <button mat-icon-button *ngIf="!(isHandset$ | async)" matTooltip="Settings">
+      <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/business/settings">
         <mat-icon>settings</mat-icon>
+        <span>Business Settings</span>
       </button>
-      <button mat-icon-button routerLink="/sign" [class.active]="isRouteActive('/sign')" class="profile-button" 
-              [matTooltip]="data.currentUser ? data.currentUser.name : 'Sign In'">
-        <div *ngIf="data.currentUser" class="user-avatar">
-          {{ getUserInitials() }}
-        </div>
-        <mat-icon *ngIf="!data.currentUser">account_circle</mat-icon>
-      </button>
-         </div>
-   </mat-toolbar>
+    </mat-menu>
+    <button mat-button routerLink="/analytics" [class.active]="isRouteActive('/analytics')">
+      <mat-icon>analytics</mat-icon>
+      <span [class.hide-text]="isSmallScreen$ | async">Analytics</span>
+    </button>
+    <button mat-button routerLink="/chat" [class.active]="isRouteActive('/chat')">
+      <mat-icon>chat</mat-icon>
+      <span [class.hide-text]="isSmallScreen$ | async">Chat</span>
+    </button>
+  </div>
+ 
+  <div class="toolbar-right">
+    <button mat-icon-button *ngIf="!(isSmallScreen$ | async)" matTooltip="Notifications">
+      <mat-icon>notifications</mat-icon>
+    </button>
+    <button mat-icon-button matTooltip="Settings">
+      <mat-icon>settings</mat-icon>
+    </button>
+    <button mat-icon-button routerLink="/sign" [class.active]="isRouteActive('/sign')" class="profile-button" 
+            [matTooltip]="data.currentUser ? data.currentUser.name : 'Sign In'">
+      <div *ngIf="data.currentUser" class="user-avatar">
+        {{ getUserInitials() }}
+      </div>
+      <mat-icon *ngIf="!data.currentUser">account_circle</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>

@@ -1,10 +1,24 @@
 .home-container {
   padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
-  padding: 20px;
+}
+
+/* Desktop layout - use more width */
+@media (min-width: 1200px) {
+  .home-container {
+    padding: 2rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .home-container {
+    padding: 2rem 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 }
 
 h1 {
@@ -83,7 +97,7 @@ p {
 
 .slide-content p {
   font-size: 1.2em;
-  max-width: 600px;
+  max-width: 100%;
   line-height: 1.6;
   color: white;
 }
@@ -274,8 +288,15 @@ mat-icon {
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
+  .home-container {
+    padding: 16px;
+    min-height: calc(100vh - 56px); /* Account for mobile topbar */
+    width: 100%;
+    overflow-x: hidden;
+  }
+
   .carousel-content {
-    height: 600px;
+    height: 500px;
   }
 
   .slide-content {
@@ -330,32 +351,97 @@ mat-icon {
   .video-section button {
     padding: 10px 20px;
     font-size: 1em;
+    min-height: 44px; /* Ensure touch target size */
+  }
+
+  /* Ensure sections are visible */
+  .features-section,
+  .benefits-section,
+  .info-section,
+  .cta-section {
+    padding: 40px 16px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 400px) {
+  .home-container {
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  
   .carousel-content {
-    height: 500px;
+    height: 400px;
   }
-
+  
   .slide-content {
-    padding: 20px;
+    padding: 30px 20px;
   }
-
+  
   .slide-content img {
     width: 120px;
     height: 120px;
-    margin-bottom: 20px;
   }
-
+  
   .slide-content h1 {
-    font-size: 1.8em;
-    margin-bottom: 15px;
+    font-size: 2em;
   }
-
+  
   .slide-content p {
     font-size: 1em;
-    line-height: 1.4;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .features-section,
+  .benefits-section,
+  .info-section {
+    padding: 30px 15px;
+  }
+
+  .carousel-indicators button {
+    transform: scale(0.8);
+  }
+}
+
+@media (max-width: 412px) {
+  .home-container {
+    padding: 0.5rem;
+  }
+  
+  .carousel-content {
+    height: 350px;
+  }
+  
+  .slide-content {
+    padding: 20px 15px;
+  }
+  
+  .slide-content img {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .slide-content h1 {
+    font-size: 1.5em;
+  }
+  
+  .slide-content p {
+    font-size: 0.9em;
+  }
+  
+  .features-section,
+  .benefits-section,
+  .info-section {
+    padding: 20px 10px;
   }
 
   .carousel-indicators button {
