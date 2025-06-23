@@ -1,0 +1,322 @@
+<div class="business-edit-container">
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="48" color="primary"></mat-spinner>
+    <h2>Loading Business...</h2>
+  </div>
+
+  <!-- Edit Form -->
+  <div *ngIf="!isLoading && business" class="edit-form-container">
+    <div class="form-header">
+      <h1>Edit Business</h1>
+      <p>Update your business information, services, locations, and staff</p>
+    </div>
+
+    <form [formGroup]="businessForm" class="business-form">
+      <!-- Basic Information Section -->
+      <mat-card class="form-section-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>business</mat-icon>
+            Basic Information
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Business Name *</mat-label>
+              <input matInput formControlName="businessName" placeholder="Enter business name">
+              <mat-error *ngIf="businessForm.get('businessName')?.hasError('required')">
+                Business name is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="businessDescription" 
+                        placeholder="Describe your business" rows="3"></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Email *</mat-label>
+              <input matInput formControlName="email" type="email" placeholder="business@example.com">
+              <mat-error *ngIf="businessForm.get('email')?.hasError('required')">
+                Email is required
+              </mat-error>
+              <mat-error *ngIf="businessForm.get('email')?.hasError('email')">
+                Please enter a valid email
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="phone" placeholder="+1 (555) 123-4567">
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Services Section -->
+      <mat-card class="form-section-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>category</mat-icon>
+            Services
+          </mat-card-title>
+          <button mat-icon-button color="primary" (click)="addService()" type="button" class="add-button">
+            <mat-icon>add</mat-icon>
+          </button>
+        </mat-card-header>
+        <mat-card-content>
+          <div formArrayName="services" class="services-container">
+            <div *ngFor="let service of servicesArray.controls; let i = index" 
+                 [formGroupName]="i" class="service-item">
+              <div class="service-header">
+                <h4>Service {{ i + 1 }}</h4>
+                <button mat-icon-button color="warn" (click)="removeService(i)" type="button">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Service Name *</mat-label>
+                  <input matInput formControlName="serviceName" placeholder="Service name">
+                  <mat-error *ngIf="service.get('serviceName')?.hasError('required')">
+                    Service name is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Price</mat-label>
+                  <input matInput formControlName="price" type="number" placeholder="0.00">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Currency</mat-label>
+                  <input matInput formControlName="currency" placeholder="USD">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Duration (minutes)</mat-label>
+                  <input matInput formControlName="duration" type="number" placeholder="60">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Description</mat-label>
+                  <textarea matInput formControlName="serviceDescription" 
+                            placeholder="Service description" rows="2"></textarea>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Addresses Section -->
+      <mat-card class="form-section-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>location_on</mat-icon>
+            Specific Addresses
+          </mat-card-title>
+          <button mat-icon-button color="primary" (click)="addSpecificAddress()" type="button" class="add-button">
+            <mat-icon>add</mat-icon>
+          </button>
+        </mat-card-header>
+        <mat-card-content>
+          <div formArrayName="specificAddresses" class="addresses-container">
+            <div *ngFor="let address of addressesArray.controls; let i = index" 
+                 [formGroupName]="i" class="address-item">
+              <div class="address-header">
+                <h4>Address {{ i + 1 }}</h4>
+                <button mat-icon-button color="warn" (click)="removeSpecificAddress(i)" type="button">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              
+              <div class="form-grid">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Street Address *</mat-label>
+                  <input matInput formControlName="streetAddress" placeholder="123 Main St">
+                  <mat-error *ngIf="address.get('streetAddress')?.hasError('required')">
+                    Street address is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>City *</mat-label>
+                  <input matInput formControlName="city" placeholder="City">
+                  <mat-error *ngIf="address.get('city')?.hasError('required')">
+                    City is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>State</mat-label>
+                  <input matInput formControlName="state" placeholder="State">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Country *</mat-label>
+                  <input matInput formControlName="country" placeholder="Country">
+                  <mat-error *ngIf="address.get('country')?.hasError('required')">
+                    Country is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Postal Code</mat-label>
+                  <input matInput formControlName="postalCode" placeholder="12345">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Service Areas Section -->
+      <mat-card class="form-section-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>map</mat-icon>
+            Service Areas
+          </mat-card-title>
+          <button mat-icon-button color="primary" (click)="addAreaSpecification()" type="button" class="add-button">
+            <mat-icon>add</mat-icon>
+          </button>
+        </mat-card-header>
+        <mat-card-content>
+          <div formArrayName="areaSpecifications" class="areas-container">
+            <div *ngFor="let area of areasArray.controls; let i = index" 
+                 [formGroupName]="i" class="area-item">
+              <div class="area-header">
+                <h4>Service Area {{ i + 1 }}</h4>
+                <button mat-icon-button color="warn" (click)="removeAreaSpecification(i)" type="button">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Country *</mat-label>
+                  <input matInput formControlName="country" placeholder="Country">
+                  <mat-error *ngIf="area.get('country')?.hasError('required')">
+                    Country is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>State</mat-label>
+                  <input matInput formControlName="state" placeholder="State">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>City</mat-label>
+                  <input matInput formControlName="city" placeholder="City">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Postal Code</mat-label>
+                  <input matInput formControlName="postalCode" placeholder="12345">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Operation Type and Staff Section -->
+      <mat-card class="form-section-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>people</mat-icon>
+            Operation Type & Staff
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="operation-type-section">
+            <h4>Operation Type</h4>
+            <mat-radio-group formControlName="operationType" class="radio-group">
+              <mat-radio-button value="solo">Solo Operation</mat-radio-button>
+              <mat-radio-button value="with_staff">With Staff</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <div *ngIf="businessForm.get('operationType')?.value === 'with_staff'" class="staff-section">
+            <div class="staff-header">
+              <h4>Staff Members</h4>
+              <button mat-icon-button color="primary" (click)="addStaffMember()" type="button" class="add-button">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            
+            <div formArrayName="staff" class="staff-container">
+              <div *ngFor="let staff of staffArray.controls; let i = index" 
+                   [formGroupName]="i" class="staff-item">
+                <div class="staff-header">
+                  <h5>Staff Member {{ i + 1 }}</h5>
+                  <button mat-icon-button color="warn" (click)="removeStaffMember(i)" type="button">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+                
+                <div class="form-grid">
+                  <mat-form-field appearance="outline">
+                    <mat-label>First Name *</mat-label>
+                    <input matInput formControlName="firstName" placeholder="First name">
+                    <mat-error *ngIf="staff.get('firstName')?.hasError('required')">
+                      First name is required
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Last Name *</mat-label>
+                    <input matInput formControlName="lastName" placeholder="Last name">
+                    <mat-error *ngIf="staff.get('lastName')?.hasError('required')">
+                      Last name is required
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Email *</mat-label>
+                    <input matInput formControlName="email" type="email" placeholder="staff@example.com">
+                    <mat-error *ngIf="staff.get('email')?.hasError('required')">
+                      Email is required
+                    </mat-error>
+                    <mat-error *ngIf="staff.get('email')?.hasError('email')">
+                      Please enter a valid email
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Role</mat-label>
+                    <input matInput formControlName="role" placeholder="Role">
+                  </mat-form-field>
+
+                  <div class="checkbox-group">
+                    <mat-checkbox formControlName="accessAll">Full Access</mat-checkbox>
+                    <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button mat-button color="warn" (click)="cancelEditing()" [disabled]="isUpdating">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+        <button mat-raised-button color="primary" (click)="saveBusiness()" 
+                [disabled]="isUpdating || businessForm.invalid">
+          <mat-icon>{{ isUpdating ? 'hourglass_empty' : 'save' }}</mat-icon>
+          {{ isUpdating ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div> 

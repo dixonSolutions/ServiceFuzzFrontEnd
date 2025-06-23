@@ -7,6 +7,7 @@ import { ManagebusinessesComponent } from './managebusinesses/managebusinesses.c
 import { BusinessDetailsComponent } from './business-details/business-details.component';
 import { BusinessSettingsComponent } from './business-settings/business-settings.component';
 import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
+import { BusinessEditComponent } from './business-edit/business-edit.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -14,6 +15,7 @@ const routes: Routes = [
   { path: 'sign', component: SignInOrSignUpComponent },
   { path: 'business/add', component: BusinessComponent },
   { path: 'business/manage', component: ManagebusinessesComponent },
+  { path: 'business/edit/:id', component: BusinessEditComponent },
   { path: 'business/details', component: BusinessDetailsComponent },
   { path: 'business/settings', component: BusinessSettingsComponent },
   { path: 'chat', component: ChatWithAiAboutServiceFuzzComponent },

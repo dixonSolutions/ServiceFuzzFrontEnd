@@ -37,6 +37,7 @@ import { BusinessDetailsComponent } from './business-details/business-details.co
 import { BusinessSettingsComponent } from './business-settings/business-settings.component';
 import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
+import { BusinessEditComponent } from './business-edit/business-edit.component';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -59,11 +60,12 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     BusinessDetailsComponent,
     BusinessSettingsComponent,
     ChatWithAiAboutServiceFuzzComponent,
-    AnalyticsComponent,
+    AnalyticsComponent
   ],
   imports: [
     BrowserModule,
     CommonModule,
+    BusinessEditComponent,
     BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,

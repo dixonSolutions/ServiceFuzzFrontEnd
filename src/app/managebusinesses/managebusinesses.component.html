@@ -121,12 +121,16 @@
                 <mat-icon>location_on</mat-icon>
                 {{(business.specificAddresses?.length || 0) + (business.areaSpecifications?.length || 0)}} Locations
               </p>
+              <p *ngIf="business.operationType === 'with_staff'">
+                <mat-icon>people</mat-icon>
+                {{business.staff?.length || 0}} Staff
+              </p>
             </div>
           </div>
         </mat-card-content>
 
         <mat-card-actions>
-          <button mat-button color="primary">
+          <button mat-button color="primary" (click)="startEditing(business)">
             <mat-icon>edit</mat-icon>
             Edit
           </button>

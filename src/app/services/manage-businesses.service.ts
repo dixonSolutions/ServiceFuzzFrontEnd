@@ -110,4 +110,33 @@ export class ManageBusinessesService {
       }
     });
   }
+
+  /**
+   * Update a business
+   * @param business - The updated business data
+   * @returns Observable of any response
+   */
+  updateBusiness(business: BusinessRegistrationDto): Observable<any> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+    
+    const url = `${this.apiUrl}/api/ManagesBusinesses/UpdateBusiness`;
+    
+    // Debug logging
+    console.log('Update business API call:', {
+      url: url,
+      businessId: business.basicInfo.businessID,
+      businessName: business.basicInfo.businessName,
+      hasJwtToken: !!jwtToken
+    });
+    
+    return this.http.put(url, business, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`
+      }
+    });
+  }
 } 

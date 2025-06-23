@@ -200,31 +200,29 @@ mat-card-title {
 }
 
 mat-card-subtitle {
-  color: #666 !important;
+  color: #666;
+  font-size: 14px;
 }
 
 .business-info {
-  padding: 16px;
+  padding: 16px 0;
 }
 
 .description {
-  font-size: 14px;
-  color: #666;
+  color: #555;
   margin-bottom: 16px;
   line-height: 1.5;
+  font-size: 14px;
 }
 
 .contact-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .contact-info p {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0;
+  margin: 8px 0;
   color: #666;
   font-size: 14px;
 }
@@ -238,34 +236,29 @@ mat-card-subtitle {
 }
 
 mat-card-actions {
+  padding: 16px;
   display: flex;
-  justify-content: space-around;
-  padding: 16px !important;
-  background: rgba(0, 0, 0, 0.02);
-  margin: 0 !important;
+  gap: 8px;
+  justify-content: flex-start;
+  border-top: 1px solid #f0f0f0;
 }
 
 mat-card-actions button {
   flex: 1;
-  margin: 0 4px !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
+  min-width: 0;
+  font-size: 14px;
 }
 
 .business-stats {
   margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
 }
 
 .business-stats p {
   display: flex;
   align-items: center;
-  margin: 8px 0;
-  font-size: 14px;
+  margin: 4px 0;
   color: #666;
+  font-size: 12px;
 }
 
 .business-stats mat-icon {
@@ -284,25 +277,24 @@ mat-card-actions button {
 
   .grid-container {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .section-title {
     font-size: 24px;
-    margin-bottom: 24px;
   }
 
   .search-container {
-    padding: 0;
-    margin-bottom: 16px;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .search-field {
-    font-size: 14px;
+    width: 100%;
   }
 
   .search-results-info {
-    padding: 0;
-    margin-bottom: 16px;
+    padding: 0 8px;
   }
 
   .search-results-info p {
@@ -322,10 +314,8 @@ mat-card-actions button {
     width: 100%;
   }
 
-  /* Mobile loading card adjustments */
   .loading-card {
     margin: 24px auto;
-    padding: 24px;
   }
 
   .loading-card h2 {

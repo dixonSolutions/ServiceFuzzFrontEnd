@@ -154,6 +154,15 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Start editing a business
+   * @param business - The business to edit
+   */
+  startEditing(business: BusinessRegistrationDto): void {
+    // Navigate to the edit page with the business ID
+    this.router.navigate(['/business/edit', business.basicInfo.businessID]);
+  }
+
+  /**
    * Delete a business with confirmation
    * @param business - The business to delete
    */

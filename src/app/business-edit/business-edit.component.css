@@ -1,0 +1,321 @@
+.business-edit-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 16px;
+}
+
+.loading-container h2 {
+  color: #666;
+  margin: 0;
+}
+
+/* Form Header */
+.form-header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-header h1 {
+  font-size: 32px;
+  font-weight: 500;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.form-header p {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Business Form */
+.business-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Form Section Cards */
+.form-section-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.form-section-card mat-card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.form-section-card mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+}
+
+.form-section-card mat-card-title mat-icon {
+  color: #007bff;
+}
+
+.form-section-card mat-card-content {
+  padding: 24px;
+}
+
+/* Form Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Add Button */
+.add-button {
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.add-button:hover {
+  background-color: #0056b3;
+}
+
+/* Services Container */
+.services-container,
+.addresses-container,
+.areas-container,
+.staff-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Service Items */
+.service-item,
+.address-item,
+.area-item,
+.staff-item {
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+  position: relative;
+}
+
+.service-header,
+.address-header,
+.area-header,
+.staff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.service-header h4,
+.address-header h4,
+.area-header h4,
+.staff-header h4,
+.staff-header h5 {
+  margin: 0;
+  color: #333;
+  font-weight: 500;
+}
+
+.staff-header h5 {
+  font-size: 16px;
+}
+
+/* Operation Type Section */
+.operation-type-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.operation-type-section h4 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-weight: 500;
+}
+
+.radio-group {
+  display: flex;
+  gap: 32px;
+}
+
+.radio-group mat-radio-button {
+  margin-right: 16px;
+}
+
+/* Staff Section */
+.staff-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.staff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* Checkbox Group */
+.checkbox-group {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  grid-column: 1 / -1;
+  padding: 12px 0;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 24px;
+}
+
+.action-buttons button {
+  min-width: 120px;
+  padding: 12px 24px;
+}
+
+/* Form Field Overrides */
+mat-form-field {
+  width: 100%;
+}
+
+mat-form-field textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .business-edit-container {
+    padding: 16px;
+  }
+
+  .form-header {
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .form-header h1 {
+    font-size: 24px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .radio-group {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .checkbox-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .action-buttons button {
+    width: 100%;
+  }
+
+  .service-item,
+  .address-item,
+  .area-item,
+  .staff-item {
+    padding: 16px;
+  }
+
+  .form-section-card mat-card-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .business-edit-container {
+    padding: 12px;
+  }
+
+  .form-header h1 {
+    font-size: 20px;
+  }
+
+  .form-header p {
+    font-size: 14px;
+  }
+}
+
+/* Animation for form sections */
+.form-section-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Focus states for better accessibility */
+mat-form-field:focus-within {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
+/* Error states */
+mat-form-field.mat-form-field-invalid {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+} 
