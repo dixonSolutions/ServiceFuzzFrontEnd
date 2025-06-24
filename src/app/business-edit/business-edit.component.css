@@ -330,4 +330,172 @@ mat-form-field.mat-form-field-invalid {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
+}
+
+/* Business Schedule Styles */
+.schedule-form {
+  margin-top: 16px;
+}
+
+.schedule-config {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.schedule-cycles,
+.schedule-exceptions {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.section-header h4,
+.section-header h5,
+.section-header h6 {
+  margin: 0;
+  color: #333;
+  font-weight: 500;
+}
+
+.cycles-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cycle-panel {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cycle-content {
+  padding: 16px;
+}
+
+.days-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.day-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.day-card mat-card-header {
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.day-card mat-card-content {
+  padding: 16px;
+}
+
+.opening-periods {
+  margin-top: 12px;
+}
+
+.periods-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.period-item {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.cycle-actions {
+  padding: 16px;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.exceptions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.exception-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.exception-card mat-card-header {
+  padding: 16px;
+  background: #fff3e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.exception-card mat-card-content {
+  padding: 16px;
+}
+
+.schedule-actions {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.schedule-actions button {
+  min-width: 200px;
+}
+
+/* Responsive adjustments for schedule */
+@media (max-width: 768px) {
+  .schedule-config {
+    padding: 12px;
+  }
+  
+  .cycle-content {
+    padding: 12px;
+  }
+  
+  .day-card mat-card-header {
+    padding: 8px 12px;
+  }
+  
+  .day-card mat-card-content {
+    padding: 12px;
+  }
+  
+  .period-item {
+    padding: 8px;
+  }
+  
+  .exception-card mat-card-header {
+    padding: 12px;
+  }
+  
+  .exception-card mat-card-content {
+    padding: 12px;
+  }
+  
+  .schedule-actions button {
+    min-width: 150px;
+  }
 } 

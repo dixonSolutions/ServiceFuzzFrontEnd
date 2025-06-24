@@ -305,6 +305,284 @@
         </mat-card-content>
       </mat-card>
 
+      <!-- Business Schedule Section -->
+      <mat-card class="form-section-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>schedule</mat-icon>
+            Business Schedule
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="scheduleForm" class="schedule-form">
+            <!-- Schedule Configuration -->
+            <div class="schedule-config">
+              <h4>Schedule Configuration</h4>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Cycle Type *</mat-label>
+                  <mat-select formControlName="cycleType">
+                    <mat-option *ngFor="let type of scheduleCycleTypeOptions" [value]="type">
+                      {{ getScheduleCycleTypeName(type) }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="scheduleForm.get('cycleType')?.hasError('required')">
+                    Cycle type is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Cycle Length (Days) *</mat-label>
+                  <input matInput formControlName="cycleLengthInDays" type="number" min="1">
+                  <mat-error *ngIf="scheduleForm.get('cycleLengthInDays')?.hasError('required')">
+                    Cycle length is required
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Cycle Start Date *</mat-label>
+                  <input matInput [matDatepicker]="startPicker" formControlName="cycleStartDate">
+                  <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #startPicker></mat-datepicker>
+                  <mat-error *ngIf="scheduleForm.get('cycleStartDate')?.hasError('required')">
+                    Start date is required
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <!-- Schedule Cycles -->
+            <div class="schedule-cycles">
+              <div class="section-header">
+                <h4>Schedule Cycles</h4>
+                <button mat-icon-button color="primary" (click)="addCycle()" type="button" class="add-button">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+              
+              <div formArrayName="cycles" class="cycles-container">
+                <mat-expansion-panel *ngFor="let cycle of cyclesArray.controls; let cycleIndex = index" 
+                                   [formGroupName]="cycleIndex" class="cycle-panel">
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      Cycle {{ cycleIndex + 1 }}
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      {{ cycle.get('startDate')?.value | date }} - {{ cycle.get('endDate')?.value | date }}
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <div class="cycle-content">
+                    <div class="form-grid">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Start Date *</mat-label>
+                        <input matInput [matDatepicker]="cycleStartPicker" formControlName="startDate">
+                        <mat-datepicker-toggle matSuffix [for]="cycleStartPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #cycleStartPicker></mat-datepicker>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>End Date *</mat-label>
+                        <input matInput [matDatepicker]="cycleEndPicker" formControlName="endDate">
+                        <mat-datepicker-toggle matSuffix [for]="cycleEndPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #cycleEndPicker></mat-datepicker>
+                      </mat-form-field>
+
+                      <div class="checkbox-group">
+                        <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+                      </div>
+                    </div>
+
+                    <!-- Day Schedules -->
+                    <div class="day-schedules">
+                      <div class="section-header">
+                        <h5>Day Schedules</h5>
+                        <button mat-icon-button color="primary" (click)="addDaySchedule(cycleIndex)" type="button" class="add-button">
+                          <mat-icon>add</mat-icon>
+                        </button>
+                      </div>
+                      
+                      <div formArrayName="days" class="days-container">
+                        <mat-card *ngFor="let day of getDaysArray(cycle); let dayIndex = index" 
+                                 [formGroupName]="dayIndex" class="day-card">
+                          <mat-card-header>
+                            <mat-card-title>
+                              <mat-form-field appearance="outline">
+                                <mat-label>Day</mat-label>
+                                <mat-select formControlName="day">
+                                  <mat-option *ngFor="let dayOption of dayOfWeekOptions" [value]="dayOption">
+                                    {{ getDayOfWeekName(dayOption) }}
+                                  </mat-option>
+                                </mat-select>
+                              </mat-form-field>
+                            </mat-card-title>
+                            <mat-card-subtitle>
+                              <mat-form-field appearance="outline">
+                                <mat-label>Availability</mat-label>
+                                <mat-select formControlName="availabilityStatus">
+                                  <mat-option *ngFor="let status of dayAvailabilityStatusOptions" [value]="status">
+                                    {{ getDayAvailabilityStatusName(status) }}
+                                  </mat-option>
+                                </mat-select>
+                              </mat-form-field>
+                            </mat-card-subtitle>
+                            <button mat-icon-button color="warn" (click)="removeDaySchedule(cycleIndex, dayIndex)" type="button">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          </mat-card-header>
+                          
+                          <mat-card-content>
+                            <!-- Opening Periods -->
+                            <div class="opening-periods">
+                              <div class="section-header">
+                                <h6>Opening Periods</h6>
+                                <button mat-icon-button color="primary" (click)="addOpeningPeriod(cycleIndex, dayIndex)" type="button" class="add-button">
+                                  <mat-icon>add</mat-icon>
+                                </button>
+                              </div>
+                              
+                              <div formArrayName="openingPeriods" class="periods-container">
+                                <div *ngFor="let period of getPeriodsArray(day); let periodIndex = index" 
+                                     [formGroupName]="periodIndex" class="period-item">
+                                  <div class="form-grid">
+                                    <mat-form-field appearance="outline">
+                                      <mat-label>Opening Time</mat-label>
+                                      <input matInput formControlName="openingTime" type="time">
+                                    </mat-form-field>
+                                    
+                                    <mat-form-field appearance="outline">
+                                      <mat-label>Closing Time</mat-label>
+                                      <input matInput formControlName="closingTime" type="time">
+                                    </mat-form-field>
+                                    
+                                    <button mat-icon-button color="warn" (click)="removeOpeningPeriod(cycleIndex, dayIndex, periodIndex)" type="button">
+                                      <mat-icon>delete</mat-icon>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </mat-card-content>
+                        </mat-card>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="cycle-actions">
+                    <button mat-button color="warn" (click)="removeCycle(cycleIndex)" type="button">
+                      <mat-icon>delete</mat-icon>
+                      Remove Cycle
+                    </button>
+                  </div>
+                </mat-expansion-panel>
+              </div>
+            </div>
+
+            <!-- Schedule Exceptions -->
+            <div class="schedule-exceptions">
+              <div class="section-header">
+                <h4>Schedule Exceptions</h4>
+                <button mat-icon-button color="primary" (click)="addException()" type="button" class="add-button">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+              
+              <div formArrayName="exceptions" class="exceptions-container">
+                <mat-card *ngFor="let exception of exceptionsArray.controls; let exceptionIndex = index" 
+                         [formGroupName]="exceptionIndex" class="exception-card">
+                  <mat-card-header>
+                    <mat-card-title>
+                      <mat-form-field appearance="outline">
+                        <mat-label>Exception Type</mat-label>
+                        <mat-select formControlName="exceptionType">
+                          <mat-option *ngFor="let type of exceptionTypeOptions" [value]="type">
+                            {{ getExceptionTypeName(type) }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </mat-card-title>
+                    <mat-card-subtitle>
+                      <mat-form-field appearance="outline">
+                        <mat-label>Reason</mat-label>
+                        <input matInput formControlName="reason" placeholder="Exception reason">
+                      </mat-form-field>
+                    </mat-card-subtitle>
+                    <button mat-icon-button color="warn" (click)="removeException(exceptionIndex)" type="button">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </mat-card-header>
+                  
+                  <mat-card-content>
+                    <div class="form-grid">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Exception Date *</mat-label>
+                        <input matInput [matDatepicker]="exceptionDatePicker" formControlName="exceptionDate">
+                        <mat-datepicker-toggle matSuffix [for]="exceptionDatePicker"></mat-datepicker-toggle>
+                        <mat-datepicker #exceptionDatePicker></mat-datepicker>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>End Date</mat-label>
+                        <input matInput [matDatepicker]="exceptionEndDatePicker" formControlName="endDate">
+                        <mat-datepicker-toggle matSuffix [for]="exceptionEndDatePicker"></mat-datepicker-toggle>
+                        <mat-datepicker #exceptionEndDatePicker></mat-datepicker>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Availability Status</mat-label>
+                        <mat-select formControlName="availabilityStatus">
+                          <mat-option *ngFor="let status of dayAvailabilityStatusOptions" [value]="status">
+                            {{ getDayAvailabilityStatusName(status) }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Recurrence Pattern</mat-label>
+                        <mat-select formControlName="recurrencePattern">
+                          <mat-option *ngFor="let pattern of recurrencePatternOptions" [value]="pattern">
+                            {{ getRecurrencePatternName(pattern) }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Recurrence Interval</mat-label>
+                        <input matInput formControlName="recurrenceInterval" type="number" min="1">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline">
+                        <mat-label>Time Zone</mat-label>
+                        <input matInput formControlName="timeZone" placeholder="UTC">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Notes</mat-label>
+                        <textarea matInput formControlName="notes" rows="2" placeholder="Additional notes"></textarea>
+                      </mat-form-field>
+
+                      <div class="checkbox-group">
+                        <mat-checkbox formControlName="isClosed">Closed</mat-checkbox>
+                        <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </div>
+
+            <!-- Schedule Action Buttons -->
+            <div class="schedule-actions">
+              <button mat-raised-button color="accent" (click)="saveSchedule()" 
+                      [disabled]="isUpdating || scheduleForm.invalid">
+                <mat-icon>{{ isUpdating ? 'hourglass_empty' : 'schedule' }}</mat-icon>
+                {{ isUpdating ? 'Saving Schedule...' : 'Save Schedule' }}
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
       <!-- Action Buttons -->
       <div class="action-buttons">
         <button mat-button color="warn" (click)="cancelEditing()" [disabled]="isUpdating">

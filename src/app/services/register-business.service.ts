@@ -7,6 +7,7 @@ import { ServicesForBusiness } from '../models/services-for-business';
 import { BusinessPlace } from '../models/business-place';
 import { BusinessSpecificAdr } from '../models/business-specific-adr';
 import { S2CareaSpecification } from '../models/s2c-area-specification';
+import { BusinessSchedule } from '../models/businessSchedules';
 import { 
   BusinessRegistrationDto, 
   BusinessBasicInfoDto, 
@@ -23,6 +24,13 @@ export interface RegisterBusinessResponse {
   message?: string;
   errors?: string[];
   businessId?: string;
+}
+
+export interface RegisterBusinessScheduleResponse {
+  success: boolean;
+  message?: string;
+  errors?: string[];
+  scheduleId?: string;
 }
 
 @Injectable({
@@ -327,5 +335,97 @@ export interface RegisterBusinessResponse {
      */
     getSupportedCountries(): string[] {
       return ['USA', 'Canada', 'UK', 'Australia'];
+    }
+
+    /**
+     * Register a business schedule using the RegisterBusinessSchedule endpoint
+     * @param businessId - The ID of the business
+     * @param schedule - The business schedule to register
+     * @returns Observable of RegisterBusinessScheduleResponse
+     */
+    registerBusinessSchedule(businessId: string, schedule: BusinessSchedule): Observable<RegisterBusinessScheduleResponse> {
+      const jwtToken = this.dataSvr.jwtToken;
+
+      if (!jwtToken) {
+        return throwError(() => new Error('Authentication required. Please log in.'));
+      }
+
+      if (!businessId || businessId.trim() === '') {
+        return throwError(() => new Error('Business ID is required.'));
+      }
+
+      if (!schedule) {
+        return throwError(() => new Error('Schedule is required.'));
+      }
+
+      // Validate schedule structure
+      if (!schedule.businessId || schedule.businessId !== businessId) {
+        return throwError(() => new Error('Schedule business ID must match the provided business ID.'));
+      }
+
+      if (!schedule.cycles || schedule.cycles.length === 0) {
+        return throwError(() => new Error('At least one schedule cycle is required.'));
+      }
+
+      const headers = new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`,
+        'Accept': 'application/json'
+      });
+
+      // Create request body with just the schedule object (not wrapped)
+      const requestBody = {
+        businessId: businessId,
+        cycleType: schedule.cycleType,
+        cycleLengthInDays: schedule.cycleLengthInDays,
+        cycleStartDate: schedule.cycleStartDate,
+        cycles: schedule.cycles.map(cycle => ({
+          ...cycle,
+          cycleId: parseInt(cycle.cycleId.toString()) || 0
+        })),
+        exceptions: schedule.exceptions
+      };
+
+      console.log('Sending schedule request to API:', {
+        url: `${this.apiUrl}/api/BusinessRegistry/RegisterBusinessSchedule?businessId=${encodeURIComponent(businessId)}`,
+        businessId: businessId,
+        requestBody: requestBody
+      });
+
+      console.log('Request body JSON:', JSON.stringify(requestBody, null, 2));
+      console.log('BusinessId in query parameter:', businessId);
+      console.log('BusinessId type:', typeof businessId);
+
+      return this.http.post<RegisterBusinessScheduleResponse>(
+        `${this.apiUrl}/api/BusinessRegistry/RegisterBusinessSchedule?businessId=${encodeURIComponent(businessId)}`,
+        requestBody,
+        { headers }
+      ).pipe(
+        map(response => ({
+          ...response,
+          success: response.success !== undefined ? response.success : true,
+          message: response.message || 'Business schedule registered successfully!'
+        })),
+        catchError(error => {
+          console.error('Business schedule registration error:', error);
+          let errorMessage = 'Business schedule registration failed. Please try again.';
+          let errors: string[] = [];
+
+          if (error.error) {
+            if (error.error.message) {
+              errorMessage = error.error.message;
+            }
+            if (error.error.errors && Array.isArray(error.error.errors)) {
+              errors = error.error.errors;
+            }
+          }
+
+          return throwError(() => ({
+            success: false,
+            message: errorMessage,
+            errors: errors
+          }));
+        })
+      );
     }
   }

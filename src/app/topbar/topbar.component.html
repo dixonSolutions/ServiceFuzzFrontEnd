@@ -9,25 +9,25 @@
 
 <!-- Simple Mobile Sidebar -->
 <div class="simple-mobile-sidebar" *ngIf="(isSidebarVisible$ | async) && mobileDrawerOpened">
-  <div class="mobile-nav-header">
+    <div class="mobile-nav-header">
     <h2>✨ServiceFuzz✨</h2>
     <button mat-icon-button (click)="closeMobileSidebar()" class="close-button">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
-  
-  <mat-nav-list class="mobile-nav-list">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    
+    <mat-nav-list class="mobile-nav-list">
     <!-- Main Navigation -->
     <a mat-list-item routerLink="/" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/')">
-      <mat-icon matListIcon>home</mat-icon>
-      <span matLine>Home</span>
-    </a>
-    
+        <mat-icon matListIcon>home</mat-icon>
+        <span matLine>Home</span>
+      </a>
+      
     <a mat-list-item (click)="toggleBusinessSidebar()" class="business-nav-item">
-      <mat-icon matListIcon>business</mat-icon>
-      <span matLine>Business</span>
+        <mat-icon matListIcon>business</mat-icon>
+        <span matLine>Business</span>
       <mat-icon class="expand-icon">{{ businessSidebarExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
-    </a>
+      </a>
     <div *ngIf="businessSidebarExpanded" class="sidebar-business-submenu">
       <a mat-list-item routerLink="/business/add" (click)="closeMobileSidebar()">
         <mat-icon matListIcon>add_business</mat-icon>
@@ -44,22 +44,22 @@
     </div>
     
     <a mat-list-item routerLink="/analytics" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/analytics')">
-      <mat-icon matListIcon>analytics</mat-icon>
-      <span matLine>Analytics</span>
-    </a>
-    
+        <mat-icon matListIcon>analytics</mat-icon>
+        <span matLine>Analytics</span>
+      </a>
+      
     <a mat-list-item routerLink="/chat" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/chat')">
-      <mat-icon matListIcon>chat</mat-icon>
-      <span matLine>Chat</span>
-    </a>
-    
-    <mat-divider></mat-divider>
-    
+        <mat-icon matListIcon>chat</mat-icon>
+        <span matLine>Chat</span>
+      </a>
+      
+      <mat-divider></mat-divider>
+      
     <!-- Staff Portal -->
     <a mat-list-item routerLink="/staff" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/staff')">
-      <mat-icon matListIcon>people</mat-icon>
-      <span matLine>Staff Portal</span>
-    </a>
+        <mat-icon matListIcon>people</mat-icon>
+        <span matLine>Staff Portal</span>
+      </a>
     
     <mat-divider></mat-divider>
     
@@ -67,17 +67,17 @@
     <a mat-list-item routerLink="/sign" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/sign')">
       <mat-icon matListIcon>account_circle</mat-icon>
       <span matLine>{{ data.currentUser ? data.currentUser.name : 'Sign In' }}</span>
-    </a>
+      </a>
     
     <a mat-list-item (click)="closeMobileSidebar()">
       <mat-icon matListIcon>notifications</mat-icon>
       <span matLine>Notifications</span>
-    </a>
+      </a>
     
     <a mat-list-item (click)="closeMobileSidebar()">
       <mat-icon matListIcon>settings</mat-icon>
       <span matLine>Settings</span>
-    </a>
+      </a>
   </mat-nav-list>
 </div>
 
