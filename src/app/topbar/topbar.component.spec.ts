@@ -71,17 +71,7 @@ describe('TopbarComponent', () => {
     });
   });
 
-  it('should hide content below 400px', (done) => {
-    // Mock the breakpoint observer to return true for max-width: 400px
-    mockBreakpointObserver.observe.and.returnValue(of({ matches: true }));
-    
-    component.isContentHidden$.subscribe(isHidden => {
-      expect(isHidden).toBe(true);
-      done();
-    });
-  });
-
-  it('should show desktop toolbar above 700px when content is visible', (done) => {
+  it('should show desktop toolbar above 700px', (done) => {
     // Mock the breakpoint observer to return false for max-width: 700px (sidebar not visible)
     mockBreakpointObserver.observe.and.returnValue(of({ matches: false }));
     

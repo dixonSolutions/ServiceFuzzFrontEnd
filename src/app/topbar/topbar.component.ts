@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {MatToolbarModule} from '@angular/material/toolbar';
+import {MatSidenavModule} from '@angular/material/sidenav';
 import { DataSvrService } from '../services/data-svr.service';
 import {MatMenuModule} from '@angular/material/menu'; 
 import { Router } from '@angular/router';
@@ -22,15 +23,12 @@ export class TopbarComponent implements OnInit {
   // Window reference for debug info
   window = window;
 
+  // Mobile sidebar state
+  mobileDrawerOpened = false;
+  businessSidebarExpanded = false;
+
   // Sidebar appears at 700px maximum (700px and below)
   isSidebarVisible$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 700px)')
-    .pipe(
-      map(result => result.matches),
-      shareReplay()
-    );
-
-  // Content disappears below 400px
-  isContentHidden$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 399px)')
     .pipe(
       map(result => result.matches),
       shareReplay()
@@ -88,5 +86,19 @@ export class TopbarComponent implements OnInit {
     if (this.mobileDrawer) {
       this.mobileDrawer.close();
     }
+  }
+
+  // Simple mobile sidebar methods
+  toggleMobileSidebar(): void {
+    this.mobileDrawerOpened = !this.mobileDrawerOpened;
+  }
+
+  closeMobileSidebar(): void {
+    this.mobileDrawerOpened = false;
+    this.businessSidebarExpanded = false;
+  }
+
+  toggleBusinessSidebar(): void {
+    this.businessSidebarExpanded = !this.businessSidebarExpanded;
   }
 }

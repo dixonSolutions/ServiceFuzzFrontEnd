@@ -16,32 +16,41 @@
   min-height: calc(100vh - 64px);
 }
 
-/* Desktop toolbar height (64px) for screens above 400px */
-@media (min-width: 401px) {
-  .main-content {
-    margin-top: 64px; /* Desktop toolbar height */
-    padding: 16px;
-    min-height: calc(100vh - 64px);
+/* Desktop toolbar height (64px) for screens above 700px */
+@media (min-width: 701px) {
+  .app-container .main-content {
+    margin-top: 64px !important; /* Desktop toolbar height */
+    padding: 16px !important;
+    min-height: calc(100vh - 64px) !important;
+  }
+}
+
+/* Mobile toolbar height (56px) for screens below 700px */
+@media (max-width: 700px) {
+  .app-container .main-content {
+    margin-top: 56px !important; /* Mobile toolbar height */
+    padding: 16px !important;
+    min-height: calc(100vh - 56px) !important;
   }
 }
 
 /* Content disappears below 400px - no margin needed */
 @media (max-width: 400px) {
-  .main-content {
-    margin-top: 0;
-    padding: 0;
-    min-height: 100vh;
-    width: 100%;
-    max-width: 100%;
+  .app-container .main-content {
+    margin-top: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
 
 @media (max-width: 412px) {
-  .main-content {
-    margin-top: 0;
-    padding: 0;
-    min-height: 100vh;
-    width: 100%;
-    max-width: 100%;
+  .app-container .main-content {
+    margin-top: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }

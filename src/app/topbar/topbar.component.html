@@ -1,74 +1,90 @@
 <!-- Debug Information (temporary) -->
-<div style="position: fixed; top: 100px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 9999;" *ngIf="!(isContentHidden$ | async)">
+<div style="position: fixed; top: 100px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 9999;">
   <div>Screen Width: {{ window.innerWidth }}px</div>
   <div>Sidebar Visible: {{ (isSidebarVisible$ | async) ? 'Yes' : 'No' }}</div>
-  <div>Content Hidden: {{ (isContentHidden$ | async) ? 'Yes' : 'No' }}</div>
 </div>
 
-<!-- Mobile Sidenav (only the drawer, not the container) -->
-<mat-sidenav-container class="mobile-sidenav-container" *ngIf="(isSidebarVisible$ | async) && !(isContentHidden$ | async)">
-  <mat-sidenav #mobileDrawer mode="over" class="mobile-sidenav" position="start">
-    <div class="mobile-nav-header">
-      <h2>Menu</h2>
-      <button mat-icon-button (click)="mobileDrawer.close()" class="close-button">
-        <mat-icon>close</mat-icon>
-      </button>
+<!-- Mobile Sidebar Backdrop -->
+<div class="mobile-sidebar-backdrop" *ngIf="(isSidebarVisible$ | async) && mobileDrawerOpened" (click)="closeMobileSidebar()"></div>
+
+<!-- Simple Mobile Sidebar -->
+<div class="simple-mobile-sidebar" *ngIf="(isSidebarVisible$ | async) && mobileDrawerOpened">
+  <div class="mobile-nav-header">
+    <h2>✨ServiceFuzz✨</h2>
+    <button mat-icon-button (click)="closeMobileSidebar()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  
+  <mat-nav-list class="mobile-nav-list">
+    <!-- Main Navigation -->
+    <a mat-list-item routerLink="/" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/')">
+      <mat-icon matListIcon>home</mat-icon>
+      <span matLine>Home</span>
+    </a>
+    
+    <a mat-list-item (click)="toggleBusinessSidebar()" class="business-nav-item">
+      <mat-icon matListIcon>business</mat-icon>
+      <span matLine>Business</span>
+      <mat-icon class="expand-icon">{{ businessSidebarExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </a>
+    <div *ngIf="businessSidebarExpanded" class="sidebar-business-submenu">
+      <a mat-list-item routerLink="/business/add" (click)="closeMobileSidebar()">
+        <mat-icon matListIcon>add_business</mat-icon>
+        <span matLine>Add Business</span>
+      </a>
+      <a mat-list-item routerLink="/business/manage" (click)="closeMobileSidebar()">
+        <mat-icon matListIcon>manage_accounts</mat-icon>
+        <span matLine>Manage Businesses</span>
+      </a>
+      <a mat-list-item routerLink="/business/settings" (click)="closeMobileSidebar()">
+        <mat-icon matListIcon>settings</mat-icon>
+        <span matLine>Business Settings</span>
+      </a>
     </div>
     
-    <mat-nav-list class="mobile-nav-list">
-      <a mat-list-item routerLink="/" (click)="mobileDrawer.close()" [class.active-nav-item]="isRouteActive('/')">
-        <mat-icon matListIcon>home</mat-icon>
-        <span matLine>Home</span>
-      </a>
-      
-      <a mat-list-item [matMenuTriggerFor]="mobileBusinessSubmenu" class="business-nav-item">
-        <mat-icon matListIcon>business</mat-icon>
-        <span matLine>Business</span>
-        <mat-icon class="expand-icon">expand_more</mat-icon>
-      </a>
-      
-      <a mat-list-item routerLink="/analytics" (click)="mobileDrawer.close()" [class.active-nav-item]="isRouteActive('/analytics')">
-        <mat-icon matListIcon>analytics</mat-icon>
-        <span matLine>Analytics</span>
-      </a>
-      
-      <a mat-list-item routerLink="/chat" (click)="mobileDrawer.close()" [class.active-nav-item]="isRouteActive('/chat')">
-        <mat-icon matListIcon>chat</mat-icon>
-        <span matLine>Chat</span>
-      </a>
-      
-      <mat-divider></mat-divider>
-      
-      <a mat-list-item routerLink="/staff" (click)="mobileDrawer.close()" [class.active-nav-item]="isRouteActive('/staff')">
-        <mat-icon matListIcon>people</mat-icon>
-        <span matLine>Staff Portal</span>
-      </a>
-    </mat-nav-list>
+    <a mat-list-item routerLink="/analytics" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/analytics')">
+      <mat-icon matListIcon>analytics</mat-icon>
+      <span matLine>Analytics</span>
+    </a>
     
-    <!-- Mobile Business Submenu -->
-    <mat-menu #mobileBusinessSubmenu="matMenu" class="mobile-business-submenu">
-      <a mat-menu-item routerLink="/business/add" (click)="mobileDrawer.close()">
-        <mat-icon>add_business</mat-icon>
-        <span>Add Business</span>
-      </a>
-      <a mat-menu-item routerLink="/business/manage" (click)="mobileDrawer.close()">
-        <mat-icon>manage_accounts</mat-icon>
-        <span>Manage Businesses</span>
-      </a>
-      <mat-divider></mat-divider>
-      <a mat-menu-item routerLink="/business/settings" (click)="mobileDrawer.close()">
-        <mat-icon>settings</mat-icon>
-        <span>Business Settings</span>
-      </a>
-    </mat-menu>
-  </mat-sidenav>
-  <mat-sidenav-content></mat-sidenav-content>
-</mat-sidenav-container>
+    <a mat-list-item routerLink="/chat" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/chat')">
+      <mat-icon matListIcon>chat</mat-icon>
+      <span matLine>Chat</span>
+    </a>
+    
+    <mat-divider></mat-divider>
+    
+    <!-- Staff Portal -->
+    <a mat-list-item routerLink="/staff" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/staff')">
+      <mat-icon matListIcon>people</mat-icon>
+      <span matLine>Staff Portal</span>
+    </a>
+    
+    <mat-divider></mat-divider>
+    
+    <!-- User Actions -->
+    <a mat-list-item routerLink="/sign" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/sign')">
+      <mat-icon matListIcon>account_circle</mat-icon>
+      <span matLine>{{ data.currentUser ? data.currentUser.name : 'Sign In' }}</span>
+    </a>
+    
+    <a mat-list-item (click)="closeMobileSidebar()">
+      <mat-icon matListIcon>notifications</mat-icon>
+      <span matLine>Notifications</span>
+    </a>
+    
+    <a mat-list-item (click)="closeMobileSidebar()">
+      <mat-icon matListIcon>settings</mat-icon>
+      <span matLine>Settings</span>
+    </a>
+  </mat-nav-list>
+</div>
 
 <!-- Mobile Toolbar -->
-<mat-toolbar class="fancy-toolbar mobile-toolbar" *ngIf="(isSidebarVisible$ | async) && !(isContentHidden$ | async)">
+<mat-toolbar class="fancy-toolbar mobile-toolbar" *ngIf="isSidebarVisible$ | async">
   <div class="toolbar-left">
-    <button mat-icon-button (click)="mobileDrawer.toggle()" class="hamburger-menu">
+    <button mat-icon-button (click)="toggleMobileSidebar()" class="hamburger-menu">
       <mat-icon>menu</mat-icon>
     </button>
     <a class="app-title mobile-title">✨ServiceFuzz✨</a>
@@ -89,7 +105,7 @@
 </mat-toolbar>
 
 <!-- Desktop Toolbar -->
-<mat-toolbar class="fancy-toolbar desktop-toolbar" *ngIf="!(isSidebarVisible$ | async) && !(isContentHidden$ | async)">
+<mat-toolbar class="fancy-toolbar desktop-toolbar" *ngIf="!(isSidebarVisible$ | async)">
   <div class="toolbar-left">
     <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-menu">
       <mat-icon>menu</mat-icon>

@@ -3,6 +3,33 @@
   position: relative;
 }
 
+/* Mobile Sidebar Backdrop */
+.mobile-sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  cursor: pointer;
+}
+
+/* Simple Mobile Sidebar */
+.simple-mobile-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: #ffffff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  z-index: 1002;
+  overflow-y: auto;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
+
 /* Mobile Sidenav Styles */
 .mobile-sidenav-container {
   position: fixed;
@@ -153,7 +180,6 @@
   z-index: 1001;
   width: 100%;
   max-width: 100%;
-  display: none; /* Hidden by default */
   justify-content: space-between;
   align-items: center;
 }
@@ -501,52 +527,27 @@ button:hover {
   border-color: #e0e0e0;
 }
 
-.toolbar-center button.active {
-  background: linear-gradient(135deg, #1976d2, #42a5f5);
-  color: white;
+/* Remove vibrant background and gradient underline for active topbar sections */
+.toolbar-center button.active, .toolbar-right button.active {
+  background: none !important;
+  color: white !important;
   position: relative;
   overflow: hidden;
 }
 
-.toolbar-center button.active::after {
+.toolbar-center button.active::after, .toolbar-right button.active::after {
   content: '';
   position: absolute;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
+  left: 10%;
+  width: 80%;
   height: 3px;
-  background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+  background: white;
   border-radius: 2px;
-  animation: slideIn 0.3s ease forwards;
+  transition: width 0.3s;
 }
 
-@keyframes slideIn {
-  to {
-    width: 80%;
-  }
-}
-
-.toolbar-right button.active {
-  background: linear-gradient(135deg, #1976d2, #42a5f5);
-  color: white;
-  position: relative;
-  overflow: hidden;
-}
-
-.toolbar-right button.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 3px;
-  background: linear-gradient(135deg, #ff6b6b, #ff8e53);
-  border-radius: 2px;
-  animation: slideIn 0.3s ease forwards;
-}
-
+/* Remove any previous gradient backgrounds/animations for active states */
 .user-avatar {
   width: 32px;
   height: 32px;
@@ -682,32 +683,11 @@ button:hover {
   }
 }
 
-/* BREAKPOINT 1: Sidebar appears at 700px maximum (700px and below) */
-@media (max-width: 700px) {
-  .desktop-toolbar {
-    display: none !important;
-  }
-  
-  .mobile-toolbar {
-    display: flex !important;
-  }
-  
-  .mobile-sidenav-container {
-    display: block !important;
-  }
-}
+/* BREAKPOINT: Sidebar appears at 700px maximum (700px and below) */
+/* REMOVED - This was causing content to disappear below 700px */
 
-/* BREAKPOINT 2: Content disappears below 400px */
-@media (max-width: 399px) {
-  .mobile-toolbar {
-    display: none !important;
-  }
-  
-  .mobile-sidenav-container {
-    display: none !important;
-  }
-  
-  .desktop-toolbar {
-    display: none !important;
-  }
+.sidebar-business-submenu {
+  padding-left: 32px;
+  border-left: 2px solid #eee;
+  margin-bottom: 8px;
 }
