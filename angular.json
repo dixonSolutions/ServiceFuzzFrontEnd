@@ -31,7 +31,7 @@
               }
             ],
             "styles": [
-              "@angular/material/prebuilt-themes/purple-green.css",
+              "src/styles/theme.scss",
               "src/styles.css"
             ],
             "scripts": []
@@ -90,7 +90,7 @@
               }
             ],
             "styles": [
-              "@angular/material/prebuilt-themes/purple-green.css",
+              "src/styles/theme.scss",
               "src/styles.css"
             ],
             "scripts": []

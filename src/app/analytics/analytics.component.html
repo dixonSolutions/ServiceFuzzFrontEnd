@@ -1,17 +1,21 @@
+<button mat-raised-button color="secondary">
+  M3 Raised Button
+</button>
+
 <div class="analytics-container">
   <!-- Header Section -->
   <div class="analytics-header">
     <div class="header-content">
-      <h1>Business Analytics Dashboard</h1>
-      <p>Your command center for business intelligence and performance insights</p>
+      <h1 class="m3-headline">Business Analytics Dashboard</h1>
+      <p class="m3-body-large">Your command center for business intelligence and performance insights</p>
     </div>
     <div class="header-actions">
-      <button mat-button="outlined" class="date-filter">
+      <button mat-button="outlined" class="date-filter m3-button">
         <mat-icon>calendar_today</mat-icon>
         This Month
         <mat-icon>expand_more</mat-icon>
       </button>
-      <button mat-button="elevated" class="refresh-btn">
+      <button mat-button="elevated" class="refresh-btn m3-button">
         <mat-icon>refresh</mat-icon>
         Refresh Data
       </button>
@@ -20,17 +24,17 @@
 
   <!-- Top Section - Key Performance Indicators (KPIs) -->
   <div class="kpi-section">
-    <h2 class="section-title">Key Performance Indicators</h2>
+    <h2 class="section-title m3-headline-small">Key Performance Indicators</h2>
     <div class="kpi-grid">
       <!-- Revenue KPI -->
-      <mat-card class="kpi-card revenue">
+      <mat-card class="kpi-card revenue m3-card">
         <div class="kpi-content">
           <div class="kpi-icon">
             <mat-icon>trending_up</mat-icon>
           </div>
           <div class="kpi-details">
-            <div class="kpi-value">$24,580</div>
-            <div class="kpi-label">Total Revenue</div>
+            <div class="kpi-value m3-headline-medium">$24,580</div>
+            <div class="kpi-label m3-label-large">Total Revenue</div>
             <div class="kpi-trend positive">
               <mat-icon>arrow_upward</mat-icon>
               +12.5% vs last month
@@ -40,14 +44,14 @@
       </mat-card>
 
       <!-- Appointments KPI -->
-      <mat-card class="kpi-card appointments">
+      <mat-card class="kpi-card appointments m3-card">
         <div class="kpi-content">
           <div class="kpi-icon">
             <mat-icon>event</mat-icon>
           </div>
           <div class="kpi-details">
-            <div class="kpi-value">156</div>
-            <div class="kpi-label">Appointments</div>
+            <div class="kpi-value m3-headline-medium">156</div>
+            <div class="kpi-label m3-label-large">Appointments</div>
             <div class="kpi-trend positive">
               <mat-icon>arrow_upward</mat-icon>
               +8.2% vs last month
@@ -57,14 +61,14 @@
       </mat-card>
 
       <!-- Customers KPI -->
-      <mat-card class="kpi-card customers">
+      <mat-card class="kpi-card customers m3-card">
         <div class="kpi-content">
           <div class="kpi-icon">
             <mat-icon>people</mat-icon>
           </div>
           <div class="kpi-details">
-            <div class="kpi-value">89</div>
-            <div class="kpi-label">New Customers</div>
+            <div class="kpi-value m3-headline-medium">89</div>
+            <div class="kpi-label m3-label-large">New Customers</div>
             <div class="kpi-trend positive">
               <mat-icon>arrow_upward</mat-icon>
               +15.3% vs last month
@@ -74,14 +78,14 @@
       </mat-card>
 
       <!-- Satisfaction KPI -->
-      <mat-card class="kpi-card satisfaction">
+      <mat-card class="kpi-card satisfaction m3-card">
         <div class="kpi-content">
           <div class="kpi-icon">
             <mat-icon>star</mat-icon>
           </div>
           <div class="kpi-details">
-            <div class="kpi-value">4.8</div>
-            <div class="kpi-label">Avg. Rating</div>
+            <div class="kpi-value m3-headline-medium">4.8</div>
+            <div class="kpi-label m3-label-large">Avg. Rating</div>
             <div class="kpi-trend neutral">
               <mat-icon>remove</mat-icon>
               No change
@@ -94,13 +98,13 @@
 
   <!-- Middle Section - Primary Charts -->
   <div class="primary-charts-section">
-    <h2 class="section-title">Performance Analytics</h2>
+    <h2 class="section-title m3-headline-small">Performance Analytics</h2>
     <div class="charts-grid primary">
       <!-- Revenue Trends -->
-      <mat-card class="chart-card large">
+      <mat-card class="chart-card large m3-card">
         <mat-card-header>
-          <mat-card-title>Revenue Trends</mat-card-title>
-          <mat-card-subtitle>Daily revenue performance over time</mat-card-subtitle>
+          <mat-card-title class="m3-title-large">Revenue Trends</mat-card-title>
+          <mat-card-subtitle class="m3-body-medium">Daily revenue performance over time</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="chart-container">
@@ -110,10 +114,10 @@
       </mat-card>
 
       <!-- Appointment Volume -->
-      <mat-card class="chart-card">
+      <mat-card class="chart-card m3-card">
         <mat-card-header>
-          <mat-card-title>Appointment Volume</mat-card-title>
-          <mat-card-subtitle>Booking patterns by day of week</mat-card-subtitle>
+          <mat-card-title class="m3-title-large">Appointment Volume</mat-card-title>
+          <mat-card-subtitle class="m3-body-medium">Booking patterns by day of week</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="chart-container">
@@ -123,10 +127,10 @@
       </mat-card>
 
       <!-- Service Performance -->
-      <mat-card class="chart-card">
+      <mat-card class="chart-card m3-card">
         <mat-card-header>
-          <mat-card-title>Service Performance</mat-card-title>
-          <mat-card-subtitle>Most popular services ranking</mat-card-subtitle>
+          <mat-card-title class="m3-title-large">Service Performance</mat-card-title>
+          <mat-card-subtitle class="m3-body-medium">Most popular services ranking</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="chart-container">
@@ -136,10 +140,10 @@
       </mat-card>
 
       <!-- Customer Acquisition -->
-      <mat-card class="chart-card">
+      <mat-card class="chart-card m3-card">
         <mat-card-header>
-          <mat-card-title>Customer Acquisition</mat-card-title>
-          <mat-card-subtitle>New vs returning customers</mat-card-subtitle>
+          <mat-card-title class="m3-title-large">Customer Acquisition</mat-card-title>
+          <mat-card-subtitle class="m3-body-medium">New vs returning customers</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="chart-container">
@@ -152,13 +156,13 @@
 
   <!-- Bottom Section - Detailed Insights -->
   <div class="detailed-insights-section">
-    <h2 class="section-title">Detailed Insights</h2>
+    <h2 class="section-title m3-headline-small">Detailed Insights</h2>
     <div class="insights-grid">
       <!-- Customer Behavior -->
-      <mat-card class="insight-card">
+      <mat-card class="insight-card m3-card">
         <mat-card-header>
-          <mat-card-title>Customer Behavior</mat-card-title>
-          <mat-card-subtitle>Demographics and booking patterns</mat-card-subtitle>
+          <mat-card-title class="m3-title-large">Customer Behavior</mat-card-title>
+          <mat-card-subtitle class="m3-body-medium">Demographics and booking patterns</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="chart-container">
@@ -168,10 +172,10 @@
       </mat-card>
 
       <!-- Staff Performance -->
-      <mat-card class="insight-card">
+      <mat-card class="insight-card m3-card">
         <mat-card-header>
-          <mat-card-title>Staff Performance</mat-card-title>
-          <mat-card-subtitle>Productivity and ratings analysis</mat-card-subtitle>
+          <mat-card-title class="m3-title-large">Staff Performance</mat-card-title>
+          <mat-card-subtitle class="m3-body-medium">Productivity and ratings analysis</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="chart-container">
@@ -181,10 +185,10 @@
       </mat-card>
 
       <!-- Operational Efficiency -->
-      <mat-card class="insight-card">
+      <mat-card class="insight-card m3-card">
         <mat-card-header>
-          <mat-card-title>Operational Efficiency</mat-card-title>
-          <mat-card-subtitle>Utilization rates and peak hours</mat-card-subtitle>
+          <mat-card-title class="m3-title-large">Operational Efficiency</mat-card-title>
+          <mat-card-subtitle class="m3-body-medium">Utilization rates and peak hours</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="chart-container">
@@ -194,10 +198,10 @@
       </mat-card>
 
       <!-- Financial Breakdown -->
-      <mat-card class="insight-card">
+      <mat-card class="insight-card m3-card">
         <mat-card-header>
-          <mat-card-title>Financial Breakdown</mat-card-title>
-          <mat-card-subtitle>Payment methods and revenue distribution</mat-card-subtitle>
+          <mat-card-title class="m3-title-large">Financial Breakdown</mat-card-title>
+          <mat-card-subtitle class="m3-body-medium">Payment methods and revenue distribution</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <div class="chart-container">
@@ -210,25 +214,25 @@
 
   <!-- Quick Actions Section -->
   <div class="quick-actions-section">
-    <mat-card class="actions-card">
+    <mat-card class="actions-card m3-card">
       <mat-card-header>
-        <mat-card-title>Quick Actions</mat-card-title>
+        <mat-card-title class="m3-title-large">Quick Actions</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="actions-grid">
-          <button mat-button="elevated" class="action-btn">
+          <button mat-button="elevated" class="action-btn m3-button">
             <mat-icon>download</mat-icon>
             Export Report
           </button>
-          <button mat-button="outlined" class="action-btn">
+          <button mat-button="outlined" class="action-btn m3-button">
             <mat-icon>print</mat-icon>
             Print Dashboard
           </button>
-          <button mat-button="outlined" class="action-btn">
+          <button mat-button="outlined" class="action-btn m3-button">
             <mat-icon>share</mat-icon>
             Share Insights
           </button>
-          <button mat-button="outlined" class="action-btn">
+          <button mat-button="outlined" class="action-btn m3-button">
             <mat-icon>settings</mat-icon>
             Customize Views
           </button>
