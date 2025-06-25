@@ -367,3 +367,5 @@ mat-card-actions button {
     margin-bottom: 6px;
   }
 }
+
+/* All custom button appearance styles removed to allow Angular Material defaults. */

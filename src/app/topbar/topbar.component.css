@@ -283,7 +283,8 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-button {
+/* Remove generic button styles that interfere with Angular Material */
+/* button {
   background: transparent;
   border: none;
   color: white;
@@ -296,8 +297,9 @@ button {
 button:hover {
   background-color: rgba(255,255,255,0.1);
   transform: translateY(-1px);
-}
+} */
 
+/* Specific styles for toolbar buttons */
 .toolbar-center button {
   display: flex;
   align-items: center;
@@ -672,9 +674,10 @@ button:hover {
     border-bottom: 2px solid #fff;
   }
   
-  button {
+  /* Remove generic button override */
+  /* button {
     border: 1px solid #fff;
-  }
+  } */
   
   .user-avatar {
     background: #fff;
@@ -691,3 +694,5 @@ button:hover {
   border-left: 2px solid #eee;
   margin-bottom: 8px;
 }
+
+/* All custom button appearance styles removed to allow Angular Material defaults. */

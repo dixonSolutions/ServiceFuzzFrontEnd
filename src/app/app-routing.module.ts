@@ -8,6 +8,7 @@ import { BusinessDetailsComponent } from './business-details/business-details.co
 import { BusinessSettingsComponent } from './business-settings/business-settings.component';
 import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
 import { BusinessEditComponent } from './business-edit/business-edit.component';
+import { AnalyticsComponent } from './analytics/analytics.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -19,6 +20,7 @@ const routes: Routes = [
   { path: 'business/details', component: BusinessDetailsComponent },
   { path: 'business/settings', component: BusinessSettingsComponent },
   { path: 'chat', component: ChatWithAiAboutServiceFuzzComponent },
+  {path:'analytics', component: AnalyticsComponent},
   { path: '**', redirectTo: '', pathMatch: 'full' } // Wildcard route for 404 cases
 ];
 

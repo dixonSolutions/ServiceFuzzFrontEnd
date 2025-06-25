@@ -210,3 +210,5 @@ mat-spinner {
     flex-direction: column;
   }
 }
+
+/* All custom button appearance styles removed to allow Angular Material defaults. */
