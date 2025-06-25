@@ -693,6 +693,6 @@ button:hover {
   padding-left: 32px;
   border-left: 2px solid #eee;
   margin-bottom: 8px;
-}
-
+  }
+  
 /* All custom button appearance styles removed to allow Angular Material defaults. */

@@ -680,11 +680,6 @@
     border-radius: 8px;
 }
 
-::ng-deep .mat-raised-button {
-    border-radius: 8px;
-    font-weight: 500;
-}
-
 ::ng-deep .mat-card {
     border-radius: 8px;
 }
