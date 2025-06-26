@@ -1,137 +1,220 @@
 <div class="home-container">
-  <!-- Hero Carousel Section -->
-  <div class="carousel-container">
-    <mat-card class="carousel-card">
-      <div class="carousel-content">
-        <div class="slide" *ngFor="let slide of slides; let i = index" [class.active]="currentSlide === i">
-          <div class="slide-content">
-            <img src="https://lh3.googleusercontent.com/a/ACg8ocLaJxexuHa88Q1viRsHMpdLIEIUjbiNlBs-asm8Pk02NoVN0Sk=s96-c-rg-br100" alt="servicefuzzlogo">
-            <h1>{{slide.title}}</h1>
-            <p>{{slide.description}}</p>
+  <!-- Hero Section with PrimeNG Carousel -->
+  <section class="hero-section">
+    <p-carousel 
+      [value]="heroSlides" 
+      [numVisible]="1" 
+      [numScroll]="1" 
+      [circular]="true" 
+      [autoplayInterval]="5000"
+      [showIndicators]="true"
+      [showNavigators]="true"
+      [responsiveOptions]="responsiveOptions"
+      styleClass="hero-carousel">
+      <ng-template let-slide pTemplate="item">
+        <div class="hero-slide">
+          <div class="hero-content">
+            <div class="hero-text">
+              <p-tag [value]="slide.badge" [severity]="getSeverity(slide.badge)" styleClass="hero-badge"></p-tag>
+              <h1 pAnimateOnScroll enterClass="fadeinup" [threshold]="0.3">{{ slide.title }}</h1>
+              <h2 pAnimateOnScroll enterClass="fadeinup" [threshold]="0.3">{{ slide.subtitle }}</h2>
+              <p pAnimateOnScroll enterClass="fadeinup" [threshold]="0.3">{{ slide.description }}</p>
+              <div class="hero-actions" pAnimateOnScroll enterClass="fadeinup" [threshold]="0.3">
+                <p-button 
+                  [label]="slide.cta" 
+                  icon="pi pi-arrow-right" 
+                  iconPos="right"
+                  styleClass="p-button-primary p-button-lg"
+                  (onClick)="navigateToSignup()">
+                </p-button>
+                <p-button 
+                  label="Watch Demo" 
+                  icon="pi pi-play" 
+                  styleClass="p-button-outlined p-button-lg"
+                  (onClick)="openVideoDialog()">
+                </p-button>
+              </div>
+            </div>
+            <div class="hero-image">
+              <img [src]="slide.image" [alt]="slide.title" pAnimateOnScroll enterClass="fadeinright" [threshold]="0.3">
+            </div>
           </div>
-          <img [src]="slide.image" [alt]="slide.title">
+        </div>
+      </ng-template>
+    </p-carousel>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section" pAnimateOnScroll enterClass="fadeinup" [threshold]="0.3">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item" *ngFor="let stat of stats">
+          <div class="stat-icon">
+            <i [class]="stat.icon"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ stat.value }}</h3>
+            <p>{{ stat.label }}</p>
+          </div>
         </div>
       </div>
-      <div class="carousel-indicators">
-        <button mat-mini-fab *ngFor="let slide of slides; let i = index" 
-                [class.active]="currentSlide === i"
-                (click)="setSlide(i)">
-          {{i + 1}}
-        </button>
-      </div>
-    </mat-card>
-  </div>
+    </div>
+  </section>
 
   <!-- Features Section -->
-  <div class="video-section">
-    <button mat-raised-button color="primary" (click)="openVideoDialog()">
-      <mat-icon>play_circle</mat-icon>
-      Watch Overview
-    </button>
-  </div>
-
   <section class="features-section">
-    <h2>Our Platform at a Glance</h2>
-    <div class="features-grid">
-      <mat-card *ngFor="let feature of features">
-        <mat-card-header>
-          <mat-icon mat-card-avatar>{{feature.icon}}</mat-icon>
-          <mat-card-title>{{feature.title}}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <p>{{feature.description}}</p>
-        </mat-card-content>
-        <p>✅</p>
-      </mat-card>
+    <div class="container">
+      <div class="section-header" pAnimateOnScroll enterClass="fadeinup" [threshold]="0.3">
+        <h2>Powerful Features for Modern Businesses</h2>
+        <p>Everything you need to streamline operations and grow your service business</p>
+      </div>
+      
+      <div class="features-grid">
+        <p-card 
+          *ngFor="let feature of features; let i = index" 
+          styleClass="feature-card"
+          pAnimateOnScroll 
+          enterClass="fadeinup" 
+          [threshold]="0.3">
+          <ng-template pTemplate="header">
+            <div class="feature-header">
+              <div class="feature-icon" [class]="'icon-' + feature.color">
+                <i [class]="feature.icon"></i>
+              </div>
+              <div class="feature-stats">{{ feature.stats }}</div>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="content">
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
+          </ng-template>
+        </p-card>
+      </div>
     </div>
   </section>
 
-  <!-- Benefits Section -->
-  <section class="benefits-section">
-    <mat-tab-group mat-align-tabs="center" animationDuration="500ms">
-      <mat-tab label="For Business Owners">
-        <div class="benefits-content">
-          <mat-list>
-            <mat-list-item *ngFor="let benefit of businessBenefits">
-              <p>✅</p>
-              <mat-icon matListItemIcon>check_circle</mat-icon>
-              <div matListItemTitle>{{benefit}}</div>
-            </mat-list-item>
-          </mat-list>
-        </div>
-      </mat-tab>
-      <mat-tab label="For Your Customers">
-        <div class="benefits-content">
-          <mat-list>
-            <mat-list-item *ngFor="let benefit of customerBenefits">
-              <mat-icon matListItemIcon>star</mat-icon>
-              <div matListItemTitle>{{benefit}}</div>
-            </mat-list-item>
-          </mat-list>
-        </div>
-      </mat-tab>
-    </mat-tab-group>
-  </section>
-
-  <!-- Security & Integration Section -->
-  <section class="info-section">
-    <div class="info-grid">
-      <mat-card class="security-card">
-        <mat-card-header>
-          <mat-card-title>Security and Reliability</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <mat-list>
-            <mat-list-item *ngFor="let item of securityFeatures">
-              <mat-icon matListItemIcon>security</mat-icon>
-              <div matListItemTitle>{{item}}</div>
-            </mat-list-item>
-          </mat-list>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="integration-card">
-        <mat-card-header>
-          <mat-card-title>Integration Capabilities</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <mat-list>
-            <mat-list-item *ngFor="let item of integrationFeatures">
-              <mat-icon matListItemIcon>integration_instructions</mat-icon>
-              <div matListItemTitle>{{item}}</div>
-            </mat-list-item>
-          </mat-list>
-        </mat-card-content>
-      </mat-card>
+  <!-- Timeline Section -->
+  <section class="timeline-section">
+    <div class="container">
+      <div class="section-header" pAnimateOnScroll enterClass="fadeinup" [threshold]="0.3">
+        <h2>Your Journey to Success</h2>
+        <p>From setup to scaling, we're with you every step of the way</p>
+      </div>
+      
+      <p-timeline 
+        [value]="timeline" 
+        layout="horizontal" 
+        styleClass="custom-timeline"
+        pAnimateOnScroll 
+        enterClass="fadeinup" 
+        [threshold]="0.3">
+        <ng-template pTemplate="content" let-event>
+          <div class="timeline-content">
+            <div class="timeline-icon" [class]="'icon-' + event.color">
+              <i [class]="event.icon"></i>
+            </div>
+            <h3>{{ event.title }}</h3>
+            <p>{{ event.description }}</p>
+          </div>
+        </ng-template>
+      </p-timeline>
     </div>
   </section>
 
-  <!-- Call to Action -->
-  <section class="cta-section">
-    <mat-card>
-      <mat-card-content>
-        <h2>Ready to Transform Your Business?</h2>
-        <p style="color: white;">Join thousands of successful businesses already using ServiceFuzz</p>
-        <button mat-raised-button color="primary" (click)="navigateToSignup()">Get Started Now</button>
-      </mat-card-content>
-    </mat-card>
+  <!-- Testimonials Section -->
+  <section class="testimonials-section">
+    <div class="container">
+      <div class="section-header" pAnimateOnScroll enterClass="fadeinup" [threshold]="0.3">
+        <h2>Trusted by Business Leaders</h2>
+        <p>See what our customers say about ServiceFuzz</p>
+      </div>
+      
+      <p-carousel 
+        [value]="testimonials" 
+        [numVisible]="3" 
+        [numScroll]="1" 
+        [circular]="true"
+        [autoplayInterval]="4000"
+        [responsiveOptions]="responsiveOptions"
+        styleClass="testimonials-carousel">
+        <ng-template let-testimonial pTemplate="item">
+          <p-card styleClass="testimonial-card">
+            <ng-template pTemplate="content">
+              <div class="testimonial-content">
+                <div class="testimonial-rating">
+                  <i class="pi pi-star-fill" *ngFor="let star of [1,2,3,4,5]"></i>
+                </div>
+                <p class="testimonial-text">"{{ testimonial.content }}"</p>
+                <div class="testimonial-author">
+                  <p-avatar 
+                    [image]="testimonial.avatar" 
+                    size="large" 
+                    shape="circle">
+                  </p-avatar>
+                  <div class="author-info">
+                    <h4>{{ testimonial.name }}</h4>
+                    <p>{{ testimonial.role }}</p>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </p-card>
+        </ng-template>
+      </p-carousel>
+    </div>
   </section>
 
-  <!-- Gemini Response Section -->
-  
+  <!-- CTA Section -->
+  <section class="cta-section" pAnimateOnScroll enterClass="fadeinup" [threshold]="0.3">
+    <div class="container">
+      <p-card styleClass="cta-card">
+        <ng-template pTemplate="content">
+          <div class="cta-content">
+            <h2>Ready to Transform Your Business?</h2>
+            <p>Join thousands of successful businesses already using ServiceFuzz</p>
+            <div class="cta-actions">
+              <p-button 
+                label="Start Free Trial" 
+                icon="pi pi-rocket" 
+                styleClass="p-button-primary p-button-lg"
+                (onClick)="navigateToSignup()">
+              </p-button>
+              <p-button 
+                label="Schedule Demo" 
+                icon="pi pi-calendar" 
+                styleClass="p-button-outlined p-button-lg"
+                (onClick)="openVideoDialog()">
+              </p-button>
+            </div>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+  </section>
 </div>
 
 <!-- Video Dialog -->
-<ng-template #videoDialog>
-  <div class="video-dialog-container">
-    <iframe 
-      width="560" 
-      height="315" 
-      src="https://www.youtube.com/embed/f2LXCW-bdGY" 
-      title="ServiceFuzz Platform Overview"
-      frameborder="0" 
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-      allowfullscreen>
-    </iframe>
-  </div>
-</ng-template>
+<p-dialog 
+  [(visible)]="videoVisible" 
+  [modal]="true" 
+  [style]="{width: '80vw', maxWidth: '800px'}"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="video-dialog">
+  <ng-template pTemplate="header">
+    <h3>ServiceFuzz Platform Overview</h3>
+  </ng-template>
+  <ng-template pTemplate="content">
+    <div class="video-container">
+      <iframe 
+        width="100%" 
+        height="400" 
+        src="https://www.youtube.com/embed/f2LXCW-bdGY" 
+        title="ServiceFuzz Platform Overview"
+        frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+        allowfullscreen>
+      </iframe>
+    </div>
+  </ng-template>
+</p-dialog>

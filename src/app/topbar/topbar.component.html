@@ -37,7 +37,7 @@
         <mat-icon matListIcon>manage_accounts</mat-icon>
         <span matLine>Manage Businesses</span>
       </a>
-      <a mat-list-item routerLink="/business/settings" (click)="closeMobileSidebar()">
+      <a mat-list-item routerLink="/settings" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/settings')">
         <mat-icon matListIcon>settings</mat-icon>
         <span matLine>Business Settings</span>
       </a>
@@ -74,7 +74,7 @@
       <span matLine>Notifications</span>
       </a>
     
-    <a mat-list-item (click)="closeMobileSidebar()">
+    <a mat-list-item (click)="closeMobileSidebar()" routerLink="/settings">
       <mat-icon matListIcon>settings</mat-icon>
       <span matLine>Settings</span>
       </a>
@@ -160,7 +160,7 @@
     <button mat-icon-button *ngIf="!(isSmallScreen$ | async)" matTooltip="Notifications">
       <mat-icon>notifications</mat-icon>
     </button>
-    <button mat-icon-button matTooltip="Settings">
+    <button mat-icon-button routerLink="/settings" [class.active]="isRouteActive('/settings')" matTooltip="Settings">
       <mat-icon>settings</mat-icon>
     </button>
     <button mat-icon-button routerLink="/sign" [class.active]="isRouteActive('/sign')" class="profile-button" 

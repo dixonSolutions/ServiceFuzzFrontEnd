@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { MatButton } from '@angular/material/button';
+import { ButtonModule } from 'primeng/button';
 import { 
   Chart, 
   ChartConfiguration, 
@@ -21,6 +22,7 @@ import {
   RadarController,
   PolarAreaController
 } from 'chart.js';
+import { MenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-analytics',
@@ -46,6 +48,13 @@ export class AnalyticsComponent implements OnInit, AfterViewInit {
   radarChart: Chart | null = null;
   polarAreaChart: Chart | null = null;
   heatmapChart: Chart | null = null;
+  items: MenuItem[] = [
+    {
+      label: 'Save',
+      icon: 'pi pi-save'
+    },
+    
+  ];
 
   ngOnInit() {
     // Register all required Chart.js components including controllers

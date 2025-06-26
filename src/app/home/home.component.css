@@ -1,452 +1,605 @@
+/* Home Container */
 .home-container {
-  padding: 2rem;
-  width: 100%;
-  max-width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  overflow-x: hidden;
 }
 
-/* Desktop layout - use more width */
-@media (min-width: 1200px) {
-  .home-container {
-    padding: 2rem 4rem;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
-@media (min-width: 768px) and (max-width: 1199px) {
-  .home-container {
-    padding: 2rem 3rem;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-}
-
-h1 {
-  margin-bottom: 2rem;
-  color: #333;
-}
-
-mat-form-field {
-  width: 100%;
-  max-width: 300px;
-}
-
-p {
-  margin-top: 1rem;
-  color: #666;
-}
-
-/* Carousel Styles */
-.carousel-container {
-  margin: -20px -20px 40px -20px;
-}
-
-.carousel-card {
-  border-radius: 0;
-  box-shadow: none;
-  overflow: hidden;
-  background: linear-gradient(135deg, #ffffff, #000000);
-  color: white;
-}
-
-.carousel-content {
+/* Hero Section */
+.hero-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
   position: relative;
-  height: 500px;
   overflow: hidden;
 }
 
-.slide {
+.hero-section::before {
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-  display: flex;
-  align-items: center;
-}
-
-.slide.active {
-  opacity: 1;
-}
-
-.slide-content {
-  flex: 1;
-  padding: 60px;
-  z-index: 2;
-  position: relative;
-}
-
-.slide-content img {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  margin-bottom: 20px;
-  object-fit: cover;
-  position: relative;
-  z-index: 3;
-}
-
-.slide-content h1 {
-  font-size: 3em;
-  margin-bottom: 20px;
-  font-weight: 300;
-  color: white;
-}
-
-.slide-content p {
-  font-size: 1.2em;
-  max-width: 100%;
-  line-height: 1.6;
-  color: white;
-}
-
-.slide > img {
-  position: absolute;
   right: 0;
-  top: 0;
-  height: 100%;
-  width: 50%;
-  object-fit: cover;
-  opacity: 0.3;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
   z-index: 1;
 }
 
-.carousel-indicators {
-  position: absolute;
-  bottom: 20px;
-  left: 60px;
+.hero-carousel {
+  width: 100%;
+  height: 100vh;
+}
+
+.hero-slide {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.hero-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  height: 100%;
+  position: relative;
   z-index: 2;
 }
 
-.carousel-indicators button {
-  margin: 0 5px;
-  background: rgba(255, 255, 255, 0.3);
+.hero-text {
+  color: #2c3e50;
 }
 
-.carousel-indicators button.active {
-  background: white;
+.hero-badge {
+  margin-bottom: 1rem;
+}
+
+.hero-text h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+  color: #2c3e50;
+}
+
+.hero-text h2 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+  color: #34495e;
+}
+
+.hero-text p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #5a6c7d;
+  line-height: 1.6;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.hero-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.hero-image img:hover {
+  transform: translateY(-10px);
+}
+
+/* Stats Section */
+.stats-section {
+  padding: 4rem 0;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.stat-content h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.stat-content p {
+  color: #5a6c7d;
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Section Headers */
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  color: #2c3e50;
+}
+
+.section-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.section-header p {
+  font-size: 1.2rem;
+  color: #5a6c7d;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 /* Features Section */
 .features-section {
-  padding: 60px 0;
-}
-
-.features-section h2 {
-  text-align: center;
-  font-size: 2.5em;
-  margin-bottom: 40px;
-  color: #1a237e;
-  font-weight: 300;
+  padding: 6rem 0;
 }
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  padding: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
 }
 
-.features-grid mat-card {
-  padding: 20px;
-  transition: transform 0.3s ease;
+/* Force all feature cards and their content to be white with dark text */
+.feature-card,
+.feature-card ::ng-deep .p-card,
+.feature-card ::ng-deep .p-card-body,
+.feature-card ::ng-deep .p-card-content,
+.feature-card ::ng-deep .p-card-header,
+.feature-card ::ng-deep .p-card-title,
+.feature-card ::ng-deep .p-card-subtitle,
+.feature-card ::ng-deep h3,
+.feature-card ::ng-deep p,
+.feature-card ::ng-deep span,
+.feature-card ::ng-deep div {
+  background: #fff !important;
+  color: #222 !important;
+  border: none !important;
+  box-shadow: 0 4px 24px rgba(44,62,80,0.04) !important;
 }
 
-.features-grid mat-card:hover {
-  transform: translateY(-5px);
+/* Remove any dark overlay or filter from the card */
+.feature-card ::ng-deep * {
+  background: transparent !important;
+  color: #222 !important;
+  filter: none !important;
+  opacity: 1 !important;
 }
 
-.features-grid mat-card-header {
-  margin-bottom: 15px;
+/* Keep the icon backgrounds vibrant */
+.feature-icon {
+  filter: none !important;
+  opacity: 1 !important;
 }
 
-.features-grid mat-icon {
-  color: #1a237e;
-  font-size: 2em;
-  width: 40px;
-  height: 40px;
+.feature-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
-/* Benefits Section */
-.benefits-section {
-  padding: 60px 0;
-  background: #f5f5f5;
-  margin: 40px -20px;
-}
-
-.benefits-content {
-  padding: 40px;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-mat-list-item {
-  margin-bottom: 15px;
-}
-
-mat-icon {
-  color: #1a237e;
-}
-
-/* Info Section */
-.info-section {
-  padding: 60px 20px;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.security-card, .integration-card {
-  height: 100%;
-}
-
-/* Call to Action */
-.cta-section {
-  text-align: center;
-  padding: 60px 20px;
-  background: linear-gradient(135deg, #000000, #00ffea);
-  margin: 40px -20px -20px -20px;
-}
-
-.cta-section mat-card {
-  background: transparent;
-  color: white;
-  box-shadow: none;
-}
-
-.cta-section h2 {
-  font-size: 2.5em;
-  margin-bottom: 20px;
-  font-weight: 300;
-}
-
-.cta-section button {
-  font-size: 1.2em;
-  padding: 10px 30px;
-}
-
-/* Video Container */
-.video-container {
-  position: relative;
-  width: 100%;
-  max-width: 800px;
-  margin: 40px auto;
-  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-  height: 0;
-  overflow: hidden;
-}
-
-.video-container iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-/* Video Section */
-.video-section {
-  text-align: center;
-  margin: 40px 0;
-}
-
-.video-section button {
-  padding: 12px 24px;
-  font-size: 1.1em;
-  display: inline-flex;
+.feature-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  padding: 1.5rem;
+  background: transparent !important;
 }
 
-.video-section mat-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
+.icon-primary { background: linear-gradient(45deg, #667eea, #764ba2); }
+.icon-success { background: linear-gradient(45deg, #4CAF50, #45a049); }
+.icon-info { background: linear-gradient(45deg, #2196F3, #1976D2); }
+.icon-warning { background: linear-gradient(45deg, #FF9800, #F57C00); }
+.icon-danger { background: linear-gradient(45deg, #f44336, #d32f2f); }
+.icon-secondary { background: linear-gradient(45deg, #9c27b0, #7b1fa2); }
+
+.feature-stats {
+  background: rgba(102, 126, 234, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.feature-card ::ng-deep .p-card-body {
+  padding: 1.5rem;
+}
+
+.feature-card h3,
+.feature-card p,
+.feature-stats {
+  color: #2c3e50 !important;
+}
+
+.feature-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.feature-card p {
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Timeline Section */
+.timeline-section {
+  padding: 6rem 0;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.custom-timeline ::ng-deep .p-timeline-event-content {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 15px !important;
+  padding: 1.5rem !important;
+  color: #2c3e50 !important;
+}
+
+.timeline-content {
+  text-align: center;
+}
+
+.timeline-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 1.2rem;
+  color: white;
+}
+
+.timeline-content h3 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.timeline-content p {
+  color: #5a6c7d;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Testimonials Section */
+.testimonials-section {
+  padding: 6rem 0;
+}
+
+.testimonials-carousel ::ng-deep .p-carousel-indicators {
+  margin-top: 2rem;
+}
+
+.testimonial-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 20px !important;
+  height: 100%;
+}
+
+.testimonial-content {
+  padding: 2rem;
+  color: #2c3e50;
+}
+
+.testimonial-rating {
+  margin-bottom: 1rem;
+}
+
+.testimonial-rating i {
+  color: #FFD700;
+  margin-right: 0.2rem;
+}
+
+.testimonial-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  font-style: italic;
+  color: #5a6c7d;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.author-info h4 {
+  color: #2c3e50;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.author-info p {
+  color: #5a6c7d;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* CTA Section */
+.cta-section {
+  padding: 6rem 0;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.cta-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6)) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 25px !important;
+}
+
+.cta-content {
+  text-align: center;
+  padding: 3rem;
+  color: #2c3e50;
+}
+
+.cta-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.cta-content p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #5a6c7d;
+}
+
+.cta-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* Video Dialog */
-::ng-deep .video-dialog {
-  .mat-mdc-dialog-container {
-    padding: 0;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  
-  .mat-mdc-dialog-surface {
-    padding: 0;
-    border-radius: 12px;
-    overflow: hidden;
-  }
+.video-dialog ::ng-deep .p-dialog {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 20px !important;
 }
 
-/* Responsive Adjustments */
+.video-dialog ::ng-deep .p-dialog-header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #2c3e50 !important;
+}
+
+.video-dialog ::ng-deep .p-dialog-content {
+  background: transparent !important;
+  padding: 2rem !important;
+}
+
+.video-container {
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-  .home-container {
-    padding: 16px;
-    min-height: calc(100vh - 56px); /* Account for mobile topbar */
-    width: 100%;
-    overflow-x: hidden;
-  }
-
-  .carousel-content {
-    height: 500px;
-  }
-
-  .slide-content {
-    padding: 30px;
+  .hero-content {
+    grid-template-columns: 1fr;
     text-align: center;
-    display: flex;
+    gap: 2rem;
+  }
+
+  .hero-text h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero-text h2 {
+    font-size: 1.2rem;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cta-actions {
     flex-direction: column;
     align-items: center;
-    justify-content: center;
   }
 
-  .slide-content img {
-    width: 150px;
-    height: 150px;
-    margin-bottom: 30px;
+  .section-header h2 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-text h1 {
+    font-size: 2rem;
   }
 
-  .slide-content h1 {
-    font-size: 2em;
+  .hero-text p {
+    font-size: 1rem;
+  }
+
+  .stat-item {
+    flex-direction: column;
     text-align: center;
   }
 
-  .slide-content p {
-    font-size: 1.1em;
-    text-align: center;
+  .cta-content {
+    padding: 2rem 1rem;
   }
 
-  .slide > img {
-    width: 100%;
-    opacity: 0.2;
-  }
-
-  .carousel-indicators {
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    justify-content: center;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .video-container {
-    margin: 20px auto;
-  }
-
-  .video-section button {
-    padding: 10px 20px;
-    font-size: 1em;
-    min-height: 44px; /* Ensure touch target size */
-  }
-
-  /* Ensure sections are visible */
-  .features-section,
-  .benefits-section,
-  .info-section,
-  .cta-section {
-    padding: 40px 16px;
+  .cta-content h2 {
+    font-size: 2rem;
   }
 }
 
-@media (max-width: 400px) {
-  .home-container {
-    padding: 1rem;
-    width: 100%;
-    max-width: 100%;
-  }
-  
-  .carousel-content {
-    height: 400px;
-  }
-  
-  .slide-content {
-    padding: 30px 20px;
-  }
-  
-  .slide-content img {
-    width: 120px;
-    height: 120px;
-  }
-  
-  .slide-content h1 {
-    font-size: 2em;
-  }
-  
-  .slide-content p {
-    font-size: 1em;
-  }
-  
-  .features-grid {
-    grid-template-columns: 1fr;
-    gap: 15px;
-    padding: 15px;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .features-section,
-  .benefits-section,
-  .info-section {
-    padding: 30px 15px;
-  }
+/* Animation Classes */
+.fadeinup {
+  animation: fadeInUp 0.8s ease-out;
+}
 
-  .carousel-indicators button {
-    transform: scale(0.8);
+.fadeinright {
+  animation: fadeInRight 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (max-width: 412px) {
-  .home-container {
-    padding: 0.5rem;
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
   }
-  
-  .carousel-content {
-    height: 350px;
-  }
-  
-  .slide-content {
-    padding: 20px 15px;
-  }
-  
-  .slide-content img {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .slide-content h1 {
-    font-size: 1.5em;
-  }
-  
-  .slide-content p {
-    font-size: 0.9em;
-  }
-  
-  .features-section,
-  .benefits-section,
-  .info-section {
-    padding: 20px 10px;
-  }
-
-  .carousel-indicators button {
-    transform: scale(0.8);
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
-/* All custom button appearance styles removed to allow Angular Material defaults. */
+/* Carousel Styling */
+.hero-carousel ::ng-deep .p-carousel-indicators {
+  margin-top: 2rem;
+}
+
+.hero-carousel ::ng-deep .p-carousel-indicator {
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  margin: 0 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.hero-carousel ::ng-deep .p-carousel-indicator.p-highlight {
+  background: #667eea;
+  border-color: #667eea;
+}
+
+.hero-carousel ::ng-deep .p-carousel-prev,
+.hero-carousel ::ng-deep .p-carousel-next {
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  color: #2c3e50;
+  transition: all 0.3s ease;
+}
+
+.hero-carousel ::ng-deep .p-carousel-prev:hover,
+.hero-carousel ::ng-deep .p-carousel-next:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
+
+.testimonials-carousel ::ng-deep .p-carousel-indicators {
+  margin-top: 2rem;
+}
+
+.testimonials-carousel ::ng-deep .p-carousel-indicator {
+  background: rgba(102, 126, 234, 0.3);
+  border: 2px solid rgba(102, 126, 234, 0.5);
+  margin: 0 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.testimonials-carousel ::ng-deep .p-carousel-indicator.p-highlight {
+  background: #667eea;
+  border-color: #667eea;
+}
+
+.testimonials-carousel ::ng-deep .p-carousel-prev,
+.testimonials-carousel ::ng-deep .p-carousel-next {
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  color: #2c3e50;
+  transition: all 0.3s ease;
+}
+
+.testimonials-carousel ::ng-deep .p-carousel-prev:hover,
+.testimonials-carousel ::ng-deep .p-carousel-next:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}

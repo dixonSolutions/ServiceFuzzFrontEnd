@@ -32,6 +32,30 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LayoutModule } from '@angular/cdk/layout';
+import { providePrimeNG } from 'primeng/config';
+import Aura from '@primeng/themes/aura';
+import { ButtonModule } from 'primeng/button';
+import { ColorPickerModule } from 'primeng/colorpicker';
+import { ToolbarModule } from 'primeng/toolbar';
+import { CardModule } from 'primeng/card';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputTextModule } from 'primeng/inputtext';
+import { TabViewModule } from 'primeng/tabview';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { SliderModule } from 'primeng/slider';
+import { CarouselModule } from 'primeng/carousel';
+import { AnimateOnScrollModule } from 'primeng/animateonscroll';
+import { TagModule } from 'primeng/tag';
+import { TimelineModule } from 'primeng/timeline';
+import { ChipModule } from 'primeng/chip';
+import { DividerModule } from 'primeng/divider';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { AvatarModule } from 'primeng/avatar';
+import { AvatarGroupModule } from 'primeng/avatargroup';
+import { BadgeModule } from 'primeng/badge';
+import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
@@ -46,6 +70,7 @@ import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-servic
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { BusinessEditComponent } from './business-edit/business-edit.component';
 import { VideoDialogComponent } from './home/home.component';
+import { Settings } from './settings/settings';
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
 
@@ -60,13 +85,18 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     BusinessDetailsComponent,
     BusinessSettingsComponent,
     ChatWithAiAboutServiceFuzzComponent,
-    AnalyticsComponent
+    AnalyticsComponent,
+    Settings
   ],
   imports: [
     BrowserModule,
     CommonModule,
+    ButtonModule,
+    ToolbarModule,
     BusinessEditComponent,
+    VideoDialogComponent,
     BrowserAnimationsModule,
+    ColorPickerModule,
     FormsModule,
     ReactiveFormsModule,
     MatDatepickerModule,
@@ -98,9 +128,32 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     MatRadioModule,
     MatCheckboxModule,
     LayoutModule,
-    VideoDialogComponent
+    CardModule,
+    InputSwitchModule,
+    DropdownModule,
+    InputTextModule,
+    TabViewModule,
+    SelectButtonModule,
+    SliderModule,
+    CarouselModule,
+    AnimateOnScrollModule,
+    TagModule,
+    TimelineModule,
+    ChipModule,
+    DividerModule,
+    ProgressBarModule,
+    AvatarModule,
+    AvatarGroupModule,
+    BadgeModule,
+    TooltipModule,
+    DialogModule
   ],
   providers: [
+    providePrimeNG({
+      theme: {
+        preset: Aura
+      }
+    }),
     CookieService,
     {
       provide: 'SocialAuthServiceConfig',

@@ -1,8 +1,25 @@
-<button mat-raised-button color="secondary">
-  M3 Raised Button
-</button>
 
+<div class="card flex justify-center">
+  <p-button label="Check" />
+</div>
+<p-colorpicker />
 <div class="analytics-container">
+  <p-toolbar>
+    <ng-template #start>
+        <p-button icon="pi pi-plus" class="mr-2" text severity="secondary" />
+        <p-button icon="pi pi-print" class="mr-2" text severity="secondary" />
+        <p-button icon="pi pi-upload" text severity="secondary" />
+    </ng-template>
+    <ng-template #center>
+        <p-iconfield iconPosition="left">
+            <p-inputicon styleClass="pi pi-search" />
+            <input type="text" pInputText placeholder="Search" />
+        </p-iconfield>
+    </ng-template>
+    <ng-template #end>
+        <p-splitbutton label="Save" [model]="items" />
+    </ng-template>
+</p-toolbar>
   <!-- Header Section -->
   <div class="analytics-header">
     <div class="header-content">

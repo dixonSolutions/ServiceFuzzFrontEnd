@@ -1,0 +1,129 @@
+<div class="settings-container">
+  <div class="settings-header">
+    <div class="header-content">
+      <i class="pi pi-cog header-icon"></i>
+      <div class="header-text">
+        <h1>Settings</h1>
+        <p>Manage your application preferences and business settings</p>
+      </div>
+    </div>
+  </div>
+
+  <p-tabView styleClass="settings-tabs">
+    <!-- General Settings Tab -->
+    <p-tabPanel header="General" leftIcon="pi pi-home">
+      <div class="settings-grid">
+        <p-card header="Notifications" styleClass="settings-card">
+          <div class="setting-item">
+            <div class="setting-label">
+              <i class="pi pi-bell setting-icon"></i>
+              <label>Enable Notifications</label>
+            </div>
+            <p-inputSwitch [(ngModel)]="notifications"></p-inputSwitch>
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-label">
+              <i class="pi pi-envelope setting-icon"></i>
+              <label>Email Notifications</label>
+            </div>
+            <p-inputSwitch [(ngModel)]="emailNotifications"></p-inputSwitch>
+          </div>
+        </p-card>
+
+        <p-card header="Language & Region" styleClass="settings-card">
+          <div class="setting-item">
+            <div class="setting-label">
+              <i class="pi pi-globe setting-icon"></i>
+              <label>Language</label>
+            </div>
+            <p-dropdown 
+              [(ngModel)]="language" 
+              [options]="languages" 
+              placeholder="Select Language"
+              styleClass="w-full">
+            </p-dropdown>
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-label">
+              <i class="pi pi-palette setting-icon"></i>
+              <label>Theme</label>
+            </div>
+            <p-selectButton 
+              [(ngModel)]="theme" 
+              [options]="themes" 
+              optionLabel="label" 
+              optionValue="value">
+            </p-selectButton>
+          </div>
+        </p-card>
+      </div>
+    </p-tabPanel>
+
+    <!-- Business Settings Tab -->
+    <p-tabPanel header="Business" leftIcon="pi pi-briefcase">
+      <div class="settings-grid">
+        <p-card header="Business Information" styleClass="settings-card">
+          <div class="setting-item">
+            <div class="setting-label">
+              <i class="pi pi-building setting-icon"></i>
+              <label>Business Name</label>
+            </div>
+            <input pInputText [(ngModel)]="businessName" class="w-full" />
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-label">
+              <i class="pi pi-envelope setting-icon"></i>
+              <label>Business Email</label>
+            </div>
+            <input pInputText [(ngModel)]="businessEmail" class="w-full" type="email" />
+          </div>
+        </p-card>
+      </div>
+    </p-tabPanel>
+
+    <!-- Appearance Settings Tab -->
+    <p-tabPanel header="Appearance" leftIcon="pi pi-palette">
+      <div class="settings-grid">
+        <p-card header="Colors" styleClass="settings-card">
+          <div class="setting-item">
+            <div class="setting-label">
+              <i class="pi pi-palette setting-icon"></i>
+              <label>Primary Color</label>
+            </div>
+            <p-colorPicker [(ngModel)]="primaryColor"></p-colorPicker>
+          </div>
+        </p-card>
+
+        <p-card header="Layout" styleClass="settings-card">
+          <div class="setting-item">
+            <div class="setting-label">
+              <i class="pi pi-text-height setting-icon"></i>
+              <label>Font Size: {{fontSize}}px</label>
+            </div>
+            <p-slider [(ngModel)]="fontSize" [min]="12" [max]="20" [step]="1"></p-slider>
+          </div>
+        </p-card>
+      </div>
+    </p-tabPanel>
+  </p-tabView>
+
+  <!-- Action Buttons -->
+  <div class="settings-actions">
+    <p-button 
+      label="Save Settings" 
+      icon="pi pi-check" 
+      (onClick)="saveSettings()" 
+      styleClass="p-button-success">
+    </p-button>
+    
+    <p-button 
+      label="Reset to Default" 
+      icon="pi pi-refresh" 
+      (onClick)="resetSettings()" 
+      styleClass="p-button-secondary">
+    </p-button>
+  </div>
+</div>

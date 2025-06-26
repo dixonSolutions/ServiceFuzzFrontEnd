@@ -31,7 +31,6 @@
               }
             ],
             "styles": [
-              "src/styles/theme.scss",
               "src/styles.css"
             ],
             "scripts": []
@@ -90,7 +89,6 @@
               }
             ],
             "styles": [
-              "src/styles/theme.scss",
               "src/styles.css"
             ],
             "scripts": []
