@@ -603,3 +603,253 @@
   background: rgba(255, 255, 255, 0.9);
   transform: scale(1.1);
 }
+
+/* Remove previous timeline card/box styles */
+.timeline-step,
+.timeline-step.selected,
+.timeline-label-row {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Minimal vertical timeline styles */
+.minimal-timeline .p-timeline-event-opposite {
+  display: none;
+}
+
+.minimal-timeline .p-timeline-event-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.minimal-timeline .p-timeline-event {
+  min-width: 0;
+  padding: 0 !important;
+  margin: 0 0 0.5rem 0 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.timeline-label-row {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  min-height: 32px;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.timeline-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #222b3a;
+  display: inline-block;
+  margin-right: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Vertical line between dots */
+.minimal-timeline .p-timeline-event-connector {
+  background: #d3dbe6;
+  width: 2px;
+  left: 7px;
+  top: 16px;
+  bottom: -16px;
+}
+
+.timeline-label {
+  font-size: 1.1rem;
+  color: #222b3a;
+  font-weight: 500;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Minimal PrimeNG Timeline Styles */
+.minimal-timeline .p-timeline-event,
+.minimal-timeline .p-timeline-event-content,
+.minimal-timeline .p-timeline-event-connector,
+.minimal-timeline .p-timeline-event-marker {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.minimal-timeline .p-timeline-event-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #222b3a;
+  background: #fff;
+  margin-right: 12px;
+  margin-left: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.minimal-timeline .p-timeline-event-connector {
+  background: #d3dbe6 !important;
+  width: 2px !important;
+  left: 6px !important;
+  top: 14px !important;
+  bottom: -14px !important;
+}
+
+.minimal-timeline .p-timeline-event-content {
+  color: #222b3a;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-left: 24px !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Customized PrimeNG Timeline Styles */
+.customized-timeline .p-timeline-event-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 10;
+  border: none;
+  margin: 0 auto;
+}
+
+.customized-timeline .p-timeline-event-content {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border: none;
+}
+
+.customized-timeline .p-card {
+  margin: 0.5rem 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-radius: 12px;
+}
+
+.customized-timeline .p-card-header,
+.customized-timeline .p-card-subtitle {
+  font-weight: 600;
+}
+
+.customized-timeline .p-card-content p {
+  margin-bottom: 0.5rem;
+}
+
+.customized-timeline .shadow {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  border-radius: 8px;
+}
+
+/* Responsive for alternate alignment */
+@media (max-width: 768px) {
+  .customized-timeline .p-timeline-event {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  .customized-timeline .p-timeline-event-content {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+/* Galleria Section Styles */
+.galleria-section {
+  padding: 3rem 0 2rem 0;
+  background: #f8fafc;
+}
+.galleria-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #222b3a;
+}
+.galleria-caption {
+  text-align: center;
+  padding: 1rem 0 0.5rem 0;
+}
+.galleria-caption h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #222b3a;
+}
+.galleria-caption p {
+  margin: 0;
+  color: #555;
+  font-size: 1rem;
+}
+.p-galleria {
+  max-width: 1200px !important;
+  margin: 0 auto;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  background: #fff;
+  overflow: visible !important;
+}
+.p-galleria-item-wrapper,
+.p-galleria-item {
+  min-height: 400px;
+  max-height: 620px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible !important;
+}
+.p-galleria-item img {
+  width: 100%;
+  max-height: 600px;
+  object-fit: cover;
+  display: block;
+}
+.p-galleria-thumbnail-item img {
+  width: 140px;
+  height: 90px;
+  object-fit: cover;
+}
+.galleria-section .container {
+  overflow: visible !important;
+}
+@media (max-width: 1300px) {
+  .p-galleria {
+    max-width: 98vw;
+  }
+}
+@media (max-width: 800px) {
+  .p-galleria-item img {
+    max-height: 300px;
+  }
+  .p-galleria-thumbnail-item img {
+    width: 80px;
+    height: 50px;
+  }
+}

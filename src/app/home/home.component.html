@@ -101,21 +101,20 @@
         <p>From setup to scaling, we're with you every step of the way</p>
       </div>
       
-      <p-timeline 
-        [value]="timeline" 
-        layout="horizontal" 
-        styleClass="custom-timeline"
-        pAnimateOnScroll 
-        enterClass="fadeinup" 
-        [threshold]="0.3">
+      <p-timeline [value]="timeline" align="alternate" styleClass="customized-timeline">
+        <ng-template pTemplate="marker" let-event>
+          <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm" [style]="{ 'background-color': event.color }">
+            <i [class]="event.icon"></i>
+          </span>
+        </ng-template>
         <ng-template pTemplate="content" let-event>
-          <div class="timeline-content">
-            <div class="timeline-icon" [class]="'icon-' + event.color">
-              <i [class]="event.icon"></i>
-            </div>
-            <h3>{{ event.title }}</h3>
-            <p>{{ event.description }}</p>
-          </div>
+          <p-card [header]="event.status" [subheader]="event.date">
+            <img *ngIf="event.image" [src]="'https://primefaces.org/cdn/primeng/images/demo/product/' + event.image" [alt]="event.status" width="200" class="shadow" />
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!
+            </p>
+            <p-button label="Read more" [text]="true"></p-button>
+          </p-card>
         </ng-template>
       </p-timeline>
     </div>
@@ -189,6 +188,34 @@
           </div>
         </ng-template>
       </p-card>
+    </div>
+  </section>
+
+  <!-- Galleria Section: Service-Based Businesses -->
+  <section class="galleria-section">
+    <div class="container">
+      <h2 class="galleria-title">Types of Service-Based Businesses We Support</h2>
+      <p-galleria 
+        [value]="galleriaImages" 
+        [responsiveOptions]="responsiveOptions" 
+        [containerStyle]="{ 'max-width': '1200px', 'margin': '0 auto' }" 
+        [numVisible]="6"
+        [showThumbnails]="true"
+        [showItemNavigators]="true"
+        [circular]="true">
+        <ng-template pTemplate="item" let-item>
+          <img [src]="item.image" [alt]="item.title" style="width:100%; max-height:600px; object-fit:cover; display:block;" />
+        </ng-template>
+        <ng-template pTemplate="caption" let-item>
+          <div class="galleria-caption">
+            <h4>{{ item.title }}</h4>
+            <p>{{ item.description }}</p>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="thumbnail" let-item>
+          <img [src]="item.image" [alt]="item.title" style="width:140px; height:90px; object-fit:cover;" />
+        </ng-template>
+      </p-galleria>
     </div>
   </section>
 </div>

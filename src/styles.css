@@ -206,3 +206,82 @@ router-outlet + * {
   width: 100%;
   max-width: 100%;
 }
+
+/* PrimeNG Card Theme Overrides - White Cards with Black Text */
+.p-card {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+  border: 1px solid #e0e0e0 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.p-card .p-card-body {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.p-card .p-card-content {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.p-card .p-card-title {
+  color: #333333 !important;
+}
+
+.p-card .p-card-subtitle {
+  color: #666666 !important;
+}
+
+.p-card .p-card-body p {
+  color: #333333 !important;
+}
+
+.p-card .p-card-body h1,
+.p-card .p-card-body h2,
+.p-card .p-card-body h3,
+.p-card .p-card-body h4,
+.p-card .p-card-body h5,
+.p-card .p-card-body h6 {
+  color: #333333 !important;
+}
+
+.p-card .p-card-body span,
+.p-card .p-card-body div {
+  color: #333333 !important;
+}
+
+/* Specific card style classes used in home component */
+.feature-card {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.testimonial-card {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.cta-card {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+/* Ensure all text within cards is readable */
+.p-card * {
+  color: inherit !important;
+}
+
+/* Override any dark theme styles that might affect cards */
+.p-component {
+  color: #333333 !important;
+}
+
+/* Ensure buttons within cards maintain their styling */
+.p-card .p-button {
+  color: white !important;
+}
+
+.p-card .p-button.p-button-text {
+  color: #1976d2 !important;
+}

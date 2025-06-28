@@ -56,6 +56,7 @@ import { AvatarGroupModule } from 'primeng/avatargroup';
 import { BadgeModule } from 'primeng/badge';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
+import { GalleriaModule } from 'primeng/galleria';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
@@ -98,6 +99,7 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     BrowserAnimationsModule,
     ColorPickerModule,
     FormsModule,
+    GalleriaModule,
     ReactiveFormsModule,
     MatDatepickerModule,
     MatInputModule,
