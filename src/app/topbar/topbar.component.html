@@ -53,6 +53,11 @@
         <span matLine>Chat</span>
       </a>
       
+    <a mat-list-item (click)="navigateToWebsiteCreator(); closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/website-creator')">
+      <mat-icon matListIcon>web</mat-icon>
+      <span matLine>Website Creator</span>
+    </a>
+      
       <mat-divider></mat-divider>
       
     <!-- Staff Portal -->
@@ -153,6 +158,10 @@
     <button mat-button routerLink="/chat" [class.active]="isRouteActive('/chat')">
       <mat-icon>chat</mat-icon>
       <span [class.hide-text]="isSmallScreen$ | async">Chat</span>
+    </button>
+    <button mat-button (click)="navigateToWebsiteCreator()" [class.active]="isRouteActive('/website-creator')">
+      <mat-icon>web</mat-icon>
+      <span [class.hide-text]="isSmallScreen$ | async">Website Creator</span>
     </button>
   </div>
  

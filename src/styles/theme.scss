@@ -1,22 +1,35 @@
-// Minimal theme file to resolve compilation errors
-// This file is required by Angular Material but can be empty for basic functionality
+// Comprehensive theme fixes to ensure proper text contrast
+// This file fixes white text on white background issues
 
-// Fix white text issue caused by PrimeNG theme
+// Global body and text fixes
 body {
-  color: #333 !important;
+  background-color: #ffffff !important;
+  color: #333333 !important;
 }
 
-p, h1, h2, h3, h4, h5, h6, span, div {
-  color: inherit !important;
+// Fix all text elements globally
+p, h1, h2, h3, h4, h5, h6, span, div, label, a {
+  color: #333333 !important;
 }
 
 // Ensure Material components have proper text colors
 .mat-mdc-card {
-  color: #333 !important;
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.mat-mdc-card * {
+  color: #333333 !important;
 }
 
 .mat-mdc-button {
   color: inherit !important;
+}
+
+// Fix PrimeNG components
+.p-component {
+  background-color: #ffffff !important;
+  color: #333333 !important;
 }
 
 // Fix PrimeNG button text colors
@@ -26,4 +39,53 @@ p, h1, h2, h3, h4, h5, h6, span, div {
 
 .p-button.p-button-text {
   color: #1976d2 !important;
+}
+
+// Fix any component with white text
+* {
+  color: #333333 !important;
+}
+
+// Override for buttons that should have white text
+button, .p-button, .mat-mdc-raised-button {
+  color: white !important;
+}
+
+// Override for text buttons
+.p-button.p-button-text, .p-button.p-button-outlined, .mat-mdc-button:not(.mat-mdc-raised-button) {
+  color: #1976d2 !important;
+}
+
+// Dark Background Areas - White Text Overrides
+// Topbar and navigation areas
+.mat-toolbar {
+  background-color: #1976d2 !important;
+  
+  &, *, .mat-button, .mat-icon-button, .mat-icon, span, a, .app-title {
+    color: white !important;
+  }
+}
+
+// Mobile sidebar and navigation
+.mat-sidenav, .simple-mobile-sidebar {
+  background-color: #1976d2 !important;
+  
+  &, *, .mat-nav-list, .mat-list-item, .mobile-nav-header, .mobile-nav-list {
+    color: white !important;
+  }
+}
+
+// Menu dropdowns
+.mat-mdc-menu-panel {
+  background-color: #1976d2 !important;
+  
+  &, *, .mat-mdc-menu-item {
+    color: white !important;
+  }
+}
+
+// Primary buttons and dark elements
+.mat-mdc-raised-button.mat-primary, .p-button:not(.p-button-text):not(.p-button-outlined) {
+  background-color: #1976d2 !important;
+  color: white !important;
 } 

@@ -421,28 +421,48 @@
   flex-wrap: wrap;
 }
 
-/* Video Dialog */
-.video-dialog ::ng-deep .p-dialog {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  border-radius: 20px !important;
+/* Video Dialog Styles */
+.video-dialog {
+  z-index: 9999 !important;
 }
 
-.video-dialog ::ng-deep .p-dialog-header {
-  background: transparent !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
-  color: #2c3e50 !important;
+.video-dialog .p-dialog-content {
+  padding: 0 !important;
+  background: #000 !important;
 }
 
-.video-dialog ::ng-deep .p-dialog-content {
-  background: transparent !important;
-  padding: 2rem !important;
+.video-dialog .p-dialog-header {
+  background: #333 !important;
+  color: white !important;
+  border-bottom: 1px solid #555 !important;
+}
+
+.video-dialog .p-dialog-header .p-dialog-title {
+  color: white !important;
 }
 
 .video-container {
-  border-radius: 15px;
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  height: 0;
   overflow: hidden;
+  background: #000;
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Ensure dialog backdrop is visible */
+.p-dialog-mask {
+  z-index: 9998 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Responsive Design */
@@ -796,17 +816,23 @@
 .galleria-caption {
   text-align: center;
   padding: 1rem 0 0.5rem 0;
+  background: rgba(0, 0, 0, 0.7) !important;
+  border-radius: 8px;
+  margin: 0.5rem;
+  backdrop-filter: blur(10px);
 }
 .galleria-caption h4 {
   margin: 0 0 0.25rem 0;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #222b3a;
+  color: #ffffff !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 .galleria-caption p {
   margin: 0;
-  color: #555;
+  color: #ffffff !important;
   font-size: 1rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 .p-galleria {
   max-width: 1200px !important;

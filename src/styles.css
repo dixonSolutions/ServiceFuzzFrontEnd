@@ -285,3 +285,179 @@ router-outlet + * {
 .p-card .p-button.p-button-text {
   color: #1976d2 !important;
 }
+
+/* Global Text Color Fixes */
+/* Ensure all text elements have proper contrast */
+body {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+/* Fix all heading elements */
+h1, h2, h3, h4, h5, h6 {
+  color: #333333 !important;
+}
+
+/* Fix all paragraph and text elements */
+p, span, div, label, a {
+  color: #333333 !important;
+}
+
+/* Fix Angular Material components */
+.mat-mdc-card {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.mat-mdc-card * {
+  color: #333333 !important;
+}
+
+/* Fix all Angular Material text elements */
+.mat-mdc-form-field {
+  color: #333333 !important;
+}
+
+.mat-mdc-input-element {
+  color: #333333 !important;
+}
+
+.mat-mdc-select {
+  color: #333333 !important;
+}
+
+/* Fix PrimeNG components globally */
+.p-component {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.p-inputtext {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+  border: 1px solid #cccccc !important;
+}
+
+.p-dropdown {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+  border: 1px solid #cccccc !important;
+}
+
+/* Fix any remaining white text */
+* {
+  color: #333333 !important;
+}
+
+/* Override only for buttons and specific UI elements that should have different colors */
+.p-button, .mat-mdc-button, button {
+  color: white !important;
+}
+
+.p-button.p-button-text, .p-button.p-button-outlined {
+  color: #1976d2 !important;
+}
+
+.mat-mdc-button.mat-primary {
+  color: #1976d2 !important;
+}
+
+.mat-mdc-button.mat-accent {
+  color: #ff4081 !important;
+}
+
+.mat-mdc-button.mat-warn {
+  color: #f44336 !important;
+}
+
+/* Fix navigation and toolbar text */
+.mat-toolbar, .mat-toolbar * {
+  color: #333333 !important;
+}
+
+.mat-nav-list, .mat-nav-list * {
+  color: #333333 !important;
+}
+
+/* Fix router outlet content */
+router-outlet + * {
+  color: #333333 !important;
+}
+
+router-outlet + * * {
+  color: #333333 !important;
+}
+
+/* Dark Background Areas - Override to White Text */
+/* Topbar and navigation with dark backgrounds */
+.mat-toolbar {
+  background-color: #1976d2 !important;
+}
+
+.mat-toolbar, 
+.mat-toolbar *,
+.mat-toolbar .mat-button,
+.mat-toolbar .mat-icon-button,
+.mat-toolbar .mat-icon,
+.mat-toolbar span,
+.mat-toolbar a,
+.mat-toolbar .app-title {
+  color: white !important;
+}
+
+/* Mobile sidebar with dark background */
+.mat-sidenav,
+.mat-sidenav *,
+.mat-nav-list,
+.mat-nav-list *,
+.mat-list-item,
+.mat-list-item * {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+/* Mobile sidebar custom classes */
+.simple-mobile-sidebar,
+.simple-mobile-sidebar *,
+.mobile-nav-header,
+.mobile-nav-header *,
+.mobile-nav-list,
+.mobile-nav-list * {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+/* Dark themed buttons */
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-raised-button.mat-primary *,
+.p-button:not(.p-button-text):not(.p-button-outlined),
+.p-button:not(.p-button-text):not(.p-button-outlined) * {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+/* Menu dropdowns with dark backgrounds */
+.mat-mdc-menu-panel,
+.mat-mdc-menu-panel *,
+.mat-mdc-menu-item,
+.mat-mdc-menu-item * {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+/* Any element with dark background class */
+.dark-bg,
+.dark-bg *,
+.primary-bg,
+.primary-bg * {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+/* Hover states for dark areas */
+.mat-toolbar .mat-button:hover,
+.mat-toolbar .mat-icon-button:hover,
+.mat-nav-list .mat-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}

@@ -101,4 +101,13 @@ export class TopbarComponent implements OnInit {
   toggleBusinessSidebar(): void {
     this.businessSidebarExpanded = !this.businessSidebarExpanded;
   }
+
+  // Test method for website-creator navigation
+  navigateToWebsiteCreator(): void {
+    console.log('Attempting to navigate to website-creator...');
+    this.router.navigate(['/website-creator']).then(
+      (success) => console.log('Navigation success:', success),
+      (error) => console.error('Navigation error:', error)
+    );
+  }
 }

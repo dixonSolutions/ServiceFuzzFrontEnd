@@ -10,6 +10,7 @@ import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-servic
 import { BusinessEditComponent } from './business-edit/business-edit.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { Settings } from './settings/settings';
+import { WebsiteCreator } from './website-creator/website-creator';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -23,6 +24,7 @@ const routes: Routes = [
   { path: 'chat', component: ChatWithAiAboutServiceFuzzComponent },
   {path:'analytics', component: AnalyticsComponent},
   { path: 'settings', component: Settings },
+  { path: 'website-creator', component: WebsiteCreator },
   { path: '**', redirectTo: '', pathMatch: 'full' } // Wildcard route for 404 cases
 ];
 

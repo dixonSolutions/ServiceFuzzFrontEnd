@@ -72,6 +72,7 @@ import { AnalyticsComponent } from './analytics/analytics.component';
 import { BusinessEditComponent } from './business-edit/business-edit.component';
 import { VideoDialogComponent } from './home/home.component';
 import { Settings } from './settings/settings';
+import { WebsiteCreator } from './website-creator/website-creator';
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
 
@@ -87,7 +88,8 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     BusinessSettingsComponent,
     ChatWithAiAboutServiceFuzzComponent,
     AnalyticsComponent,
-    Settings
+    Settings,
+    WebsiteCreator
   ],
   imports: [
     BrowserModule,
