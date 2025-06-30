@@ -1,0 +1,113 @@
+<div class="json-editor-container">
+  <!-- Top Navigation Tabs -->
+  <div class="page-tabs">
+    <button 
+      *ngFor="let page of pages" 
+      class="page-tab"
+      [class.active]="page.name === currentPage"
+      (click)="onPageSelect(page)">
+      {{ page.name }}
+      <span class="page-route">{{ page.route }}</span>
+    </button>
+    <button class="add-page-btn" (click)="addPage()" title="Add Page">
+      + Add Page
+    </button>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button class="action-btn apply-btn" (click)="applyChanges()" [disabled]="!isValidJson">
+      <i class="pi pi-check"></i>
+      Apply Changes
+    </button>
+    <button class="action-btn refresh-btn" (click)="refreshPreview()">
+      <i class="pi pi-refresh"></i>
+      Refresh Preview
+    </button>
+    <div class="view-indicator">
+      <span class="desktop-view">🖥️ Desktop View</span>
+      <button class="close-editor-btn" (click)="closeEditor()" title="Close JSON Editor">
+        <i class="pi pi-times"></i>
+        Close Editor
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="editor-content">
+    <!-- Left Panel - JSON Editor -->
+    <div class="json-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="pi pi-file-edit"></i>
+          <span>Website JSON</span>
+        </div>
+        <div class="json-status">
+          <span class="status-indicator" [class.valid]="isValidJson" [class.invalid]="!isValidJson">
+            {{ isValidJson ? '✓ Valid JSON' : '✗ Invalid JSON' }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="json-editor">
+        <textarea
+          class="json-textarea"
+          [value]="jsonContent"
+          (input)="onJsonChange($event)"
+          placeholder="Loading JSON..."
+          spellcheck="false"></textarea>
+      </div>
+      
+      <!-- JSON Structure Help -->
+      <div class="json-help">
+        <details>
+          <summary>📖 JSON Structure Help</summary>
+          <div class="help-content">
+            <p><strong>Website Structure:</strong></p>
+            <ul>
+              <li><code>id</code> - Unique website identifier</li>
+              <li><code>name</code> - Website name</li>
+              <li><code>pages</code> - Array of page objects</li>
+            </ul>
+            <p><strong>Page Structure:</strong></p>
+            <ul>
+              <li><code>id</code> - Unique page identifier</li>
+              <li><code>name</code> - Page display name</li>
+              <li><code>route</code> - URL route (e.g., "/about")</li>
+              <li><code>components</code> - Array of component objects</li>
+            </ul>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Right Panel - HTML Preview -->
+    <div class="preview-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <i class="pi pi-eye"></i>
+          <span>HTML Preview</span>
+        </div>
+        <div class="preview-info">
+          <span class="showing-page">Showing: {{ currentPage }}</span>
+        </div>
+      </div>
+      
+      <div class="html-preview">
+        <iframe 
+          class="preview-iframe"
+          [srcdoc]="htmlPreview"
+          sandbox="allow-same-origin">
+        </iframe>
+      </div>
+      
+      <!-- HTML Source View -->
+      <div class="html-source">
+        <details>
+          <summary>📝 View HTML Source</summary>
+          <pre class="html-code">{{ htmlPreview }}</pre>
+        </details>
+      </div>
+    </div>
+  </div>
+</div> 

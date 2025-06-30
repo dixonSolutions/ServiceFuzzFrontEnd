@@ -1,0 +1,2 @@
+Frontend:
+* JSON is stored with all ui for the business's website

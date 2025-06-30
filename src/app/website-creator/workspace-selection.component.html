@@ -1,0 +1,236 @@
+<div class="workspace-selection">
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-section">
+      <i class="pi pi-code"></i>
+      <h1>ServiceFuzz WebDesigner</h1>
+      <p>Create professional websites for your business</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Business Selection -->
+    <div class="business-section">
+      <h2>Select Your Business</h2>
+      <p>Choose the business you want to create a website for:</p>
+      
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-state">
+        <div class="loading-spinner">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        <p>Loading your businesses...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="errorMessage && !isLoading" class="error-state">
+        <div class="error-icon">
+          <i class="pi pi-exclamation-triangle"></i>
+        </div>
+        <p>{{ errorMessage }}</p>
+        <button class="btn btn-primary" (click)="loadBusinesses()">
+          <i class="pi pi-refresh"></i>
+          Try Again
+        </button>
+      </div>
+      
+      <div class="business-grid" *ngIf="!isLoading && !errorMessage">
+        <div 
+          *ngFor="let business of businesses"
+          class="business-card"
+          [class.selected]="selectedBusiness?.id === business.id"
+          (click)="onBusinessSelect(business)">
+          <div class="business-icon">
+            <i [class]="getBusinessTypeIcon(business.type)"></i>
+          </div>
+          <div class="business-info">
+            <h3>{{ business.name }}</h3>
+            <p class="business-type">{{ business.type }}</p>
+            <p class="business-description">{{ business.description }}</p>
+          </div>
+          <div class="selection-indicator" *ngIf="selectedBusiness?.id === business.id">
+            <i class="pi pi-check"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add New Business Button -->
+      <div class="add-business-card" (click)="onAddNewBusiness()">
+        <div class="add-icon">
+          <i class="pi pi-plus"></i>
+        </div>
+        <div class="add-info">
+          <h3>Add New Business</h3>
+          <p>Register a new business profile</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Section -->
+    <div class="project-section" *ngIf="selectedBusiness">
+      <div class="section-header">
+        <h2>Website Projects for {{ selectedBusiness.name }}</h2>
+        <button class="btn btn-primary" (click)="onCreateNewProject()">
+          <i class="pi pi-plus"></i>
+          New Website Project
+        </button>
+      </div>
+
+      <!-- Existing Projects -->
+      <div class="projects-grid" *ngIf="getProjectsByBusiness(selectedBusiness.name).length > 0">
+        <div 
+          *ngFor="let project of getProjectsByBusiness(selectedBusiness.name)"
+          class="project-card"
+          (click)="onSelectExistingProject(project)">
+          <div class="project-thumbnail">
+            <div class="thumbnail-placeholder" *ngIf="!project.thumbnail">
+              <i class="pi pi-image"></i>
+              <span>Website Preview</span>
+            </div>
+            <img *ngIf="project.thumbnail" [src]="project.thumbnail" [alt]="project.name">
+          </div>
+          <div class="project-info">
+            <h4>{{ project.name }}</h4>
+            <p class="project-description">{{ project.description }}</p>
+            <div class="project-meta">
+              <span class="created-date">
+                <i class="pi pi-calendar"></i>
+                Created: {{ formatDate(project.createdAt) }}
+              </span>
+              <span class="modified-date">
+                <i class="pi pi-clock"></i>
+                Modified: {{ formatDate(project.lastModified) }}
+              </span>
+            </div>
+          </div>
+          <div class="project-actions">
+            <button class="btn btn-outline" (click)="onSelectExistingProject(project); $event.stopPropagation()">
+              <i class="pi pi-pencil"></i>
+              Edit
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Projects Message -->
+      <div class="no-projects" *ngIf="getProjectsByBusiness(selectedBusiness.name).length === 0">
+        <div class="no-projects-icon">
+          <i class="pi pi-folder-open"></i>
+        </div>
+        <h3>No Website Projects Yet</h3>
+        <p>Create your first website project for {{ selectedBusiness.name }}</p>
+        <button class="btn btn-primary" (click)="onCreateNewProject()">
+          <i class="pi pi-plus"></i>
+          Create First Website
+        </button>
+      </div>
+    </div>
+
+    <!-- Welcome Message -->
+    <div class="welcome-section" *ngIf="!selectedBusiness">
+      <div class="welcome-content">
+        <div class="welcome-icon">
+          <i class="pi pi-star"></i>
+        </div>
+        <h2>Welcome to ServiceFuzz WebDesigner</h2>
+        <p>Build professional websites for your service-based business with our drag-and-drop editor.</p>
+        <div class="features-list">
+          <div class="feature-item">
+            <i class="pi pi-check"></i>
+            <span>Professional business templates</span>
+          </div>
+          <div class="feature-item">
+            <i class="pi pi-check"></i>
+            <span>Integrated booking system</span>
+          </div>
+          <div class="feature-item">
+            <i class="pi pi-check"></i>
+            <span>Payment processing</span>
+          </div>
+          <div class="feature-item">
+            <i class="pi pi-check"></i>
+            <span>Customer management</span>
+          </div>
+        </div>
+        <p class="cta-text">Select a business above to get started!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Project Dialog -->
+<div class="dialog-overlay" *ngIf="showNewProjectDialog" (click)="closeNewProjectDialog()">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Create New Website Project</h3>
+      <button class="close-btn" (click)="closeNewProjectDialog()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="dialog-content">
+      <div class="selected-business-info">
+        <div class="business-badge">
+          <i [class]="getBusinessTypeIcon(selectedBusiness?.type || '')"></i>
+          <span>{{ selectedBusiness?.name }}</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="projectName">Website Project Name *</label>
+        <input 
+          id="projectName"
+          type="text" 
+          [(ngModel)]="newProjectName" 
+          placeholder="e.g., Main Website, Landing Page, Booking Site"
+          name="newProjectName"
+          class="form-control">
+      </div>
+      
+      <div class="form-group">
+        <label for="projectDescription">Description (Optional)</label>
+        <textarea 
+          id="projectDescription"
+          [(ngModel)]="newProjectDescription" 
+          placeholder="Brief description of this website project..."
+          name="newProjectDescription"
+          class="form-control"
+          rows="3"></textarea>
+      </div>
+      
+      <div class="project-templates">
+        <h4>Choose a Starting Template</h4>
+        <div class="template-options">
+          <div class="template-option selected">
+            <div class="template-preview">
+              <i class="pi pi-layout"></i>
+            </div>
+            <span>Blank Website</span>
+          </div>
+          <div class="template-option">
+            <div class="template-preview">
+              <i class="pi pi-heart"></i>
+            </div>
+            <span>Beauty & Wellness</span>
+          </div>
+          <div class="template-option">
+            <div class="template-preview">
+              <i class="pi pi-bolt"></i>
+            </div>
+            <span>Fitness & Health</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" (click)="closeNewProjectDialog()">Cancel</button>
+      <button 
+        class="btn btn-primary" 
+        (click)="onConfirmCreateProject()"
+        [disabled]="!newProjectName.trim()">
+        <i class="pi pi-plus"></i>
+        Create Website Project
+      </button>
+    </div>
+  </div>
+</div> 

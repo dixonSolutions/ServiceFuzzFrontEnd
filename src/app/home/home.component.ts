@@ -308,7 +308,26 @@ export class HomeComponent implements OnInit {
     { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Scaffolding and Rigging Services', description: 'Scaffolding and rigging.' },
   ];
 
-  // Galleria responsive options (merged, with numScroll for each breakpoint)
+  // Hero carousel responsive options (for top carousel)
+  heroResponsiveOptions = [
+    {
+      breakpoint: '1199px',
+      numVisible: 1,
+      numScroll: 1
+    },
+    {
+      breakpoint: '991px',
+      numVisible: 1,
+      numScroll: 1
+    },
+    {
+      breakpoint: '768px',
+      numVisible: 1,
+      numScroll: 1
+    }
+  ];
+
+  // Galleria responsive options (for testimonials and galleria)
   responsiveOptions = [
     {
       breakpoint: '1199px',

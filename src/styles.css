@@ -405,25 +405,38 @@ router-outlet + * * {
   color: white !important;
 }
 
-/* Mobile sidebar with dark background */
-.mat-sidenav,
-.mat-sidenav *,
-.mat-nav-list,
-.mat-nav-list *,
-.mat-list-item,
-.mat-list-item * {
+/* Remove the overly broad sidenav rules that were causing issues */
+/* Mobile sidebar with dark background - more specific selectors */
+.mat-sidenav-container .mat-sidenav {
   background-color: #1976d2 !important;
+}
+
+.mat-sidenav-container .mat-sidenav * {
   color: white !important;
 }
 
-/* Mobile sidebar custom classes */
-.simple-mobile-sidebar,
-.simple-mobile-sidebar *,
-.mobile-nav-header,
-.mobile-nav-header *,
-.mobile-nav-list,
-.mobile-nav-list * {
+/* Mobile sidebar custom classes - more specific */
+.simple-mobile-sidebar {
   background-color: #1976d2 !important;
+}
+
+.simple-mobile-sidebar * {
+  color: white !important;
+}
+
+.mobile-nav-header {
+  background-color: #1976d2 !important;
+}
+
+.mobile-nav-header * {
+  color: white !important;
+}
+
+.mobile-nav-list {
+  background-color: #1976d2 !important;
+}
+
+.mobile-nav-list * {
   color: white !important;
 }
 
@@ -436,14 +449,8 @@ router-outlet + * * {
   color: white !important;
 }
 
-/* Menu dropdowns with dark backgrounds */
-.mat-mdc-menu-panel,
-.mat-mdc-menu-panel *,
-.mat-mdc-menu-item,
-.mat-mdc-menu-item * {
-  background-color: #1976d2 !important;
-  color: white !important;
-}
+/* Remove the overly broad menu panel rules that were causing issues */
+/* Only apply dark backgrounds to specific menu panels that should be dark */
 
 /* Any element with dark background class */
 .dark-bg,
@@ -460,4 +467,56 @@ router-outlet + * * {
 .mat-nav-list .mat-list-item:hover {
   background-color: rgba(255, 255, 255, 0.1) !important;
   color: white !important;
+}
+
+/* Fix for dropdown menus and mobile navigation */
+/* Ensure dropdown menus have proper styling */
+.p-dropdown-panel,
+.p-dropdown-panel * {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.p-dropdown-item {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.p-dropdown-item:hover {
+  background-color: #f5f5f5 !important;
+  color: #333333 !important;
+}
+
+/* Fix for mobile navigation dropdowns */
+.mat-menu-panel,
+.mat-menu-panel * {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.mat-menu-item {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.mat-menu-item:hover {
+  background-color: #f5f5f5 !important;
+  color: #333333 !important;
+}
+
+/* Ensure business dropdown in topbar has proper styling */
+.mat-toolbar .mat-menu-panel,
+.mat-toolbar .mat-menu-panel * {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.mat-toolbar .mat-menu-item {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.mat-toolbar .mat-menu-item:hover {
+  background-color: #f5f5f5 !important;
+  color: #333333 !important;
 }

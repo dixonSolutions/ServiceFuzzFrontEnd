@@ -57,6 +57,13 @@ import { BadgeModule } from 'primeng/badge';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { GalleriaModule } from 'primeng/galleria';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { CheckboxModule } from 'primeng/checkbox';
+import { SplitButtonModule } from 'primeng/splitbutton';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
+import { TextareaModule } from 'primeng/textarea';
+import { MenuModule } from 'primeng/menu';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
@@ -72,7 +79,10 @@ import { AnalyticsComponent } from './analytics/analytics.component';
 import { BusinessEditComponent } from './business-edit/business-edit.component';
 import { VideoDialogComponent } from './home/home.component';
 import { Settings } from './settings/settings';
-import { WebsiteCreator } from './website-creator/website-creator';
+import { WebsiteCreatorComponent } from './website-creator/website-creator';
+import { JsonEditorComponent } from './website-creator/json-editor.component';
+import { WorkspaceSelectionComponent } from './website-creator/workspace-selection.component';
+
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
 
@@ -89,14 +99,15 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     ChatWithAiAboutServiceFuzzComponent,
     AnalyticsComponent,
     Settings,
-    WebsiteCreator
+    WebsiteCreatorComponent,
+    JsonEditorComponent,
+    WorkspaceSelectionComponent
   ],
   imports: [
     BrowserModule,
     CommonModule,
     ButtonModule,
     ToolbarModule,
-    BusinessEditComponent,
     VideoDialogComponent,
     BrowserAnimationsModule,
     ColorPickerModule,
@@ -150,7 +161,13 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     AvatarGroupModule,
     BadgeModule,
     TooltipModule,
-    DialogModule
+    DialogModule,
+    InputNumberModule,
+    CheckboxModule,
+    SplitButtonModule,
+    ConfirmDialogModule,
+    TextareaModule,
+    MenuModule
   ],
   providers: [
     providePrimeNG({
@@ -159,6 +176,7 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
       }
     }),
     CookieService,
+    ConfirmationService,
     {
       provide: 'SocialAuthServiceConfig',
       useValue: {

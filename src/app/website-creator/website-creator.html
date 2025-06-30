@@ -1,1 +1,1066 @@
-<p>website-creator works!</p>
+<!-- Workspace Selection -->
+<app-workspace-selection 
+  *ngIf="showWorkspaceSelection"
+  (projectSelected)="onWorkspaceProjectSelected($event)"
+  (newProjectCreated)="onWorkspaceProjectCreated($event)">
+</app-workspace-selection>
+
+<!-- Website Creator Interface -->
+<div class="website-creator" *ngIf="!showWorkspaceSelection">
+  <!-- Top Toolbar -->
+  <div class="top-toolbar">
+    <div class="toolbar-left">
+      <button class="toolbar-btn back-btn" (click)="onBackToWorkspace()" title="Back to Workspace">
+        <i class="pi pi-arrow-left"></i>
+        Back
+      </button>
+      <div class="logo-section">
+        <i class="pi pi-code"></i>
+        <span class="brand-name">ServiceFuzz WebDesigner</span>
+        <span class="project-label">{{ currentProject?.name || 'New Website' }}</span>
+        <span class="business-label" *ngIf="currentProject?.businessName">{{ currentProject?.businessName }}</span>
+      </div>
+    </div>
+    
+    <div class="toolbar-right">
+      <button class="toolbar-btn" title="Undo">
+        <i class="pi pi-undo"></i>
+        Undo
+      </button>
+      <button class="toolbar-btn" title="Redo">
+        <i class="pi pi-redo"></i>
+        Redo
+      </button>
+      <button class="toolbar-btn" title="JSON Editor" (click)="onJsonEditor()">
+        <i class="pi pi-code"></i>
+        JSON Editor
+      </button>
+      <button class="toolbar-btn preview-btn" (click)="onPreview()">
+        <i class="pi pi-eye"></i>
+        Preview
+      </button>
+      <button class="toolbar-btn save-btn" (click)="onSave()">
+        <i class="pi pi-save"></i>
+        Save
+      </button>
+      <button class="toolbar-btn publish-btn">
+        <i class="pi pi-upload"></i>
+        Publish
+      </button>
+    </div>
+  </div>
+
+  <!-- JSON Editor (full screen overlay) -->
+  <app-json-editor *ngIf="showJsonEditor" (close)="onJsonEditor()"></app-json-editor>
+
+  <!-- Main Layout -->
+  <div class="main-layout" [style.display]="showJsonEditor ? 'none' : 'flex'">
+    <!-- Left Sidebar -->
+    <div class="left-sidebar">
+      <!-- Templates Section -->
+      <div class="templates-section">
+        <div class="template-item active">
+          <div class="template-preview">
+            <div class="template-icon">🥋</div>
+          </div>
+          <div class="template-info">
+            <h4>Martial Arts</h4>
+            <p>Dynamic template for martial arts schools</p>
+          </div>
+        </div>
+        
+        <div class="template-item">
+          <div class="template-preview">
+            <div class="template-icon">💪</div>
+          </div>
+          <div class="template-info">
+            <h4>Modern Fitness</h4>
+            <p>Contemporary design for modern fitness centers</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Components Section -->
+      <div class="components-section">
+        <div class="section-header">
+          <i class="pi pi-plus"></i>
+          <span>Components</span>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="search-container">
+          <input 
+            type="text" 
+            placeholder="Search components..." 
+            class="search-input"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange($event)">
+          <i class="pi pi-search search-icon"></i>
+        </div>
+
+        <!-- Category Filters -->
+        <div class="category-filters">
+          <button 
+            *ngFor="let category of componentCategories"
+            class="category-btn"
+            [class.active]="selectedCategory === category.name"
+            (click)="onCategoryChange(category.name)">
+            {{ category.name }} ({{ category.count }})
+          </button>
+        </div>
+
+        <!-- Component List -->
+        <div class="component-list">
+          <div 
+            *ngFor="let component of getFilteredComponentsByCategory(selectedCategory)"
+            class="component-item"
+            draggable="true"
+            (dragstart)="onDragStart($event, component)"
+            [title]="component.description">
+            <div class="component-icon">
+              <i [class]="getComponentIcon(component.icon)"></i>
+            </div>
+            <div class="component-info">
+              <span class="component-name">{{ component.name }}</span>
+              <span class="component-category badge" [class]="component.category.toLowerCase()">{{ component.category }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Canvas Area -->
+    <div class="center-area">
+      <!-- Page Tabs -->
+      <div class="page-tabs">
+        <div 
+          *ngFor="let page of pages" 
+          class="page-tab"
+          [class.active]="page.id === currentPageId"
+          (click)="onPageTabClick(page.id)">
+          <span class="page-name">{{ page.name }}</span>
+          <span class="page-route">{{ page.route }}</span>
+          <button 
+            *ngIf="page.isDeletable" 
+            class="delete-page-btn"
+            (click)="onDeletePage(page.id); $event.stopPropagation()"
+            title="Delete Page">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+        <button class="add-page-btn" (click)="onAddPage()" title="Add Page">
+          + Add Page
+        </button>
+      </div>
+
+      <!-- Canvas Container -->
+      <div class="canvas-container">
+        <!-- Canvas Toolbar -->
+        <div class="canvas-toolbar">
+          <div class="canvas-info">
+            <span class="breadcrumb">Page: {{ getPageById(currentPageId)?.name || 'Home' }} (/)</span>
+            <span class="components-count">→ Components: 1</span>
+            <span class="canvas-view">Canvas: Desktop View (100%)</span>
+          </div>
+          <div class="view-controls">
+            <div class="device-selector">
+              <button 
+                class="device-btn"
+                [class.active]="selectedDevice === 'desktop'"
+                (click)="onDeviceChange('desktop')">
+                <i class="pi pi-desktop"></i>
+              </button>
+              <button 
+                class="device-btn"
+                [class.active]="selectedDevice === 'tablet'"
+                (click)="onDeviceChange('tablet')">
+                <i class="pi pi-tablet"></i>
+              </button>
+              <button 
+                class="device-btn"
+                [class.active]="selectedDevice === 'mobile'"
+                (click)="onDeviceChange('mobile')">
+                <i class="pi pi-mobile"></i>
+              </button>
+            </div>
+            <span class="view-label">Desktop View</span>
+          </div>
+        </div>
+
+        <!-- Canvas -->
+        <div 
+          class="canvas" 
+          [class]="'device-' + selectedDevice"
+          (drop)="onDrop($event)"
+          (dragover)="onDragOver($event)">
+          
+          <!-- Navigation Bar (always visible) -->
+          <nav class="site-nav">
+            <div class="nav-brand">Your Logo</div>
+            <div class="nav-menu">
+              <span 
+                *ngFor="let page of pages" 
+                class="nav-item"
+                [class.active]="page.id === currentPageId"
+                (click)="onPageTabClick(page.id)"
+                [style.cursor]="'pointer'">
+                {{ page.name }}
+              </span>
+            </div>
+          </nav>
+          
+          <!-- Render current page components -->
+          <div *ngFor="let instance of getCurrentPageComponents(); trackBy: trackByInstanceId" 
+               class="component-instance"
+               [id]="'component-' + instance.id"
+               (click)="selectComponentInstance(instance)"
+               (mousedown)="startDrag($event, instance)"
+               [class.selected]="selectedComponentInstance?.id === instance.id"
+               [style.position]="'absolute'"
+               [style.left.px]="instance.x"
+               [style.top.px]="instance.y"
+               [style.width.px]="instance.width"
+               [style.height.px]="instance.height"
+               [style.z-index]="instance.zIndex">
+            
+            <!-- Render component based on type -->
+            <div [ngSwitch]="instance.type">
+              
+              <!-- Hero Section -->
+              <section *ngSwitchCase="'hero-section'" class="hero" 
+                       [style.background-color]="instance.parameters['backgroundColor'] || '#f8f9fa'"
+                       [style.color]="instance.parameters['textColor'] || '#333333'"
+                       [style.width]="'100%'"
+                       [style.height]="'100%'">
+                <h1>{{ instance.parameters['title'] || 'Welcome to Our Website' }}</h1>
+                <p>{{ instance.parameters['subtitle'] || 'Discover amazing services and solutions' }}</p>
+                <button class="hero-btn" 
+                        [style.background-color]="instance.parameters['ctaButtonColor'] || '#007bff'"
+                        [style.color]="'white'">
+                  {{ instance.parameters['ctaText'] || 'Get Started' }}
+                </button>
+              </section>
+              
+              <!-- Text Block -->
+              <div *ngSwitchCase="'text-block'" class="text-block"
+                   [style.text-align]="instance.parameters['alignment'] || 'left'"
+                   [style.color]="instance.parameters['textColor'] || '#333333'"
+                   [style.font-size.px]="instance.parameters['fontSize'] || 16"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'">
+                <h3 *ngIf="instance.parameters['title']">{{ instance.parameters['title'] }}</h3>
+                <p>{{ instance.parameters['content'] || 'Your text content goes here...' }}</p>
+              </div>
+              
+              <!-- Image -->
+              <div *ngSwitchCase="'image'" class="image-block" 
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.text-align]="'center'">
+                <img [src]="instance.parameters['imageUrl'] || 'https://via.placeholder.com/300x200'" 
+                     [alt]="instance.parameters['altText'] || 'Image description'"
+                     [style.width]="'100%'"
+                     [style.height]="'100%'"
+                     [style.object-fit]="instance.parameters['objectFit'] || 'cover'"
+                     [style.border-radius.px]="instance.parameters['borderRadius'] || 0">
+              </div>
+              
+              <!-- Button -->
+              <div *ngSwitchCase="'button'" class="button-block" 
+                   [style.text-align]="instance.parameters['alignment'] || 'center'"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.display]="'flex'"
+                   [style.align-items]="'center'"
+                   [style.justify-content]="'center'">
+                <button [style.background-color]="instance.parameters['backgroundColor'] || '#007bff'"
+                        [style.color]="instance.parameters['textColor'] || 'white'"
+                        [style.padding]="instance.parameters['size'] === 'large' ? '12px 24px' : '8px 16px'"
+                        [style.border]="'none'"
+                        [style.border-radius.px]="6">
+                  {{ instance.parameters['text'] || 'Button' }}
+                </button>
+              </div>
+              
+              <!-- Top Navigation -->
+              <nav *ngSwitchCase="'top-navigation'" class="top-nav"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'"
+                   [style.color]="instance.parameters['textColor'] || '#000000'"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.display]="'flex'"
+                   [style.align-items]="'center'"
+                   [style.justify-content]="'space-between'"
+                   [style.padding]="'0 24px'">
+                <div class="nav-brand">{{ instance.parameters['logoText'] || 'My Website' }}</div>
+                <div class="nav-menu">
+                  <span 
+                    *ngFor="let page of pages" 
+                    class="nav-item"
+                    [class.active]="page.id === currentPageId"
+                    (click)="onNavigationClick($event, page.id)"
+                    [style.cursor]="'pointer'"
+                    [style.margin-right.px]="20">
+                    {{ page.name }}
+                  </span>
+                </div>
+              </nav>
+              
+              <!-- Footer -->
+              <footer *ngSwitchCase="'footer'" class="footer" 
+                      [style.background-color]="instance.parameters['backgroundColor'] || '#2c3e50'"
+                      [style.color]="instance.parameters['textColor'] || '#ffffff'"
+                      [style.width]="'100%'"
+                      [style.height]="'100%'"
+                      [style.padding]="'24px'">
+                <div class="footer-content">
+                  <div class="footer-section">
+                    <h4>{{ instance.parameters['companyName'] || 'Company Name' }}</h4>
+                    <p>{{ instance.parameters['description'] || 'Your company description' }}</p>
+                  </div>
+                </div>
+              </footer>
+              
+              <!-- Contact Information -->
+              <div *ngSwitchCase="'contact-info'" class="contact-info"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'"
+                   [style.background-color]="'#f8f9fa'"
+                   [style.border-radius.px]="8">
+                <h3>{{ instance.parameters['businessName'] || 'Your Business' }}</h3>
+                <div class="contact-details" [style.margin-top.px]="15">
+                  <div class="contact-item" [style.margin-bottom.px]="10">
+                    <i class="pi pi-map-marker" [style.margin-right.px]="8"></i>
+                    <span>{{ instance.parameters['address'] || '123 Main St, City, State 12345' }}</span>
+                  </div>
+                  <div class="contact-item" [style.margin-bottom.px]="10">
+                    <i class="pi pi-phone" [style.margin-right.px]="8"></i>
+                    <span>{{ instance.parameters['phone'] || '(555) 123-4567' }}</span>
+                  </div>
+                  <div class="contact-item" [style.margin-bottom.px]="10">
+                    <i class="pi pi-envelope" [style.margin-right.px]="8"></i>
+                    <span>{{ instance.parameters['email'] || 'info@yourbusiness.com' }}</span>
+                  </div>
+                  <div class="contact-item" [style.margin-bottom.px]="10">
+                    <i class="pi pi-clock" [style.margin-right.px]="8"></i>
+                    <span>{{ instance.parameters['hours'] || 'Mon-Fri: 9AM-6PM' }}</span>
+                  </div>
+                  <div *ngIf="instance.parameters['showMap']" class="map-placeholder" 
+                       [style.width]="'100%'"
+                       [style.height.px]="120"
+                       [style.background-color]="'#e9ecef'"
+                       [style.margin-top.px]="15"
+                       [style.border-radius.px]="6"
+                       [style.display]="'flex'"
+                       [style.align-items]="'center'"
+                       [style.justify-content]="'center'">
+                    <span>📍 Interactive Map</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Product Display -->
+              <div *ngSwitchCase="'product-grid'" class="product-display"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'">
+                <h3 *ngIf="instance.parameters['title']">{{ instance.parameters['title'] }}</h3>
+                <div class="services-grid" 
+                     [style.display]="'grid'"
+                     [style.grid-template-columns]="'repeat(' + (instance.parameters['columns'] || 3) + ', 1fr)'"
+                     [style.gap.px]="15"
+                     [style.margin-top.px]="15">
+                  <div class="service-item" 
+                       [style.border]="'1px solid #ddd'"
+                       [style.border-radius.px]="8"
+                       [style.padding.px]="15"
+                       [style.text-align]="'center'">
+                    <h4>Haircut & Style</h4>
+                    <p *ngIf="instance.parameters['showDuration']">Duration: 45 min</p>
+                    <p *ngIf="instance.parameters['showPricing']">Price: $35</p>
+                    <div *ngIf="instance.parameters['showRatings']" class="rating">
+                      ⭐⭐⭐⭐⭐ (4.8/5)
+                    </div>
+                    <button *ngIf="instance.parameters['showBooking']" 
+                            class="book-btn"
+                            [style.background-color]="'#007bff'"
+                            [style.color]="'white'"
+                            [style.border]="'none'"
+                            [style.padding]="'8px 16px'"
+                            [style.border-radius.px]="6"
+                            [style.margin-top.px]="10">
+                      Book Now
+                    </button>
+                  </div>
+                  <div class="service-item" 
+                       [style.border]="'1px solid #ddd'"
+                       [style.border-radius.px]="8"
+                       [style.padding.px]="15"
+                       [style.text-align]="'center'">
+                    <h4>Color Treatment</h4>
+                    <p *ngIf="instance.parameters['showDuration']">Duration: 2 hours</p>
+                    <p *ngIf="instance.parameters['showPricing']">Price: $85</p>
+                    <div *ngIf="instance.parameters['showRatings']" class="rating">
+                      ⭐⭐⭐⭐⭐ (4.9/5)
+                    </div>
+                    <button *ngIf="instance.parameters['showBooking']" 
+                            class="book-btn"
+                            [style.background-color]="'#007bff'"
+                            [style.color]="'white'"
+                            [style.border]="'none'"
+                            [style.padding]="'8px 16px'"
+                            [style.border-radius.px]="6"
+                            [style.margin-top.px]="10">
+                      Book Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Checkout Summary -->
+              <div *ngSwitchCase="'checkout-summary'" class="checkout-summary"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'"
+                   [style.background-color]="'#ffffff'"
+                   [style.border]="'1px solid #ddd'"
+                   [style.border-radius.px]="8">
+                <h3>{{ instance.parameters['title'] || 'Checkout' }}</h3>
+                <div class="order-items" [style.margin-top.px]="15">
+                  <div class="order-item" 
+                       [style.display]="'flex'"
+                       [style.justify-content]="'space-between'"
+                       [style.padding]="'10px 0'"
+                       [style.border-bottom]="'1px solid #eee'">
+                    <span>Haircut & Style</span>
+                    <span>$35.00</span>
+                  </div>
+                  <div class="order-item" 
+                       [style.display]="'flex'"
+                       [style.justify-content]="'space-between'"
+                       [style.padding]="'10px 0'"
+                       [style.border-bottom]="'1px solid #eee'">
+                    <span>Beard Trim</span>
+                    <span>$15.00</span>
+                  </div>
+                  <div class="subtotal" 
+                       [style.display]="'flex'"
+                       [style.justify-content]="'space-between'"
+                       [style.padding]="'10px 0'"
+                       [style.font-weight]="'bold'">
+                    <span>Subtotal</span>
+                    <span>$50.00</span>
+                  </div>
+                  <div *ngIf="instance.parameters['showTax']" class="tax" 
+                       [style.display]="'flex'"
+                       [style.justify-content]="'space-between'"
+                       [style.padding]="'5px 0'">
+                    <span>Tax</span>
+                    <span>$4.00</span>
+                  </div>
+                  <div class="total" 
+                       [style.display]="'flex'"
+                       [style.justify-content]="'space-between'"
+                       [style.padding]="'10px 0'"
+                       [style.font-weight]="'bold'"
+                       [style.font-size.px]="18"
+                       [style.border-top]="'2px solid #333'">
+                    <span>Total</span>
+                    <span>$54.00</span>
+                  </div>
+                </div>
+                <button class="checkout-btn"
+                        [style.width]="'100%'"
+                        [style.background-color]="'#28a745'"
+                        [style.color]="'white'"
+                        [style.border]="'none'"
+                        [style.padding]="'12px'"
+                        [style.border-radius.px]="6"
+                        [style.margin-top.px]="15"
+                        [style.font-size.px]="16"
+                        [style.font-weight]="'bold'">
+                  Proceed to Payment
+                </button>
+                <p [style.margin-top.px]="10" [style.font-size.px]="12" [style.color]="'#666'">
+                  Accepted: {{ instance.parameters['paymentMethods'] || 'Credit Card, PayPal, Apple Pay' }}
+                </p>
+              </div>
+              
+              <!-- Payment Form -->
+              <div *ngSwitchCase="'payment-form'" class="payment-form"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'"
+                   [style.background-color]="'#ffffff'"
+                   [style.border]="'1px solid #ddd'"
+                   [style.border-radius.px]="8">
+                <h3>{{ instance.parameters['title'] || 'Payment Details' }}</h3>
+                <form [style.margin-top.px]="15">
+                  <div class="form-group" [style.margin-bottom.px]="15">
+                    <label>Card Number</label>
+                    <input type="text" placeholder="1234 5678 9012 3456" 
+                           [style.width]="'100%'"
+                           [style.padding]="'8px'"
+                           [style.border]="'1px solid #ddd'"
+                           [style.border-radius.px]="4">
+                  </div>
+                  <div class="form-row" [style.display]="'flex'" [style.gap.px]="10">
+                    <div class="form-group" [style.flex]="'1'">
+                      <label>Expiry Date</label>
+                      <input type="text" placeholder="MM/YY" 
+                             [style.width]="'100%'"
+                             [style.padding]="'8px'"
+                             [style.border]="'1px solid #ddd'"
+                             [style.border-radius.px]="4">
+                    </div>
+                    <div class="form-group" [style.flex]="'1'">
+                      <label>CVV</label>
+                      <input type="text" placeholder="123" 
+                             [style.width]="'100%'"
+                             [style.padding]="'8px'"
+                             [style.border]="'1px solid #ddd'"
+                             [style.border-radius.px]="4">
+                    </div>
+                  </div>
+                  <div class="form-group" [style.margin-bottom.px]="15">
+                    <label>Cardholder Name</label>
+                    <input type="text" placeholder="John Doe" 
+                           [style.width]="'100%'"
+                           [style.padding]="'8px'"
+                           [style.border]="'1px solid #ddd'"
+                           [style.border-radius.px]="4">
+                  </div>
+                  <div *ngIf="instance.parameters['showSaveCard']" class="form-group" [style.margin-bottom.px]="15">
+                    <label>
+                      <input type="checkbox"> Save card for future purchases
+                    </label>
+                  </div>
+                </form>
+                <p [style.font-size.px]="12" [style.color]="'#666'">
+                  We accept: {{ instance.parameters['acceptedCards'] || 'Visa, MasterCard, American Express' }}
+                </p>
+              </div>
+              
+              <!-- Past Orders Display -->
+              <div *ngSwitchCase="'past-orders-display'" class="past-orders"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'">
+                <h3>{{ instance.parameters['title'] || 'Your Past Orders' }}</h3>
+                <div class="orders-list" [style.margin-top.px]="15">
+                  <div class="order-item" 
+                       [style.border]="'1px solid #ddd'"
+                       [style.border-radius.px]="8"
+                       [style.padding.px]="15"
+                       [style.margin-bottom.px]="15">
+                    <div class="order-header" 
+                         [style.display]="'flex'"
+                         [style.justify-content]="'space-between'"
+                         [style.align-items]="'center'">
+                      <h4>Order #12345</h4>
+                      <span *ngIf="instance.parameters['showStatus']" 
+                            class="status completed"
+                            [style.background-color]="'#28a745'"
+                            [style.color]="'white'"
+                            [style.padding]="'4px 8px'"
+                            [style.border-radius.px]="4"
+                            [style.font-size.px]="12">
+                        Completed
+                      </span>
+                    </div>
+                    <p>Service: Haircut & Style</p>
+                    <p *ngIf="instance.parameters['showDate']">Date: March 15, 2024 at 2:00 PM</p>
+                    <p>Total: $35.00</p>
+                    <div class="order-actions" [style.margin-top.px]="10">
+                      <button *ngIf="instance.parameters['allowReschedule']"
+                              class="btn-outline"
+                              [style.margin-right.px]="8"
+                              [style.padding]="'6px 12px'"
+                              [style.border]="'1px solid #007bff'"
+                              [style.color]="'#007bff'"
+                              [style.background]="'transparent'"
+                              [style.border-radius.px]="4">
+                        Reschedule
+                      </button>
+                      <button *ngIf="instance.parameters['allowCancel']"
+                              class="btn-outline"
+                              [style.padding]="'6px 12px'"
+                              [style.border]="'1px solid #dc3545'"
+                              [style.color]="'#dc3545'"
+                              [style.background]="'transparent'"
+                              [style.border-radius.px]="4">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="order-item" 
+                       [style.border]="'1px solid #ddd'"
+                       [style.border-radius.px]="8"
+                       [style.padding.px]="15"
+                       [style.margin-bottom.px]="15">
+                    <div class="order-header" 
+                         [style.display]="'flex'"
+                         [style.justify-content]="'space-between'"
+                         [style.align-items]="'center'">
+                      <h4>Order #12344</h4>
+                      <span *ngIf="instance.parameters['showStatus']" 
+                            class="status upcoming"
+                            [style.background-color]="'#007bff'"
+                            [style.color]="'white'"
+                            [style.padding]="'4px 8px'"
+                            [style.border-radius.px]="4"
+                            [style.font-size.px]="12">
+                        Upcoming
+                      </span>
+                    </div>
+                    <p>Service: Color Treatment</p>
+                    <p *ngIf="instance.parameters['showDate']">Date: March 22, 2024 at 10:00 AM</p>
+                    <p>Total: $85.00</p>
+                    <div class="order-actions" [style.margin-top.px]="10">
+                      <button *ngIf="instance.parameters['allowReschedule']"
+                              class="btn-outline"
+                              [style.margin-right.px]="8"
+                              [style.padding]="'6px 12px'"
+                              [style.border]="'1px solid #007bff'"
+                              [style.color]="'#007bff'"
+                              [style.background]="'transparent'"
+                              [style.border-radius.px]="4">
+                        Reschedule
+                      </button>
+                      <button *ngIf="instance.parameters['allowCancel']"
+                              class="btn-outline"
+                              [style.padding]="'6px 12px'"
+                              [style.border]="'1px solid #dc3545'"
+                              [style.color]="'#dc3545'"
+                              [style.background]="'transparent'"
+                              [style.border-radius.px]="4">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Authentication Form -->
+              <div *ngSwitchCase="'authentication-form'" class="auth-form"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'"
+                   [style.background-color]="'#ffffff'"
+                   [style.border]="'1px solid #ddd'"
+                   [style.border-radius.px]="8">
+                <h3>{{ instance.parameters['title'] || 'Sign In' }}</h3>
+                <form [style.margin-top.px]="15">
+                  <div class="form-group" [style.margin-bottom.px]="15">
+                    <label>Email</label>
+                    <input type="email" placeholder="your@email.com" 
+                           [style.width]="'100%'"
+                           [style.padding]="'8px'"
+                           [style.border]="'1px solid #ddd'"
+                           [style.border-radius.px]="4">
+                  </div>
+                  <div class="form-group" [style.margin-bottom.px]="15">
+                    <label>Password</label>
+                    <input type="password" placeholder="Your password" 
+                           [style.width]="'100%'"
+                           [style.padding]="'8px'"
+                           [style.border]="'1px solid #ddd'"
+                           [style.border-radius.px]="4">
+                  </div>
+                  <button type="submit"
+                          [style.width]="'100%'"
+                          [style.background-color]="'#007bff'"
+                          [style.color]="'white'"
+                          [style.border]="'none'"
+                          [style.padding]="'10px'"
+                          [style.border-radius.px]="4"
+                          [style.margin-bottom.px]="15">
+                    Sign In
+                  </button>
+                  <div *ngIf="instance.parameters['showSocialLogin']" class="social-login" [style.margin-bottom.px]="15">
+                    <button type="button"
+                            [style.width]="'100%'"
+                            [style.background-color]="'#4285f4'"
+                            [style.color]="'white'"
+                            [style.border]="'none'"
+                            [style.padding]="'8px'"
+                            [style.border-radius.px]="4"
+                            [style.margin-bottom.px]="8">
+                      Sign in with Google
+                    </button>
+                  </div>
+                  <div class="auth-links" [style.text-align]="'center'" [style.font-size.px]="14">
+                    <a *ngIf="instance.parameters['showForgotPassword']" 
+                       href="#" [style.color]="'#007bff'">Forgot Password?</a>
+                    <div *ngIf="instance.parameters['showRegister']" [style.margin-top.px]="10">
+                      Don't have an account? <a href="#" [style.color]="'#007bff'">Sign Up</a>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              
+              <!-- Booking Calendar -->
+              <div *ngSwitchCase="'booking-calendar'" class="booking-calendar"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'">
+                <h3>{{ instance.parameters['title'] || 'Book an Appointment' }}</h3>
+                <div class="calendar-section" [style.margin-top.px]="15">
+                  <div class="calendar-header" 
+                       [style.display]="'flex'"
+                       [style.justify-content]="'space-between'"
+                       [style.align-items]="'center'"
+                       [style.margin-bottom.px]="15">
+                    <button [style.background]="'none'" [style.border]="'none'" [style.font-size.px]="18">‹</button>
+                    <h4>March 2024</h4>
+                    <button [style.background]="'none'" [style.border]="'none'" [style.font-size.px]="18">›</button>
+                  </div>
+                  <div class="calendar-grid" 
+                       [style.display]="'grid'"
+                       [style.grid-template-columns]="'repeat(7, 1fr)'"
+                       [style.gap.px]="5"
+                       [style.margin-bottom.px]="15">
+                    <div class="day-header" 
+                         *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']"
+                         [style.text-align]="'center'"
+                         [style.font-weight]="'bold'"
+                         [style.padding.px]="8">
+                      {{ day }}
+                    </div>
+                    <div class="calendar-day available" 
+                         *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]"
+                         [style.text-align]="'center'"
+                         [style.padding.px]="8"
+                         [style.border]="'1px solid #ddd'"
+                         [style.cursor]="'pointer'"
+                         [style.background-color]="i === 15 ? '#007bff' : '#f8f9fa'"
+                         [style.color]="i === 15 ? 'white' : 'black'">
+                      {{ i }}
+                    </div>
+                  </div>
+                  <div *ngIf="instance.parameters['showTimeSlots']" class="time-slots">
+                    <h4>Available Times for March 15</h4>
+                    <div class="time-grid" 
+                         [style.display]="'grid'"
+                         [style.grid-template-columns]="'repeat(4, 1fr)'"
+                         [style.gap.px]="8"
+                         [style.margin-top.px]="10">
+                      <button *ngFor="let time of ['9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM']"
+                              class="time-slot"
+                              [style.padding]="'8px'"
+                              [style.border]="'1px solid #007bff'"
+                              [style.background-color]="'transparent'"
+                              [style.color]="'#007bff'"
+                              [style.border-radius.px]="4"
+                              [style.cursor]="'pointer'">
+                        {{ time }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Default case for unknown components -->
+              <div *ngSwitchDefault class="unknown-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'">
+                <p>{{ getComponentDefinition(instance.type)?.name || instance.type }} Component</p>
+                <small>Component ID: {{ instance.id }}</small>
+              </div>
+              
+            </div>
+            
+            <!-- Component overlay for selection -->
+            <div class="component-overlay" *ngIf="selectedComponentInstance?.id === instance.id">
+              <span class="component-label">{{ getComponentDefinition(instance.type)?.name || instance.type }}</span>
+              <small class="edit-hint">✏️ Editing properties</small>
+            </div>
+            
+            <!-- Resize handles for selected component -->
+            <div class="resize-handles" *ngIf="selectedComponentInstance?.id === instance.id">
+              <div class="resize-handle nw" 
+                   (mousedown)="startResize($event, instance, 'nw')"></div>
+              <div class="resize-handle ne" 
+                   (mousedown)="startResize($event, instance, 'ne')"></div>
+              <div class="resize-handle sw" 
+                   (mousedown)="startResize($event, instance, 'sw')"></div>
+              <div class="resize-handle se" 
+                   (mousedown)="startResize($event, instance, 'se')"></div>
+            </div>
+            
+            <!-- Delete button for selected component -->
+            <button class="delete-btn" 
+                    *ngIf="selectedComponentInstance?.id === instance.id"
+                    (click)="deleteComponent($event, instance.id)"
+                    title="Delete Component">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+          
+          <!-- Drop indicator -->
+          <div class="drop-indicator" *ngIf="getCurrentPageComponents().length === 0">
+            <div class="drop-icon">⊕</div>
+            <p>Select a Component</p>
+            <small>Click on any component in the canvas to edit its properties</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Properties Panel -->
+    <div class="right-sidebar">
+      <div class="properties-header">
+        <i class="pi pi-cog"></i>
+        <span>{{ selectedComponentInstance ? 'Component Properties' : 'Page Settings' }}</span>
+      </div>
+      
+      <div class="properties-content">
+        <!-- Component Properties (when component is selected) -->
+        <div *ngIf="selectedComponentInstance" class="component-properties">
+          <div class="selected-component-info">
+            <h4>{{ getComponentDefinition(selectedComponentInstance.type)?.name || selectedComponentInstance.type }}</h4>
+            <small>{{ getComponentDefinition(selectedComponentInstance.type)?.description }}</small>
+            <div class="edit-status">
+              <i class="pi pi-pencil"></i>
+              <span>Edit properties below - changes apply instantly</span>
+            </div>
+          </div>
+          
+          <!-- Dynamic parameter inputs -->
+          <div *ngFor="let param of getComponentDefinition(selectedComponentInstance.type)?.parameters" class="property-group">
+            <label>{{ param.label }}</label>
+            
+            <!-- Text input -->
+            <input 
+              *ngIf="param.type === 'text'"
+              type="text"
+              class="property-input"
+              [value]="selectedComponentInstance.parameters[param.name] || param.defaultValue"
+              (input)="updateComponentParameter(param.name, $event)"
+              [placeholder]="param.defaultValue">
+            
+            <!-- Number input -->
+            <input 
+              *ngIf="param.type === 'number'"
+              type="number"
+              class="property-input"
+              [value]="selectedComponentInstance.parameters[param.name] || param.defaultValue"
+              (input)="updateComponentParameter(param.name, $event)"
+              [placeholder]="param.defaultValue">
+            
+            <!-- Color input -->
+            <input 
+              *ngIf="param.type === 'color'"
+              type="color"
+              class="color-input"
+              [value]="selectedComponentInstance.parameters[param.name] || param.defaultValue"
+              (input)="updateComponentParameter(param.name, $event)">
+            
+            <!-- Select dropdown -->
+            <select 
+              *ngIf="param.type === 'select'"
+              class="property-input"
+              [value]="selectedComponentInstance.parameters[param.name] || param.defaultValue"
+              (change)="updateComponentParameter(param.name, $event)">
+              <option *ngFor="let option of param.options" [value]="option">{{ option }}</option>
+            </select>
+            
+            <!-- Boolean checkbox -->
+            <label *ngIf="param.type === 'boolean'" class="checkbox-label">
+              <input 
+                type="checkbox"
+                [checked]="selectedComponentInstance.parameters[param.name] ?? param.defaultValue"
+                (change)="updateComponentParameter(param.name, $event)">
+              <span class="checkbox-text">{{ param.label }}</span>
+            </label>
+            
+            <small *ngIf="param.required" class="required-note">* Required</small>
+          </div>
+          
+          <!-- Component Actions -->
+          <div class="component-actions">
+            <button class="btn btn-outline" (click)="duplicateComponent()">
+              <i class="pi pi-copy"></i>
+              Duplicate
+            </button>
+            <button class="btn btn-danger" (click)="deleteSelectedComponent()">
+              <i class="pi pi-trash"></i>
+              Delete
+            </button>
+          </div>
+        </div>
+        
+        <!-- Page Settings (when no component is selected) -->
+        <div *ngIf="!selectedComponentInstance" class="page-settings">
+          <!-- Selection Hint -->
+          <div class="selection-hint">
+            <div class="hint-icon">🎯</div>
+            <h4>Select a Component</h4>
+            <p>Click on any component in the canvas to edit its properties and customize text, colors, and other settings.</p>
+          </div>
+          
+          <!-- Page Name -->
+          <div class="property-group">
+            <label>Page Name</label>
+            <input 
+              type="text" 
+              [value]="getPageById(currentPageId)?.name || 'Home'"
+              class="property-input"
+              readonly>
+          </div>
+          
+          <!-- Route/URL -->
+          <div class="property-group">
+            <label>Route/URL</label>
+            <input 
+              type="text" 
+              [value]="getPageById(currentPageId)?.route || '/'"
+              class="property-input"
+              readonly>
+            <small class="property-note">
+              <i class="pi pi-info-circle"></i>
+              This is your home page. The route cannot be changed.
+            </small>
+          </div>
+          
+          <!-- Navigation Info -->
+          <div class="property-group">
+            <label>Navigation</label>
+            <small class="property-note" style="color: #28a745;">
+              <i class="pi pi-check-circle"></i>
+              Navigation components are now interactive and will automatically navigate between pages.
+            </small>
+          </div>
+          
+          <!-- Website Theme -->
+          <div class="theme-section">
+            <div class="theme-header">
+              <i class="pi pi-palette"></i>
+              <span>Website Theme</span>
+            </div>
+            
+            <div class="color-controls">
+              <div class="color-group">
+                <label>Primary Color</label>
+                <div class="color-input-wrapper">
+                  <input type="color" value="#000000" class="color-input">
+                </div>
+              </div>
+              
+              <div class="color-group">
+                <label>Secondary Color</label>
+                <div class="color-input-wrapper">
+                  <input type="color" value="#000000" class="color-input">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Bottom Stats -->
+      <div class="stats-footer">
+        <div class="stat-item">
+          <span class="stat-label">Pages:</span>
+          <span class="stat-value">{{ pages.length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Last saved:</span>
+          <span class="stat-value">6/30/25, 4:32 PM</span>
+        </div>
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text">Draft</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dialogs -->
+<!-- New Project Dialog -->
+<div class="dialog-overlay" *ngIf="showNewProjectDialog" (click)="showNewProjectDialog = false">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Create New Project</h3>
+      <button class="close-btn" (click)="showNewProjectDialog = false">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="dialog-content">
+      <div class="form-group">
+        <label>Project Name</label>
+        <input 
+          type="text" 
+          [(ngModel)]="newProjectName" 
+          placeholder="Enter project name"
+          name="newProjectName">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea 
+          [(ngModel)]="newProjectDescription" 
+          placeholder="Enter project description"
+          name="newProjectDescription"></textarea>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" (click)="showNewProjectDialog = false">Cancel</button>
+      <button class="btn btn-primary" (click)="onCreateNewProject()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Dialog -->
+<div class="dialog-overlay" *ngIf="showExportDialog" (click)="showExportDialog = false">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Export Project</h3>
+      <button class="close-btn" (click)="showExportDialog = false">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="dialog-content">
+      <div class="form-group">
+        <label>Project Data</label>
+        <textarea 
+          [(ngModel)]="exportData" 
+          readonly 
+          class="export-textarea"
+          name="exportData"></textarea>
+      </div>
+    </div>
+         <div class="dialog-actions">
+       <button class="btn btn-outline" (click)="showExportDialog = false">Close</button>
+       <button class="btn btn-primary" (click)="copyToClipboard()">Copy to Clipboard</button>
+     </div>
+  </div>
+</div>
+
+<!-- Import Dialog -->
+<div class="dialog-overlay" *ngIf="showImportDialog" (click)="showImportDialog = false">
+  <div class="dialog" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Import Project</h3>
+      <button class="close-btn" (click)="showImportDialog = false">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="dialog-content">
+      <div class="form-group">
+        <label>Project Data</label>
+        <textarea 
+          [(ngModel)]="importData" 
+          placeholder="Paste project data here..."
+          name="importData"></textarea>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" (click)="showImportDialog = false">Cancel</button>
+      <button class="btn btn-primary" (click)="onImportConfirm()">Import</button>
+    </div>
+  </div>
+</div>
+
