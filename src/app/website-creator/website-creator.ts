@@ -360,18 +360,32 @@ export class WebsiteCreatorComponent implements OnInit {
     });
   }
 
-  getCurrentPageComponents() {
+  get currentPageComponents() {
     const currentPage = this.websiteBuilder.getCurrentPage();
     return currentPage ? currentPage.components : [];
+  }
+
+  getCurrentPageComponents() {
+    return this.currentPageComponents;
   }
 
   trackByInstanceId(index: number, instance: any) {
     return instance.id;
   }
 
+  private selectionTimeout: any = null;
+
   selectComponentInstance(instance: any) {
-    this.selectedComponentInstance = instance;
-    console.log('Selected component instance:', instance);
+    // Debounce the selection to prevent rapid-fire updates
+    if (this.selectionTimeout) {
+      clearTimeout(this.selectionTimeout);
+    }
+    
+    this.selectionTimeout = setTimeout(() => {
+      this.selectedComponentInstance = instance;
+      console.log('Selected component instance:', instance);
+      this.selectionTimeout = null;
+    }, 50); // 50ms debounce
   }
 
   getArrayFromNumber(count: number): number[] {

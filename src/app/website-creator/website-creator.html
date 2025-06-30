@@ -210,7 +210,7 @@
           </nav>
           
           <!-- Render current page components -->
-          <div *ngFor="let instance of getCurrentPageComponents(); trackBy: trackByInstanceId" 
+          <div *ngFor="let instance of currentPageComponents; trackBy: trackByInstanceId" 
                class="component-instance"
                [id]="'component-' + instance.id"
                (click)="selectComponentInstance(instance)"
@@ -800,7 +800,7 @@
           </div>
           
           <!-- Drop indicator -->
-          <div class="drop-indicator" *ngIf="getCurrentPageComponents().length === 0">
+          <div class="drop-indicator" *ngIf="currentPageComponents.length === 0">
             <div class="drop-icon">⊕</div>
             <p>Select a Component</p>
             <small>Click on any component in the canvas to edit its properties</small>
