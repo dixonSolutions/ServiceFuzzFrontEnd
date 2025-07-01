@@ -56,6 +56,7 @@ import { AvatarGroupModule } from 'primeng/avatargroup';
 import { BadgeModule } from 'primeng/badge';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
+import { MessageModule } from 'primeng/message';
 import { GalleriaModule } from 'primeng/galleria';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -164,6 +165,7 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     BadgeModule,
     TooltipModule,
     DialogModule,
+    MessageModule,
     InputNumberModule,
     CheckboxModule,
     SplitButtonModule,

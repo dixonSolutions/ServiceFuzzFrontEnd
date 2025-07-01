@@ -1,10 +1,28 @@
 import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { tap, catchError, map } from 'rxjs/operators';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { 
+  CreateWorkspaceDto, 
+  UpdateWorkspaceDto, 
+  WorkspaceResponseDto,
+  CreateWorkspaceComponentDto,
+  UpdateWorkspaceComponentDto,
+  WorkspaceComponentResponseDto,
+  ComponentType,
+  DeployWorkspaceDto,
+  WorkspaceDeployment,
+  WorkspaceListResponse,
+  ComponentListResponse,
+  ComponentTypeListResponse,
+  DeploymentListResponse,
+  ApiResponse
+} from '../models/workspace.models';
 
 // Component Parameter Interface
 export interface ComponentParameter {
   name: string;
-  type: 'text' | 'number' | 'color' | 'image' | 'select' | 'boolean';
+  type: 'text' | 'number' | 'color' | 'image' | 'image-asset' | 'select' | 'boolean';
   label: string;
   defaultValue: any;
   options?: string[]; // For select type
@@ -71,10 +89,42 @@ export interface WebsitePage {
   isActive: boolean;
 }
 
+// Image Upload Response Interface
+export interface ImageUploadResponse {
+  success: boolean;
+  imageUrl?: string;
+  message?: string;
+  error?: string;
+}
+
+// Business Image Interface
+export interface BusinessImage {
+  id: number;
+  businessId: string;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+  uploadedAt: string;
+  description: string | null;
+  isActive: boolean;
+  imageUrl: string;
+  imageData: string; // Base64 encoded image data
+}
+
+// Business Images Response Interface
+export interface BusinessImagesResponse {
+  businessId: string;
+  totalImages: number;
+  images: BusinessImage[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class WebsiteBuilderService {
+  // API Configuration
+  private readonly apiBaseUrl = 'https://servicefuzzapi-atf8b4dqawc8dsa9.australiaeast-01.azurewebsites.net';
+
   // Signals for reactive state management
   private _currentProject = signal<WebsiteProject | null>(null);
   private _selectedComponent = signal<ComponentInstance | null>(null);
@@ -103,7 +153,7 @@ export class WebsiteBuilderService {
   get pages$(): Observable<WebsitePage[]> { return this._pages.asObservable(); }
   get currentPageId$(): Observable<string> { return this._currentPageId.asObservable(); }
 
-  constructor() {
+  constructor(private http: HttpClient) {
     this.initializeComponents();
     
     // Initialize filtered components to show all components by default
@@ -119,11 +169,15 @@ export class WebsiteBuilderService {
         name: 'Top Navigation',
         category: 'UI',
         icon: 'pi pi-bars',
-        description: 'Navigation bar with logo, menu items, mobile hamburger menu',
+        description: 'Navigation bar with business name, optional logo, menu items, mobile hamburger menu',
         defaultWidth: 100,
         defaultHeight: 80,
         parameters: [
-          { name: 'logoText', type: 'text', label: 'Logo Text', defaultValue: 'My Website', required: true },
+          { name: 'logoType', type: 'select', label: 'Logo Type', defaultValue: 'text', options: ['text', 'image'] },
+          { name: 'logoText', type: 'text', label: 'Business Name', defaultValue: 'My Business', required: true },
+          { name: 'logoImage', type: 'image-asset', label: 'Logo Image', defaultValue: '' },
+          { name: 'logoShape', type: 'select', label: 'Logo Shape', defaultValue: 'square', options: ['square', 'circle'] },
+          { name: 'logoSize', type: 'select', label: 'Logo Size', defaultValue: 'normal', options: ['small', 'normal', 'large'] },
           { name: 'backgroundColor', type: 'color', label: 'Background Color', defaultValue: '#ffffff' },
           { name: 'textColor', type: 'color', label: 'Text Color', defaultValue: '#000000' },
           { name: 'isSticky', type: 'boolean', label: 'Sticky Navigation', defaultValue: true },
@@ -191,7 +245,7 @@ export class WebsiteBuilderService {
         defaultWidth: 300,
         defaultHeight: 200,
         parameters: [
-          { name: 'imageUrl', type: 'text', label: 'Image URL', defaultValue: 'https://via.placeholder.com/300x200' },
+          { name: 'imageUrl', type: 'image-asset', label: 'Select Image', defaultValue: 'https://via.placeholder.com/300x200' },
           { name: 'altText', type: 'text', label: 'Alt Text', defaultValue: 'Image description' },
           { name: 'borderRadius', type: 'number', label: 'Border Radius', defaultValue: 0 },
           { name: 'objectFit', type: 'select', label: 'Object Fit', defaultValue: 'cover', options: ['cover', 'contain', 'fill'] }
@@ -779,5 +833,396 @@ export class WebsiteBuilderService {
       route: page.route,
       isActive: page.isActive
     }));
+  }
+
+  // Image upload method for business websites
+  uploadBusinessImage(businessId: string, file: File, description: string = ''): Observable<ImageUploadResponse> {
+    // Create FormData object for multipart/form-data request
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    formData.append('description', description);
+
+    // Construct the API endpoint URL
+    const uploadUrl = `${this.apiBaseUrl}/api/BusinessWebsite/images/upload/${businessId}`;
+
+    // Set headers - Content-Type will be automatically set by the browser for FormData
+    const headers = new HttpHeaders({
+      'accept': '*/*'
+    });
+
+    // Make the POST request
+    return this.http.post<ImageUploadResponse>(uploadUrl, formData, { headers });
+  }
+
+  // Fetch business images
+  getBusinessImages(businessId: string, activeOnly: boolean = true): Observable<BusinessImagesResponse> {
+    // Construct the API endpoint URL
+    const fetchUrl = `${this.apiBaseUrl}/api/BusinessWebsite/images/business/${businessId}`;
+    
+    // Set query parameters using Angular's HttpParams
+    let params = new HttpParams();
+    if (activeOnly) {
+      params = params.set('activeOnly', 'true');
+    }
+
+    // Set headers
+    const headers = new HttpHeaders({
+      'accept': '*/*'
+    });
+
+    // Make the GET request
+    return this.http.get<BusinessImagesResponse>(fetchUrl, { headers, params });
+  }
+
+  // Convert base64 image data to data URL for display
+  convertImageDataToDataUrl(imageData: string, contentType: string): string {
+    return `data:${contentType};base64,${imageData}`;
+  }
+
+  // Helper method to get displayable image URL from BusinessImage
+  getDisplayableImageUrl(image: BusinessImage): string {
+    return this.convertImageDataToDataUrl(image.imageData, image.contentType);
+  }
+
+  // Format file size for display
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // Format upload date for display
+  formatUploadDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  }
+
+  // ===================== WORKSPACE METHODS =====================
+
+  /**
+   * Creates a new workspace
+   */
+  createWorkspace(workspace: CreateWorkspaceDto): Observable<{ workspaceId: number; message: string }> {
+    return this.http.post<{ workspaceId: number; message: string }>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces`, 
+      workspace
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Gets a workspace by ID
+   */
+  getWorkspace(workspaceId: number): Observable<WorkspaceResponseDto> {
+    return this.http.get<WorkspaceResponseDto>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Gets all workspaces for a specific user
+   */
+  getWorkspacesByUser(userId: number): Observable<WorkspaceListResponse> {
+    return this.http.get<WorkspaceListResponse>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/user/${userId}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Gets all workspaces for a specific business
+   */
+  getWorkspacesByBusiness(businessId: number): Observable<WorkspaceListResponse> {
+    return this.http.get<WorkspaceListResponse>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/business/${businessId}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Updates an existing workspace
+   */
+  updateWorkspace(workspaceId: number, updates: UpdateWorkspaceDto): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`, 
+      updates
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Deletes a workspace
+   */
+  deleteWorkspace(workspaceId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Deploys a workspace
+   */
+  deployWorkspace(workspaceId: number, deployedBy: number): Observable<{ message: string }> {
+    const deployDto: DeployWorkspaceDto = { workspaceId, deployedBy };
+    return this.http.post<{ message: string }>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/deploy`, 
+      deployDto
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Gets deployment history for a workspace
+   */
+  getWorkspaceDeployments(workspaceId: number): Observable<DeploymentListResponse> {
+    return this.http.get<DeploymentListResponse>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/deployments`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // ===================== WORKSPACE COMPONENT METHODS =====================
+
+  /**
+   * Creates a new workspace component
+   */
+  createWorkspaceComponent(component: CreateWorkspaceComponentDto): Observable<{ componentId: number; message: string }> {
+    return this.http.post<{ componentId: number; message: string }>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/components`, 
+      component
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Gets a workspace component by ID
+   */
+  getWorkspaceComponent(componentId: number): Observable<WorkspaceComponentResponseDto> {
+    return this.http.get<WorkspaceComponentResponseDto>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/components/${componentId}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Gets all components for a workspace
+   */
+  getWorkspaceComponents(workspaceId: number): Observable<ComponentListResponse> {
+    return this.http.get<ComponentListResponse>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/components`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Gets all components for a specific page within a workspace
+   */
+  getWorkspaceComponentsByPage(workspaceId: number, pageId: string): Observable<ComponentListResponse> {
+    return this.http.get<ComponentListResponse>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/pages/${pageId}/components`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Updates a workspace component
+   */
+  updateWorkspaceComponent(componentId: number, updates: UpdateWorkspaceComponentDto): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/components/${componentId}`, 
+      updates
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Deletes a workspace component
+   */
+  deleteWorkspaceComponent(componentId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/components/${componentId}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // ===================== COMPONENT TYPE METHODS =====================
+
+  /**
+   * Gets all available component types
+   */
+  getAllComponentTypes(): Observable<ComponentTypeListResponse> {
+    return this.http.get<ComponentTypeListResponse>(
+      `${this.apiBaseUrl}/api/businesswebsite/component-types`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Gets component types by category
+   */
+  getComponentTypesByCategory(category: string): Observable<ComponentTypeListResponse> {
+    return this.http.get<ComponentTypeListResponse>(
+      `${this.apiBaseUrl}/api/businesswebsite/component-types/category/${category}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Gets a specific component type by ID
+   */
+  getComponentType(componentTypeId: string): Observable<ComponentType> {
+    return this.http.get<ComponentType>(
+      `${this.apiBaseUrl}/api/businesswebsite/component-types/${componentTypeId}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // ===================== WORKSPACE HELPER METHODS =====================
+
+  /**
+   * Saves workspace as JSON
+   */
+  saveWorkspaceAsJson(workspaceId: number, websiteJson: any): Observable<{ message: string }> {
+    const updates: UpdateWorkspaceDto = {
+      websiteJson: JSON.stringify(websiteJson)
+    };
+    return this.updateWorkspace(workspaceId, updates);
+  }
+
+  /**
+   * Bulk update component positions (useful for drag & drop)
+   */
+  updateComponentPositions(components: Array<{id: number, x: number, y: number, zIndex?: number}>): Observable<any[]> {
+    const updatePromises = components.map(comp => {
+      const updates: UpdateWorkspaceComponentDto = {
+        xPosition: comp.x,
+        yPosition: comp.y,
+        zIndex: comp.zIndex
+      };
+      return this.updateWorkspaceComponent(comp.id, updates);
+    });
+
+    return new Observable(observer => {
+      Promise.all(updatePromises.map(obs => obs.toPromise()))
+        .then(results => {
+          observer.next(results);
+          observer.complete();
+        })
+        .catch(error => observer.error(error));
+    });
+  }
+
+  /**
+   * Converts local ComponentInstance to CreateWorkspaceComponentDto
+   */
+  convertToWorkspaceComponent(workspaceId: number, pageId: string, component: ComponentInstance): CreateWorkspaceComponentDto {
+    return {
+      workspaceId,
+      pageId,
+      componentId: component.id,
+      componentType: component.type,
+      xPosition: component.x,
+      yPosition: component.y,
+      width: component.width,
+      height: component.height,
+      zIndex: component.zIndex,
+      parameters: JSON.stringify(component.parameters)
+    };
+  }
+
+  /**
+   * Converts WorkspaceComponentResponseDto to local ComponentInstance
+   */
+  convertFromWorkspaceComponent(workspaceComponent: WorkspaceComponentResponseDto): ComponentInstance {
+    return {
+      id: workspaceComponent.componentId,
+      type: workspaceComponent.componentType,
+      x: workspaceComponent.xPosition,
+      y: workspaceComponent.yPosition,
+      width: workspaceComponent.width,
+      height: workspaceComponent.height,
+      zIndex: workspaceComponent.zIndex,
+      parameters: workspaceComponent.parameters ? JSON.parse(workspaceComponent.parameters) : {}
+    };
+  }
+
+  /**
+   * Sync current page components to workspace
+   */
+  syncPageComponentsToWorkspace(workspaceId: number, pageId: string): Observable<any> {
+    const currentPage = this.getCurrentPage();
+    if (!currentPage || currentPage.id !== pageId) {
+      throw new Error('Current page does not match provided pageId');
+    }
+
+    const componentPromises = currentPage.components.map(component => {
+      const workspaceComponent = this.convertToWorkspaceComponent(workspaceId, pageId, component);
+      return this.createWorkspaceComponent(workspaceComponent);
+    });
+
+    return new Observable(observer => {
+      Promise.all(componentPromises.map(obs => obs.toPromise()))
+        .then(results => {
+          observer.next(results);
+          observer.complete();
+        })
+        .catch(error => observer.error(error));
+    });
+  }
+
+  /**
+   * Load page components from workspace
+   */
+  loadPageComponentsFromWorkspace(workspaceId: number, pageId: string): Observable<ComponentInstance[]> {
+    return this.getWorkspaceComponentsByPage(workspaceId, pageId).pipe(
+      tap(response => {
+        const components = response.components.map(wc => this.convertFromWorkspaceComponent(wc));
+        
+        // Update the current page with loaded components
+        const currentPages = this._pages.value;
+        const updatedPages = currentPages.map(page => 
+          page.id === pageId ? { ...page, components } : page
+        );
+        this._pages.next(updatedPages);
+        
+        // Update components observable if this is the current page
+        if (this._currentPageId.value === pageId) {
+          this._components.next(components);
+        }
+      }),
+      map(response => response.components.map(wc => this.convertFromWorkspaceComponent(wc))),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Error handling for workspace methods
+   */
+  private handleError = (error: any): Observable<never> => {
+    console.error('Workspace API Error:', error);
+    throw error;
   }
 }

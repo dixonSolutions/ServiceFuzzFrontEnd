@@ -42,10 +42,23 @@
           <i class="pi pi-file-edit"></i>
           <span>Website JSON</span>
         </div>
-        <div class="json-status">
-          <span class="status-indicator" [class.valid]="isValidJson" [class.invalid]="!isValidJson">
-            {{ isValidJson ? '✓ Valid JSON' : '✗ Invalid JSON' }}
-          </span>
+        <div class="json-controls">
+          <div class="data-size-info">
+            <small>{{ getDataSizeInfo() }}</small>
+          </div>
+          <div class="view-controls" *ngIf="originalDataSize > sanitizedDataSize">
+            <button 
+              class="toggle-view-btn" 
+              (click)="toggleJsonView()"
+              [title]="showFullJson ? 'Switch to sanitized view' : 'Switch to full view'">
+              {{ showFullJson ? '🔍 Sanitized' : '📄 Full' }}
+            </button>
+          </div>
+          <div class="json-status">
+            <span class="status-indicator" [class.valid]="isValidJson" [class.invalid]="!isValidJson">
+              {{ isValidJson ? '✓ Valid JSON' : '✗ Invalid JSON' }}
+            </span>
+          </div>
         </div>
       </div>
       
@@ -58,6 +71,22 @@
           spellcheck="false"></textarea>
       </div>
       
+      <!-- Binary Data Information -->
+      <div class="binary-data-info" *ngIf="binaryFieldsRemoved.length > 0">
+        <details>
+          <summary>🗂️ Hidden Binary Data ({{ binaryFieldsRemoved.length }} fields)</summary>
+          <div class="binary-fields-list">
+            <p><strong>The following fields contain large binary data and have been hidden:</strong></p>
+            <ul>
+              <li *ngFor="let field of binaryFieldsRemoved">
+                <code>{{ field }}</code>
+              </li>
+            </ul>
+            <p><em>Use the "Full" view button above to see the complete JSON with binary data.</em></p>
+          </div>
+        </details>
+      </div>
+
       <!-- JSON Structure Help -->
       <div class="json-help">
         <details>

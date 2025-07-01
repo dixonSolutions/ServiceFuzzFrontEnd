@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, Input } from '@angular/core';
 import { WebsiteBuilderService } from '../services/website-builder';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -12,6 +12,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 })
 export class JsonEditorComponent implements OnInit, OnDestroy {
   @Output() close = new EventEmitter<void>();
+  @Output() builtInNavPropertiesChange = new EventEmitter<{ [key: string]: any }>();
+  @Input() builtInNavProperties: { [key: string]: any } = {};
   
   private destroy$ = new Subject<void>();
   
@@ -21,6 +23,13 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
   pages: any[] = [];
   htmlPreview: string = '';
   safeHtmlPreview: SafeHtml = '';
+  
+  // Add new properties for handling large data
+  showFullJson: boolean = false;
+  sanitizedJsonContent: string = '';
+  originalDataSize: number = 0;
+  sanitizedDataSize: number = 0;
+  binaryFieldsRemoved: string[] = [];
   
   constructor(
     private websiteBuilder: WebsiteBuilderService,
@@ -53,11 +62,15 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // Store both versions of JSON
+  private fullJsonContent: string = '';
+
   updateJsonContent() {
     try {
       const websiteData = {
         id: this.generateId(),
         name: "New Website",
+        builtInNavigation: this.builtInNavProperties,
         pages: this.pages.map(page => ({
           id: page.id,
           name: page.name,
@@ -73,7 +86,24 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
         }))
       };
       
-      this.jsonContent = JSON.stringify(websiteData, null, 2);
+      // Create full JSON
+      this.fullJsonContent = JSON.stringify(websiteData, null, 2);
+      this.originalDataSize = new Blob([this.fullJsonContent]).size;
+      
+      // Create sanitized version
+      const sanitizedData = this.sanitizeDataForDisplay(websiteData);
+      this.sanitizedJsonContent = JSON.stringify(sanitizedData, null, 2);
+      this.sanitizedDataSize = new Blob([this.sanitizedJsonContent]).size;
+      
+      // Use sanitized version by default if original is too large
+      if (this.originalDataSize > 100000) { // 100KB threshold
+        this.jsonContent = this.sanitizedJsonContent;
+        this.showFullJson = false;
+      } else {
+        this.jsonContent = this.fullJsonContent;
+        this.showFullJson = true;
+      }
+      
       this.isValidJson = true;
     } catch (error) {
       this.isValidJson = false;
@@ -82,6 +112,14 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
 
   onJsonChange(event: any) {
     this.jsonContent = event.target.value;
+    
+    // Update the appropriate stored version based on current view
+    if (this.showFullJson) {
+      this.fullJsonContent = this.jsonContent;
+    } else {
+      this.sanitizedJsonContent = this.jsonContent;
+    }
+    
     this.validateAndApplyJson();
   }
 
@@ -89,6 +127,13 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
     try {
       const parsed = JSON.parse(this.jsonContent);
       this.isValidJson = true;
+      
+      // If the JSON contains built-in navigation properties, emit them to the parent
+      if (parsed.builtInNavigation) {
+        this.builtInNavProperties = parsed.builtInNavigation;
+        this.builtInNavPropertiesChange.emit(parsed.builtInNavigation);
+      }
+      
       // Apply changes back to the service if needed
       this.generateHtmlPreview();
     } catch (error) {
@@ -121,7 +166,12 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
 </head>
 <body>
   <div class="navigation">
-    <div class="nav-brand">Your Logo</div>
+    <div class="nav-brand">
+      ${this.builtInNavProperties['logoType'] === 'image' && this.builtInNavProperties['logoImage'] ? 
+        `<img src="${this.sanitizeText(this.builtInNavProperties['logoImage'])}" alt="Logo" style="height: 24px; margin-right: 8px; vertical-align: middle;">` : 
+        ''}
+      ${this.sanitizeText(this.builtInNavProperties['logoText'] || 'Your Business')}
+    </div>
     <div class="nav-menu">`;
 
     // Add navigation menu
@@ -218,6 +268,12 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
         const parsed = JSON.parse(this.jsonContent);
         console.log('Applying JSON changes:', parsed);
         
+        // Update built-in navigation properties if present
+        if (parsed.builtInNavigation) {
+          this.builtInNavProperties = { ...parsed.builtInNavigation };
+          this.builtInNavPropertiesChange.emit(this.builtInNavProperties);
+        }
+        
         // Apply changes to the website builder service
         if (parsed.pages && Array.isArray(parsed.pages)) {
           // Update pages data in the service
@@ -312,5 +368,92 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
       'footer': 'ui'
     };
     return categories[type] || 'ui';
+  }
+
+  // Utility methods for handling large data
+  private sanitizeDataForDisplay(data: any): any {
+    this.binaryFieldsRemoved = [];
+    return this.recursiveSanitize(data, '');
+  }
+
+  private recursiveSanitize(obj: any, path: string): any {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      // Check if it's likely base64 image data
+      if (this.isBase64ImageData(obj)) {
+        const fieldPath = path || 'root';
+        this.binaryFieldsRemoved.push(fieldPath);
+        return `[BINARY_DATA_REMOVED: ${this.formatFileSize(obj.length)} base64 data]`;
+      }
+      // Check if it's a very long string (potential binary data)
+      if (obj.length > 10000) {
+        const fieldPath = path || 'root';
+        this.binaryFieldsRemoved.push(fieldPath);
+        return `[LARGE_DATA_REMOVED: ${this.formatFileSize(obj.length)} string data]`;
+      }
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item, index) => this.recursiveSanitize(item, `${path}[${index}]`));
+    }
+
+    if (typeof obj === 'object') {
+      const sanitized: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        const currentPath = path ? `${path}.${key}` : key;
+        sanitized[key] = this.recursiveSanitize(value, currentPath);
+      }
+      return sanitized;
+    }
+
+    return obj;
+  }
+
+  private isBase64ImageData(str: string): boolean {
+    // Check if string looks like base64 image data
+    if (str.length < 100) return false; // Too short to be meaningful image data
+    
+    // Check for data URL pattern
+    if (str.startsWith('data:image/')) return true;
+    
+    // Check for pure base64 pattern (common prefixes/suffixes for images)
+    const base64Pattern = /^[A-Za-z0-9+/]+={0,2}$/;
+    if (str.length > 1000 && base64Pattern.test(str)) {
+      // Additional check for common image file headers in base64
+      const imageHeaders = ['/9j/', 'iVBORw0KGgo', 'R0lGODlh', 'UklGR']; // JPEG, PNG, GIF, WebP
+      return imageHeaders.some(header => str.startsWith(header));
+    }
+    
+    return false;
+  }
+
+  private formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  toggleJsonView(): void {
+    this.showFullJson = !this.showFullJson;
+    // Switch between stored versions
+    if (this.showFullJson) {
+      this.jsonContent = this.fullJsonContent;
+    } else {
+      this.jsonContent = this.sanitizedJsonContent;
+    }
+  }
+
+  getDataSizeInfo(): string {
+    if (this.originalDataSize > this.sanitizedDataSize) {
+      const savedSize = this.originalDataSize - this.sanitizedDataSize;
+      return `Showing sanitized version (${this.formatFileSize(this.sanitizedDataSize)}) - ${this.formatFileSize(savedSize)} of binary data hidden`;
+    }
+    return `Data size: ${this.formatFileSize(this.originalDataSize)}`;
   }
 } 

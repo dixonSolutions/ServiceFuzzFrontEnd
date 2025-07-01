@@ -19,6 +19,27 @@
         <span class="brand-name">ServiceFuzz WebDesigner</span>
         <span class="project-label">{{ currentProject?.name || 'New Website' }}</span>
         <span class="business-label" *ngIf="currentProject?.businessName">{{ currentProject?.businessName }}</span>
+        
+        <!-- Show selected logo in toolbar -->
+        <div class="toolbar-logo-preview" *ngIf="builtInNavProperties['logoType'] === 'image' && builtInNavProperties['logoImage']">
+          <span class="logo-preview-label">Brand:</span>
+          <div class="logo-preview-container">
+            <p-avatar 
+              *ngIf="builtInNavProperties['logoShape'] === 'circle'"
+              [image]="builtInNavProperties['logoImage']"
+              size="normal"
+              shape="circle"
+              [style.width]="'20px'"
+              [style.height]="'20px'">
+            </p-avatar>
+            <img 
+              *ngIf="builtInNavProperties['logoShape'] === 'square'"
+              [src]="builtInNavProperties['logoImage']"
+              [alt]="'Logo preview'"
+              style="height: 20px; width: auto; border-radius: 2px;">
+            <span class="toolbar-business-name">{{ builtInNavProperties['logoText'] }}</span>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -51,7 +72,7 @@
   </div>
 
   <!-- JSON Editor (full screen overlay) -->
-  <app-json-editor *ngIf="showJsonEditor" (close)="onJsonEditor()"></app-json-editor>
+  <app-json-editor *ngIf="showJsonEditor" [builtInNavProperties]="builtInNavProperties" (builtInNavPropertiesChange)="onBuiltInNavPropertiesChange($event)" (close)="onJsonEditor()"></app-json-editor>
 
   <!-- Main Layout -->
   <div class="main-layout" [style.display]="showJsonEditor ? 'none' : 'flex'">
@@ -80,13 +101,28 @@
         </div>
       </div>
 
-      <!-- Components Section -->
+      <!-- Components & Assets Section -->
       <div class="components-section">
-        <div class="section-header">
+        <!-- Tab Headers -->
+        <div class="section-tabs">
+          <button 
+            class="tab-btn"
+            [class.active]="activeTab === 'components'"
+            (click)="onTabChange('components')">
           <i class="pi pi-plus"></i>
           <span>Components</span>
+          </button>
+          <button 
+            class="tab-btn"
+            [class.active]="activeTab === 'assets'"
+            (click)="onTabChange('assets')">
+            <i class="pi pi-image"></i>
+            <span>Assets</span>
+          </button>
         </div>
         
+        <!-- Components Tab Content -->
+        <div class="tab-content" *ngIf="activeTab === 'components'">
         <!-- Search Bar -->
         <div class="search-container">
           <input 
@@ -123,6 +159,95 @@
             <div class="component-info">
               <span class="component-name">{{ component.name }}</span>
               <span class="component-category badge" [class]="component.category.toLowerCase()">{{ component.category }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assets Tab Content -->
+        <div class="tab-content" *ngIf="activeTab === 'assets'">
+          <!-- Upload Section -->
+          <div class="assets-upload-section">
+            <button 
+              class="btn btn-primary" 
+              (click)="openUploadDialog()" 
+              style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px;">
+              <i class="pi pi-cloud-upload" style="margin-right: 8px;"></i>
+              Upload New Image
+            </button>
+            <p style="text-align: center; color: #6c757d; font-size: 12px; margin-top: 8px;">
+              Click to select and upload images to your asset library
+            </p>
+          </div>
+
+          
+
+          <!-- Error Message -->
+          <div class="error-message" *ngIf="imageUploadError">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>{{ imageUploadError }}</span>
+          </div>
+
+          <!-- Loading State -->
+          <div class="loading-state" *ngIf="isLoadingImages">
+            <div class="loading-spinner">
+              <i class="pi pi-spin pi-spinner"></i>
+            </div>
+            <p>Loading images...</p>
+          </div>
+
+          <!-- Images Grid -->
+          <div class="images-grid" *ngIf="!isLoadingImages && businessImages.length > 0">
+            <div 
+              *ngFor="let image of businessImages"
+              class="image-item"
+              [class.selectable]="selectedComponentInstance?.type === 'image'"
+              (click)="selectImageForComponent(image)">
+              <div class="image-preview">
+                <img [src]="getDisplayableImageUrl(image)" [alt]="image.fileName">
+                <div class="image-overlay">
+                  <button 
+                    class="overlay-btn select-btn" 
+                    *ngIf="selectedComponentInstance?.type === 'image'"
+                    (click)="selectImageForComponent(image); $event.stopPropagation()"
+                    title="Use this image">
+                    <i class="pi pi-check"></i>
+                  </button>
+                  <button 
+                    class="overlay-btn download-btn"
+                    (click)="downloadImage(image); $event.stopPropagation()"
+                    title="Download image">
+                    <i class="pi pi-download"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="image-info">
+                <div class="image-name" [title]="image.fileName">{{ image.fileName }}</div>
+                <div class="image-meta">
+                  <span class="file-size">{{ formatFileSize(image.fileSize) }}</span>
+                  <span class="upload-date">{{ formatUploadDate(image.uploadedAt) }}</span>
+                </div>
+                <div class="image-description" *ngIf="image.description">{{ image.description }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" *ngIf="!isLoadingImages && businessImages.length === 0">
+            <div class="empty-icon">
+              <i class="pi pi-image"></i>
+            </div>
+            <p>No images uploaded yet</p>
+            <small>Upload your first image to get started</small>
+          </div>
+
+          <!-- Helpful Tip -->
+          <div class="assets-tip" *ngIf="selectedComponentInstance?.type === 'image'">
+            <div class="tip-icon">
+              <i class="pi pi-info-circle"></i>
+            </div>
+            <div class="tip-content">
+              <strong>Tip:</strong> Click on any image above to use it in your selected Image component.
             </div>
           </div>
         </div>
@@ -194,16 +319,58 @@
           (drop)="onDrop($event)"
           (dragover)="onDragOver($event)">
           
-          <!-- Navigation Bar (always visible) -->
-          <nav class="site-nav">
-            <div class="nav-brand">Your Logo</div>
+          <!-- Built-in Navigation Bar (always visible and editable) -->
+          <nav class="site-nav"
+               [class.selected]="selectedComponentInstance?.id === 'built-in-nav'"
+               (click)="selectBuiltInNavigation()"
+               [style.background-color]="builtInNavProperties['backgroundColor']"
+               [style.color]="builtInNavProperties['textColor']"
+               [style.box-shadow]="builtInNavProperties['showShadow'] ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'"
+               [style.cursor]="'pointer'">
+            
+            <!-- Logo Section -->
+            <div class="nav-brand">
+              <!-- Image Logo (when selected) -->
+              <div class="logo-image-container" *ngIf="builtInNavProperties['logoType'] === 'image' && builtInNavProperties['logoImage']">
+                <!-- Circular Logo using PrimeNG Avatar -->
+                <p-avatar 
+                  *ngIf="builtInNavProperties['logoShape'] === 'circle'"
+                  [image]="builtInNavProperties['logoImage']"
+                  [size]="getAvatarSize(builtInNavProperties['logoSize'])"
+                  shape="circle">
+                </p-avatar>
+                
+                <!-- Square Logo -->
+                <img 
+                  *ngIf="builtInNavProperties['logoShape'] === 'square'"
+                  [src]="builtInNavProperties['logoImage']"
+                  [alt]="builtInNavProperties['logoText'] || 'Logo'"
+                  [style.height]="getImageLogoSize(builtInNavProperties['logoSize'])"
+                  [style.width]="'auto'"
+                  [style.max-height]="'50px'"
+                  [style.border-radius]="'4px'">
+              </div>
+              
+              <!-- Business Name Text (always shows) -->
+              <span class="business-name-text"
+                    [style.font-weight]="'600'"
+                    [style.font-size]="getLogoSize(builtInNavProperties['logoSize'])"
+                    [style.margin-left]="builtInNavProperties['logoType'] === 'image' && builtInNavProperties['logoImage'] ? '8px' : '0'">
+                {{ builtInNavProperties['logoText'] }}
+              </span>
+            </div>
+            
+            <!-- Navigation Menu -->
             <div class="nav-menu">
               <span 
                 *ngFor="let page of pages" 
                 class="nav-item"
                 [class.active]="page.id === currentPageId"
-                (click)="onPageTabClick(page.id)"
-                [style.cursor]="'pointer'">
+                (click)="onPageTabClick(page.id); $event.stopPropagation()"
+                [style.cursor]="'pointer'"
+                [style.padding]="'6px 12px'"
+                [style.border-radius]="'4px'"
+                [style.transition]="'all 0.2s'">
                 {{ page.name }}
               </span>
             </div>
@@ -291,8 +458,45 @@
                    [style.display]="'flex'"
                    [style.align-items]="'center'"
                    [style.justify-content]="'space-between'"
-                   [style.padding]="'0 24px'">
-                <div class="nav-brand">{{ instance.parameters['logoText'] || 'My Website' }}</div>
+                   [style.padding]="'0 24px'"
+                   [style.box-shadow]="instance.parameters['showShadow'] ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'">
+                
+                                <!-- Logo Section -->
+                <div class="nav-brand" [style.display]="'flex'" [style.align-items]="'center'">
+                  <!-- Image Logo (when selected) -->
+                  <div class="logo-image-container" 
+                       *ngIf="instance.parameters['logoType'] === 'image' && instance.parameters['logoImage']"
+                       [style.display]="'flex'"
+                       [style.align-items]="'center'"
+                       [style.margin-right]="'8px'">
+                    <!-- Circular Logo using PrimeNG Avatar -->
+                    <p-avatar 
+                      *ngIf="instance.parameters['logoShape'] === 'circle'"
+                      [image]="instance.parameters['logoImage']"
+                      [size]="getAvatarSize(instance.parameters['logoSize'])"
+                      shape="circle">
+                    </p-avatar>
+                    
+                    <!-- Square Logo -->
+                    <img 
+                      *ngIf="instance.parameters['logoShape'] === 'square'"
+                      [src]="instance.parameters['logoImage']"
+                      [alt]="instance.parameters['logoText'] || 'Logo'"
+                      [style.height]="getImageLogoSize(instance.parameters['logoSize'])"
+                      [style.width]="'auto'"
+                      [style.max-height]="'60px'"
+                      [style.border-radius]="'4px'">
+                  </div>
+                  
+                  <!-- Business Name Text (always shows) -->
+                  <span class="business-name-text"
+                        [style.font-weight]="'600'"
+                        [style.font-size]="getLogoSize(instance.parameters['logoSize'])">
+                    {{ instance.parameters['logoText'] || 'My Business' }}
+                  </span>
+                </div>
+                
+                <!-- Navigation Menu -->
                 <div class="nav-menu">
                   <span 
                     *ngFor="let page of pages" 
@@ -300,7 +504,11 @@
                     [class.active]="page.id === currentPageId"
                     (click)="onNavigationClick($event, page.id)"
                     [style.cursor]="'pointer'"
-                    [style.margin-right.px]="20">
+                    [style.margin-right.px]="20"
+                    [style.padding]="'8px 12px'"
+                    [style.border-radius]="'6px'"
+                    [style.transition]="'all 0.2s'"
+                    [style.hover]="'background-color: rgba(0,0,0,0.05)'">
                     {{ page.name }}
                   </span>
                 </div>
@@ -820,15 +1028,114 @@
         <!-- Component Properties (when component is selected) -->
         <div *ngIf="selectedComponentInstance" class="component-properties">
           <div class="selected-component-info">
-            <h4>{{ getComponentDefinition(selectedComponentInstance.type)?.name || selectedComponentInstance.type }}</h4>
-            <small>{{ getComponentDefinition(selectedComponentInstance.type)?.description }}</small>
+            <h4>{{ selectedComponentInstance.type === 'built-in-navigation' ? 'Built-in Navigation' : (getComponentDefinition(selectedComponentInstance.type)?.name || selectedComponentInstance.type) }}</h4>
+            <small>{{ selectedComponentInstance.type === 'built-in-navigation' ? 'Configure your website navigation bar and logo' : getComponentDefinition(selectedComponentInstance.type)?.description }}</small>
             <div class="edit-status">
               <i class="pi pi-pencil"></i>
               <span>Edit properties below - changes apply instantly</span>
             </div>
           </div>
           
-          <!-- Dynamic parameter inputs -->
+          <!-- Built-in Navigation Properties -->
+          <div *ngIf="selectedComponentInstance.type === 'built-in-navigation'">
+            <div class="property-group">
+              <label>Logo Type</label>
+              <select 
+                class="property-input"
+                [value]="builtInNavProperties['logoType']"
+                (change)="updateBuiltInNavProperty('logoType', $event)">
+                <option value="text">Text Logo</option>
+                <option value="image">Image Logo</option>
+              </select>
+            </div>
+            
+            <div class="property-group">
+              <label>Business Name</label>
+              <input 
+                type="text"
+                class="property-input"
+                [value]="builtInNavProperties['logoText']"
+                (input)="updateBuiltInNavProperty('logoText', $event)"
+                placeholder="Your Business Name">
+              <small class="property-note">
+                <i class="pi pi-info-circle"></i>
+                This text will always appear in your navigation, alongside any logo image you select.
+              </small>
+            </div>
+            
+            <div class="property-group" *ngIf="builtInNavProperties['logoType'] === 'image'">
+              <label>Logo Image</label>
+              <div class="image-asset-input">
+                <div class="current-image-preview" *ngIf="builtInNavProperties['logoImage']">
+                  <img [src]="builtInNavProperties['logoImage']" 
+                       alt="Selected logo"
+                       style="width: 100%; height: 60px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;">
+                </div>
+                <button 
+                  type="button"
+                  class="btn btn-outline asset-browser-btn"
+                  (click)="openAssetBrowserForBuiltInNav('logoImage')"
+                  style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  <i class="pi pi-images"></i>
+                  {{ builtInNavProperties['logoImage'] ? 'Change Logo' : 'Select Logo' }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="property-group" *ngIf="builtInNavProperties['logoType'] === 'image' && builtInNavProperties['logoImage']">
+              <label>Logo Shape</label>
+              <select 
+                class="property-input"
+                [value]="builtInNavProperties['logoShape']"
+                (change)="updateBuiltInNavProperty('logoShape', $event)">
+                <option value="square">Square</option>
+                <option value="circle">Circle</option>
+              </select>
+            </div>
+            
+            <div class="property-group">
+              <label>Logo Size</label>
+              <select 
+                class="property-input"
+                [value]="builtInNavProperties['logoSize']"
+                (change)="updateBuiltInNavProperty('logoSize', $event)">
+                <option value="small">Small</option>
+                <option value="normal">Normal</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+            
+            <div class="property-group">
+              <label>Background Color</label>
+              <input 
+                type="color"
+                class="color-input"
+                [value]="builtInNavProperties['backgroundColor']"
+                (input)="updateBuiltInNavProperty('backgroundColor', $event)">
+            </div>
+            
+            <div class="property-group">
+              <label>Text Color</label>
+              <input 
+                type="color"
+                class="color-input"
+                [value]="builtInNavProperties['textColor']"
+                (input)="updateBuiltInNavProperty('textColor', $event)">
+            </div>
+            
+            <div class="property-group">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox"
+                  [checked]="builtInNavProperties['showShadow']"
+                  (change)="updateBuiltInNavProperty('showShadow', $event)">
+                <span class="checkbox-text">Show Drop Shadow</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Dynamic parameter inputs for regular components -->
+          <div *ngIf="selectedComponentInstance.type !== 'built-in-navigation'">
           <div *ngFor="let param of getComponentDefinition(selectedComponentInstance.type)?.parameters" class="property-group">
             <label>{{ param.label }}</label>
             
@@ -858,6 +1165,26 @@
               [value]="selectedComponentInstance.parameters[param.name] || param.defaultValue"
               (input)="updateComponentParameter(param.name, $event)">
             
+            <!-- Image Asset Browser -->
+            <div *ngIf="param.type === 'image-asset'" class="image-asset-input">
+              <div class="current-image-preview" *ngIf="selectedComponentInstance.parameters[param.name] && selectedComponentInstance.parameters[param.name] !== param.defaultValue">
+                <img [src]="selectedComponentInstance.parameters[param.name]" 
+                     alt="Selected image"
+                     style="width: 100%; height: 60px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;">
+              </div>
+              <button 
+                type="button"
+                class="btn btn-outline asset-browser-btn"
+                (click)="openAssetBrowser(param.name)"
+                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="pi pi-images"></i>
+                {{ selectedComponentInstance.parameters[param.name] && selectedComponentInstance.parameters[param.name] !== param.defaultValue ? 'Change Image' : 'Select Image' }}
+              </button>
+              <small style="color: #6c757d; font-size: 11px; margin-top: 4px; display: block;">
+                Choose from your uploaded business images
+              </small>
+            </div>
+            
             <!-- Select dropdown -->
             <select 
               *ngIf="param.type === 'select'"
@@ -879,8 +1206,8 @@
             <small *ngIf="param.required" class="required-note">* Required</small>
           </div>
           
-          <!-- Component Actions -->
-          <div class="component-actions">
+          <!-- Component Actions (only for regular components, not built-in navigation) -->
+          <div class="component-actions" *ngIf="selectedComponentInstance.type !== 'built-in-navigation'">
             <button class="btn btn-outline" (click)="duplicateComponent()">
               <i class="pi pi-copy"></i>
               Duplicate
@@ -979,7 +1306,180 @@
   </div>
 </div>
 
-<!-- Dialogs -->
+<!-- PrimeNG Upload Dialog -->
+<p-dialog 
+  header="Upload New Image" 
+  [modal]="true" 
+  [(visible)]="showImageUploadDialog" 
+  [style]="{ width: '450px' }"
+  [breakpoints]="{ '960px': '75vw', '641px': '90vw' }"
+  [draggable]="false"
+  [resizable]="false">
+  
+  <div class="upload-dialog-content">
+    <!-- File Selection Section -->
+    <div class="file-selection-section" *ngIf="!selectedImageFile">
+      <div class="upload-drop-zone" 
+           (click)="triggerFileInput()"
+           style="border: 2px dashed #e9ecef; padding: 40px; text-align: center; cursor: pointer; border-radius: 8px; background: #f8f9fa;">
+        <i class="pi pi-cloud-upload" style="font-size: 3rem; color: #6c757d; margin-bottom: 16px;"></i>
+        <h4 style="margin: 0 0 8px 0; color: #495057;">Choose an image file</h4>
+        <p style="margin: 0; color: #6c757d; font-size: 14px;">
+          Click here to browse or drag and drop an image
+        </p>
+        <small style="color: #6c757d; display: block; margin-top: 8px;">
+          Supported formats: JPG, PNG, GIF (Max 10MB)
+        </small>
+      </div>
+      
+      <input 
+        #fileInput
+        type="file" 
+        accept="image/*" 
+        (change)="onFileSelected($event)"
+        style="display: none;">
+    </div>
+    
+    <!-- File Preview Section -->
+    <div class="file-preview-section" *ngIf="selectedImageFile">
+      <div class="selected-file-info" 
+           style="background: #e3f2fd; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <i class="pi pi-image" style="font-size: 2rem; color: #1976d2;"></i>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; color: #1976d2;">{{ selectedImageFile?.name }}</div>
+            <div style="font-size: 12px; color: #6c757d;">{{ formatFileSize(selectedImageFile?.size || 0) }}</div>
+          </div>
+          <button 
+            type="button"
+            (click)="removeSelectedFile()"
+            style="background: none; border: none; color: #6c757d; cursor: pointer;">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Description Input -->
+    <div class="form-group" style="margin-bottom: 16px;">
+      <label for="imageDescription" style="display: block; margin-bottom: 8px; font-weight: 500;">
+        Description (Optional)
+      </label>
+      <textarea 
+        id="imageDescription"
+        [(ngModel)]="imageDescription" 
+        placeholder="Add a description for this image..."
+        pInputTextarea
+        [autoResize]="true"
+        rows="3"
+        style="width: 100%;"></textarea>
+    </div>
+    
+    <!-- Error Message -->
+    <p-message 
+      *ngIf="imageUploadError" 
+      severity="error" 
+      [text]="imageUploadError"
+      [style]="{'margin-bottom': '16px'}">
+    </p-message>
+  </div>
+  
+  <ng-template #footer>
+    <p-button 
+      label="Cancel" 
+      icon="pi pi-times" 
+      [text]="true" 
+      (click)="cancelImageUpload()" />
+    <p-button 
+      [label]="isLoadingImages ? 'Uploading...' : 'Upload Image'"
+      [icon]="isLoadingImages ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"
+      (click)="onUploadButtonClick()"
+      [disabled]="!selectedImageFile || isLoadingImages" />
+  </ng-template>
+</p-dialog>
+
+<!-- Asset Browser Dialog -->
+<p-dialog 
+  header="Select Image from Assets" 
+  [modal]="true" 
+  [(visible)]="showAssetBrowserDialog" 
+  [style]="{ width: '700px', height: '600px' }"
+  [breakpoints]="{ '960px': '80vw', '641px': '95vw' }"
+  [draggable]="false"
+  [resizable]="true">
+  
+  <div class="asset-browser-content">
+    <!-- Header Info -->
+    <div class="browser-header">
+      <div class="header-info">
+        <i class="pi pi-images" style="color: #007bff; margin-right: 8px;"></i>
+        <span>Choose an image for your <strong>{{ selectedComponentInstance?.type }}</strong> component</span>
+      </div>
+      <p-button 
+        label="Upload New" 
+        icon="pi pi-plus" 
+        [text]="true"
+        (click)="openUploadDialog(); closeAssetBrowser()" />
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoadingImages" class="loading-state" style="padding: 40px; text-align: center;">
+      <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: #007bff; margin-bottom: 16px;"></i>
+      <p>Loading your images...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="imageUploadError && !isLoadingImages" class="error-state" style="padding: 40px; text-align: center;">
+      <i class="pi pi-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 16px;"></i>
+      <p>{{ imageUploadError }}</p>
+      <p-button label="Try Again" icon="pi pi-refresh" (click)="loadBusinessImages()" />
+    </div>
+
+    <!-- Images Grid -->
+    <div class="asset-browser-grid" *ngIf="!isLoadingImages && !imageUploadError && businessImages.length > 0">
+      <div 
+        *ngFor="let image of businessImages"
+        class="asset-browser-item"
+        (click)="selectImageFromAssetBrowser(image)">
+        <div class="asset-image-preview">
+          <img [src]="getDisplayableImageUrl(image)" [alt]="image.fileName">
+          <div class="asset-overlay">
+            <i class="pi pi-check"></i>
+            <span>Select</span>
+          </div>
+        </div>
+        <div class="asset-info">
+          <div class="asset-name" [title]="image.fileName">{{ image.fileName }}</div>
+          <div class="asset-meta">
+            <span>{{ formatFileSize(image.fileSize) }}</span>
+          </div>
+          <div class="asset-description" *ngIf="image.description">{{ image.description }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoadingImages && !imageUploadError && businessImages.length === 0" 
+         style="padding: 40px; text-align: center;">
+      <i class="pi pi-image" style="font-size: 3rem; color: #dee2e6; margin-bottom: 16px;"></i>
+      <h4>No Images Yet</h4>
+      <p>Upload your first image to get started</p>
+      <p-button 
+        label="Upload First Image" 
+        icon="pi pi-cloud-upload" 
+        (click)="openUploadDialog(); closeAssetBrowser()" />
+    </div>
+  </div>
+  
+  <ng-template #footer>
+    <p-button 
+      label="Cancel" 
+      icon="pi pi-times" 
+      [text]="true" 
+      (click)="closeAssetBrowser()" />
+  </ng-template>
+</p-dialog>
+
 <!-- New Project Dialog -->
 <div class="dialog-overlay" *ngIf="showNewProjectDialog" (click)="showNewProjectDialog = false">
   <div class="dialog" (click)="$event.stopPropagation()">
