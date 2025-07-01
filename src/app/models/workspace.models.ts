@@ -1,25 +1,25 @@
 export interface CreateWorkspaceDto {
-  userId: number;
-  businessId: number;
-  name: string;
-  description?: string;
-  thumbnailUrl?: string;
-  websiteJson?: string;
+  UserId: string;
+  BusinessId: string;
+  Name: string;
+  Description?: string;
+  ThumbnailUrl?: string;
+  WebsiteJson?: string;
 }
 
 export interface UpdateWorkspaceDto {
-  name?: string;
-  description?: string;
-  thumbnailUrl?: string;
-  websiteJson?: string;
-  deploymentStatus?: string;
-  deploymentUrl?: string;
+  Name?: string;
+  Description?: string;
+  ThumbnailUrl?: string;
+  WebsiteJson?: string;
+  DeploymentStatus?: string;
+  DeploymentUrl?: string;
 }
 
 export interface WorkspaceResponseDto {
-  id: number;
-  userId: number;
-  businessId: number;
+  id: string;
+  userId: string;
+  businessId: string;
   name: string;
   description?: string;
   thumbnailUrl?: string;
@@ -32,30 +32,30 @@ export interface WorkspaceResponseDto {
 }
 
 export interface CreateWorkspaceComponentDto {
-  workspaceId: number;
-  pageId: string;
-  componentId: string;
-  componentType: string;
-  xPosition: number;
-  yPosition: number;
-  width: number;
-  height: number;
-  zIndex: number;
-  parameters?: string;
+  WorkspaceId: string;
+  PageId: string;
+  ComponentId: string;
+  ComponentType: string;
+  XPosition: number;
+  YPosition: number;
+  Width: number;
+  Height: number;
+  ZIndex: number;
+  Parameters?: string;
 }
 
 export interface UpdateWorkspaceComponentDto {
-  xPosition?: number;
-  yPosition?: number;
-  width?: number;
-  height?: number;
-  zIndex?: number;
-  parameters?: string;
+  XPosition?: number;
+  YPosition?: number;
+  Width?: number;
+  Height?: number;
+  ZIndex?: number;
+  Parameters?: string;
 }
 
 export interface WorkspaceComponentResponseDto {
-  id: number;
-  workspaceId: number;
+  id: string;
+  workspaceId: string;
   pageId: string;
   componentId: string;
   componentType: string;
@@ -84,17 +84,17 @@ export interface ComponentType {
 }
 
 export interface DeployWorkspaceDto {
-  workspaceId: number;
-  deployedBy: number;
+  WorkspaceId: string;
+  DeployedBy: string;
 }
 
 export interface WorkspaceDeployment {
-  id: number;
-  workspaceId: number;
+  id: string;
+  workspaceId: string;
   deploymentStatus: string;
   deploymentUrl?: string;
   errorMessage?: string;
-  deployedBy: number;
+  deployedBy: string;
   deployedAt: Date;
 }
 
@@ -106,14 +106,14 @@ export interface ApiResponse<T> {
 }
 
 export interface WorkspaceListResponse {
-  userId?: number;
-  businessId?: number;
+  userId?: string;
+  businessId?: string;
   totalWorkspaces: number;
   workspaces: WorkspaceResponseDto[];
 }
 
 export interface ComponentListResponse {
-  workspaceId: number;
+  workspaceId: string;
   pageId?: string;
   totalComponents: number;
   components: WorkspaceComponentResponseDto[];
@@ -126,7 +126,7 @@ export interface ComponentTypeListResponse {
 }
 
 export interface DeploymentListResponse {
-  workspaceId: number;
+  workspaceId: string;
   totalDeployments: number;
   deployments: WorkspaceDeployment[];
 } 

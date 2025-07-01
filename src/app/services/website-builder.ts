@@ -906,10 +906,11 @@ export class WebsiteBuilderService {
   /**
    * Creates a new workspace
    */
-  createWorkspace(workspace: CreateWorkspaceDto): Observable<{ workspaceId: number; message: string }> {
-    return this.http.post<{ workspaceId: number; message: string }>(
+  createWorkspace(workspace: CreateWorkspaceDto): Observable<{ workspaceId: string; message: string }> {
+    const requestBody = { createDto: workspace };
+    return this.http.post<{ workspaceId: string; message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces`, 
-      workspace
+      requestBody
     ).pipe(
       catchError(this.handleError)
     );
@@ -918,7 +919,7 @@ export class WebsiteBuilderService {
   /**
    * Gets a workspace by ID
    */
-  getWorkspace(workspaceId: number): Observable<WorkspaceResponseDto> {
+  getWorkspace(workspaceId: string): Observable<WorkspaceResponseDto> {
     return this.http.get<WorkspaceResponseDto>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`
     ).pipe(
@@ -929,7 +930,7 @@ export class WebsiteBuilderService {
   /**
    * Gets all workspaces for a specific user
    */
-  getWorkspacesByUser(userId: number): Observable<WorkspaceListResponse> {
+  getWorkspacesByUser(userId: string): Observable<WorkspaceListResponse> {
     return this.http.get<WorkspaceListResponse>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/user/${userId}`
     ).pipe(
@@ -940,7 +941,7 @@ export class WebsiteBuilderService {
   /**
    * Gets all workspaces for a specific business
    */
-  getWorkspacesByBusiness(businessId: number): Observable<WorkspaceListResponse> {
+  getWorkspacesByBusiness(businessId: string): Observable<WorkspaceListResponse> {
     return this.http.get<WorkspaceListResponse>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/business/${businessId}`
     ).pipe(
@@ -951,10 +952,11 @@ export class WebsiteBuilderService {
   /**
    * Updates an existing workspace
    */
-  updateWorkspace(workspaceId: number, updates: UpdateWorkspaceDto): Observable<{ message: string }> {
+  updateWorkspace(workspaceId: string, updates: UpdateWorkspaceDto): Observable<{ message: string }> {
+    const requestBody = { updateDto: updates };
     return this.http.put<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`, 
-      updates
+      requestBody
     ).pipe(
       catchError(this.handleError)
     );
@@ -963,7 +965,7 @@ export class WebsiteBuilderService {
   /**
    * Deletes a workspace
    */
-  deleteWorkspace(workspaceId: number): Observable<{ message: string }> {
+  deleteWorkspace(workspaceId: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`
     ).pipe(
@@ -974,11 +976,12 @@ export class WebsiteBuilderService {
   /**
    * Deploys a workspace
    */
-  deployWorkspace(workspaceId: number, deployedBy: number): Observable<{ message: string }> {
-    const deployDto: DeployWorkspaceDto = { workspaceId, deployedBy };
+  deployWorkspace(workspaceId: string, deployedBy: string): Observable<{ message: string }> {
+    const deployDto: DeployWorkspaceDto = { WorkspaceId: workspaceId, DeployedBy: deployedBy };
+    const requestBody = { deployDto };
     return this.http.post<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/deploy`, 
-      deployDto
+      requestBody
     ).pipe(
       catchError(this.handleError)
     );
@@ -987,7 +990,7 @@ export class WebsiteBuilderService {
   /**
    * Gets deployment history for a workspace
    */
-  getWorkspaceDeployments(workspaceId: number): Observable<DeploymentListResponse> {
+  getWorkspaceDeployments(workspaceId: string): Observable<DeploymentListResponse> {
     return this.http.get<DeploymentListResponse>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/deployments`
     ).pipe(
@@ -1000,10 +1003,11 @@ export class WebsiteBuilderService {
   /**
    * Creates a new workspace component
    */
-  createWorkspaceComponent(component: CreateWorkspaceComponentDto): Observable<{ componentId: number; message: string }> {
-    return this.http.post<{ componentId: number; message: string }>(
+  createWorkspaceComponent(component: CreateWorkspaceComponentDto): Observable<{ componentId: string; message: string }> {
+    const requestBody = { createDto: component };
+    return this.http.post<{ componentId: string; message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/components`, 
-      component
+      requestBody
     ).pipe(
       catchError(this.handleError)
     );
@@ -1012,7 +1016,7 @@ export class WebsiteBuilderService {
   /**
    * Gets a workspace component by ID
    */
-  getWorkspaceComponent(componentId: number): Observable<WorkspaceComponentResponseDto> {
+  getWorkspaceComponent(componentId: string): Observable<WorkspaceComponentResponseDto> {
     return this.http.get<WorkspaceComponentResponseDto>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/components/${componentId}`
     ).pipe(
@@ -1023,7 +1027,7 @@ export class WebsiteBuilderService {
   /**
    * Gets all components for a workspace
    */
-  getWorkspaceComponents(workspaceId: number): Observable<ComponentListResponse> {
+  getWorkspaceComponents(workspaceId: string): Observable<ComponentListResponse> {
     return this.http.get<ComponentListResponse>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/components`
     ).pipe(
@@ -1034,7 +1038,7 @@ export class WebsiteBuilderService {
   /**
    * Gets all components for a specific page within a workspace
    */
-  getWorkspaceComponentsByPage(workspaceId: number, pageId: string): Observable<ComponentListResponse> {
+  getWorkspaceComponentsByPage(workspaceId: string, pageId: string): Observable<ComponentListResponse> {
     return this.http.get<ComponentListResponse>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/pages/${pageId}/components`
     ).pipe(
@@ -1045,10 +1049,11 @@ export class WebsiteBuilderService {
   /**
    * Updates a workspace component
    */
-  updateWorkspaceComponent(componentId: number, updates: UpdateWorkspaceComponentDto): Observable<{ message: string }> {
+  updateWorkspaceComponent(componentId: string, updates: UpdateWorkspaceComponentDto): Observable<{ message: string }> {
+    const requestBody = { updateDto: updates };
     return this.http.put<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/components/${componentId}`, 
-      updates
+      requestBody
     ).pipe(
       catchError(this.handleError)
     );
@@ -1057,7 +1062,7 @@ export class WebsiteBuilderService {
   /**
    * Deletes a workspace component
    */
-  deleteWorkspaceComponent(componentId: number): Observable<{ message: string }> {
+  deleteWorkspaceComponent(componentId: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/components/${componentId}`
     ).pipe(
@@ -1105,9 +1110,9 @@ export class WebsiteBuilderService {
   /**
    * Saves workspace as JSON
    */
-  saveWorkspaceAsJson(workspaceId: number, websiteJson: any): Observable<{ message: string }> {
+  saveWorkspaceAsJson(workspaceId: string, websiteJson: any): Observable<{ message: string }> {
     const updates: UpdateWorkspaceDto = {
-      websiteJson: JSON.stringify(websiteJson)
+      WebsiteJson: JSON.stringify(websiteJson)
     };
     return this.updateWorkspace(workspaceId, updates);
   }
@@ -1115,12 +1120,12 @@ export class WebsiteBuilderService {
   /**
    * Bulk update component positions (useful for drag & drop)
    */
-  updateComponentPositions(components: Array<{id: number, x: number, y: number, zIndex?: number}>): Observable<any[]> {
+  updateComponentPositions(components: Array<{id: string, x: number, y: number, zIndex?: number}>): Observable<any[]> {
     const updatePromises = components.map(comp => {
       const updates: UpdateWorkspaceComponentDto = {
-        xPosition: comp.x,
-        yPosition: comp.y,
-        zIndex: comp.zIndex
+        XPosition: comp.x,
+        YPosition: comp.y,
+        ZIndex: comp.zIndex
       };
       return this.updateWorkspaceComponent(comp.id, updates);
     });
@@ -1138,18 +1143,18 @@ export class WebsiteBuilderService {
   /**
    * Converts local ComponentInstance to CreateWorkspaceComponentDto
    */
-  convertToWorkspaceComponent(workspaceId: number, pageId: string, component: ComponentInstance): CreateWorkspaceComponentDto {
+  convertToWorkspaceComponent(workspaceId: string, pageId: string, component: ComponentInstance): CreateWorkspaceComponentDto {
     return {
-      workspaceId,
-      pageId,
-      componentId: component.id,
-      componentType: component.type,
-      xPosition: component.x,
-      yPosition: component.y,
-      width: component.width,
-      height: component.height,
-      zIndex: component.zIndex,
-      parameters: JSON.stringify(component.parameters)
+      WorkspaceId: workspaceId,
+      PageId: pageId,
+      ComponentId: component.id,
+      ComponentType: component.type,
+      XPosition: component.x,
+      YPosition: component.y,
+      Width: component.width,
+      Height: component.height,
+      ZIndex: component.zIndex,
+      Parameters: JSON.stringify(component.parameters)
     };
   }
 
@@ -1172,7 +1177,7 @@ export class WebsiteBuilderService {
   /**
    * Sync current page components to workspace
    */
-  syncPageComponentsToWorkspace(workspaceId: number, pageId: string): Observable<any> {
+  syncPageComponentsToWorkspace(workspaceId: string, pageId: string): Observable<any> {
     const currentPage = this.getCurrentPage();
     if (!currentPage || currentPage.id !== pageId) {
       throw new Error('Current page does not match provided pageId');
@@ -1196,7 +1201,7 @@ export class WebsiteBuilderService {
   /**
    * Load page components from workspace
    */
-  loadPageComponentsFromWorkspace(workspaceId: number, pageId: string): Observable<ComponentInstance[]> {
+  loadPageComponentsFromWorkspace(workspaceId: string, pageId: string): Observable<ComponentInstance[]> {
     return this.getWorkspaceComponentsByPage(workspaceId, pageId).pipe(
       tap(response => {
         const components = response.components.map(wc => this.convertFromWorkspaceComponent(wc));

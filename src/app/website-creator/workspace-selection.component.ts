@@ -1,16 +1,29 @@
 import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { ManageBusinessesService } from '../services/manage-businesses.service';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
+import { WebsiteBuilderService } from '../services/website-builder';
+import { DataSvrService } from '../services/data-svr.service';
+import { 
+  WorkspaceResponseDto, 
+  CreateWorkspaceDto, 
+  WorkspaceListResponse 
+} from '../models/workspace.models';
 
 export interface WorkspaceProject {
   id: string;
   name: string;
   businessName: string;
   businessId: string;
+  userId: string;
   description: string;
   createdAt: Date;
   lastModified: Date;
   thumbnail?: string;
+  websiteJson?: string;
+  deploymentStatus?: string;
+  deploymentUrl?: string;
+  deployedAt?: Date;
+  isNew?: boolean; // Flag to indicate if this is a new workspace not yet saved
 }
 
 export interface BusinessInfo {
@@ -45,7 +58,11 @@ export class WorkspaceSelectionComponent implements OnInit {
   // Existing projects (initially empty - could be loaded from a projects service)
   existingProjects: WorkspaceProject[] = [];
 
-  constructor(private manageBusinessesService: ManageBusinessesService) {}
+  constructor(
+    private manageBusinessesService: ManageBusinessesService,
+    private websiteBuilderService: WebsiteBuilderService,
+    private dataSvrService: DataSvrService
+  ) {}
 
   ngOnInit(): void {
     this.loadBusinesses();
@@ -148,6 +165,7 @@ export class WorkspaceSelectionComponent implements OnInit {
 
   onBusinessSelect(business: BusinessInfo): void {
     this.selectedBusiness = business;
+    this.loadWorkspacesForBusiness(business.id);
   }
 
   onAddNewBusiness(): void {
@@ -170,14 +188,24 @@ export class WorkspaceSelectionComponent implements OnInit {
       return;
     }
 
+    // Get user ID from DataSvrService
+    const currentUserId = this.dataSvrService.currentUser?.userID;
+    if (!currentUserId) {
+      this.errorMessage = 'User not authenticated. Please log in again.';
+      return;
+    }
+
     const newProject: WorkspaceProject = {
       id: this.generateId(),
       name: this.newProjectName.trim(),
       businessName: this.selectedBusiness.name,
       businessId: this.selectedBusiness.id,
+      userId: currentUserId,
       description: this.newProjectDescription.trim(),
       createdAt: new Date(),
-      lastModified: new Date()
+      lastModified: new Date(),
+      isNew: true, // Mark as new workspace not yet saved to API
+      deploymentStatus: 'Not Deployed'
     };
 
     this.existingProjects.unshift(newProject);
@@ -222,5 +250,162 @@ export class WorkspaceSelectionComponent implements OnInit {
 
   private generateId(): string {
     return 'project-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  }
+
+  // ===================== WORKSPACE API INTEGRATION =====================
+
+  /**
+   * Load workspaces for the selected business from API
+   */
+  loadWorkspacesForBusiness(businessId: string): void {
+    if (!businessId) return;
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    // Use string businessId directly for API
+    if (!businessId.trim()) {
+      this.errorMessage = 'Invalid business ID';
+      this.isLoading = false;
+      return;
+    }
+
+    this.websiteBuilderService.getWorkspacesByBusiness(businessId).subscribe({
+      next: (response: WorkspaceListResponse) => {
+        console.log('Loaded workspaces from API:', response);
+        
+        // Convert API workspaces to local format and merge with new projects
+        const apiWorkspaces = response.workspaces.map(w => this.convertWorkspaceResponseToProject(w));
+        
+        // Keep only new (unsaved) projects for this business
+        const newProjects = this.existingProjects.filter(p => 
+          p.businessId === businessId && p.isNew
+        );
+        
+        // Merge API workspaces with new projects
+        this.existingProjects = [...newProjects, ...apiWorkspaces];
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading workspaces:', error);
+        this.errorMessage = 'Failed to load website projects. Please try again.';
+        this.isLoading = false;
+        
+        // Keep only new projects on error
+        this.existingProjects = this.existingProjects.filter(p => 
+          p.businessId === businessId && p.isNew
+        );
+      }
+    });
+  }
+
+  /**
+   * Convert WorkspaceResponseDto to WorkspaceProject
+   */
+  private convertWorkspaceResponseToProject(workspace: WorkspaceResponseDto): WorkspaceProject {
+    const business = this.businesses.find(b => b.id === workspace.businessId);
+    
+    return {
+      id: workspace.id,
+      name: workspace.name,
+      businessName: business?.name || 'Unknown Business',
+      businessId: workspace.businessId,
+      userId: workspace.userId,
+      description: workspace.description || '',
+      createdAt: new Date(workspace.createdAt),
+      lastModified: new Date(workspace.lastModified),
+      thumbnail: workspace.thumbnailUrl,
+      websiteJson: workspace.websiteJson,
+      deploymentStatus: workspace.deploymentStatus,
+      deploymentUrl: workspace.deploymentUrl,
+      deployedAt: workspace.deployedAt ? new Date(workspace.deployedAt) : undefined,
+      isNew: false
+    };
+  }
+
+  /**
+   * Convert WorkspaceProject to CreateWorkspaceDto
+   */
+  createWorkspaceDto(project: WorkspaceProject): CreateWorkspaceDto {
+    console.log('Creating workspace DTO for project:', project);
+    const dto = {
+      UserId: project.userId,
+      BusinessId: project.businessId,
+      Name: project.name,
+      Description: project.description,
+      ThumbnailUrl: project.thumbnail,
+      WebsiteJson: project.websiteJson
+    };
+    console.log('Created workspace DTO:', dto);
+    return dto;
+  }
+
+  /**
+   * Save a new workspace to the API
+   */
+  saveWorkspaceToAPI(project: WorkspaceProject): Promise<string> {
+    const workspaceDto = this.createWorkspaceDto(project);
+    
+    return new Promise((resolve, reject) => {
+      this.websiteBuilderService.createWorkspace(workspaceDto).subscribe({
+        next: (response) => {
+          console.log('Workspace saved to API:', response);
+          // Update the project with the API-assigned ID
+          project.id = response.workspaceId;
+          project.isNew = false;
+          resolve(response.workspaceId);
+        },
+        error: (error) => {
+          console.error('Error saving workspace:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Update an existing workspace in the API
+   */
+  updateWorkspaceInAPI(project: WorkspaceProject): Promise<void> {
+    if (project.isNew) {
+      // If it's new, save it instead
+      return this.saveWorkspaceToAPI(project).then(() => {});
+    }
+
+    const workspaceId = project.id;
+    const updates = {
+      Name: project.name,
+      Description: project.description,
+      ThumbnailUrl: project.thumbnail,
+      WebsiteJson: project.websiteJson
+    };
+
+    return new Promise((resolve, reject) => {
+      this.websiteBuilderService.updateWorkspace(workspaceId, updates).subscribe({
+        next: (response) => {
+          console.log('Workspace updated in API:', response);
+          project.lastModified = new Date();
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error updating workspace:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Check if there are unsaved changes
+   */
+  hasUnsavedChanges(): boolean {
+    return this.existingProjects.some(p => p.isNew);
+  }
+
+  /**
+   * Get all new (unsaved) projects
+   */
+  getUnsavedProjects(): WorkspaceProject[] {
+    return this.existingProjects.filter(p => p.isNew);
   }
 } 

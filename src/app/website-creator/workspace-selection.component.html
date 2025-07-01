@@ -91,7 +91,13 @@
             <img *ngIf="project.thumbnail" [src]="project.thumbnail" [alt]="project.name">
           </div>
           <div class="project-info">
-            <h4>{{ project.name }}</h4>
+            <div class="project-header">
+              <h4>{{ project.name }}</h4>
+              <div class="project-status-badge" [ngClass]="{'new-project': project.isNew, 'saved-project': !project.isNew}">
+                <i [class]="project.isNew ? 'pi pi-exclamation-circle' : 'pi pi-check-circle'"></i>
+                <span>{{ project.isNew ? 'Not Saved' : 'Saved' }}</span>
+              </div>
+            </div>
             <p class="project-description">{{ project.description }}</p>
             <div class="project-meta">
               <span class="created-date">
@@ -101,6 +107,10 @@
               <span class="modified-date">
                 <i class="pi pi-clock"></i>
                 Modified: {{ formatDate(project.lastModified) }}
+              </span>
+              <span class="deployment-status" *ngIf="project.deploymentStatus">
+                <i class="pi pi-globe"></i>
+                {{ project.deploymentStatus }}
               </span>
             </div>
           </div>
@@ -218,6 +228,16 @@
               <i class="pi pi-bolt"></i>
             </div>
             <span>Fitness & Health</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="project-save-info">
+        <div class="info-box">
+          <i class="pi pi-info-circle"></i>
+          <div>
+            <strong>Note:</strong> Your project will be created in draft mode. 
+            Remember to click <strong>"Save"</strong> in the editor to save your work to the cloud.
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WebsiteBuilderService, ComponentDefinition, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/website-builder';
 import { WorkspaceProject } from './workspace-selection.component';
+import { CreateWorkspaceDto, UpdateWorkspaceDto } from '../models/workspace.models';
 
 @Component({
   selector: 'app-website-creator',
@@ -314,7 +315,26 @@ export class WebsiteCreatorComponent implements OnInit {
   }
 
   onSave(): void {
-    console.log('Save functionality to be implemented');
+    if (!this.currentProject) {
+      alert('No project selected to save');
+      return;
+    }
+
+    console.log('Saving project...', this.currentProject);
+    
+    // Convert current website state to JSON
+    const websiteJson = this.exportWebsiteDataAsJson();
+    
+    // Update the current project with the website data
+    this.currentProject.websiteJson = JSON.stringify(websiteJson);
+    this.currentProject.lastModified = new Date();
+
+    // Save or update the workspace
+    if (this.currentProject.isNew) {
+      this.saveNewWorkspace();
+    } else {
+      this.updateExistingWorkspace();
+    }
   }
 
   onJsonEditor(): void {
@@ -625,6 +645,11 @@ export class WebsiteCreatorComponent implements OnInit {
     // Initialize the website builder with this project
     this.websiteBuilder.createNewProject(project.name, project.description);
     this.initializeWebsiteBuilder();
+    
+    // Load existing website data if available
+    if (project.websiteJson) {
+      this.loadWebsiteDataFromJson(project.websiteJson);
+    }
   }
 
   onWorkspaceProjectCreated(project: WorkspaceProject): void {
@@ -978,6 +1003,151 @@ export class WebsiteCreatorComponent implements OnInit {
 
   onBuiltInNavPropertiesChange(properties: { [key: string]: any }): void {
     this.builtInNavProperties = { ...properties };
+  }
+
+  // ===================== WORKSPACE SAVE/LOAD METHODS =====================
+
+  /**
+   * Export current website data as JSON object
+   */
+  private exportWebsiteDataAsJson(): any {
+    return {
+      id: this.currentProject?.id || this.generateUniqueId(),
+      name: this.currentProject?.name || "New Website",
+      builtInNavigation: this.builtInNavProperties,
+      pages: this.pages.map(page => ({
+        id: page.id,
+        name: page.name,
+        route: page.route,
+        components: page.components.map((comp: any) => ({
+          id: comp.id,
+          type: comp.type,
+          x: comp.x,
+          y: comp.y,
+          width: comp.width,
+          height: comp.height,
+          zIndex: comp.zIndex,
+          parameters: comp.parameters
+        }))
+      }))
+    };
+  }
+
+  /**
+   * Load website data from JSON string
+   */
+  private loadWebsiteDataFromJson(jsonString: string): void {
+    try {
+      if (!jsonString) {
+        console.log('No JSON data to load');
+        return;
+      }
+
+      const websiteData = JSON.parse(jsonString);
+      console.log('Loading website data:', websiteData);
+
+      // Load built-in navigation properties
+      if (websiteData.builtInNavigation) {
+        this.builtInNavProperties = { ...websiteData.builtInNavigation };
+      }
+
+      // Load pages and components
+      if (websiteData.pages && Array.isArray(websiteData.pages)) {
+        // Update the website builder with loaded data
+        this.pages = websiteData.pages.map((page: any) => ({
+          id: page.id,
+          name: page.name,
+          route: page.route,
+          components: page.components.map((comp: any) => ({
+            id: comp.id,
+            type: comp.type,
+            x: comp.x || 0,
+            y: comp.y || 0,
+            width: comp.width || 300,
+            height: comp.height || 100,
+            zIndex: comp.zIndex || 1,
+            parameters: comp.parameters || {}
+          })),
+          isDeletable: page.id !== 'home',
+          isActive: page.id === this.currentPageId
+        }));
+
+        // Update the current page components
+        const currentPage = this.pages.find(p => p.id === this.currentPageId);
+        if (currentPage) {
+          this.pageComponents = currentPage.components;
+        }
+      }
+
+      console.log('Website data loaded successfully');
+    } catch (error) {
+      console.error('Error loading website data:', error);
+      alert('Error loading website data. Using default configuration.');
+    }
+  }
+
+  /**
+   * Save a new workspace to the API
+   */
+  private async saveNewWorkspace(): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const workspaceDto: CreateWorkspaceDto = {
+        UserId: this.currentProject.userId,
+        BusinessId: this.currentProject.businessId,
+        Name: this.currentProject.name,
+        Description: this.currentProject.description,
+        WebsiteJson: this.currentProject.websiteJson
+      };
+
+      this.websiteBuilder.createWorkspace(workspaceDto).subscribe({
+        next: (response) => {
+          this.currentProject!.id = response.workspaceId;
+          this.currentProject!.isNew = false;
+          console.log('New workspace saved with ID:', response.workspaceId);
+          alert('Website project saved successfully!');
+        },
+        error: (error) => {
+          console.error('Error saving workspace:', error);
+          alert('Error saving website project. Please try again.');
+        }
+      });
+    } catch (error) {
+      console.error('Error saving new workspace:', error);
+      alert('Error saving website project. Please try again.');
+    }
+  }
+
+  /**
+   * Update an existing workspace in the API
+   */
+  private async updateExistingWorkspace(): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const workspaceId = this.currentProject.id;
+      const updates: UpdateWorkspaceDto = {
+        Name: this.currentProject.name,
+        Description: this.currentProject.description,
+        WebsiteJson: this.currentProject.websiteJson
+      };
+
+      this.websiteBuilder.updateWorkspace(workspaceId, updates).subscribe({
+        next: (response) => {
+          this.currentProject!.lastModified = new Date();
+          console.log('Workspace updated:', response);
+          alert('Website project updated successfully!');
+        },
+        error: (error) => {
+          console.error('Error updating workspace:', error);
+          alert('Error updating website project. Please try again.');
+        }
+      });
+    } catch (error) {
+      console.error('Error updating workspace:', error);
+      alert('Error updating website project. Please try again.');
+    }
   }
 
 } 
