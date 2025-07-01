@@ -907,10 +907,9 @@ export class WebsiteBuilderService {
    * Creates a new workspace
    */
   createWorkspace(workspace: CreateWorkspaceDto): Observable<{ workspaceId: string; message: string }> {
-    const requestBody = { createDto: workspace };
     return this.http.post<{ workspaceId: string; message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces`, 
-      requestBody
+      workspace
     ).pipe(
       catchError(this.handleError)
     );
@@ -953,10 +952,9 @@ export class WebsiteBuilderService {
    * Updates an existing workspace
    */
   updateWorkspace(workspaceId: string, updates: UpdateWorkspaceDto): Observable<{ message: string }> {
-    const requestBody = { updateDto: updates };
     return this.http.put<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`, 
-      requestBody
+      updates
     ).pipe(
       catchError(this.handleError)
     );
@@ -977,11 +975,10 @@ export class WebsiteBuilderService {
    * Deploys a workspace
    */
   deployWorkspace(workspaceId: string, deployedBy: string): Observable<{ message: string }> {
-    const deployDto: DeployWorkspaceDto = { workspaceId: workspaceId, deployedBy: deployedBy };
-    const requestBody = { deployDto };
+    const deployDto: DeployWorkspaceDto = { workspaceId, deployedBy };
     return this.http.post<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/deploy`, 
-      requestBody
+      deployDto
     ).pipe(
       catchError(this.handleError)
     );
@@ -1004,10 +1001,9 @@ export class WebsiteBuilderService {
    * Creates a new workspace component
    */
   createWorkspaceComponent(component: CreateWorkspaceComponentDto): Observable<{ componentId: string; message: string }> {
-    const requestBody = { createDto: component };
     return this.http.post<{ componentId: string; message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/components`, 
-      requestBody
+      component
     ).pipe(
       catchError(this.handleError)
     );
@@ -1050,10 +1046,9 @@ export class WebsiteBuilderService {
    * Updates a workspace component
    */
   updateWorkspaceComponent(componentId: string, updates: UpdateWorkspaceComponentDto): Observable<{ message: string }> {
-    const requestBody = { updateDto: updates };
     return this.http.put<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/components/${componentId}`, 
-      requestBody
+      updates
     ).pipe(
       catchError(this.handleError)
     );
