@@ -648,7 +648,19 @@ export class WebsiteCreatorComponent implements OnInit {
     
     // Load existing website data if available
     if (project.websiteJson) {
-      this.loadWebsiteDataFromJson(project.websiteJson);
+      try {
+        // Use the service method to properly load workspace data
+        this.websiteBuilder.loadWorkspaceData(project.websiteJson);
+        
+        // Also load built-in navigation properties locally
+        const websiteData = JSON.parse(project.websiteJson);
+        if (websiteData.builtInNavigation) {
+          this.builtInNavProperties = { ...websiteData.builtInNavigation };
+        }
+      } catch (error) {
+        console.error('Error loading workspace data:', error);
+        alert('Error loading workspace data. Starting with a blank workspace.');
+      }
     }
   }
 

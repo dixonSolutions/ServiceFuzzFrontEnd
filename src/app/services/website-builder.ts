@@ -535,38 +535,50 @@ export class WebsiteBuilderService {
       page.id === currentPage.id ? currentPage : page
     );
     this._pages.next(updatedPages);
+    
+    // Update current page components to refresh the canvas
+    this.updateCurrentPageComponents();
 
     return component;
   }
 
   updateComponent(componentId: string, updates: Partial<ComponentInstance>): void {
-    const project = this._currentProject();
-    if (!project) return;
+    const currentPage = this.getCurrentPage();
+    if (!currentPage) return;
 
-    const layout = project.layouts[project.currentDevice];
-    const componentIndex = layout.components.findIndex(c => c.id === componentId);
+    const componentIndex = currentPage.components.findIndex(c => c.id === componentId);
     
     if (componentIndex !== -1) {
-      layout.components[componentIndex] = { ...layout.components[componentIndex], ...updates };
-      layout.updatedAt = new Date();
-      project.updatedAt = new Date();
+      currentPage.components[componentIndex] = { ...currentPage.components[componentIndex], ...updates };
       
-      this._currentProject.set(project);
-      this.updateComponents();
+      // Update the pages array with the modified page
+      const currentPages = this._pages.value;
+      const updatedPages = currentPages.map(page => 
+        page.id === currentPage.id ? currentPage : page
+      );
+      this._pages.next(updatedPages);
+      
+      // Update current page components to refresh the canvas
+      this.updateCurrentPageComponents();
     }
   }
 
   deleteComponent(componentId: string): void {
-    const project = this._currentProject();
-    if (!project) return;
+    const currentPage = this.getCurrentPage();
+    if (!currentPage) return;
 
-    const layout = project.layouts[project.currentDevice];
-    layout.components = layout.components.filter(c => c.id !== componentId);
-    layout.updatedAt = new Date();
-    project.updatedAt = new Date();
-
-    this._currentProject.set(project);
-    this.updateComponents();
+    // Remove component from current page
+    currentPage.components = currentPage.components.filter(c => c.id !== componentId);
+    
+    // Update the pages array with the modified page
+    const currentPages = this._pages.value;
+    const updatedPages = currentPages.map(page => 
+      page.id === currentPage.id ? currentPage : page
+    );
+    this._pages.next(updatedPages);
+    
+    // Update current page components to refresh the canvas
+    this.updateCurrentPageComponents();
   }
 
   selectComponent(componentId: string | null): void {
@@ -616,11 +628,17 @@ export class WebsiteBuilderService {
   }
 
   private updateComponents(): void {
-    const project = this._currentProject();
-    if (project) {
-      this._components.next(project.layouts[project.currentDevice].components);
+    // Use page-based approach if pages are available, otherwise fall back to project layouts
+    const pages = this._pages.value;
+    if (pages && pages.length > 0) {
+      this.updateCurrentPageComponents();
     } else {
-      this._components.next([]);
+      const project = this._currentProject();
+      if (project) {
+        this._components.next(project.layouts[project.currentDevice].components);
+      } else {
+        this._components.next([]);
+      }
     }
   }
 
@@ -639,6 +657,68 @@ export class WebsiteBuilderService {
       return project;
     } catch (error) {
       throw new Error('Invalid project data');
+    }
+  }
+
+  /**
+   * Load workspace data from JSON string into the page-based structure
+   */
+  loadWorkspaceData(jsonString: string): void {
+    try {
+      if (!jsonString) {
+        console.log('No JSON data to load');
+        return;
+      }
+
+      const websiteData = JSON.parse(jsonString);
+      console.log('Loading workspace data into service:', websiteData);
+
+      // Load pages and components
+      if (websiteData.pages && Array.isArray(websiteData.pages)) {
+        const loadedPages: WebsitePage[] = websiteData.pages.map((page: any) => ({
+          id: page.id,
+          name: page.name,
+          route: page.route,
+          components: page.components.map((comp: any) => ({
+            id: comp.id,
+            type: comp.type,
+            x: comp.x || 0,
+            y: comp.y || 0,
+            width: comp.width || 300,
+            height: comp.height || 100,
+            zIndex: comp.zIndex || 1,
+            parameters: comp.parameters || {}
+          })),
+          isDeletable: page.id !== 'home',
+          isActive: page.id === this._currentPageId.value
+        }));
+
+        // Update the pages in the service
+        this._pages.next(loadedPages);
+        
+        // Set the current page components based on the current page
+        this.updateCurrentPageComponents();
+        
+        console.log('Workspace data loaded successfully into service');
+      }
+    } catch (error) {
+      console.error('Error loading workspace data into service:', error);
+      throw new Error('Failed to load workspace data');
+    }
+  }
+
+  /**
+   * Update the current page components based on the current page ID
+   */
+  private updateCurrentPageComponents(): void {
+    const currentPageId = this._currentPageId.value;
+    const currentPage = this._pages.value.find(p => p.id === currentPageId);
+    
+    if (currentPage) {
+      this._components.next(currentPage.components);
+      console.log('Updated current page components:', currentPage.components.length);
+    } else {
+      this._components.next([]);
     }
   }
 
@@ -819,6 +899,9 @@ export class WebsiteBuilderService {
       isActive: page.id === pageId
     }));
     this._pages.next(updatedPages);
+    
+    // Update current page components
+    this.updateCurrentPageComponents();
   }
 
   getCurrentPage(): WebsitePage | undefined {
