@@ -140,6 +140,10 @@ export class WebsiteBuilderService {
   private _pages = new BehaviorSubject<WebsitePage[]>([]);
   private _currentPageId = new BehaviorSubject<string>('home');
 
+  // API Component Types Cache
+  private _apiComponentTypes = new BehaviorSubject<ComponentType[]>([]);
+  private _apiComponentTypesLoaded = false;
+
   // Getters
   get currentProject() { return this._currentProject(); }
   get selectedComponent() { return this._selectedComponent(); }
@@ -152,12 +156,22 @@ export class WebsiteBuilderService {
   get selectedCategory$(): Observable<string> { return this._selectedCategory.asObservable(); }
   get pages$(): Observable<WebsitePage[]> { return this._pages.asObservable(); }
   get currentPageId$(): Observable<string> { return this._currentPageId.asObservable(); }
+  
+  // API Component Types getters
+  get apiComponentTypes$(): Observable<ComponentType[]> { return this._apiComponentTypes.asObservable(); }
+  get apiComponentTypes(): ComponentType[] { return this._apiComponentTypes.value; }
 
   constructor(private http: HttpClient) {
     this.initializeComponents();
     
     // Initialize filtered components to show all components by default
     this.filterComponents();
+    
+    // Auto-load API component types for immediate availability
+    this.loadAndCacheApiComponentTypes().subscribe({
+      next: () => console.log('API Component types loaded and cached'),
+      error: (error) => console.warn('Failed to load API component types:', error)
+    });
   }
 
   // Initialize available components
@@ -633,11 +647,11 @@ export class WebsiteBuilderService {
     if (pages && pages.length > 0) {
       this.updateCurrentPageComponents();
     } else {
-      const project = this._currentProject();
-      if (project) {
-        this._components.next(project.layouts[project.currentDevice].components);
-      } else {
-        this._components.next([]);
+    const project = this._currentProject();
+    if (project) {
+      this._components.next(project.layouts[project.currentDevice].components);
+    } else {
+      this._components.next([]);
       }
     }
   }
@@ -1181,6 +1195,80 @@ export class WebsiteBuilderService {
     ).pipe(
       catchError(this.handleError)
     );
+  }
+
+  /**
+   * Gets all component types for business workspaces and caches them
+   * This method loads from API and stores in local cache for immediate access
+   */
+  loadAndCacheApiComponentTypes(): Observable<ComponentType[]> {
+    if (this._apiComponentTypesLoaded) {
+      // Return cached data if already loaded
+      return this._apiComponentTypes.asObservable();
+    }
+
+    return this.getAllComponentTypes().pipe(
+      tap(response => {
+        this._apiComponentTypes.next(response.componentTypes);
+        this._apiComponentTypesLoaded = true;
+      }),
+      map(response => response.componentTypes),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Forces a refresh of the API component types cache
+   */
+  refreshApiComponentTypes(): Observable<ComponentType[]> {
+    this._apiComponentTypesLoaded = false;
+    return this.loadAndCacheApiComponentTypes();
+  }
+
+  /**
+   * Gets cached API component types synchronously (returns empty array if not loaded)
+   * Use loadAndCacheApiComponentTypes() first to ensure data is available
+   */
+  getCachedApiComponentTypes(): ComponentType[] {
+    return this._apiComponentTypes.value;
+  }
+
+  /**
+   * Gets API component types by category from cache
+   */
+  getCachedApiComponentTypesByCategory(category: string): ComponentType[] {
+    return this._apiComponentTypes.value.filter(component => 
+      component.category?.toLowerCase() === category.toLowerCase()
+    );
+  }
+
+  /**
+   * Gets all unique categories from cached API component types
+   */
+  getApiComponentCategories(): string[] {
+    const categories = this._apiComponentTypes.value
+      .map(component => component.category)
+      .filter(category => !!category) as string[];
+    
+    return [...new Set(categories)];
+  }
+
+  /**
+   * Convenience method for components to get API component types
+   * Returns cached data immediately if available, otherwise loads from API
+   */
+  getApiComponentTypesForBusinessWorkspace(): Observable<ComponentType[]> {
+    if (this._apiComponentTypesLoaded && this._apiComponentTypes.value.length > 0) {
+      return this._apiComponentTypes.asObservable();
+    }
+    return this.loadAndCacheApiComponentTypes();
+  }
+
+  /**
+   * Check if API component types are loaded and available
+   */
+  areApiComponentTypesLoaded(): boolean {
+    return this._apiComponentTypesLoaded && this._apiComponentTypes.value.length > 0;
   }
 
   // ===================== WORKSPACE HELPER METHODS =====================

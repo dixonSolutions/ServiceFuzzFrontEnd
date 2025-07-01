@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WebsiteBuilderService, ComponentDefinition, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/website-builder';
 import { WorkspaceProject } from './workspace-selection.component';
-import { CreateWorkspaceDto, UpdateWorkspaceDto } from '../models/workspace.models';
+import { CreateWorkspaceDto, UpdateWorkspaceDto, ComponentType } from '../models/workspace.models';
 
 @Component({
   selector: 'app-website-creator',
@@ -28,6 +28,11 @@ export class WebsiteCreatorComponent implements OnInit {
   selectedCategory: string = 'All';
   searchTerm: string = '';
   selectedDevice: string = 'desktop';
+  
+  // API Component Types
+  apiComponentTypes: ComponentType[] = [];
+  isLoadingApiComponents = false;
+  apiComponentsLoadError: string | null = null;
   deviceOptions = [
     { label: 'Desktop', value: 'desktop' },
     { label: 'Tablet', value: 'tablet' }, 
@@ -95,6 +100,150 @@ export class WebsiteCreatorComponent implements OnInit {
   ngOnInit() {
     // Show workspace selection first - don't initialize builder until project is selected
     console.log('Website Creator initialized - showing workspace selection');
+    
+    // Load API component types for business workspace
+    this.loadApiComponentTypes();
+    
+    // Subscribe to API component types changes
+    this.subscribeToApiComponentTypes();
+  }
+
+  // API Component Types Methods
+  private loadApiComponentTypes(): void {
+    this.isLoadingApiComponents = true;
+    this.apiComponentsLoadError = null;
+    
+    console.log('Loading API component types...');
+    
+    this.websiteBuilder.getApiComponentTypesForBusinessWorkspace().subscribe({
+      next: (componentTypes: ComponentType[]) => {
+        this.apiComponentTypes = componentTypes;
+        this.isLoadingApiComponents = false;
+        console.log('API Component types loaded successfully:', componentTypes.length, 'components');
+        console.log('Available categories:', this.websiteBuilder.getApiComponentCategories());
+      },
+      error: (error) => {
+        this.isLoadingApiComponents = false;
+        this.apiComponentsLoadError = 'Failed to load component types from API';
+        console.error('Error loading API component types:', error);
+      }
+    });
+  }
+
+  private subscribeToApiComponentTypes(): void {
+    // Subscribe to real-time updates of API component types
+    this.websiteBuilder.apiComponentTypes$.subscribe({
+      next: (componentTypes: ComponentType[]) => {
+        this.apiComponentTypes = componentTypes;
+        console.log('API Component types updated:', componentTypes.length, 'components');
+      },
+      error: (error) => {
+        console.error('Error in API component types subscription:', error);
+      }
+    });
+  }
+
+  // Get API component types by category
+  getApiComponentsByCategory(category: string): ComponentType[] {
+    if (category === 'All') {
+      return this.apiComponentTypes;
+    }
+    return this.websiteBuilder.getCachedApiComponentTypesByCategory(category);
+  }
+
+  // Check if API components are available
+  hasApiComponents(): boolean {
+    return this.apiComponentTypes.length > 0;
+  }
+
+  // Get combined categories from both local and API components
+  getAllAvailableCategories(): string[] {
+    const localCategories = this.websiteBuilder.getComponentCategories().map(cat => cat.name);
+    const apiCategories = this.websiteBuilder.getApiComponentCategories();
+    const allCategories = [...new Set([...localCategories, ...apiCategories])];
+    return ['All', ...allCategories];
+  }
+
+  // Refresh API component types
+  refreshApiComponentTypes(): void {
+    console.log('Refreshing API component types...');
+    this.isLoadingApiComponents = true;
+    this.apiComponentsLoadError = null;
+    
+    this.websiteBuilder.refreshApiComponentTypes().subscribe({
+      next: (componentTypes: ComponentType[]) => {
+        this.apiComponentTypes = componentTypes;
+        this.isLoadingApiComponents = false;
+        console.log('API Component types refreshed successfully');
+      },
+      error: (error) => {
+        this.isLoadingApiComponents = false;
+        this.apiComponentsLoadError = 'Failed to refresh component types';
+        console.error('Error refreshing API component types:', error);
+      }
+    });
+  }
+
+  // Convert API ComponentType to local ComponentDefinition format for consistency
+  private convertApiComponentToDefinition(apiComponent: ComponentType): ComponentDefinition {
+    const parametersSchema = apiComponent.parametersSchema ? JSON.parse(apiComponent.parametersSchema) : [];
+    const defaultParameters = apiComponent.defaultParameters ? JSON.parse(apiComponent.defaultParameters) : {};
+
+    return {
+      id: apiComponent.id,
+      name: apiComponent.name,
+      category: apiComponent.category,
+      icon: apiComponent.icon || 'pi pi-box',
+      description: apiComponent.description || '',
+      parameters: parametersSchema,
+      template: `<div class="api-component-${apiComponent.id}"></div>`, // Basic template
+      defaultWidth: apiComponent.defaultWidth,
+      defaultHeight: apiComponent.defaultHeight
+    };
+  }
+
+  // Get combined components (local + API) for display
+  getCombinedComponentsByCategory(category: string): ComponentDefinition[] {
+    const localComponents = this.getFilteredComponentsByCategory(category);
+    
+    if (!this.hasApiComponents()) {
+      return localComponents;
+    }
+
+    const apiComponents = this.getApiComponentsByCategory(category)
+      .map(apiComp => this.convertApiComponentToDefinition(apiComp));
+    
+    // Combine and deduplicate by ID
+    const combinedComponents = [...localComponents, ...apiComponents];
+    const uniqueComponents = combinedComponents.filter((component, index, self) => 
+      index === self.findIndex(c => c.id === component.id)
+    );
+
+    return uniqueComponents;
+  }
+
+  // Debug method to get API component status
+  getApiComponentStatus(): string {
+    if (this.isLoadingApiComponents) {
+      return 'Loading API components...';
+    }
+    if (this.apiComponentsLoadError) {
+      return `Error: ${this.apiComponentsLoadError}`;
+    }
+    if (this.apiComponentTypes.length === 0) {
+      return 'No API components loaded';
+    }
+    return `${this.apiComponentTypes.length} API components loaded`;
+  }
+
+  // Check if a component is from API
+  isApiComponent(componentId: string): boolean {
+    return this.apiComponentTypes.some(comp => comp.id === componentId);
+  }
+
+  // Get API component type by ID
+  getApiComponentType(componentId: string): ComponentType | undefined {
+    return this.apiComponentTypes.find(comp => comp.id === componentId);
   }
 
   // Search and filter methods

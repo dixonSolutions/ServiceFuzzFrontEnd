@@ -92,7 +92,7 @@
           </div>
           <div class="project-info">
             <div class="project-header">
-              <h4>{{ project.name }}</h4>
+            <h4>{{ project.name }}</h4>
               <div class="project-status-badge" [ngClass]="{'new-project': project.isNew, 'saved-project': !project.isNew}">
                 <i [class]="project.isNew ? 'pi pi-exclamation-circle' : 'pi pi-check-circle'"></i>
                 <span>{{ project.isNew ? 'Not Saved' : 'Saved' }}</span>

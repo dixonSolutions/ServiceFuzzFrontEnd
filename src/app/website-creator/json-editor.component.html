@@ -54,10 +54,10 @@
               {{ showFullJson ? '🔍 Sanitized' : '📄 Full' }}
             </button>
           </div>
-          <div class="json-status">
-            <span class="status-indicator" [class.valid]="isValidJson" [class.invalid]="!isValidJson">
-              {{ isValidJson ? '✓ Valid JSON' : '✗ Invalid JSON' }}
-            </span>
+        <div class="json-status">
+          <span class="status-indicator" [class.valid]="isValidJson" [class.invalid]="!isValidJson">
+            {{ isValidJson ? '✓ Valid JSON' : '✗ Invalid JSON' }}
+          </span>
           </div>
         </div>
       </div>
@@ -86,7 +86,7 @@
           </div>
         </details>
       </div>
-
+      
       <!-- JSON Structure Help -->
       <div class="json-help">
         <details>

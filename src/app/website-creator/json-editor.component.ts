@@ -3,6 +3,7 @@ import { WebsiteBuilderService } from '../services/website-builder';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ComponentType } from '../models/workspace.models';
 
 @Component({
   selector: 'app-json-editor',
@@ -31,12 +32,25 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
   sanitizedDataSize: number = 0;
   binaryFieldsRemoved: string[] = [];
   
+  // API Component Types
+  apiComponentTypes: ComponentType[] = [];
+  isLoadingApiComponents = false;
+  apiComponentsLoadError: string | null = null;
+  
   constructor(
     private websiteBuilder: WebsiteBuilderService,
     private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
+    console.log('JSON Editor component initialized');
+    
+    // Load API component types for business workspace
+    this.loadApiComponentTypes();
+    
+    // Subscribe to API component types changes
+    this.subscribeToApiComponentTypes();
+    
     // Subscribe to pages
     this.websiteBuilder.pages$.pipe(takeUntil(this.destroy$)).subscribe(pages => {
       this.pages = pages;
@@ -60,6 +74,76 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // API Component Types Methods
+  private loadApiComponentTypes(): void {
+    this.isLoadingApiComponents = true;
+    this.apiComponentsLoadError = null;
+    
+    console.log('JSON Editor: Loading API component types...');
+    
+    this.websiteBuilder.getApiComponentTypesForBusinessWorkspace().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (componentTypes: ComponentType[]) => {
+        this.apiComponentTypes = componentTypes;
+        this.isLoadingApiComponents = false;
+        console.log('JSON Editor: API Component types loaded successfully:', componentTypes.length, 'components');
+      },
+      error: (error) => {
+        this.isLoadingApiComponents = false;
+        this.apiComponentsLoadError = 'Failed to load component types from API';
+        console.error('JSON Editor: Error loading API component types:', error);
+      }
+    });
+  }
+
+  private subscribeToApiComponentTypes(): void {
+    // Subscribe to real-time updates of API component types
+    this.websiteBuilder.apiComponentTypes$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (componentTypes: ComponentType[]) => {
+        this.apiComponentTypes = componentTypes;
+        console.log('JSON Editor: API Component types updated:', componentTypes.length, 'components');
+      },
+      error: (error) => {
+        console.error('JSON Editor: Error in API component types subscription:', error);
+      }
+    });
+  }
+
+  // Get API component type info for JSON generation
+  private getApiComponentInfo(componentType: string): { name: string; icon: string; category: string } | null {
+    const apiComponent = this.apiComponentTypes.find(comp => comp.id === componentType);
+    if (apiComponent) {
+      return {
+        name: apiComponent.name,
+        icon: apiComponent.icon || 'pi pi-box',
+        category: apiComponent.category
+      };
+    }
+    return null;
+  }
+
+  // Debug method to get API component status for the JSON editor
+  getApiComponentStatus(): string {
+    if (this.isLoadingApiComponents) {
+      return 'Loading API components...';
+    }
+    if (this.apiComponentsLoadError) {
+      return `Error: ${this.apiComponentsLoadError}`;
+    }
+    if (this.apiComponentTypes.length === 0) {
+      return 'No API components loaded';
+    }
+    return `${this.apiComponentTypes.length} API components available`;
+  }
+
+  // Check if a component is from API
+  isApiComponent(componentId: string): boolean {
+    return this.apiComponentTypes.some(comp => comp.id === componentId);
   }
 
   // Store both versions of JSON
@@ -335,6 +419,19 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
   }
 
   private getComponentName(type: string): string {
+    // First check local component definitions
+    const componentDef = this.websiteBuilder.getComponentDefinition(type);
+    if (componentDef) {
+      return componentDef.name;
+    }
+    
+    // Then check API component types
+    const apiComponentInfo = this.getApiComponentInfo(type);
+    if (apiComponentInfo) {
+      return apiComponentInfo.name;
+    }
+    
+    // Fallback mapping for known types
     const names: { [key: string]: string } = {
       'top-navigation': 'Top Navigation',
       'hero-section': 'Hero Section',
@@ -347,6 +444,19 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
   }
 
   private getComponentIcon(type: string): string {
+    // First check local component definitions
+    const componentDef = this.websiteBuilder.getComponentDefinition(type);
+    if (componentDef) {
+      return componentDef.icon;
+    }
+    
+    // Then check API component types
+    const apiComponentInfo = this.getApiComponentInfo(type);
+    if (apiComponentInfo) {
+      return apiComponentInfo.icon;
+    }
+    
+    // Fallback mapping for known types
     const icons: { [key: string]: string } = {
       'top-navigation': '🧭',
       'hero-section': '⭐',
@@ -359,6 +469,19 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
   }
 
   private getComponentCategory(type: string): string {
+    // First check local component definitions
+    const componentDef = this.websiteBuilder.getComponentDefinition(type);
+    if (componentDef) {
+      return componentDef.category.toLowerCase();
+    }
+    
+    // Then check API component types
+    const apiComponentInfo = this.getApiComponentInfo(type);
+    if (apiComponentInfo) {
+      return apiComponentInfo.category.toLowerCase();
+    }
+    
+    // Fallback mapping for known types
     const categories: { [key: string]: string } = {
       'top-navigation': 'ui',
       'hero-section': 'ui',
