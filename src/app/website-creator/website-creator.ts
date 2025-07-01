@@ -1094,11 +1094,11 @@ export class WebsiteCreatorComponent implements OnInit {
 
     try {
       const workspaceDto: CreateWorkspaceDto = {
-        UserId: this.currentProject.userId,
-        BusinessId: this.currentProject.businessId,
-        Name: this.currentProject.name,
-        Description: this.currentProject.description,
-        WebsiteJson: this.currentProject.websiteJson
+        userId: this.currentProject.userId,
+        businessId: this.currentProject.businessId,
+        name: this.currentProject.name,
+        description: this.currentProject.description,
+        websiteJson: this.currentProject.websiteJson
       };
 
       this.websiteBuilder.createWorkspace(workspaceDto).subscribe({
@@ -1128,9 +1128,9 @@ export class WebsiteCreatorComponent implements OnInit {
     try {
       const workspaceId = this.currentProject.id;
       const updates: UpdateWorkspaceDto = {
-        Name: this.currentProject.name,
-        Description: this.currentProject.description,
-        WebsiteJson: this.currentProject.websiteJson
+        name: this.currentProject.name,
+        description: this.currentProject.description,
+        websiteJson: this.currentProject.websiteJson
       };
 
       this.websiteBuilder.updateWorkspace(workspaceId, updates).subscribe({

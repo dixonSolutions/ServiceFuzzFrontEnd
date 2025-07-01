@@ -1,19 +1,19 @@
 export interface CreateWorkspaceDto {
-  UserId: string;
-  BusinessId: string;
-  Name: string;
-  Description?: string;
-  ThumbnailUrl?: string;
-  WebsiteJson?: string;
+  userId: string;
+  businessId: string;
+  name: string;
+  description?: string;
+  thumbnailUrl?: string;
+  websiteJson?: string;
 }
 
 export interface UpdateWorkspaceDto {
-  Name?: string;
-  Description?: string;
-  ThumbnailUrl?: string;
-  WebsiteJson?: string;
-  DeploymentStatus?: string;
-  DeploymentUrl?: string;
+  name?: string;
+  description?: string;
+  thumbnailUrl?: string;
+  websiteJson?: string;
+  deploymentStatus?: string;
+  deploymentUrl?: string;
 }
 
 export interface WorkspaceResponseDto {
@@ -32,25 +32,25 @@ export interface WorkspaceResponseDto {
 }
 
 export interface CreateWorkspaceComponentDto {
-  WorkspaceId: string;
-  PageId: string;
-  ComponentId: string;
-  ComponentType: string;
-  XPosition: number;
-  YPosition: number;
-  Width: number;
-  Height: number;
-  ZIndex: number;
-  Parameters?: string;
+  workspaceId: string;
+  pageId: string;
+  componentId: string;
+  componentType: string;
+  xPosition: number;
+  yPosition: number;
+  width: number;
+  height: number;
+  zIndex: number;
+  parameters?: string;
 }
 
 export interface UpdateWorkspaceComponentDto {
-  XPosition?: number;
-  YPosition?: number;
-  Width?: number;
-  Height?: number;
-  ZIndex?: number;
-  Parameters?: string;
+  xPosition?: number;
+  yPosition?: number;
+  width?: number;
+  height?: number;
+  zIndex?: number;
+  parameters?: string;
 }
 
 export interface WorkspaceComponentResponseDto {
@@ -84,8 +84,8 @@ export interface ComponentType {
 }
 
 export interface DeployWorkspaceDto {
-  WorkspaceId: string;
-  DeployedBy: string;
+  workspaceId: string;
+  deployedBy: string;
 }
 
 export interface WorkspaceDeployment {

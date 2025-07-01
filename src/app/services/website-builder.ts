@@ -977,7 +977,7 @@ export class WebsiteBuilderService {
    * Deploys a workspace
    */
   deployWorkspace(workspaceId: string, deployedBy: string): Observable<{ message: string }> {
-    const deployDto: DeployWorkspaceDto = { WorkspaceId: workspaceId, DeployedBy: deployedBy };
+    const deployDto: DeployWorkspaceDto = { workspaceId: workspaceId, deployedBy: deployedBy };
     const requestBody = { deployDto };
     return this.http.post<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/deploy`, 
@@ -1112,7 +1112,7 @@ export class WebsiteBuilderService {
    */
   saveWorkspaceAsJson(workspaceId: string, websiteJson: any): Observable<{ message: string }> {
     const updates: UpdateWorkspaceDto = {
-      WebsiteJson: JSON.stringify(websiteJson)
+      websiteJson: JSON.stringify(websiteJson)
     };
     return this.updateWorkspace(workspaceId, updates);
   }
@@ -1123,9 +1123,9 @@ export class WebsiteBuilderService {
   updateComponentPositions(components: Array<{id: string, x: number, y: number, zIndex?: number}>): Observable<any[]> {
     const updatePromises = components.map(comp => {
       const updates: UpdateWorkspaceComponentDto = {
-        XPosition: comp.x,
-        YPosition: comp.y,
-        ZIndex: comp.zIndex
+        xPosition: comp.x,
+        yPosition: comp.y,
+        zIndex: comp.zIndex
       };
       return this.updateWorkspaceComponent(comp.id, updates);
     });
@@ -1145,16 +1145,16 @@ export class WebsiteBuilderService {
    */
   convertToWorkspaceComponent(workspaceId: string, pageId: string, component: ComponentInstance): CreateWorkspaceComponentDto {
     return {
-      WorkspaceId: workspaceId,
-      PageId: pageId,
-      ComponentId: component.id,
-      ComponentType: component.type,
-      XPosition: component.x,
-      YPosition: component.y,
-      Width: component.width,
-      Height: component.height,
-      ZIndex: component.zIndex,
-      Parameters: JSON.stringify(component.parameters)
+      workspaceId,
+      pageId,
+      componentId: component.id,
+      componentType: component.type,
+      xPosition: component.x,
+      yPosition: component.y,
+      width: component.width,
+      height: component.height,
+      zIndex: component.zIndex,
+      parameters: JSON.stringify(component.parameters)
     };
   }
 

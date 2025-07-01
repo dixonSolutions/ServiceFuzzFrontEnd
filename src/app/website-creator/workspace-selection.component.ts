@@ -329,12 +329,12 @@ export class WorkspaceSelectionComponent implements OnInit {
   createWorkspaceDto(project: WorkspaceProject): CreateWorkspaceDto {
     console.log('Creating workspace DTO for project:', project);
     const dto = {
-      UserId: project.userId,
-      BusinessId: project.businessId,
-      Name: project.name,
-      Description: project.description,
-      ThumbnailUrl: project.thumbnail,
-      WebsiteJson: project.websiteJson
+      userId: project.userId,
+      businessId: project.businessId,
+      name: project.name,
+      description: project.description,
+      thumbnailUrl: project.thumbnail,
+      websiteJson: project.websiteJson
     };
     console.log('Created workspace DTO:', dto);
     return dto;
@@ -374,10 +374,10 @@ export class WorkspaceSelectionComponent implements OnInit {
 
     const workspaceId = project.id;
     const updates = {
-      Name: project.name,
-      Description: project.description,
-      ThumbnailUrl: project.thumbnail,
-      WebsiteJson: project.websiteJson
+      name: project.name,
+      description: project.description,
+      thumbnailUrl: project.thumbnail,
+      websiteJson: project.websiteJson
     };
 
     return new Promise((resolve, reject) => {
