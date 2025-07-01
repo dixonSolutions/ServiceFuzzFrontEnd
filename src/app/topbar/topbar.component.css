@@ -101,8 +101,6 @@
 
 .mobile-nav-list a[mat-list-item].active-nav-item {
   background-color: #e3f2fd;
-  color: #1976d2;
-  border-right: 4px solid #1976d2;
 }
 
 .mobile-nav-list a[mat-list-item] mat-icon[matListIcon] {
@@ -114,7 +112,6 @@
 }
 
 .mobile-nav-list a[mat-list-item].active-nav-item mat-icon[matListIcon] {
-  color: #1976d2;
 }
 
 .mobile-nav-list a[mat-list-item] span[matLine] {

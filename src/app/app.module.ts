@@ -64,6 +64,9 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { TextareaModule } from 'primeng/textarea';
 import { MenuModule } from 'primeng/menu';
+import { AccordionModule } from 'primeng/accordion';
+import { TableModule } from 'primeng/table';
+import { StepsModule } from 'primeng/steps';
 
 import { AppComponent } from './app.component';
 import { HomeComponent } from './home/home.component';
@@ -77,7 +80,7 @@ import { BusinessSettingsComponent } from './business-settings/business-settings
 import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { BusinessEditComponent } from './business-edit/business-edit.component';
-import { VideoDialogComponent } from './home/home.component';
+
 import { Settings } from './settings/settings';
 import { WebsiteCreatorComponent } from './website-creator/website-creator';
 import { JsonEditorComponent } from './website-creator/json-editor.component';
@@ -108,7 +111,6 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     CommonModule,
     ButtonModule,
     ToolbarModule,
-    VideoDialogComponent,
     BrowserAnimationsModule,
     ColorPickerModule,
     FormsModule,
@@ -167,7 +169,10 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     SplitButtonModule,
     ConfirmDialogModule,
     TextareaModule,
-    MenuModule
+    MenuModule,
+    AccordionModule,
+    TableModule,
+    StepsModule
   ],
   providers: [
     providePrimeNG({

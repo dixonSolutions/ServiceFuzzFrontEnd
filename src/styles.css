@@ -520,3 +520,488 @@ router-outlet + * * {
   background-color: #f5f5f5 !important;
   color: #333333 !important;
 }
+
+/* ===== GLOBAL PRIMENG ACCORDION STYLES ===== */
+/* AGGRESSIVE styling to override ALL accordion themes */
+
+/* Base accordion container */
+.p-accordion,
+p-accordion,
+[class*="p-accordion"],
+.p-component.p-accordion {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Accordion tabs */
+.p-accordion .p-accordion-tab,
+.p-accordion .p-accordiontab,
+p-accordion .p-accordion-tab,
+p-accordion .p-accordiontab,
+[class*="p-accordion"] [class*="p-accordion-tab"],
+.p-accordion-tab {
+  background: white !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  margin-bottom: 10px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  overflow: hidden !important;
+}
+
+/* Accordion headers - VERY aggressive targeting */
+.p-accordion .p-accordion-header,
+.p-accordion .p-accordion-header-link,
+.p-accordion .p-accordion-header a,
+.p-accordion .p-accordion-header button,
+.p-accordion .p-accordion-tab .p-accordion-header,
+.p-accordion .p-accordion-tab .p-accordion-header-link,
+.p-accordion .p-accordion-tab .p-accordion-header a,
+.p-accordion .p-accordion-tab .p-accordion-header button,
+p-accordion .p-accordion-header,
+p-accordion .p-accordion-header-link,
+p-accordion .p-accordion-header a,
+p-accordion .p-accordion-header button,
+[class*="p-accordion"] [class*="p-accordion-header"],
+[class*="p-accordion"] [class*="p-accordion-header-link"],
+[class*="p-accordion"] [class*="p-accordion-header"] a,
+[class*="p-accordion"] [class*="p-accordion-header"] button {
+  background: white !important;
+  background-color: white !important;
+  color: #2c3e50 !important;
+  font-weight: 600 !important;
+  padding: 15px 20px !important;
+  border: none !important;
+  border-color: transparent !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  transition: all 0.3s ease !important;
+  border-radius: 8px 8px 0 0 !important;
+  box-shadow: none !important;
+}
+
+/* Hover states for non-active accordions */
+.p-accordion .p-accordion-header:not(.p-highlight):hover,
+.p-accordion .p-accordion-header:not(.p-highlight):hover *,
+.p-accordion .p-accordion-tab:not(.p-accordion-tab-active) .p-accordion-header:hover,
+.p-accordion .p-accordion-tab:not(.p-accordion-tab-active) .p-accordion-header:hover *,
+p-accordion .p-accordion-header:not(.p-highlight):hover,
+p-accordion .p-accordion-header:not(.p-highlight):hover *,
+[class*="p-accordion"] [class*="p-accordion-header"]:not(.p-highlight):hover,
+[class*="p-accordion"] [class*="p-accordion-header"]:not(.p-highlight):hover * {
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
+  color: #2c3e50 !important;
+}
+
+/* Active/highlighted accordion headers */
+.p-accordion .p-accordion-header.p-highlight,
+.p-accordion .p-accordion-header.p-highlight *,
+.p-accordion .p-accordion-tab.p-accordion-tab-active .p-accordion-header,
+.p-accordion .p-accordion-tab.p-accordion-tab-active .p-accordion-header *,
+p-accordion .p-accordion-header.p-highlight,
+p-accordion .p-accordion-header.p-highlight *,
+[class*="p-accordion"] [class*="p-accordion-header"].p-highlight,
+[class*="p-accordion"] [class*="p-accordion-header"].p-highlight * {
+  background: #3498db !important;
+  background-color: #3498db !important;
+  color: white !important;
+}
+
+/* Active accordion hover */
+.p-accordion .p-accordion-header.p-highlight:hover,
+.p-accordion .p-accordion-header.p-highlight:hover *,
+.p-accordion .p-accordion-tab.p-accordion-tab-active .p-accordion-header:hover,
+.p-accordion .p-accordion-tab.p-accordion-tab-active .p-accordion-header:hover *,
+p-accordion .p-accordion-header.p-highlight:hover,
+p-accordion .p-accordion-header.p-highlight:hover *,
+[class*="p-accordion"] [class*="p-accordion-header"].p-highlight:hover,
+[class*="p-accordion"] [class*="p-accordion-header"].p-highlight:hover * {
+  background: #2980b9 !important;
+  background-color: #2980b9 !important;
+  color: white !important;
+}
+
+/* Accordion content panels */
+.p-accordion .p-accordion-content,
+.p-accordion .p-accordion-content-wrapper,
+.p-accordion .p-accordion-tab .p-accordion-content,
+.p-accordion .p-accordion-tab .p-accordion-content-wrapper,
+p-accordion .p-accordion-content,
+p-accordion .p-accordion-content-wrapper,
+[class*="p-accordion"] [class*="p-accordion-content"],
+[class*="p-accordion"] [class*="p-accordion-content-wrapper"] {
+  background: white !important;
+  background-color: white !important;
+  border: none !important;
+  border-color: transparent !important;
+  border-radius: 0 0 8px 8px !important;
+  padding: 20px !important;
+  color: #2c3e50 !important;
+  box-shadow: none !important;
+}
+
+/* All text elements inside accordion content */
+.p-accordion .p-accordion-content *,
+.p-accordion .p-accordion-content-wrapper *,
+p-accordion .p-accordion-content *,
+p-accordion .p-accordion-content-wrapper *,
+[class*="p-accordion"] [class*="p-accordion-content"] *,
+[class*="p-accordion"] [class*="p-accordion-content-wrapper"] * {
+  color: #2c3e50 !important;
+}
+
+.p-accordion .p-accordion-content p,
+.p-accordion .p-accordion-content div,
+.p-accordion .p-accordion-content span,
+.p-accordion .p-accordion-content h1,
+.p-accordion .p-accordion-content h2,
+.p-accordion .p-accordion-content h3,
+.p-accordion .p-accordion-content h4,
+.p-accordion .p-accordion-content h5,
+.p-accordion .p-accordion-content h6 {
+  color: #2c3e50 !important;
+  margin-top: 0 !important;
+  line-height: 1.6 !important;
+}
+
+/* Accordion toggle icons */
+.p-accordion .p-accordion-header .p-accordion-toggle-icon,
+.p-accordion .p-accordion-header i,
+.p-accordion .p-accordion-header-link i,
+p-accordion .p-accordion-header .p-accordion-toggle-icon,
+p-accordion .p-accordion-header i,
+p-accordion .p-accordion-header-link i,
+[class*="p-accordion"] [class*="p-accordion-header"] i,
+[class*="p-accordion"] [class*="p-accordion-toggle-icon"] {
+  color: #2c3e50 !important;
+  transition: color 0.3s ease !important;
+}
+
+.p-accordion .p-accordion-header.p-highlight .p-accordion-toggle-icon,
+.p-accordion .p-accordion-header.p-highlight i,
+.p-accordion .p-accordion-tab.p-accordion-tab-active .p-accordion-header i,
+p-accordion .p-accordion-header.p-highlight .p-accordion-toggle-icon,
+p-accordion .p-accordion-header.p-highlight i,
+[class*="p-accordion"] [class*="p-accordion-header"].p-highlight i {
+  color: white !important;
+}
+
+/* SUPER AGGRESSIVE - Override any potential theme classes */
+.aura-light .p-accordion *,
+.aura-dark .p-accordion *,
+.p-component .p-accordion *,
+body .p-accordion *,
+html .p-accordion * {
+  background-color: inherit !important;
+}
+
+/* Force white backgrounds on all accordion parts */
+.aura-light .p-accordion .p-accordion-header,
+.aura-dark .p-accordion .p-accordion-header,
+.p-component .p-accordion .p-accordion-header,
+body .p-accordion .p-accordion-header,
+html .p-accordion .p-accordion-header {
+  background: white !important;
+  background-color: white !important;
+}
+
+.aura-light .p-accordion .p-accordion-content,
+.aura-dark .p-accordion .p-accordion-content,
+.p-component .p-accordion .p-accordion-content,
+body .p-accordion .p-accordion-content,
+html .p-accordion .p-accordion-content {
+  background: white !important;
+  background-color: white !important;
+}
+
+/* Special styling for dark background sections */
+.features-showcase-section .p-accordion *,
+.dark-section .p-accordion *,
+.dark-bg .p-accordion * {
+  background: white !important;
+  background-color: white !important;
+}
+
+.features-showcase-section .p-accordion .p-accordion-header:not(.p-highlight),
+.dark-section .p-accordion .p-accordion-header:not(.p-highlight),
+.dark-bg .p-accordion .p-accordion-header:not(.p-highlight) {
+  background: rgba(255, 255, 255, 1) !important;
+  background-color: rgba(255, 255, 255, 1) !important;
+  color: #2c3e50 !important;
+}
+
+.features-showcase-section .p-accordion .p-accordion-content,
+.dark-section .p-accordion .p-accordion-content,
+.dark-bg .p-accordion .p-accordion-content {
+  background: rgba(255, 255, 255, 1) !important;
+  background-color: rgba(255, 255, 255, 1) !important;
+  color: #2c3e50 !important;
+}
+
+/* ===== GLOBAL PRIMENG TABLE STYLES ===== */
+/* AGGRESSIVE styling to override ALL table themes */
+
+/* Base table container */
+.p-datatable,
+.p-table,
+p-table,
+[class*="p-datatable"],
+[class*="p-table"],
+.p-component.p-datatable,
+.p-component.p-table {
+  background: white !important;
+  background-color: white !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Table wrapper */
+.p-datatable .p-datatable-wrapper,
+.p-table .p-table-wrapper,
+p-table .p-datatable-wrapper,
+p-table .p-table-wrapper,
+[class*="p-datatable"] [class*="p-datatable-wrapper"],
+[class*="p-table"] [class*="p-table-wrapper"] {
+  background: white !important;
+  background-color: white !important;
+}
+
+/* Table element itself */
+.p-datatable table,
+.p-table table,
+p-table table,
+[class*="p-datatable"] table,
+[class*="p-table"] table {
+  background: white !important;
+  background-color: white !important;
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+/* Table headers */
+.p-datatable .p-datatable-thead,
+.p-datatable .p-datatable-thead tr,
+.p-datatable .p-datatable-thead th,
+.p-table .p-table-thead,
+.p-table .p-table-thead tr,
+.p-table .p-table-thead th,
+.p-datatable thead,
+.p-datatable thead tr,
+.p-datatable thead th,
+.p-table thead,
+.p-table thead tr,
+.p-table thead th,
+p-table .p-datatable-thead,
+p-table .p-datatable-thead tr,
+p-table .p-datatable-thead th,
+p-table thead,
+p-table thead tr,
+p-table thead th,
+[class*="p-datatable"] thead,
+[class*="p-datatable"] thead tr,
+[class*="p-datatable"] thead th,
+[class*="p-table"] thead,
+[class*="p-table"] thead tr,
+[class*="p-table"] thead th {
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
+  color: #2c3e50 !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid #e0e0e0 !important;
+  padding: 15px 20px !important;
+  text-align: left !important;
+}
+
+/* Table body */
+.p-datatable .p-datatable-tbody,
+.p-datatable .p-datatable-tbody tr,
+.p-datatable .p-datatable-tbody td,
+.p-table .p-table-tbody,
+.p-table .p-table-tbody tr,
+.p-table .p-table-tbody td,
+.p-datatable tbody,
+.p-datatable tbody tr,
+.p-datatable tbody td,
+.p-table tbody,
+.p-table tbody tr,
+.p-table tbody td,
+p-table .p-datatable-tbody,
+p-table .p-datatable-tbody tr,
+p-table .p-datatable-tbody td,
+p-table tbody,
+p-table tbody tr,
+p-table tbody td,
+[class*="p-datatable"] tbody,
+[class*="p-datatable"] tbody tr,
+[class*="p-datatable"] tbody td,
+[class*="p-table"] tbody,
+[class*="p-table"] tbody tr,
+[class*="p-table"] tbody td {
+  background: white !important;
+  background-color: white !important;
+  color: #2c3e50 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+  padding: 15px 20px !important;
+}
+
+/* Alternating row colors */
+.p-datatable .p-datatable-tbody tr:nth-child(even),
+.p-table .p-table-tbody tr:nth-child(even),
+.p-datatable tbody tr:nth-child(even),
+.p-table tbody tr:nth-child(even),
+p-table .p-datatable-tbody tr:nth-child(even),
+p-table tbody tr:nth-child(even),
+[class*="p-datatable"] tbody tr:nth-child(even),
+[class*="p-table"] tbody tr:nth-child(even) {
+  background: #f9f9f9 !important;
+  background-color: #f9f9f9 !important;
+}
+
+/* Row hover effects */
+.p-datatable .p-datatable-tbody tr:hover,
+.p-table .p-table-tbody tr:hover,
+.p-datatable tbody tr:hover,
+.p-table tbody tr:hover,
+p-table .p-datatable-tbody tr:hover,
+p-table tbody tr:hover,
+[class*="p-datatable"] tbody tr:hover,
+[class*="p-table"] tbody tr:hover {
+  background: #f0f8ff !important;
+  background-color: #f0f8ff !important;
+}
+
+/* All text elements inside tables */
+.p-datatable *,
+.p-table *,
+p-table *,
+[class*="p-datatable"] *,
+[class*="p-table"] * {
+  color: #2c3e50 !important;
+}
+
+/* Special column styling for ServiceFuzz column */
+.servicefuzz-column,
+.servicefuzz-column *,
+.p-datatable .servicefuzz-column,
+.p-datatable .servicefuzz-column *,
+.p-table .servicefuzz-column,
+.p-table .servicefuzz-column * {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+  background-color: #3498db !important;
+  color: white !important;
+}
+
+/* Icons and special elements in tables */
+.p-datatable i,
+.p-table i,
+p-table i,
+[class*="p-datatable"] i,
+[class*="p-table"] i {
+  color: inherit !important;
+}
+
+/* Checkboxes and form elements in tables */
+.p-datatable .p-checkbox,
+.p-table .p-checkbox,
+p-table .p-checkbox,
+[class*="p-datatable"] .p-checkbox,
+[class*="p-table"] .p-checkbox {
+  background: white !important;
+  border: 1px solid #ccc !important;
+}
+
+/* SUPER AGGRESSIVE - Override any theme classes */
+.aura-light .p-datatable *,
+.aura-dark .p-datatable *,
+.aura-light .p-table *,
+.aura-dark .p-table *,
+.p-component .p-datatable *,
+.p-component .p-table *,
+body .p-datatable *,
+body .p-table *,
+html .p-datatable *,
+html .p-table * {
+  color: #2c3e50 !important;
+}
+
+.aura-light .p-datatable,
+.aura-dark .p-datatable,
+.aura-light .p-table,
+.aura-dark .p-table,
+.p-component .p-datatable,
+.p-component .p-table,
+body .p-datatable,
+body .p-table,
+html .p-datatable,
+html .p-table {
+  background: white !important;
+  background-color: white !important;
+}
+
+.aura-light .p-datatable thead,
+.aura-dark .p-datatable thead,
+.aura-light .p-table thead,
+.aura-dark .p-table thead,
+.p-component .p-datatable thead,
+.p-component .p-table thead,
+body .p-datatable thead,
+body .p-table thead,
+html .p-datatable thead,
+html .p-table thead {
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
+}
+
+.aura-light .p-datatable tbody,
+.aura-dark .p-datatable tbody,
+.aura-light .p-table tbody,
+.aura-dark .p-table tbody,
+.p-component .p-datatable tbody,
+.p-component .p-table tbody,
+body .p-datatable tbody,
+body .p-table tbody,
+html .p-datatable tbody,
+html .p-table tbody {
+  background: white !important;
+  background-color: white !important;
+}
+
+/* Responsive table */
+.p-datatable.p-datatable-responsive,
+.p-table.p-table-responsive,
+p-table.p-datatable-responsive,
+[class*="p-datatable"].p-datatable-responsive,
+[class*="p-table"].p-table-responsive {
+  background: white !important;
+  background-color: white !important;
+}
+
+/* Table borders and spacing */
+.p-datatable .p-datatable-wrapper table,
+.p-table .p-table-wrapper table,
+p-table .p-datatable-wrapper table,
+[class*="p-datatable"] .p-datatable-wrapper table,
+[class*="p-table"] .p-table-wrapper table {
+  border-spacing: 0 !important;
+  border-collapse: collapse !important;
+}
+
+/* Ensure no dark backgrounds anywhere */
+.comparison-table,
+.comparison-table *,
+.comparison-section .p-datatable,
+.comparison-section .p-datatable *,
+.comparison-section .p-table,
+.comparison-section .p-table *,
+.comparison-section p-table,
+.comparison-section p-table * {
+  background: white !important;
+  background-color: white !important;
+  color: #2c3e50 !important;
+}

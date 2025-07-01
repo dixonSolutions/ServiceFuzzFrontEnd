@@ -1,23 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { DataSvrService } from '../services/data-svr.service';
-import { MatDialog } from '@angular/material/dialog';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
-import { CarouselModule } from 'primeng/carousel';
-import { AnimateOnScrollModule } from 'primeng/animateonscroll';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { TabViewModule } from 'primeng/tabview';
-import { TimelineModule } from 'primeng/timeline';
-import { ChipModule } from 'primeng/chip';
-import { DividerModule } from 'primeng/divider';
-import { ProgressBarModule } from 'primeng/progressbar';
-import { AvatarModule } from 'primeng/avatar';
-import { AvatarGroupModule } from 'primeng/avatargroup';
-import { BadgeModule } from 'primeng/badge';
-import { TooltipModule } from 'primeng/tooltip';
-import { DialogModule } from 'primeng/dialog';
+import { Subject, interval } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-home',
@@ -25,318 +9,265 @@ import { DialogModule } from 'primeng/dialog';
   styleUrls: ['./home.component.css'],
   standalone: false
 })
-export class HomeComponent implements OnInit {
-  // Hero Carousel Data
+export class HomeComponent implements OnInit, OnDestroy {
+  @ViewChild('registrationModal') registrationModal!: ElementRef;
+  @ViewChild('exitIntentModal') exitIntentModal!: ElementRef;
+
+  private destroy$ = new Subject<void>();
+  
+  // Modal states
+  showRegistrationModal = false;
+  showVideoModal = false;
+  showExitIntentModal = false;
+  showRoiCalculator = false;
+  exitIntentTriggered = false;
+
+  // Registration form
+  registrationStep = 1;
+  totalSteps = 2;
+  registrationForm = {
+    businessName: '',
+    yourName: '',
+    email: '',
+    phone: '',
+    serviceType: '',
+    businessGoal: ''
+  };
+  registrationLoading = false;
+
+  // Animated statistics
+  animatedStats = {
+    businesses: 0,
+    monthlyProcessing: 0,
+    uptime: 0,
+    savings: 0
+  };
+
+  // ROI Calculator
+  roiInputs = {
+    monthlyRevenue: 10000,
+    averageServicePrice: 100,
+    weeklyBookings: 20
+  };
+  roiResults = {
+    potentialSavings: 0,
+    revenueIncrease: 0,
+    timeEssaved: 0,
+    customerIncrease: 0
+  };
+
+  // Hero carousel
   heroSlides = [
     {
-      title: 'Revolutionize Your Service Business',
-      subtitle: 'Transform Operations • Connect Customers • Scale Growth',
-      description: 'Streamline your service business with our comprehensive platform designed for modern entrepreneurs.',
-      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      cta: 'Get Started Free',
-      badge: 'NEW'
+      title: 'Stop Losing Customers to Manual Booking Systems',
+      subtitle: 'ServiceFuzz automates your entire service business - from booking to payment - so you can focus on what you do best: serving customers.',
+      background: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=1926&q=80',
+      stats: 'Join 10,000+ Service Businesses'
     },
     {
-      title: 'Smart Booking & Management',
-      subtitle: 'Automated Scheduling • Real-time Updates • Customer Portal',
-      description: 'Handle appointments, memberships, and recurring bookings with intelligent automation.',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2015&q=80',
-      cta: 'Explore Features',
-      badge: 'POPULAR'
+      title: 'Transform Your Business Operations Today',
+      subtitle: 'Increase efficiency by 300%, reduce admin time by 15 hours per week, and grow revenue by $50K annually with our automated platform.',
+      background: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=1926&q=80',
+      stats: 'Process $2M+ Monthly'
     },
     {
-      title: 'Data-Driven Insights',
-      subtitle: 'Analytics Dashboard • Performance Metrics • Growth Reports',
-      description: 'Make informed decisions with real-time analytics and comprehensive business intelligence.',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-      cta: 'View Demo',
-      badge: 'FEATURED'
+      title: 'The Future of Service Business Management',
+      subtitle: 'AI-powered scheduling, automated payments, and intelligent customer management - all in one powerful platform.',
+      background: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1926&q=80',
+      stats: '99.9% Uptime Guaranteed'
     }
   ];
 
-  // Features Data
+  // Service professional images for rotating background
+  serviceProfessionals = [
+    'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  ];
+  currentProfessionalIndex = 0;
+
+  // Success stories
+  successStories = [
+    {
+      businessName: 'Elite Fitness Studio',
+      ownerName: 'Sarah Thompson',
+      serviceType: 'Fitness & Training',
+      result: 'Tripled monthly bookings',
+      savings: 'Saved 15 hours/week on admin',
+      revenue: 'Increased revenue by 180%',
+      quote: 'ServiceFuzz transformed our business completely. We went from struggling to book 50 sessions a month to over 150!',
+      image: 'https://images.pexels.com/photos/866023/pexels-photo-866023.jpeg?auto=compress&cs=tinysrgb&w=600',
+      logo: 'https://images.pexels.com/photos/1552252/pexels-photo-1552252.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
+    },
+    {
+      businessName: 'Zen Spa Wellness',
+      ownerName: 'Maria Rodriguez',
+      serviceType: 'Beauty & Spa',
+      result: 'Doubled customer retention',
+      savings: 'Reduced no-shows by 80%',
+      revenue: 'Increased booking value by 40%',
+      quote: 'The automated reminders and easy rebooking features have completely eliminated our scheduling headaches.',
+      image: 'https://images.pexels.com/photos/3764568/pexels-photo-3764568.jpeg?auto=compress&cs=tinysrgb&w=600',
+      logo: 'https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
+    },
+    {
+      businessName: 'TechFix Solutions',
+      ownerName: 'David Chen',
+      serviceType: 'IT Consulting',
+      result: 'Streamlined operations',
+      savings: 'Cut admin time by 70%',
+      revenue: 'Expanded to 3 new locations',
+      quote: 'ServiceFuzz gave us the tools to scale beyond what we thought possible. Our clients love the transparency.',
+      image: 'https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=600',
+      logo: 'https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
+    },
+    {
+      businessName: 'Professional Plumbing Co.',
+      ownerName: 'Mike Johnson',
+      serviceType: 'Home Services',
+      result: 'Increased efficiency by 60%',
+      savings: 'Eliminated double bookings',
+      revenue: 'Added $85K annual revenue',
+      quote: 'Our customers love the real-time updates and easy scheduling. We\'ve never been more organized!',
+      image: 'https://images.pexels.com/photos/8954173/pexels-photo-8954173.jpeg?auto=compress&cs=tinysrgb&w=600',
+      logo: 'https://images.pexels.com/photos/5691659/pexels-photo-5691659.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
+    },
+    {
+      businessName: 'Healing Hands Massage',
+      ownerName: 'Jennifer Wu',
+      serviceType: 'Wellness Therapy',
+      result: 'Boosted bookings by 150%',
+      savings: 'Reduced admin calls by 90%',
+      revenue: 'Opened second location',
+      quote: 'The self-service booking portal freed up so much time. I can focus on what I do best - helping my clients.',
+      image: 'https://images.pexels.com/photos/3997993/pexels-photo-3997993.jpeg?auto=compress&cs=tinysrgb&w=600',
+      logo: 'https://images.pexels.com/photos/4498606/pexels-photo-4498606.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
+    }
+  ];
+
+  // Features with interactive demos
   features = [
     {
-      icon: 'pi pi-chart-line',
-      title: 'Business Intelligence',
-      description: 'Comprehensive analytics and reporting to drive growth',
-      color: 'primary',
-      stats: '85%'
+      id: 'smart-scheduling',
+      name: 'Smart Scheduling',
+      benefit: 'Never double-book or miss appointments again',
+      icon: 'pi pi-calendar-plus',
+      description: 'AI-powered scheduling that prevents conflicts and optimizes your calendar automatically.',
+      demo: {
+        before: 'Manual calendar juggling leads to double bookings and frustrated customers',
+        after: 'Intelligent scheduling prevents conflicts and suggests optimal time slots'
+      },
+      metrics: '95% reduction in scheduling conflicts'
     },
     {
-      icon: 'pi pi-calendar',
-      title: 'Smart Scheduling',
-      description: 'Automated booking system with intelligent optimization',
-      color: 'success',
-      stats: '24/7'
-    },
-    {
-      icon: 'pi pi-users',
-      title: 'Team Management',
-      description: 'Streamlined staff coordination and performance tracking',
-      color: 'info',
-      stats: '100+'
-    },
-    {
+      id: 'payment-processing',
+      name: 'Instant Payment Processing',
+      benefit: 'Get paid instantly, every time',
       icon: 'pi pi-credit-card',
-      title: 'Payment Processing',
-      description: 'Secure, flexible payment solutions for all business types',
-      color: 'warning',
-      stats: '99.9%'
+      description: 'Secure payment processing with automatic invoicing and receipt generation.',
+      demo: {
+        before: 'Chasing payments and manual invoicing wastes hours daily',
+        after: 'Automatic payment collection and instant payment confirmations'
+      },
+      metrics: '99.9% payment success rate'
     },
     {
-      icon: 'pi pi-mobile',
-      title: 'Mobile App',
-      description: 'Native mobile applications for iOS and Android',
-      color: 'danger',
-      stats: '50K+'
-    },
-    {
-      icon: 'pi pi-shield',
-      title: 'Enterprise Security',
-      description: 'Bank-level security with compliance and data protection',
-      color: 'secondary',
-      stats: 'SOC2'
-    }
-  ];
-
-  // Testimonials
-  testimonials = [
-    {
-      name: 'Sarah Johnson',
-      role: 'CEO, CleanPro Services',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
-      content: 'ServiceFuzz transformed our business operations. We\'ve increased efficiency by 70% and customer satisfaction is at an all-time high.',
-      rating: 5
-    },
-    {
-      name: 'Michael Chen',
-      role: 'Founder, TechFlow Solutions',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
-      content: 'The analytics dashboard gives us insights we never had before. It\'s like having a business consultant available 24/7.',
-      rating: 5
-    },
-    {
-      name: 'Emily Rodriguez',
-      role: 'Operations Manager, GreenCare',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
-      content: 'Our team loves the mobile app. Scheduling is now seamless and our customers appreciate the real-time updates.',
-      rating: 5
-    }
-  ];
-
-  // Stats Data
-  stats = [
-    { value: '10,000+', label: 'Active Businesses', icon: 'pi pi-building' },
-    { value: '500K+', label: 'Bookings Processed', icon: 'pi pi-calendar-check' },
-    { value: '99.9%', label: 'Uptime Guarantee', icon: 'pi pi-shield-check' },
-    { value: '24/7', label: 'Customer Support', icon: 'pi pi-headset' }
-  ];
-
-  // Timeline Data
-  timeline = [
-    {
-      status: 'Business Setup',
-      date: '2024-01-01',
-      icon: 'pi pi-rocket',
-      color: '#6366F1',
-      image: 'bamboo-watch.jpg'
-    },
-    {
-      status: 'Customer Acquisition',
-      date: '2024-02-01',
+      id: 'staff-management',
+      name: 'Team Coordination',
+      benefit: 'Know exactly who\'s working where, when',
       icon: 'pi pi-users',
-      color: '#22C55E',
-      image: 'black-watch.jpg'
+      description: 'Complete staff management with scheduling, performance tracking, and communication tools.',
+      demo: {
+        before: 'Lost productivity from poor communication and unclear schedules',
+        after: 'Real-time staff coordination and automated schedule distribution'
+      },
+      metrics: '40% improvement in team efficiency'
     },
     {
-      status: 'Operations Management',
-      date: '2024-03-01',
-      icon: 'pi pi-cog',
-      color: '#3B82F6',
-      image: 'blue-band.jpg'
-    },
-    {
-      status: 'Growth & Scaling',
-      date: '2024-04-01',
-      icon: 'pi pi-chart-line',
-      color: '#F59E42',
-      image: 'blue-t-shirt.jpg'
+      id: 'customer-portal',
+      name: 'Customer Portal',
+      benefit: 'Empower customers to manage their own bookings',
+      icon: 'pi pi-user-plus',
+      description: 'Self-service portal for booking, rescheduling, and managing appointments.',
+      demo: {
+        before: 'Constant phone calls for simple booking changes',
+        after: 'Customers handle 80% of booking tasks independently'
+      },
+      metrics: '75% reduction in admin calls'
     }
   ];
 
-  // Carousel responsive options
-  // responsiveOptions = [
-  //   {
-  //     breakpoint: '1199px',
-  //     numVisible: 1,
-  //     numScroll: 1
-  //   },
-  //   {
-  //     breakpoint: '991px',
-  //     numVisible: 1,
-  //     numScroll: 1
-  //   },
-  //   {
-  //     breakpoint: '767px',
-  //     numVisible: 1,
-  //     numScroll: 1
-  //   }
-  // ];
-
-  // Video dialog
-  videoVisible = false;
-
-  // Timeline interactivity
-  selectedTimelineIndex = 0;
-
-  // Galleria Images for Service-Based Businesses (comprehensive)
-  galleriaImages = [
-    // Healthcare & Wellness
-    { image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80', title: 'Hospitals and Clinics', description: 'Medical care, diagnostics, and treatment facilities.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Dental Services', description: 'Dentistry, oral hygiene, and dental surgery.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Physical Therapy', description: 'Rehabilitation and physical therapy clinics.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Chiropractic Care', description: 'Spinal adjustments and musculoskeletal health.' },
-    { image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80', title: 'Mental Health Services', description: 'Counseling, therapy, and psychiatric care.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Massage Therapy', description: 'Relaxation and therapeutic massage.' },
-    { image: 'https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?auto=format&fit=crop&w=1200&q=80', title: 'Acupuncture', description: 'Traditional and alternative medicine.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Wellness Coaching', description: 'Personal wellness and lifestyle coaching.' },
-
-    // Home & Property Services
-    { image: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80', title: 'Plumbing', description: 'Plumbing installation, repair, and maintenance.' },
-    { image: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1200&q=80', title: 'Electrical Work', description: 'Electrical installation, repair, and safety.' },
-    { image: 'https://images.unsplash.com/photo-1503389152951-9c3d0c6b7a5a?auto=format&fit=crop&w=1200&q=80', title: 'HVAC Services', description: 'Heating, ventilation, and air conditioning.' },
-    { image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=crop&w=1200&q=80', title: 'Landscaping and Lawn Care', description: 'Garden design, maintenance, and lawn care.' },
-    { image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80', title: 'Pest Control', description: 'Extermination and pest management.' },
-    { image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80', title: 'House Cleaning', description: 'Residential and commercial cleaning.' },
-    { image: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80', title: 'Roofing', description: 'Roof installation and repair.' },
-    { image: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1200&q=80', title: 'Renovation and Remodeling', description: 'Home improvement and remodeling.' },
-    { image: 'https://images.unsplash.com/photo-1503389152951-9c3d0c6b7a5a?auto=format&fit=crop&w=1200&q=80', title: 'Pool Maintenance', description: 'Swimming pool cleaning and maintenance.' },
-    { image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=crop&w=1200&q=80', title: 'Handyman Services', description: 'General home repairs and odd jobs.' },
-
-    // Automotive Services
-    { image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80', title: 'Auto Repair and Maintenance', description: 'Car repair, maintenance, and diagnostics.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Car Detailing', description: 'Professional car cleaning and detailing.' },
-    { image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80', title: 'Towing Services', description: 'Vehicle towing and roadside assistance.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Tire and Brake Services', description: 'Tire changes, brake repair, and alignment.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Windshield Repair', description: 'Auto glass repair and replacement.' },
-    { image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80', title: 'Oil Change and Lube Shops', description: 'Quick oil change and lubrication.' },
-
-    // Personal Care & Beauty
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Hair Salons and Barbershops', description: 'Haircuts, styling, and grooming.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Nail Salons', description: 'Manicures, pedicures, and nail art.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Spas and Skincare Clinics', description: 'Facials, skincare, and relaxation.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Tattoo and Piercing Studios', description: 'Body art and piercing services.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Personal Training', description: 'Fitness and personal coaching.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Makeup Artists', description: 'Professional makeup services.' },
-
-    // Pet Services
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Pet Grooming', description: 'Pet grooming and hygiene.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Dog Walking', description: 'Dog walking and exercise.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Pet Sitting', description: 'Pet sitting and care.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Veterinary Clinics', description: 'Animal healthcare and vet clinics.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Pet Boarding and Daycare', description: 'Pet boarding and daycare services.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Animal Training', description: 'Obedience and animal training.' },
-
-    // Education & Training
-    { image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80', title: 'Tutoring Centers', description: 'Academic tutoring and support.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Test Prep Services', description: 'Test preparation and coaching.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Language Schools', description: 'Language learning and instruction.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Music and Art Lessons', description: 'Music, art, and creative lessons.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Driving Schools', description: 'Driver education and training.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Vocational Training', description: 'Career and technical training.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Corporate Training', description: 'Business and professional training.' },
-
-    // Travel & Transportation
-    { image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=crop&w=1200&q=80', title: 'Taxi and Rideshare Services', description: 'Taxi, rideshare, and transportation.' },
-    { image: 'https://images.unsplash.com/photo-1503389152951-9c3d0c6b7a5a?auto=format&fit=crop&w=1200&q=80', title: 'Airport Shuttles', description: 'Airport shuttle and transfer services.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Tour Operators', description: 'Tour and travel operators.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Travel Agencies', description: 'Travel planning and booking.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Moving and Relocation Services', description: 'Moving, packing, and relocation.' },
-    { image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80', title: 'Courier and Delivery Services', description: 'Courier, parcel, and delivery.' },
-
-    // Hospitality & Leisure
-    { image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80', title: 'Hotels and Resorts', description: 'Hotels, resorts, and accommodations.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Bed and Breakfasts', description: 'B&Bs and guesthouses.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Restaurants and Cafes', description: 'Dining, cafes, and food services.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Bars and Pubs', description: 'Bars, pubs, and nightlife.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Event Planning', description: 'Event planning and coordination.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Catering Services', description: 'Catering for events and gatherings.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Theme Parks', description: 'Theme parks and attractions.' },
-    { image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=crop&w=1200&q=80', title: 'Tourist Attractions', description: 'Tourist sites and attractions.' },
-
-    // Entertainment & Recreation
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Movie Theaters', description: 'Cinemas and movie theaters.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Concert Venues', description: 'Concerts and live music venues.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Sports Coaching', description: 'Sports coaching and training.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Dance and Martial Arts Studios', description: 'Dance, martial arts, and fitness.' },
-    { image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80', title: 'Amusement Centers', description: 'Amusement and recreation centers.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Escape Rooms', description: 'Escape rooms and adventure games.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Fitness Centers and Gyms', description: 'Gyms, fitness, and wellness centers.' },
-
-    // Professional & Business Services
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Legal Services', description: 'Legal advice and representation.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Accounting and Bookkeeping', description: 'Accounting and financial services.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Consulting', description: 'Business and management consulting.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Marketing and Advertising', description: 'Marketing, branding, and advertising.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'IT Support and Cybersecurity', description: 'IT support and security services.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'HR and Recruiting', description: 'Human resources and recruiting.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Real Estate Agencies', description: 'Real estate sales and rentals.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Architecture and Engineering Services', description: 'Architecture and engineering.' },
-
-    // Cleaning & Maintenance
-    { image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80', title: 'Commercial Janitorial Services', description: 'Commercial cleaning and janitorial.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Carpet and Upholstery Cleaning', description: 'Carpet and upholstery cleaning.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Window Washing', description: 'Window cleaning and washing.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Industrial Cleaning', description: 'Industrial and specialized cleaning.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Waste Management', description: 'Waste collection and management.' },
-    { image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=crop&w=1200&q=80', title: 'Gutter and Roof Cleaning', description: 'Gutter and roof cleaning.' },
-
-    // Public & Government Services
-    { image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80', title: 'Police and Fire Departments', description: 'Public safety and emergency services.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Public Transportation', description: 'Buses, trains, and transit.' },
-    { image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80', title: 'Postal Services', description: 'Mail and postal services.' },
-    { image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&w=1200&q=80', title: 'Public Education', description: 'Public schools and education.' },
-    { image: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80', title: 'Social Services', description: 'Social and community services.' },
-    { image: 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=crop&w=1200&q=80', title: 'Utilities', description: 'Water, electricity, and gas.' },
-
-    // Construction & Infrastructure
-    { image: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80', title: 'General Contracting', description: 'General construction and contracting.' },
-    { image: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1200&q=80', title: 'Road and Bridge Construction', description: 'Road, bridge, and infrastructure.' },
-    { image: 'https://images.unsplash.com/photo-1503389152951-9c3d0c6b7a5a?auto=format&fit=crop&w=1200&q=80', title: 'Excavation and Demolition', description: 'Excavation and demolition services.' },
-    { image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1200&q=80', title: 'Surveying', description: 'Land surveying and mapping.' },
-    { image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=1200&q=80', title: 'Scaffolding and Rigging Services', description: 'Scaffolding and rigging.' },
+  // Competitor comparison
+  competitorComparison = [
+    { feature: 'Setup Time', servicefuzz: '15 minutes', traditional: '2-4 weeks', others: '1-2 weeks' },
+    { feature: 'Monthly Cost', servicefuzz: '$49/month', traditional: '$300+/month', others: '$99+/month' },
+    { feature: 'Customer Support', servicefuzz: '24/7 Live Chat', traditional: 'Email Only', others: 'Business Hours' },
+    { feature: 'Mobile App', servicefuzz: 'Native iOS/Android', traditional: 'None', others: 'Web Only' },
+    { feature: 'Payment Processing', servicefuzz: 'Built-in (2.9%)', traditional: 'Separate Service', others: 'Extra Cost' },
+    { feature: 'Customization', servicefuzz: 'Full Control', traditional: 'Limited', others: 'Template Only' },
+    { feature: 'Integration', servicefuzz: '100+ Integrations', traditional: 'Manual Process', others: '5-10 Only' },
+    { feature: 'Learning Curve', servicefuzz: '1 Day', traditional: '2+ Months', others: '2-3 Weeks' }
   ];
 
-  // Hero carousel responsive options (for top carousel)
-  heroResponsiveOptions = [
-    {
-      breakpoint: '1199px',
-      numVisible: 1,
-      numScroll: 1
-    },
-    {
-      breakpoint: '991px',
-      numVisible: 1,
-      numScroll: 1
-    },
-    {
-      breakpoint: '768px',
-      numVisible: 1,
-      numScroll: 1
-    }
+  // Trust signals
+  trustSignals = [
+    { icon: 'pi pi-shield', text: '30-Day Money-Back Guarantee' },
+    { icon: 'pi pi-times-circle', text: 'No Setup Fees' },
+    { icon: 'pi pi-calendar-times', text: 'Cancel Anytime' },
+    { icon: 'pi pi-sync', text: 'Free Migration from Your Current System' }
   ];
 
-  // Galleria responsive options (for testimonials and galleria)
+  // Security badges
+  securityBadges = [
+    { name: 'SSL Encryption', icon: 'pi pi-lock', description: 'Bank-level security' },
+    { name: 'PCI Compliant', icon: 'pi pi-credit-card', description: 'Payment security certified' },
+    { name: 'GDPR Compliant', icon: 'pi pi-shield', description: 'Data privacy protected' },
+    { name: 'SOC 2 Type II', icon: 'pi pi-verified', description: 'Security audited' }
+  ];
+
+  // Service types for business profile
+  serviceTypes = [
+    { label: 'Fitness & Wellness', value: 'fitness', icon: 'pi pi-heart' },
+    { label: 'Beauty & Spa', value: 'beauty', icon: 'pi pi-star' },
+    { label: 'Healthcare', value: 'healthcare', icon: 'pi pi-plus' },
+    { label: 'Professional Services', value: 'professional', icon: 'pi pi-briefcase' },
+    { label: 'Home Services', value: 'home', icon: 'pi pi-home' },
+    { label: 'Education & Training', value: 'education', icon: 'pi pi-book' }
+  ];
+
+  // Business goals
+  businessGoals = [
+    { label: 'Double my bookings', value: 'double-bookings' },
+    { label: 'Reduce admin time by 50%', value: 'reduce-admin' },
+    { label: 'Expand to 3 locations', value: 'expand-locations' },
+    { label: 'Hire 2 additional staff members', value: 'hire-staff' },
+    { label: 'Increase revenue by $100K', value: 'increase-revenue' },
+    { label: 'Improve customer satisfaction', value: 'customer-satisfaction' }
+  ];
+
+  // Limited time offer
+  limitedOffer = {
+    spotsRemaining: 23,
+    title: 'New Business Special: Get 3 Months Free',
+    subtitle: 'Limited to First 100 Signups This Month'
+  };
+
+  // Recent signups (simulated live feed)
+  recentSignups = [
+    'Sarah from Denver just started her free trial',
+    'Mike from Austin upgraded to Pro plan',
+    'Lisa from Seattle integrated with Stripe',
+    'Tom from Miami published his website',
+    'Emma from Portland added team members'
+  ];
+  currentSignupIndex = 0;
+
+  // Responsive options for carousels
   responsiveOptions = [
     {
       breakpoint: '1199px',
-      numVisible: 1,
-      numScroll: 1
-    },
-    {
-      breakpoint: '1024px',
-      numVisible: 5,
+      numVisible: 2,
       numScroll: 1
     },
     {
@@ -345,85 +276,225 @@ export class HomeComponent implements OnInit {
       numScroll: 1
     },
     {
-      breakpoint: '768px',
-      numVisible: 3,
-      numScroll: 1
-    },
-    {
-      breakpoint: '560px',
+      breakpoint: '767px',
       numVisible: 1,
       numScroll: 1
     }
   ];
 
-  constructor(
-    public data: DataSvrService,
-    private dialog: MatDialog,
-    private router: Router
-  ) {}
+  constructor(private router: Router) {}
 
-  ngOnInit(): void {}
-
-  navigateToSignup(): void {
-    this.router.navigate(['/sign']);
+  ngOnInit(): void {
+    this.startAnimations();
+    this.calculateRoi();
+    this.setupExitIntentDetection();
   }
 
-  openVideoDialog(): void {
-    this.videoVisible = true;
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  closeVideoDialog(): void {
-    this.videoVisible = false;
+  // Animation methods
+  startAnimations(): void {
+    // Animate statistics
+    this.animateNumber('businesses', 10000, 2000);
+    this.animateNumber('monthlyProcessing', 2000000, 2500);
+    this.animateNumber('uptime', 99.9, 1500);
+    this.animateNumber('savings', 50000, 3000);
+
+    // Rotate service professionals every 4 seconds
+    interval(4000).pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.currentProfessionalIndex = (this.currentProfessionalIndex + 1) % this.serviceProfessionals.length;
+    });
+
+    // Rotate recent signups every 5 seconds
+    interval(5000).pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.currentSignupIndex = (this.currentSignupIndex + 1) % this.recentSignups.length;
+    });
+
+    // Update limited offer counter
+    interval(30000).pipe(takeUntil(this.destroy$)).subscribe(() => {
+      if (this.limitedOffer.spotsRemaining > 1) {
+        this.limitedOffer.spotsRemaining--;
+      }
+    });
   }
 
-  getSeverity(status: string): string {
-    switch (status) {
-      case 'NEW': return 'success';
-      case 'POPULAR': return 'warning';
-      case 'FEATURED': return 'info';
-      default: return 'primary';
+  animateNumber(key: keyof typeof this.animatedStats, target: number, duration: number): void {
+    const steps = 60;
+    const increment = target / steps;
+    const stepDuration = duration / steps;
+
+    let current = 0;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        this.animatedStats[key] = target;
+        clearInterval(timer);
+      } else {
+        this.animatedStats[key] = Math.floor(current);
+      }
+    }, stepDuration);
+  }
+
+  // Registration modal methods
+  openRegistrationModal(): void {
+    this.showRegistrationModal = true;
+    this.registrationStep = 1;
+  }
+
+  closeRegistrationModal(): void {
+    this.showRegistrationModal = false;
+    this.resetRegistrationForm();
+  }
+
+  nextRegistrationStep(): void {
+    if (this.registrationStep < this.totalSteps) {
+      this.registrationStep++;
     }
   }
 
-  onSelectTimelineStep(index: number): void {
-    this.selectedTimelineIndex = index;
+  previousRegistrationStep(): void {
+    if (this.registrationStep > 1) {
+      this.registrationStep--;
+    }
+  }
+
+  submitRegistration(): void {
+    this.registrationLoading = true;
+    // Simulate API call
+    setTimeout(() => {
+      this.registrationLoading = false;
+      this.closeRegistrationModal();
+      this.showPersonalizedPreview();
+    }, 2000);
+  }
+
+  resetRegistrationForm(): void {
+    this.registrationForm = {
+      businessName: '',
+      yourName: '',
+      email: '',
+      phone: '',
+      serviceType: '',
+      businessGoal: ''
+    };
+    this.registrationStep = 1;
+  }
+
+  // ROI Calculator
+  calculateRoi(): void {
+    const monthly = this.roiInputs.monthlyRevenue;
+    const avgPrice = this.roiInputs.averageServicePrice;
+    const weekly = this.roiInputs.weeklyBookings;
+
+    // Calculate potential improvements
+    this.roiResults.potentialSavings = Math.floor(monthly * 0.15); // 15% cost savings
+    this.roiResults.revenueIncrease = Math.floor(monthly * 0.3); // 30% revenue increase
+    this.roiResults.timeEssaved = Math.floor(weekly * 2); // 2 hours saved per booking
+    this.roiResults.customerIncrease = Math.floor(weekly * 1.5); // 50% more bookings
+  }
+
+  openRoiCalculator(): void {
+    this.showRoiCalculator = true;
+  }
+
+  closeRoiCalculator(): void {
+    this.showRoiCalculator = false;
+  }
+
+  // Demo methods
+  openVideoDemo(): void {
+    this.showVideoModal = true;
+  }
+
+  closeVideoDemo(): void {
+    this.showVideoModal = false;
+  }
+
+  // Exit intent detection
+  @HostListener('document:mouseleave', ['$event'])
+  onMouseLeave(event: MouseEvent): void {
+    if (event.clientY <= 0 && !this.exitIntentTriggered) {
+      this.triggerExitIntent();
+    }
+  }
+
+  setupExitIntentDetection(): void {
+    // Additional exit intent triggers
+    setTimeout(() => {
+      if (!this.exitIntentTriggered) {
+        this.triggerExitIntent();
+      }
+    }, 30000); // Show after 30 seconds if no interaction
+  }
+
+  triggerExitIntent(): void {
+    this.exitIntentTriggered = true;
+    this.showExitIntentModal = true;
+  }
+
+  closeExitIntentModal(): void {
+    this.showExitIntentModal = false;
+  }
+
+  // Navigation methods
+  navigateToSignup(): void {
+    this.router.navigate(['/business']);
+  }
+
+  navigateToDemo(): void {
+    this.openVideoDemo();
+  }
+
+  // Social login methods
+  loginWithGoogle(): void {
+    // Implement Google OAuth
+    console.log('Google login initiated');
+  }
+
+  loginWithApple(): void {
+    // Implement Apple OAuth
+    console.log('Apple login initiated');
+  }
+
+  // Personalized preview
+  showPersonalizedPreview(): void {
+    // Navigate to personalized onboarding
+    this.router.navigate(['/business'], {
+      queryParams: { 
+        preview: 'true',
+        business: this.registrationForm.businessName,
+        type: this.registrationForm.serviceType
+      }
+    });
+  }
+
+  // Utility methods
+  formatNumber(num: number): string {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  }
+
+  scrollToSection(sectionId: string): void {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  downloadGuide(): void {
+    // Implement guide download
+    console.log('Downloading business guide...');
+  }
+
+  scheduleConsultation(): void {
+    // Implement consultation booking
+    console.log('Scheduling consultation...');
   }
 }
-
-// Video Dialog Component
-@Component({
-  selector: 'app-video-dialog',
-  standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="video-dialog-container">
-      <iframe 
-        width="100%" 
-        height="100%" 
-        src="https://www.youtube.com/embed/f2LXCW-bdGY" 
-        title="ServiceFuzz Platform Overview"
-        frameborder="0" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-        allowfullscreen>
-      </iframe>
-    </div>
-  `,
-  styles: [`
-    .video-dialog-container {
-      position: relative;
-      width: 100%;
-      padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-      height: 0;
-      overflow: hidden;
-    }
-    .video-dialog-container iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 8px;
-    }
-  `]
-})
-export class VideoDialogComponent {}

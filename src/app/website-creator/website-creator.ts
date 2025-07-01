@@ -382,8 +382,8 @@ export class WebsiteCreatorComponent implements OnInit {
     }
     
     this.selectionTimeout = setTimeout(() => {
-      this.selectedComponentInstance = instance;
-      console.log('Selected component instance:', instance);
+    this.selectedComponentInstance = instance;
+    console.log('Selected component instance:', instance);
       this.selectionTimeout = null;
     }, 50); // 50ms debounce
   }
