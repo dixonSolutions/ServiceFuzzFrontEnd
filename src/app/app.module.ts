@@ -86,6 +86,8 @@ import { Settings } from './settings/settings';
 import { WebsiteCreatorComponent } from './website-creator/website-creator';
 import { JsonEditorComponent } from './website-creator/json-editor.component';
 import { WorkspaceSelectionComponent } from './website-creator/workspace-selection.component';
+import { LeftSidebar } from './website-creator/left-sidebar/left-sidebar';
+import { Canvas } from './website-creator/canvas/canvas';
 
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
@@ -105,7 +107,9 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     Settings,
     WebsiteCreatorComponent,
     JsonEditorComponent,
-    WorkspaceSelectionComponent
+    WorkspaceSelectionComponent,
+    LeftSidebar,
+    Canvas
   ],
   imports: [
     BrowserModule,

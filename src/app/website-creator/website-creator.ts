@@ -495,12 +495,14 @@ export class WebsiteCreatorComponent implements OnInit {
   // Page management methods
   onPageTabClick(pageId: string): void {
     this.websiteBuilder.setCurrentPage(pageId);
+    this.invalidateComponentsCache(); // Force refresh for new page
   }
 
   onNavigationClick(event: MouseEvent, pageId: string): void {
     // Prevent the component from being selected when clicking navigation
     event.stopPropagation();
     this.websiteBuilder.setCurrentPage(pageId);
+    this.invalidateComponentsCache(); // Force refresh for new page
   }
 
   onAddPage(): void {
@@ -549,6 +551,9 @@ export class WebsiteCreatorComponent implements OnInit {
         const newInstance = this.websiteBuilder.addComponent(component.id, x, y);
         
         console.log('Component added successfully:', newInstance);
+        
+        // Invalidate cache to force refresh
+        this.invalidateComponentsCache();
         
         // Select the new instance
         this.selectedComponentInstance = newInstance;
@@ -788,9 +793,24 @@ export class WebsiteCreatorComponent implements OnInit {
     });
   }
 
+  private _currentPageComponents: ComponentInstance[] = [];
+  private _lastPageId: string = '';
+
   get currentPageComponents() {
     const currentPage = this.websiteBuilder.getCurrentPage();
-    return currentPage ? currentPage.components : [];
+    const currentPageId = currentPage?.id || '';
+    
+    // Only update the cached array if the page has changed or components have changed
+    if (currentPageId !== this._lastPageId || !currentPage) {
+      this._lastPageId = currentPageId;
+      this._currentPageComponents = currentPage ? [...currentPage.components] : [];
+    }
+    
+    return this._currentPageComponents;
+  }
+
+  private invalidateComponentsCache() {
+    this._lastPageId = ''; // Force refresh on next getter call
   }
 
   getCurrentPageComponents() {
@@ -902,6 +922,9 @@ export class WebsiteCreatorComponent implements OnInit {
           page.id === currentPage.id ? currentPage : page
         );
         this.pages = updatedPages;
+        
+        // Invalidate cache to force refresh
+        this.invalidateComponentsCache();
         
         // Clear selection if deleted component was selected
         if (this.selectedComponentInstance?.id === componentId) {

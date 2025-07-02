@@ -1,0 +1,205 @@
+<!-- Left Sidebar -->
+<div class="left-sidebar">
+  <!-- Templates Section -->
+  <div class="templates-section">
+    <div class="template-item active">
+      <div class="template-preview">
+        <div class="template-icon">🥋</div>
+      </div>
+      <div class="template-info">
+        <h4>Martial Arts</h4>
+        <p>Dynamic template for martial arts schools</p>
+      </div>
+    </div>
+    
+    <div class="template-item">
+      <div class="template-preview">
+        <div class="template-icon">💪</div>
+      </div>
+      <div class="template-info">
+        <h4>Modern Fitness</h4>
+        <p>Contemporary design for modern fitness centers</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Components & Assets Section -->
+  <div class="components-section">
+    <!-- Tab Headers -->
+    <div class="section-tabs">
+      <button 
+        class="tab-btn"
+        [class.active]="activeTab === 'components'"
+        (click)="onTabChange('components')">
+      <i class="pi pi-plus"></i>
+      <span>Components</span>
+      </button>
+      <button 
+        class="tab-btn"
+        [class.active]="activeTab === 'assets'"
+        (click)="onTabChange('assets')">
+        <i class="pi pi-image"></i>
+        <span>Assets</span>
+      </button>
+    </div>
+    
+    <!-- Components Tab Content -->
+    <div class="tab-content" *ngIf="activeTab === 'components'">
+    <!-- Search Bar -->
+    <div class="search-container">
+      <input 
+        type="text" 
+        placeholder="Search components..." 
+        class="search-input"
+        [value]="searchTerm"
+        (input)="onSearchChange($event)">
+      <i class="pi pi-search search-icon"></i>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="category-filters">
+      <button 
+        *ngFor="let category of componentCategories"
+        class="category-btn"
+        [class.active]="selectedCategory === category.name"
+        (click)="onCategoryChange(category.name)">
+        {{ category.name }} ({{ category.count }})
+      </button>
+    </div>
+
+    <!-- API Components Loading State -->
+    <div class="api-loading-state" *ngIf="isLoadingApiComponents">
+      <div class="loading-spinner">
+        <i class="pi pi-spin pi-spinner"></i>
+      </div>
+      <p>Loading component library...</p>
+    </div>
+
+    <!-- API Components Error State -->
+    <div class="api-error-state" *ngIf="apiComponentsLoadError">
+      <div class="error-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <p>{{ apiComponentsLoadError }}</p>
+      <button class="retry-btn" (click)="onRefreshApiComponents()">
+        <i class="pi pi-refresh"></i> Retry
+      </button>
+    </div>
+
+    <!-- Component List -->
+    <div class="component-list" *ngIf="!isLoadingApiComponents">
+      <div 
+        *ngFor="let component of getFilteredComponentsByCategory(selectedCategory)"
+        class="component-item"
+        draggable="true"
+        (dragstart)="onDragStart($event, component)"
+        [title]="component.description">
+        <div class="component-icon">
+          <i [class]="getComponentIcon(component.icon)"></i>
+        </div>
+        <div class="component-info">
+          <span class="component-name">{{ component.name }}</span>
+          <span class="component-category badge" [class]="component.category.toLowerCase()">{{ component.category }}</span>
+          <span class="component-source" *ngIf="isApiComponent(component.id)">API</span>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-components-state" *ngIf="getFilteredComponentsByCategory(selectedCategory).length === 0">
+        <div class="empty-icon">
+          <i class="pi pi-box"></i>
+        </div>
+        <p>No components found</p>
+        <small *ngIf="searchTerm">Try adjusting your search term</small>
+        <small *ngIf="!searchTerm && selectedCategory !== 'All'">No components in this category</small>
+      </div>
+    </div>
+    </div>
+
+    <!-- Assets Tab Content -->
+    <div class="tab-content" *ngIf="activeTab === 'assets'">
+      <!-- Upload Section -->
+      <div class="assets-upload-section">
+        <button 
+          class="btn btn-primary" 
+          (click)="onOpenUploadDialog()" 
+          style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 12px;">
+          <i class="pi pi-cloud-upload" style="margin-right: 8px;"></i>
+          Upload New Image
+        </button>
+        <p style="text-align: center; color: #6c757d; font-size: 12px; margin-top: 8px;">
+          Click to select and upload images to your asset library
+        </p>
+      </div>
+
+      <!-- Error Message -->
+      <div class="error-message" *ngIf="imageUploadError">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>{{ imageUploadError }}</span>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoadingImages">
+        <div class="loading-spinner">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        <p>Loading images...</p>
+      </div>
+
+      <!-- Images Grid -->
+      <div class="images-grid" *ngIf="!isLoadingImages && businessImages.length > 0">
+        <div 
+          *ngFor="let image of businessImages"
+          class="image-item"
+          [class.selectable]="selectedComponentInstance?.type === 'image'"
+          (click)="onSelectImageForComponent(image)">
+          <div class="image-preview">
+            <img [src]="getDisplayableImageUrl(image)" [alt]="image.fileName">
+            <div class="image-overlay">
+              <button 
+                class="overlay-btn select-btn" 
+                *ngIf="selectedComponentInstance?.type === 'image'"
+                (click)="onSelectImageForComponent(image); $event.stopPropagation()"
+                title="Use this image">
+                <i class="pi pi-check"></i>
+              </button>
+              <button 
+                class="overlay-btn download-btn"
+                (click)="onDownloadImage(image); $event.stopPropagation()"
+                title="Download image">
+                <i class="pi pi-download"></i>
+              </button>
+            </div>
+          </div>
+          <div class="image-info">
+            <div class="image-name" [title]="image.fileName">{{ image.fileName }}</div>
+            <div class="image-meta">
+              <span class="file-size">{{ formatFileSize(image.fileSize) }}</span>
+              <span class="upload-date">{{ formatUploadDate(image.uploadedAt) }}</span>
+            </div>
+            <div class="image-description" *ngIf="image.description">{{ image.description }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!isLoadingImages && businessImages.length === 0">
+        <div class="empty-icon">
+          <i class="pi pi-image"></i>
+        </div>
+        <p>No images uploaded yet</p>
+        <small>Upload your first image to get started</small>
+      </div>
+
+      <!-- Helpful Tip -->
+      <div class="assets-tip" *ngIf="selectedComponentInstance?.type === 'image'">
+        <div class="tip-icon">
+          <i class="pi pi-info-circle"></i>
+        </div>
+        <div class="tip-content">
+          <strong>Tip:</strong> Click on any image above to use it in your selected Image component.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

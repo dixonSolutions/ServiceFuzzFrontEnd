@@ -1,0 +1,545 @@
+<!-- Canvas Component Wrapper -->
+<div class="canvas-component-wrapper">
+  <!-- Center Canvas Area -->
+  <div class="center-area">
+  <!-- Page Tabs -->
+  <div class="page-tabs">
+    <div 
+      *ngFor="let page of pages" 
+      class="page-tab"
+      [class.active]="page.id === currentPageId"
+      (click)="onPageTabClick(page.id)">
+      <span class="page-name">{{ page.name }}</span>
+      <span class="page-route">{{ page.route }}</span>
+      <button 
+        *ngIf="page.isDeletable" 
+        class="delete-page-btn"
+        (click)="onDeletePage(page.id); $event.stopPropagation()"
+        title="Delete Page">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <button class="add-page-btn" (click)="onAddPage()" title="Add Page">
+      + Add Page
+    </button>
+  </div>
+
+  <!-- Canvas Container -->
+  <div class="canvas-container">
+    <!-- Canvas Toolbar -->
+    <div class="canvas-toolbar">
+      <div class="canvas-info">
+        <span class="breadcrumb">Page: {{ getPageById(currentPageId)?.name || 'Home' }} (/)</span>
+        <span class="components-count">→ Components: {{ getComponentsCount() }}</span>
+        <span class="canvas-view">Canvas: Desktop View (100%)</span>
+      </div>
+      <div class="view-controls">
+        <div class="device-selector">
+          <button 
+            class="device-btn"
+            [class.active]="selectedDevice === 'desktop'"
+            (click)="onDeviceChange('desktop')">
+            <i class="pi pi-desktop"></i>
+          </button>
+          <button 
+            class="device-btn"
+            [class.active]="selectedDevice === 'tablet'"
+            (click)="onDeviceChange('tablet')">
+            <i class="pi pi-tablet"></i>
+          </button>
+          <button 
+            class="device-btn"
+            [class.active]="selectedDevice === 'mobile'"
+            (click)="onDeviceChange('mobile')">
+            <i class="pi pi-mobile"></i>
+          </button>
+        </div>
+        <span class="view-label">Desktop View</span>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <div 
+      class="canvas" 
+      [class]="'device-' + selectedDevice"
+      (drop)="onDrop($event)"
+      (dragover)="onDragOver($event)">
+      
+      <!-- Built-in Navigation Bar (always visible and editable) -->
+      <nav class="site-nav"
+           [class.selected]="selectedComponentInstance?.id === 'built-in-nav'"
+           (click)="selectBuiltInNavigationHandler()"
+           [style.background-color]="builtInNavProperties['backgroundColor']"
+           [style.color]="builtInNavProperties['textColor']"
+           [style.box-shadow]="builtInNavProperties['showShadow'] ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'"
+           [style.cursor]="'pointer'">
+        
+        <!-- Logo Section -->
+        <div class="nav-brand">
+          <!-- Image Logo (when selected) -->
+          <div class="logo-image-container" *ngIf="builtInNavProperties['logoType'] === 'image' && builtInNavProperties['logoImage']">
+            <!-- Circular Logo using PrimeNG Avatar -->
+            <p-avatar 
+              *ngIf="builtInNavProperties['logoShape'] === 'circle'"
+              [image]="builtInNavProperties['logoImage']"
+              size="normal"
+              shape="circle">
+            </p-avatar>
+            
+            <!-- Square Logo -->
+            <img 
+              *ngIf="builtInNavProperties['logoShape'] === 'square'"
+              [src]="builtInNavProperties['logoImage']"
+              [alt]="builtInNavProperties['logoText'] || 'Logo'"
+              [style.height]="getImageLogoSize(builtInNavProperties['logoSize'])"
+              [style.width]="'auto'"
+              [style.max-height]="'50px'"
+              [style.border-radius]="'4px'">
+          </div>
+          
+          <!-- Business Name Text (always shows) -->
+          <span class="business-name-text"
+                [style.font-weight]="'600'"
+                [style.font-size]="getLogoSize(builtInNavProperties['logoSize'])"
+                [style.margin-left]="builtInNavProperties['logoType'] === 'image' && builtInNavProperties['logoImage'] ? '8px' : '0'">
+            {{ builtInNavProperties['logoText'] }}
+          </span>
+        </div>
+        
+        <!-- Navigation Menu -->
+        <div class="nav-menu">
+          <span 
+            *ngFor="let page of pages" 
+            class="nav-item"
+            [class.active]="page.id === currentPageId"
+            (click)="onNavigationClick($event, page.id)"
+            [style.cursor]="'pointer'"
+            [style.padding]="'6px 12px'"
+            [style.border-radius]="'4px'"
+            [style.transition]="'all 0.2s'">
+            {{ page.name }}
+          </span>
+        </div>
+      </nav>
+      
+      <!-- Render current page components -->
+      <div *ngFor="let instance of currentPageComponents; trackBy: trackByInstanceId" 
+           class="component-instance"
+           [id]="'component-' + instance.id"
+           (click)="selectComponentInstanceHandler(instance)"
+           (mousedown)="startDragHandler($event, instance)"
+           [class.selected]="selectedComponentInstance?.id === instance.id"
+           [style.position]="'absolute'"
+           [style.left.px]="instance.x"
+           [style.top.px]="instance.y"
+           [style.width.px]="instance.width"
+           [style.height.px]="instance.height"
+           [style.z-index]="instance.zIndex">
+        
+        <!-- Render component based on type -->
+        <div [ngSwitch]="instance.type">
+          
+          <!-- Hero Section -->
+          <section *ngSwitchCase="'hero-section'" class="hero" 
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#f8f9fa'"
+                   [style.color]="instance.parameters['textColor'] || '#333333'"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'">
+            <h1>{{ instance.parameters['title'] || 'Welcome to Our Website' }}</h1>
+            <p>{{ instance.parameters['subtitle'] || 'Discover amazing services and solutions' }}</p>
+            <button class="hero-btn" 
+                    [style.background-color]="instance.parameters['ctaButtonColor'] || '#007bff'"
+                    [style.color]="'white'">
+              {{ instance.parameters['ctaText'] || 'Get Started' }}
+            </button>
+          </section>
+          
+          <!-- Text Block -->
+          <div *ngSwitchCase="'text-block'" class="text-block"
+               [style.text-align]="instance.parameters['alignment'] || 'left'"
+               [style.color]="instance.parameters['textColor'] || '#333333'"
+               [style.font-size.px]="instance.parameters['fontSize'] || 16"
+               [style.width]="'100%'"
+               [style.height]="'100%'">
+            <h3 *ngIf="instance.parameters['title']">{{ instance.parameters['title'] }}</h3>
+            <p>{{ instance.parameters['content'] || 'Your text content goes here...' }}</p>
+          </div>
+          
+          <!-- Image -->
+          <div *ngSwitchCase="'image'" class="image-block" 
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.text-align]="'center'">
+            <img [src]="instance.parameters['imageUrl'] || 'https://via.placeholder.com/300x200'" 
+                 [alt]="instance.parameters['altText'] || 'Image description'"
+                 [style.width]="'100%'"
+                 [style.height]="'100%'"
+                 [style.object-fit]="instance.parameters['objectFit'] || 'cover'"
+                 [style.border-radius.px]="instance.parameters['borderRadius'] || 0">
+          </div>
+          
+          <!-- Button -->
+          <div *ngSwitchCase="'button'" class="button-block" 
+               [style.text-align]="instance.parameters['alignment'] || 'center'"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.display]="'flex'"
+               [style.align-items]="'center'"
+               [style.justify-content]="'center'">
+            <button [style.background-color]="instance.parameters['backgroundColor'] || '#007bff'"
+                    [style.color]="instance.parameters['textColor'] || 'white'"
+                    [style.padding]="instance.parameters['size'] === 'large' ? '12px 24px' : '8px 16px'"
+                    [style.border]="'none'"
+                    [style.border-radius.px]="6">
+              {{ instance.parameters['text'] || 'Button' }}
+            </button>
+          </div>
+          
+          <!-- Top Navigation -->
+          <nav *ngSwitchCase="'top-navigation'" class="top-nav"
+               [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'"
+               [style.color]="instance.parameters['textColor'] || '#000000'"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.display]="'flex'"
+               [style.align-items]="'center'"
+               [style.justify-content]="'space-between'"
+               [style.padding]="'0 24px'"
+               [style.box-shadow]="instance.parameters['showShadow'] ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'">
+            
+            <!-- Logo Section -->
+            <div class="nav-brand" [style.display]="'flex'" [style.align-items]="'center'">
+              <!-- Image Logo (when selected) -->
+              <div class="logo-image-container" 
+                   *ngIf="instance.parameters['logoType'] === 'image' && instance.parameters['logoImage']"
+                   [style.display]="'flex'"
+                   [style.align-items]="'center'"
+                   [style.margin-right]="'8px'">
+                <!-- Circular Logo using PrimeNG Avatar -->
+                <p-avatar 
+                  *ngIf="instance.parameters['logoShape'] === 'circle'"
+                  [image]="instance.parameters['logoImage']"
+                  size="normal"
+                  shape="circle">
+                </p-avatar>
+                
+                <!-- Square Logo -->
+                <img 
+                  *ngIf="instance.parameters['logoShape'] === 'square'"
+                  [src]="instance.parameters['logoImage']"
+                  [alt]="instance.parameters['logoText'] || 'Logo'"
+                  [style.height]="getImageLogoSize(instance.parameters['logoSize'])"
+                  [style.width]="'auto'"
+                  [style.max-height]="'60px'"
+                  [style.border-radius]="'4px'">
+              </div>
+              
+              <!-- Business Name Text (always shows) -->
+              <span class="business-name-text"
+                    [style.font-weight]="'600'"
+                    [style.font-size]="getLogoSize(instance.parameters['logoSize'])">
+                {{ instance.parameters['logoText'] || 'My Business' }}
+              </span>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <div class="nav-menu">
+              <span 
+                *ngFor="let page of pages" 
+                class="nav-item"
+                [class.active]="page.id === currentPageId"
+                (click)="onNavigationClick($event, page.id)"
+                [style.cursor]="'pointer'"
+                [style.margin-right.px]="20"
+                [style.padding]="'8px 12px'"
+                [style.border-radius]="'6px'"
+                [style.transition]="'all 0.2s'"
+                [style.hover]="'background-color: rgba(0,0,0,0.05)'">
+                {{ page.name }}
+              </span>
+            </div>
+          </nav>
+          
+          <!-- Footer -->
+          <footer *ngSwitchCase="'footer'" class="footer" 
+                  [style.background-color]="instance.parameters['backgroundColor'] || '#2c3e50'"
+                  [style.color]="instance.parameters['textColor'] || '#ffffff'"
+                  [style.width]="'100%'"
+                  [style.height]="'100%'"
+                  [style.padding]="'24px'">
+            <div class="footer-content">
+              <div class="footer-section">
+                <h4>{{ instance.parameters['companyName'] || 'Company Name' }}</h4>
+                <p>{{ instance.parameters['description'] || 'Your company description' }}</p>
+              </div>
+            </div>
+          </footer>
+          
+          <!-- Contact Information -->
+          <div *ngSwitchCase="'contact-info'" class="contact-info"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.padding]="'20px'"
+               [style.background-color]="'#f8f9fa'"
+               [style.border-radius.px]="8">
+            <h3>{{ instance.parameters['businessName'] || 'Your Business' }}</h3>
+            <div class="contact-details" [style.margin-top.px]="15">
+              <div class="contact-item" [style.margin-bottom.px]="10">
+                <i class="pi pi-map-marker" [style.margin-right.px]="8"></i>
+                <span>{{ instance.parameters['address'] || '123 Main St, City, State 12345' }}</span>
+              </div>
+              <div class="contact-item" [style.margin-bottom.px]="10">
+                <i class="pi pi-phone" [style.margin-right.px]="8"></i>
+                <span>{{ instance.parameters['phone'] || '(555) 123-4567' }}</span>
+              </div>
+              <div class="contact-item" [style.margin-bottom.px]="10">
+                <i class="pi pi-envelope" [style.margin-right.px]="8"></i>
+                <span>{{ instance.parameters['email'] || 'info@yourbusiness.com' }}</span>
+              </div>
+              <div class="contact-item" [style.margin-bottom.px]="10">
+                <i class="pi pi-clock" [style.margin-right.px]="8"></i>
+                <span>{{ instance.parameters['hours'] || 'Mon-Fri: 9AM-6PM' }}</span>
+              </div>
+              <div *ngIf="instance.parameters['showMap']" class="map-placeholder" 
+                   [style.width]="'100%'"
+                   [style.height.px]="120"
+                   [style.background-color]="'#e9ecef'"
+                   [style.margin-top.px]="15"
+                   [style.border-radius.px]="6"
+                   [style.display]="'flex'"
+                   [style.align-items]="'center'"
+                   [style.justify-content]="'center'">
+                <span>📍 Interactive Map</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Default case for unknown components (includes ALL component types) -->
+          <div *ngSwitchDefault class="unknown-component"
+               [style.width]="'100%'"
+               [style.height]="'100%'">
+            
+            <!-- Universal Scalable API Component Rendering -->
+            <div *ngIf="isApiComponent(instance.type); else staticPlaceholder" 
+                 class="universal-api-component"
+                 [style.padding]="'16px'"
+                 [style.width]="'100%'"
+                 [style.height]="'100%'">
+              
+              <!-- Universal component wrapper with ALL styling parameters applied -->
+              <div class="component-wrapper"
+                   [style.max-width.px]="getParameterValue(instance, 'maxWidth') || getParameterValue(instance, 'Max Width (px)')"
+                   [style.width]="getParameterValue(instance, 'width') || '100%'"
+                   [style.height]="getParameterValue(instance, 'height') || 'auto'"
+                   [style.padding.px]="getParameterValue(instance, 'padding') || getParameterValue(instance, 'Padding')"
+                   [style.margin.px]="getParameterValue(instance, 'margin') || getParameterValue(instance, 'Margin')"
+                   [style.background-color]="getParameterValue(instance, 'backgroundColor') || getParameterValue(instance, 'Background Color')"
+                   [style.color]="getParameterValue(instance, 'textColor') || getParameterValue(instance, 'color')"
+                   [style.border-radius.px]="getParameterValue(instance, 'borderRadius') || getParameterValue(instance, 'Border Radius')"
+                   [style.border]="getParameterValue(instance, 'border') || (getParameterValue(instance, 'borderColor') ? '1px solid ' + getParameterValue(instance, 'borderColor') : '')"
+                   [style.font-size.px]="getParameterValue(instance, 'fontSize')"
+                   [style.font-weight]="getParameterValue(instance, 'fontWeight')"
+                   [style.text-align]="getParameterValue(instance, 'textAlign') || getParameterValue(instance, 'alignment') || (getParameterValue(instance, 'centerContent') || getParameterValue(instance, 'Center Content') ? 'center' : '')"
+                   [style.display]="getParameterValue(instance, 'centerContent') || getParameterValue(instance, 'Center Content') ? 'flex' : 'block'"
+                   [style.align-items]="getParameterValue(instance, 'centerContent') || getParameterValue(instance, 'Center Content') ? 'center' : 'initial'"
+                   [style.justify-content]="getParameterValue(instance, 'centerContent') || getParameterValue(instance, 'Center Content') ? 'center' : 'initial'"
+                   [style.min-height]="'40px'">
+                
+                <!-- Universal Dynamic Parameter Renderer - Works for ANY Component! -->
+                <div class="universal-parameter-renderer">
+                  
+                  <!-- Render ALL parameters as UI elements dynamically -->
+                  <div *ngFor="let param of getApiComponentTypeParameters(instance.type)" class="parameter-element">
+                    
+                    <!-- TEXT INPUT FIELDS -->
+                    <div *ngIf="isTextInputParameter(param) && getParameterValue(instance, param.name)" 
+                         class="text-input-renderer" [style.margin-bottom]="'12px'">
+                      <label [style.display]="'block'" [style.margin-bottom]="'4px'" [style.font-weight]="'500'">
+                        {{ param.label }}
+                      </label>
+                      <input [type]="getInputTypeFromParameter(param)"
+                             [value]="getParameterValue(instance, param.name)"
+                             [placeholder]="param.label"
+                             [style.width]="'100%'"
+                             [style.padding]="'8px 12px'"
+                             [style.border]="'1px solid #ddd'"
+                             [style.border-radius.px]="4"
+                             readonly>
+                    </div>
+                    
+                    <!-- BUTTON ELEMENTS -->
+                    <button *ngIf="isButtonParameter(param) && getParameterValue(instance, param.name)"
+                            type="button"
+                            [style.background-color]="getParameterValue(instance, 'buttonColor') || getParameterValue(instance, 'backgroundColor') || '#007bff'"
+                            [style.color]="getParameterValue(instance, 'buttonTextColor') || '#ffffff'"
+                            [style.border]="'none'"
+                            [style.border-radius.px]="4"
+                            [style.padding]="'8px 16px'"
+                            [style.cursor]="'pointer'"
+                            [style.margin]="'8px 0'">
+                      {{ getParameterValue(instance, param.name) }}
+                    </button>
+                    
+                    <!-- IMAGE ELEMENTS -->
+                    <div *ngIf="isImageParameter(param) && getParameterValue(instance, param.name)" 
+                         class="image-renderer" [style.margin]="'8px 0'">
+                      <img [src]="getParameterValue(instance, param.name)"
+                           [alt]="param.label"
+                           [style.width]="'100%'"
+                           [style.height]="'auto'"
+                           [style.max-height]="'200px'"
+                           [style.object-fit]="'cover'"
+                           [style.border-radius.px]="4">
+                    </div>
+                    
+                    <!-- RATING DISPLAY -->
+                    <div *ngIf="isRatingParameter(param) && getParameterValue(instance, param.name)" 
+                         class="rating-renderer" [style.margin]="'8px 0'">
+                      <label [style.font-weight]="'500'" [style.margin-right]="'8px'">{{ param.label }}:</label>
+                      <span class="rating-stars" [style.color]="'#ffc107'" [style.font-size]="'16px'">
+                        {{ generateStars(getParameterValue(instance, param.name)) }}
+                      </span>
+                      <span [style.margin-left]="'4px'" [style.color]="'#6c757d'">
+                        ({{ getParameterValue(instance, param.name) }}/5)
+                      </span>
+                    </div>
+                    
+                    <!-- PROGRESS BAR -->
+                    <div *ngIf="isProgressParameter(param) && getParameterValue(instance, param.name)" 
+                         class="progress-renderer" [style.margin]="'8px 0'">
+                      <label [style.font-weight]="'500'" [style.margin-bottom]="'4px'" [style.display]="'block'">
+                        {{ param.label }}
+                      </label>
+                      <div class="progress-wrapper" [style.position]="'relative'">
+                        <div class="progress-bg" 
+                             [style.width]="'100%'"
+                             [style.height]="'20px'"
+                             [style.background-color]="'#e9ecef'"
+                             [style.border-radius]="'10px'"
+                             [style.overflow]="'hidden'">
+                          <div class="progress-fill" 
+                               [style.width.%]="getParameterValue(instance, param.name)"
+                               [style.height]="'100%'"
+                               [style.background-color]="getParameterValue(instance, 'progressColor') || '#28a745'"
+                               [style.transition]="'width 0.3s ease'">
+                          </div>
+                        </div>
+                        <span [style.position]="'absolute'"
+                              [style.top]="'50%'"
+                              [style.left]="'50%'"
+                              [style.transform]="'translate(-50%, -50%)'"
+                              [style.font-size]="'12px'"
+                              [style.font-weight]="'bold'"
+                              [style.color]="'#fff'">
+                          {{ getParameterValue(instance, param.name) }}%
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <!-- TEXT CONTENT (Titles, Quotes, etc.) -->
+                    <div *ngIf="isTextContentParameter(param) && getParameterValue(instance, param.name)" 
+                         class="text-content-renderer" [style.margin]="'8px 0'">
+                      <!-- Large text (titles, quotes) -->
+                      <h3 *ngIf="isLargeTextParameter(param)" 
+                          [style.margin]="'0 0 8px 0'"
+                          [style.color]="getParameterValue(instance, 'titleColor') || 'inherit'"
+                          [style.font-size]="'18px'"
+                          [style.font-weight]="'600'">
+                        {{ getParameterValue(instance, param.name) }}
+                      </h3>
+                      <!-- Medium text (subtitles, names) -->
+                      <h5 *ngIf="isMediumTextParameter(param)" 
+                          [style.margin]="'0 0 4px 0'"
+                          [style.color]="getParameterValue(instance, 'subtitleColor') || '#6c757d'"
+                          [style.font-size]="'14px'"
+                          [style.font-weight]="'500'">
+                        {{ getParameterValue(instance, param.name) }}
+                      </h5>
+                      <!-- Regular text (descriptions, content) -->
+                      <p *ngIf="isRegularTextParameter(param)" 
+                         [style.margin]="'0'"
+                         [style.line-height]="'1.5'"
+                         [style.color]="getParameterValue(instance, 'textColor') || 'inherit'">
+                        {{ getParameterValue(instance, param.name) }}
+                      </p>
+                    </div>
+                    
+                    <!-- COLOR DISPLAY -->
+                    <div *ngIf="isColorParameter(param) && getParameterValue(instance, param.name)" 
+                         class="color-renderer" [style.margin]="'4px 0'">
+                      <label [style.font-size]="'12px'" [style.color]="'#6c757d'" [style.margin-right]="'8px'">
+                        {{ param.label }}:
+                      </label>
+                      <span class="color-swatch" 
+                            [style.display]="'inline-block'"
+                            [style.width]="'16px'"
+                            [style.height]="'16px'"
+                            [style.background-color]="getParameterValue(instance, param.name)"
+                            [style.border]="'1px solid #ddd'"
+                            [style.border-radius]="'3px'"
+                            [style.margin-right]="'4px'">
+                      </span>
+                      <span [style.font-size]="'12px'" [style.color]="'#495057'">
+                        {{ getParameterValue(instance, param.name) }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Empty state for components with no parameters -->
+                  <div *ngIf="getApiComponentTypeParameters(instance.type).length === 0" 
+                       class="no-parameters-state"
+                       [style.text-align]="'center'"
+                       [style.padding]="'20px'"
+                       [style.color]="'#6c757d'">
+                    <h4 [style.margin]="'0 0 8px 0'">{{ getApiComponentType(instance.type)?.name || 'Component' }}</h4>
+                    <small>This component has no configurable parameters</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <ng-template #staticPlaceholder>
+              <p>{{ getComponentDefinition(instance.type)?.name || instance.type }} Component</p>
+              <small>Component ID: {{ instance.id }}</small>
+            </ng-template>
+          </div>
+          
+        </div>
+        
+        <!-- Component overlay for selection -->
+        <div class="component-overlay" *ngIf="selectedComponentInstance?.id === instance.id">
+          <span class="component-label">{{ getComponentDefinition(instance.type)?.name || getApiComponentType(instance.type)?.name || instance.type }}</span>
+          <small class="edit-hint">✏️ Editing properties</small>
+        </div>
+        
+        <!-- Resize handles for selected component -->
+        <div class="resize-handles" *ngIf="selectedComponentInstance?.id === instance.id">
+          <div class="resize-handle nw" 
+               (mousedown)="startResizeHandler($event, instance, 'nw')"></div>
+          <div class="resize-handle ne" 
+               (mousedown)="startResizeHandler($event, instance, 'ne')"></div>
+          <div class="resize-handle sw" 
+               (mousedown)="startResizeHandler($event, instance, 'sw')"></div>
+          <div class="resize-handle se" 
+               (mousedown)="startResizeHandler($event, instance, 'se')"></div>
+        </div>
+        
+        <!-- Delete button for selected component -->
+        <button class="delete-btn" 
+                *ngIf="selectedComponentInstance?.id === instance.id"
+                (click)="deleteComponentHandler($event, instance.id)"
+                title="Delete Component">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+      
+      <!-- Drop indicator -->
+      <div class="drop-indicator" *ngIf="currentPageComponents.length === 0">
+        <div class="drop-icon">⊕</div>
+        <p>Select a Component</p>
+        <small>Click on any component in the canvas to edit its properties</small>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
