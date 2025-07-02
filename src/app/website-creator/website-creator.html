@@ -145,8 +145,27 @@
           </button>
         </div>
 
+        <!-- API Components Loading State -->
+        <div class="api-loading-state" *ngIf="isLoadingApiComponents">
+          <div class="loading-spinner">
+            <i class="pi pi-spin pi-spinner"></i>
+          </div>
+          <p>Loading component library...</p>
+        </div>
+
+        <!-- API Components Error State -->
+        <div class="api-error-state" *ngIf="apiComponentsLoadError">
+          <div class="error-icon">
+            <i class="pi pi-exclamation-triangle"></i>
+          </div>
+          <p>{{ apiComponentsLoadError }}</p>
+          <button class="retry-btn" (click)="refreshApiComponentTypes()">
+            <i class="pi pi-refresh"></i> Retry
+          </button>
+        </div>
+
         <!-- Component List -->
-        <div class="component-list">
+        <div class="component-list" *ngIf="!isLoadingApiComponents">
           <div 
             *ngFor="let component of getFilteredComponentsByCategory(selectedCategory)"
             class="component-item"
@@ -159,9 +178,20 @@
             <div class="component-info">
               <span class="component-name">{{ component.name }}</span>
               <span class="component-category badge" [class]="component.category.toLowerCase()">{{ component.category }}</span>
-              </div>
+              <span class="component-source" *ngIf="isApiComponent(component.id)">API</span>
             </div>
           </div>
+
+          <!-- Empty State -->
+          <div class="empty-components-state" *ngIf="getFilteredComponentsByCategory(selectedCategory).length === 0">
+            <div class="empty-icon">
+              <i class="pi pi-box"></i>
+            </div>
+            <p>No components found</p>
+            <small *ngIf="searchTerm">Try adjusting your search term</small>
+            <small *ngIf="!searchTerm && selectedCategory !== 'All'">No components in this category</small>
+          </div>
+        </div>
         </div>
 
         <!-- Assets Tab Content -->
@@ -572,55 +602,166 @@
               <div *ngSwitchCase="'product-grid'" class="product-display"
                    [style.width]="'100%'"
                    [style.height]="'100%'"
-                   [style.padding]="'20px'">
+                   [style.padding]="'20px'"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'">
                 <h3 *ngIf="instance.parameters['title']">{{ instance.parameters['title'] }}</h3>
+                <p *ngIf="instance.parameters['description']" [style.color]="'#6c757d'" [style.margin-bottom.px]="20">
+                  {{ instance.parameters['description'] }}
+                </p>
+                <div *ngIf="!instance.parameters['product1Name'] && !instance.parameters['product2Name'] && !instance.parameters['product3Name']" 
+                     class="no-products" 
+                     [style.text-align]="'center'" 
+                     [style.padding.px]="40" 
+                     [style.color]="'#6c757d'">
+                  <i class="pi pi-shopping-cart" [style.font-size.px]="48" [style.margin-bottom.px]="16"></i>
+                  <p>{{ instance.parameters['emptyMessage'] || 'No products to display' }}</p>
+                </div>
                 <div class="services-grid" 
                      [style.display]="'grid'"
                      [style.grid-template-columns]="'repeat(' + (instance.parameters['columns'] || 3) + ', 1fr)'"
                      [style.gap.px]="15"
                      [style.margin-top.px]="15">
-                  <div class="service-item" 
+                  <!-- Product 1 -->
+                  <div *ngIf="instance.parameters['product1Name']" class="service-item" 
                        [style.border]="'1px solid #ddd'"
                        [style.border-radius.px]="8"
                        [style.padding.px]="15"
-                       [style.text-align]="'center'">
-                    <h4>Haircut & Style</h4>
-                    <p *ngIf="instance.parameters['showDuration']">Duration: 45 min</p>
-                    <p *ngIf="instance.parameters['showPricing']">Price: $35</p>
-                    <div *ngIf="instance.parameters['showRatings']" class="rating">
-                      ⭐⭐⭐⭐⭐ (4.8/5)
+                       [style.text-align]="'center'"
+                       [style.background-color]="instance.parameters['itemBackgroundColor'] || '#ffffff'">
+                    <div *ngIf="instance.parameters['product1Image']" class="product-image" [style.margin-bottom.px]="12">
+                      <img [src]="instance.parameters['product1Image']" 
+                           [alt]="instance.parameters['product1Name']"
+                           [style.width]="'100%'" 
+                           [style.height.px]="120" 
+                           [style.object-fit]="'cover'" 
+                           [style.border-radius.px]="6">
+                    </div>
+                    <h4 [style.margin]="'8px 0'" [style.color]="instance.parameters['titleColor'] || '#333'">
+                      {{ instance.parameters['product1Name'] }}
+                    </h4>
+                    <p *ngIf="instance.parameters['product1Description']" 
+                       [style.font-size.px]="14" 
+                       [style.color]="'#6c757d'" 
+                       [style.margin-bottom.px]="8">
+                      {{ instance.parameters['product1Description'] }}
+                    </p>
+                    <p *ngIf="instance.parameters['showDuration'] && instance.parameters['product1Duration']">
+                      Duration: {{ instance.parameters['product1Duration'] }}
+                    </p>
+                    <p *ngIf="instance.parameters['showPricing'] && instance.parameters['product1Price']" 
+                       [style.font-weight]="'bold'" 
+                       [style.color]="instance.parameters['priceColor'] || '#007bff'">
+                      {{ instance.parameters['priceLabel'] || 'Price' }}: {{ instance.parameters['product1Price'] }}
+                    </p>
+                    <div *ngIf="instance.parameters['showRatings'] && instance.parameters['product1Rating']" class="rating" [style.margin]="'8px 0'">
+                      {{ getRatingStars(instance.parameters['product1Rating']) }} ({{ instance.parameters['product1Rating'] }}/5)
                     </div>
                     <button *ngIf="instance.parameters['showBooking']" 
                             class="book-btn"
-                            [style.background-color]="'#007bff'"
-                            [style.color]="'white'"
+                            [style.background-color]="instance.parameters['buttonColor'] || '#007bff'"
+                            [style.color]="instance.parameters['buttonTextColor'] || 'white'"
                             [style.border]="'none'"
                             [style.padding]="'8px 16px'"
                             [style.border-radius.px]="6"
-                            [style.margin-top.px]="10">
-                      Book Now
+                            [style.margin-top.px]="10"
+                            [style.cursor]="'pointer'">
+                      {{ instance.parameters['buttonText'] || 'Book Now' }}
                     </button>
                   </div>
-                  <div class="service-item" 
+                  
+                  <!-- Product 2 -->
+                  <div *ngIf="instance.parameters['product2Name']" class="service-item" 
                        [style.border]="'1px solid #ddd'"
                        [style.border-radius.px]="8"
                        [style.padding.px]="15"
-                       [style.text-align]="'center'">
-                    <h4>Color Treatment</h4>
-                    <p *ngIf="instance.parameters['showDuration']">Duration: 2 hours</p>
-                    <p *ngIf="instance.parameters['showPricing']">Price: $85</p>
-                    <div *ngIf="instance.parameters['showRatings']" class="rating">
-                      ⭐⭐⭐⭐⭐ (4.9/5)
+                       [style.text-align]="'center'"
+                       [style.background-color]="instance.parameters['itemBackgroundColor'] || '#ffffff'">
+                    <div *ngIf="instance.parameters['product2Image']" class="product-image" [style.margin-bottom.px]="12">
+                      <img [src]="instance.parameters['product2Image']" 
+                           [alt]="instance.parameters['product2Name']"
+                           [style.width]="'100%'" 
+                           [style.height.px]="120" 
+                           [style.object-fit]="'cover'" 
+                           [style.border-radius.px]="6">
+                    </div>
+                    <h4 [style.margin]="'8px 0'" [style.color]="instance.parameters['titleColor'] || '#333'">
+                      {{ instance.parameters['product2Name'] }}
+                    </h4>
+                    <p *ngIf="instance.parameters['product2Description']" 
+                       [style.font-size.px]="14" 
+                       [style.color]="'#6c757d'" 
+                       [style.margin-bottom.px]="8">
+                      {{ instance.parameters['product2Description'] }}
+                    </p>
+                    <p *ngIf="instance.parameters['showDuration'] && instance.parameters['product2Duration']">
+                      Duration: {{ instance.parameters['product2Duration'] }}
+                    </p>
+                    <p *ngIf="instance.parameters['showPricing'] && instance.parameters['product2Price']" 
+                       [style.font-weight]="'bold'" 
+                       [style.color]="instance.parameters['priceColor'] || '#007bff'">
+                      {{ instance.parameters['priceLabel'] || 'Price' }}: {{ instance.parameters['product2Price'] }}
+                    </p>
+                    <div *ngIf="instance.parameters['showRatings'] && instance.parameters['product2Rating']" class="rating" [style.margin]="'8px 0'">
+                      {{ getRatingStars(instance.parameters['product2Rating']) }} ({{ instance.parameters['product2Rating'] }}/5)
                     </div>
                     <button *ngIf="instance.parameters['showBooking']" 
                             class="book-btn"
-                            [style.background-color]="'#007bff'"
-                            [style.color]="'white'"
+                            [style.background-color]="instance.parameters['buttonColor'] || '#007bff'"
+                            [style.color]="instance.parameters['buttonTextColor'] || 'white'"
                             [style.border]="'none'"
                             [style.padding]="'8px 16px'"
                             [style.border-radius.px]="6"
-                            [style.margin-top.px]="10">
-                      Book Now
+                            [style.margin-top.px]="10"
+                            [style.cursor]="'pointer'">
+                      {{ instance.parameters['buttonText'] || 'Book Now' }}
+                    </button>
+                  </div>
+                  
+                  <!-- Product 3 -->
+                  <div *ngIf="instance.parameters['product3Name']" class="service-item" 
+                       [style.border]="'1px solid #ddd'"
+                       [style.border-radius.px]="8"
+                       [style.padding.px]="15"
+                       [style.text-align]="'center'"
+                       [style.background-color]="instance.parameters['itemBackgroundColor'] || '#ffffff'">
+                    <div *ngIf="instance.parameters['product3Image']" class="product-image" [style.margin-bottom.px]="12">
+                      <img [src]="instance.parameters['product3Image']" 
+                           [alt]="instance.parameters['product3Name']"
+                           [style.width]="'100%'" 
+                           [style.height.px]="120" 
+                           [style.object-fit]="'cover'" 
+                           [style.border-radius.px]="6">
+                    </div>
+                    <h4 [style.margin]="'8px 0'" [style.color]="instance.parameters['titleColor'] || '#333'">
+                      {{ instance.parameters['product3Name'] }}
+                    </h4>
+                    <p *ngIf="instance.parameters['product3Description']" 
+                       [style.font-size.px]="14" 
+                       [style.color]="'#6c757d'" 
+                       [style.margin-bottom.px]="8">
+                      {{ instance.parameters['product3Description'] }}
+                    </p>
+                    <p *ngIf="instance.parameters['showDuration'] && instance.parameters['product3Duration']">
+                      Duration: {{ instance.parameters['product3Duration'] }}
+                    </p>
+                    <p *ngIf="instance.parameters['showPricing'] && instance.parameters['product3Price']" 
+                       [style.font-weight]="'bold'" 
+                       [style.color]="instance.parameters['priceColor'] || '#007bff'">
+                      {{ instance.parameters['priceLabel'] || 'Price' }}: {{ instance.parameters['product3Price'] }}
+                    </p>
+                    <div *ngIf="instance.parameters['showRatings'] && instance.parameters['product3Rating']" class="rating" [style.margin]="'8px 0'">
+                      {{ getRatingStars(instance.parameters['product3Rating']) }} ({{ instance.parameters['product3Rating'] }}/5)
+                    </div>
+                    <button *ngIf="instance.parameters['showBooking']" 
+                            class="book-btn"
+                            [style.background-color]="instance.parameters['buttonColor'] || '#007bff'"
+                            [style.color]="instance.parameters['buttonTextColor'] || 'white'"
+                            [style.border]="'none'"
+                            [style.padding]="'8px 16px'"
+                            [style.border-radius.px]="6"
+                            [style.margin-top.px]="10"
+                            [style.cursor]="'pointer'">
+                      {{ instance.parameters['buttonText'] || 'Book Now' }}
                     </button>
                   </div>
                 </div>
@@ -631,26 +772,35 @@
                    [style.width]="'100%'"
                    [style.height]="'100%'"
                    [style.padding]="'20px'"
-                   [style.background-color]="'#ffffff'"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'"
                    [style.border]="'1px solid #ddd'"
                    [style.border-radius.px]="8">
                 <h3>{{ instance.parameters['title'] || 'Checkout' }}</h3>
                 <div class="order-items" [style.margin-top.px]="15">
+                  <!-- Dynamic order items -->
                   <div class="order-item" 
                        [style.display]="'flex'"
                        [style.justify-content]="'space-between'"
                        [style.padding]="'10px 0'"
                        [style.border-bottom]="'1px solid #eee'">
-                    <span>Haircut & Style</span>
-                    <span>$35.00</span>
+                    <span>{{ instance.parameters['item1Name'] || 'Service Item 1' }}</span>
+                    <span>{{ instance.parameters['item1Price'] || '$25.00' }}</span>
                   </div>
-                  <div class="order-item" 
+                  <div *ngIf="instance.parameters['item2Name']" class="order-item" 
                        [style.display]="'flex'"
                        [style.justify-content]="'space-between'"
                        [style.padding]="'10px 0'"
                        [style.border-bottom]="'1px solid #eee'">
-                    <span>Beard Trim</span>
-                    <span>$15.00</span>
+                    <span>{{ instance.parameters['item2Name'] }}</span>
+                    <span>{{ instance.parameters['item2Price'] || '$0.00' }}</span>
+                  </div>
+                  <div *ngIf="instance.parameters['item3Name']" class="order-item" 
+                       [style.display]="'flex'"
+                       [style.justify-content]="'space-between'"
+                       [style.padding]="'10px 0'"
+                       [style.border-bottom]="'1px solid #eee'">
+                    <span>{{ instance.parameters['item3Name'] }}</span>
+                    <span>{{ instance.parameters['item3Price'] || '$0.00' }}</span>
                   </div>
                   <div class="subtotal" 
                        [style.display]="'flex'"
@@ -658,14 +808,22 @@
                        [style.padding]="'10px 0'"
                        [style.font-weight]="'bold'">
                     <span>Subtotal</span>
-                    <span>$50.00</span>
+                    <span>{{ instance.parameters['subtotal'] || '$25.00' }}</span>
                   </div>
                   <div *ngIf="instance.parameters['showTax']" class="tax" 
                        [style.display]="'flex'"
                        [style.justify-content]="'space-between'"
                        [style.padding]="'5px 0'">
-                    <span>Tax</span>
-                    <span>$4.00</span>
+                    <span>Tax ({{ instance.parameters['taxRate'] || '8' }}%)</span>
+                    <span>{{ instance.parameters['taxAmount'] || '$2.00' }}</span>
+                  </div>
+                  <div *ngIf="instance.parameters['showDiscount'] && instance.parameters['discountAmount']" class="discount" 
+                       [style.display]="'flex'"
+                       [style.justify-content]="'space-between'"
+                       [style.padding]="'5px 0'"
+                       [style.color]="'#28a745'">
+                    <span>Discount</span>
+                    <span>-{{ instance.parameters['discountAmount'] }}</span>
                   </div>
                   <div class="total" 
                        [style.display]="'flex'"
@@ -675,20 +833,20 @@
                        [style.font-size.px]="18"
                        [style.border-top]="'2px solid #333'">
                     <span>Total</span>
-                    <span>$54.00</span>
+                    <span>{{ instance.parameters['total'] || '$27.00' }}</span>
                   </div>
                 </div>
                 <button class="checkout-btn"
                         [style.width]="'100%'"
-                        [style.background-color]="'#28a745'"
-                        [style.color]="'white'"
+                        [style.background-color]="instance.parameters['buttonColor'] || '#28a745'"
+                        [style.color]="instance.parameters['buttonTextColor'] || 'white'"
                         [style.border]="'none'"
                         [style.padding]="'12px'"
                         [style.border-radius.px]="6"
                         [style.margin-top.px]="15"
                         [style.font-size.px]="16"
                         [style.font-weight]="'bold'">
-                  Proceed to Payment
+                  {{ instance.parameters['buttonText'] || 'Proceed to Payment' }}
                 </button>
                 <p [style.margin-top.px]="10" [style.font-size.px]="12" [style.color]="'#666'">
                   Accepted: {{ instance.parameters['paymentMethods'] || 'Credit Card, PayPal, Apple Pay' }}
@@ -700,14 +858,15 @@
                    [style.width]="'100%'"
                    [style.height]="'100%'"
                    [style.padding]="'20px'"
-                   [style.background-color]="'#ffffff'"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'"
                    [style.border]="'1px solid #ddd'"
                    [style.border-radius.px]="8">
                 <h3>{{ instance.parameters['title'] || 'Payment Details' }}</h3>
                 <form [style.margin-top.px]="15">
                   <div class="form-group" [style.margin-bottom.px]="15">
-                    <label>Card Number</label>
-                    <input type="text" placeholder="1234 5678 9012 3456" 
+                    <label>{{ instance.parameters['cardNumberLabel'] || 'Card Number' }}</label>
+                    <input type="text" 
+                           [placeholder]="instance.parameters['cardNumberPlaceholder'] || '1234 5678 9012 3456'" 
                            [style.width]="'100%'"
                            [style.padding]="'8px'"
                            [style.border]="'1px solid #ddd'"
@@ -715,16 +874,18 @@
                   </div>
                   <div class="form-row" [style.display]="'flex'" [style.gap.px]="10">
                     <div class="form-group" [style.flex]="'1'">
-                      <label>Expiry Date</label>
-                      <input type="text" placeholder="MM/YY" 
+                      <label>{{ instance.parameters['expiryLabel'] || 'Expiry Date' }}</label>
+                      <input type="text" 
+                             [placeholder]="instance.parameters['expiryPlaceholder'] || 'MM/YY'" 
                              [style.width]="'100%'"
                              [style.padding]="'8px'"
                              [style.border]="'1px solid #ddd'"
                              [style.border-radius.px]="4">
                     </div>
                     <div class="form-group" [style.flex]="'1'">
-                      <label>CVV</label>
-                      <input type="text" placeholder="123" 
+                      <label>{{ instance.parameters['cvvLabel'] || 'CVV' }}</label>
+                      <input type="text" 
+                             [placeholder]="instance.parameters['cvvPlaceholder'] || '123'" 
                              [style.width]="'100%'"
                              [style.padding]="'8px'"
                              [style.border]="'1px solid #ddd'"
@@ -732,32 +893,100 @@
                     </div>
                   </div>
                   <div class="form-group" [style.margin-bottom.px]="15">
-                    <label>Cardholder Name</label>
-                    <input type="text" placeholder="John Doe" 
+                    <label>{{ instance.parameters['nameLabel'] || 'Cardholder Name' }}</label>
+                    <input type="text" 
+                           [placeholder]="instance.parameters['namePlaceholder'] || 'John Doe'" 
                            [style.width]="'100%'"
                            [style.padding]="'8px'"
                            [style.border]="'1px solid #ddd'"
                            [style.border-radius.px]="4">
                   </div>
+                  <div *ngIf="instance.parameters['showBillingAddress']" class="billing-address">
+                    <h4 [style.margin]="'16px 0 8px 0'">{{ instance.parameters['billingTitle'] || 'Billing Address' }}</h4>
+                    <div class="form-group" [style.margin-bottom.px]="10">
+                      <input type="text" 
+                             [placeholder]="instance.parameters['addressPlaceholder'] || 'Street Address'" 
+                             [style.width]="'100%'"
+                             [style.padding]="'8px'"
+                             [style.border]="'1px solid #ddd'"
+                             [style.border-radius.px]="4">
+                    </div>
+                    <div class="form-row" [style.display]="'flex'" [style.gap.px]="10">
+                      <input type="text" 
+                             [placeholder]="instance.parameters['cityPlaceholder'] || 'City'" 
+                             [style.flex]="'1'"
+                             [style.padding]="'8px'"
+                             [style.border]="'1px solid #ddd'"
+                             [style.border-radius.px]="4">
+                      <input type="text" 
+                             [placeholder]="instance.parameters['statePlaceholder'] || 'State'" 
+                             [style.flex]="'1'"
+                             [style.padding]="'8px'"
+                             [style.border]="'1px solid #ddd'"
+                             [style.border-radius.px]="4">
+                      <input type="text" 
+                             [placeholder]="instance.parameters['zipPlaceholder'] || 'ZIP'" 
+                             [style.flex]="'1'"
+                             [style.padding]="'8px'"
+                             [style.border]="'1px solid #ddd'"
+                             [style.border-radius.px]="4">
+                    </div>
+                  </div>
                   <div *ngIf="instance.parameters['showSaveCard']" class="form-group" [style.margin-bottom.px]="15">
                     <label>
-                      <input type="checkbox"> Save card for future purchases
+                      <input type="checkbox"> {{ instance.parameters['saveCardText'] || 'Save card for future purchases' }}
                     </label>
                   </div>
+                  <div *ngIf="instance.parameters['showTerms']" class="form-group" [style.margin-bottom.px]="15">
+                    <label>
+                      <input type="checkbox"> {{ instance.parameters['termsText'] || 'I agree to the terms and conditions' }}
+                    </label>
+                  </div>
+                  <button type="submit"
+                          [style.width]="'100%'"
+                          [style.background-color]="instance.parameters['buttonColor'] || '#007bff'"
+                          [style.color]="instance.parameters['buttonTextColor'] || 'white'"
+                          [style.border]="'none'"
+                          [style.padding]="'12px'"
+                          [style.border-radius.px]="6"
+                          [style.margin-top.px]="10"
+                          [style.font-size.px]="16"
+                          [style.font-weight]="'bold'">
+                    {{ instance.parameters['buttonText'] || 'Complete Payment' }}
+                  </button>
                 </form>
-                <p [style.font-size.px]="12" [style.color]="'#666'">
+                <p [style.font-size.px]="12" [style.color]="'#666'" [style.margin-top.px]="10">
                   We accept: {{ instance.parameters['acceptedCards'] || 'Visa, MasterCard, American Express' }}
                 </p>
+                <div *ngIf="instance.parameters['showSecurity']" class="security-notice" 
+                     [style.margin-top.px]="10" 
+                     [style.padding.px]="8" 
+                     [style.background-color]="'#f8f9fa'" 
+                     [style.border-radius.px]="4">
+                  <small [style.color]="'#6c757d'">
+                    🔒 {{ instance.parameters['securityText'] || 'Your payment information is encrypted and secure' }}
+                  </small>
+                </div>
               </div>
               
               <!-- Past Orders Display -->
               <div *ngSwitchCase="'past-orders-display'" class="past-orders"
                    [style.width]="'100%'"
                    [style.height]="'100%'"
-                   [style.padding]="'20px'">
+                   [style.padding]="'20px'"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'">
                 <h3>{{ instance.parameters['title'] || 'Your Past Orders' }}</h3>
+                <div *ngIf="!instance.parameters['order1Number'] && !instance.parameters['order2Number'] && !instance.parameters['order3Number']" 
+                     class="no-orders" 
+                     [style.text-align]="'center'" 
+                     [style.padding.px]="40" 
+                     [style.color]="'#6c757d'">
+                  <i class="pi pi-inbox" [style.font-size.px]="48" [style.margin-bottom.px]="16"></i>
+                  <p>{{ instance.parameters['emptyMessage'] || 'No orders found' }}</p>
+                </div>
                 <div class="orders-list" [style.margin-top.px]="15">
-                  <div class="order-item" 
+                  <!-- Order 1 -->
+                  <div *ngIf="instance.parameters['order1Number']" class="order-item" 
                        [style.border]="'1px solid #ddd'"
                        [style.border-radius.px]="8"
                        [style.padding.px]="15"
@@ -766,20 +995,23 @@
                          [style.display]="'flex'"
                          [style.justify-content]="'space-between'"
                          [style.align-items]="'center'">
-                      <h4>Order #12345</h4>
-                      <span *ngIf="instance.parameters['showStatus']" 
-                            class="status completed"
-                            [style.background-color]="'#28a745'"
+                      <h4>{{ instance.parameters['order1Number'] }}</h4>
+                      <span *ngIf="instance.parameters['showStatus'] && instance.parameters['order1Status']" 
+                            class="status"
+                            [style.background-color]="getOrderStatusColor(instance.parameters['order1Status'])"
                             [style.color]="'white'"
                             [style.padding]="'4px 8px'"
                             [style.border-radius.px]="4"
                             [style.font-size.px]="12">
-                        Completed
+                        {{ instance.parameters['order1Status'] }}
                       </span>
                     </div>
-                    <p>Service: Haircut & Style</p>
-                    <p *ngIf="instance.parameters['showDate']">Date: March 15, 2024 at 2:00 PM</p>
-                    <p>Total: $35.00</p>
+                    <p><strong>{{ instance.parameters['serviceLabel'] || 'Service' }}:</strong> {{ instance.parameters['order1Service'] || 'Service Name' }}</p>
+                    <p *ngIf="instance.parameters['showDate'] && instance.parameters['order1Date']"><strong>{{ instance.parameters['dateLabel'] || 'Date' }}:</strong> {{ instance.parameters['order1Date'] }}</p>
+                    <p><strong>{{ instance.parameters['totalLabel'] || 'Total' }}:</strong> {{ instance.parameters['order1Total'] || '$0.00' }}</p>
+                    <div *ngIf="instance.parameters['order1Description']" class="order-description" [style.margin]="'8px 0'" [style.color]="'#6c757d'">
+                      <small>{{ instance.parameters['order1Description'] }}</small>
+                    </div>
                     <div class="order-actions" [style.margin-top.px]="10">
                       <button *ngIf="instance.parameters['allowReschedule']"
                               class="btn-outline"
@@ -789,21 +1021,32 @@
                               [style.color]="'#007bff'"
                               [style.background]="'transparent'"
                               [style.border-radius.px]="4">
-                        Reschedule
+                        {{ instance.parameters['rescheduleText'] || 'Reschedule' }}
                       </button>
                       <button *ngIf="instance.parameters['allowCancel']"
                               class="btn-outline"
+                              [style.margin-right.px]="8"
                               [style.padding]="'6px 12px'"
                               [style.border]="'1px solid #dc3545'"
                               [style.color]="'#dc3545'"
                               [style.background]="'transparent'"
                               [style.border-radius.px]="4">
-                        Cancel
+                        {{ instance.parameters['cancelText'] || 'Cancel' }}
+                      </button>
+                      <button *ngIf="instance.parameters['allowReorder']"
+                              class="btn-outline"
+                              [style.padding]="'6px 12px'"
+                              [style.border]="'1px solid #28a745'"
+                              [style.color]="'#28a745'"
+                              [style.background]="'transparent'"
+                              [style.border-radius.px]="4">
+                        {{ instance.parameters['reorderText'] || 'Reorder' }}
                       </button>
                     </div>
                   </div>
                   
-                  <div class="order-item" 
+                  <!-- Order 2 -->
+                  <div *ngIf="instance.parameters['order2Number']" class="order-item" 
                        [style.border]="'1px solid #ddd'"
                        [style.border-radius.px]="8"
                        [style.padding.px]="15"
@@ -812,20 +1055,23 @@
                          [style.display]="'flex'"
                          [style.justify-content]="'space-between'"
                          [style.align-items]="'center'">
-                      <h4>Order #12344</h4>
-                      <span *ngIf="instance.parameters['showStatus']" 
-                            class="status upcoming"
-                            [style.background-color]="'#007bff'"
+                      <h4>{{ instance.parameters['order2Number'] }}</h4>
+                      <span *ngIf="instance.parameters['showStatus'] && instance.parameters['order2Status']" 
+                            class="status"
+                            [style.background-color]="getOrderStatusColor(instance.parameters['order2Status'])"
                             [style.color]="'white'"
                             [style.padding]="'4px 8px'"
                             [style.border-radius.px]="4"
                             [style.font-size.px]="12">
-                        Upcoming
+                        {{ instance.parameters['order2Status'] }}
                       </span>
                     </div>
-                    <p>Service: Color Treatment</p>
-                    <p *ngIf="instance.parameters['showDate']">Date: March 22, 2024 at 10:00 AM</p>
-                    <p>Total: $85.00</p>
+                    <p><strong>{{ instance.parameters['serviceLabel'] || 'Service' }}:</strong> {{ instance.parameters['order2Service'] || 'Service Name' }}</p>
+                    <p *ngIf="instance.parameters['showDate'] && instance.parameters['order2Date']"><strong>{{ instance.parameters['dateLabel'] || 'Date' }}:</strong> {{ instance.parameters['order2Date'] }}</p>
+                    <p><strong>{{ instance.parameters['totalLabel'] || 'Total' }}:</strong> {{ instance.parameters['order2Total'] || '$0.00' }}</p>
+                    <div *ngIf="instance.parameters['order2Description']" class="order-description" [style.margin]="'8px 0'" [style.color]="'#6c757d'">
+                      <small>{{ instance.parameters['order2Description'] }}</small>
+                    </div>
                     <div class="order-actions" [style.margin-top.px]="10">
                       <button *ngIf="instance.parameters['allowReschedule']"
                               class="btn-outline"
@@ -835,16 +1081,86 @@
                               [style.color]="'#007bff'"
                               [style.background]="'transparent'"
                               [style.border-radius.px]="4">
-                        Reschedule
+                        {{ instance.parameters['rescheduleText'] || 'Reschedule' }}
                       </button>
                       <button *ngIf="instance.parameters['allowCancel']"
                               class="btn-outline"
+                              [style.margin-right.px]="8"
                               [style.padding]="'6px 12px'"
                               [style.border]="'1px solid #dc3545'"
                               [style.color]="'#dc3545'"
                               [style.background]="'transparent'"
                               [style.border-radius.px]="4">
-                        Cancel
+                        {{ instance.parameters['cancelText'] || 'Cancel' }}
+                      </button>
+                      <button *ngIf="instance.parameters['allowReorder']"
+                              class="btn-outline"
+                              [style.padding]="'6px 12px'"
+                              [style.border]="'1px solid #28a745'"
+                              [style.color]="'#28a745'"
+                              [style.background]="'transparent'"
+                              [style.border-radius.px]="4">
+                        {{ instance.parameters['reorderText'] || 'Reorder' }}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Order 3 -->
+                  <div *ngIf="instance.parameters['order3Number']" class="order-item" 
+                       [style.border]="'1px solid #ddd'"
+                       [style.border-radius.px]="8"
+                       [style.padding.px]="15"
+                       [style.margin-bottom.px]="15">
+                    <div class="order-header" 
+                         [style.display]="'flex'"
+                         [style.justify-content]="'space-between'"
+                         [style.align-items]="'center'">
+                      <h4>{{ instance.parameters['order3Number'] }}</h4>
+                      <span *ngIf="instance.parameters['showStatus'] && instance.parameters['order3Status']" 
+                            class="status"
+                            [style.background-color]="getOrderStatusColor(instance.parameters['order3Status'])"
+                            [style.color]="'white'"
+                            [style.padding]="'4px 8px'"
+                            [style.border-radius.px]="4"
+                            [style.font-size.px]="12">
+                        {{ instance.parameters['order3Status'] }}
+                      </span>
+                    </div>
+                    <p><strong>{{ instance.parameters['serviceLabel'] || 'Service' }}:</strong> {{ instance.parameters['order3Service'] || 'Service Name' }}</p>
+                    <p *ngIf="instance.parameters['showDate'] && instance.parameters['order3Date']"><strong>{{ instance.parameters['dateLabel'] || 'Date' }}:</strong> {{ instance.parameters['order3Date'] }}</p>
+                    <p><strong>{{ instance.parameters['totalLabel'] || 'Total' }}:</strong> {{ instance.parameters['order3Total'] || '$0.00' }}</p>
+                    <div *ngIf="instance.parameters['order3Description']" class="order-description" [style.margin]="'8px 0'" [style.color]="'#6c757d'">
+                      <small>{{ instance.parameters['order3Description'] }}</small>
+                    </div>
+                    <div class="order-actions" [style.margin-top.px]="10">
+                      <button *ngIf="instance.parameters['allowReschedule']"
+                              class="btn-outline"
+                              [style.margin-right.px]="8"
+                              [style.padding]="'6px 12px'"
+                              [style.border]="'1px solid #007bff'"
+                              [style.color]="'#007bff'"
+                              [style.background]="'transparent'"
+                              [style.border-radius.px]="4">
+                        {{ instance.parameters['rescheduleText'] || 'Reschedule' }}
+                      </button>
+                      <button *ngIf="instance.parameters['allowCancel']"
+                              class="btn-outline"
+                              [style.margin-right.px]="8"
+                              [style.padding]="'6px 12px'"
+                              [style.border]="'1px solid #dc3545'"
+                              [style.color]="'#dc3545'"
+                              [style.background]="'transparent'"
+                              [style.border-radius.px]="4">
+                        {{ instance.parameters['cancelText'] || 'Cancel' }}
+                      </button>
+                      <button *ngIf="instance.parameters['allowReorder']"
+                              class="btn-outline"
+                              [style.padding]="'6px 12px'"
+                              [style.border]="'1px solid #28a745'"
+                              [style.color]="'#28a745'"
+                              [style.background]="'transparent'"
+                              [style.border-radius.px]="4">
+                        {{ instance.parameters['reorderText'] || 'Reorder' }}
                       </button>
                     </div>
                   </div>
@@ -970,19 +1286,910 @@
                 </div>
               </div>
 
+              <!-- Counter Component -->
+              <div *ngSwitchCase="'counter'" class="counter-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'"
+                   [style.text-align]="'center'">
+                <div class="counter-content">
+                  <div class="counter-value" 
+                       [style.font-size]="'48px'"
+                       [style.font-weight]="'bold'"
+                       [style.color]="instance.parameters['color'] || '#007bff'"
+                       [style.margin-bottom]="'8px'">
+                    {{ instance.parameters['prefix'] || '' }}{{ instance.parameters['value'] || 0 }}{{ instance.parameters['suffix'] || '' }}
+                  </div>
+                  <div class="counter-title" 
+                       [style.font-size]="'16px'"
+                       [style.color]="'#6c757d'">
+                    {{ instance.parameters['title'] || 'Counter' }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Progress Bar Component -->
+              <div *ngSwitchCase="'progress-bar'" class="progress-bar-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'">
+                <div class="progress-container">
+                  <div class="progress-label" 
+                       *ngIf="instance.parameters['label']"
+                       [style.margin-bottom]="'8px'"
+                       [style.font-weight]="'500'">
+                    {{ instance.parameters['label'] }}
+                  </div>
+                  <div class="progress-wrapper" [style.position]="'relative'">
+                    <div class="progress-bg" 
+                         [style.width]="'100%'"
+                         [style.height.px]="instance.parameters['height'] || 20"
+                         [style.background-color]="instance.parameters['backgroundColor'] || '#e9ecef'"
+                         [style.border-radius]="'10px'"
+                         [style.overflow]="'hidden'">
+                      <div class="progress-fill" 
+                           [style.width.%]="instance.parameters['value'] || 75"
+                           [style.height]="'100%'"
+                           [style.background-color]="instance.parameters['color'] || '#28a745'"
+                           [style.transition]="'width 0.3s ease'">
+                      </div>
+                    </div>
+                    <span class="progress-text" 
+                          *ngIf="instance.parameters['showPercentage']"
+                          [style.position]="'absolute'"
+                          [style.top]="'50%'"
+                          [style.left]="'50%'"
+                          [style.transform]="'translate(-50%, -50%)'"
+                          [style.font-size]="'12px'"
+                          [style.font-weight]="'bold'"
+                          [style.color]="'#fff'">
+                      {{ (instance.parameters['value'] || 75) }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Text Component -->
+              <div *ngSwitchCase="'text-component'" class="text-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'16px'"
+                   [style.font-size.px]="instance.parameters['fontSize'] || 16"
+                   [style.color]="instance.parameters['textColor'] || '#333333'"
+                   [style.text-align]="instance.parameters['alignment'] || 'left'"
+                   [style.line-height]="instance.parameters['lineHeight'] || 1.5"
+                   [style.font-weight]="instance.parameters['fontWeight'] || 'normal'">
+                {{ instance.parameters['content'] || 'Your text content here' }}
+              </div>
+
+              <!-- Button Component -->
+              <div *ngSwitchCase="'button-component'" class="button-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.display]="'flex'"
+                   [style.align-items]="'center'"
+                   [style.justify-content]="'center'">
+                <button type="button"
+                        [style.background-color]="instance.parameters['backgroundColor'] || '#007bff'"
+                        [style.color]="instance.parameters['textColor'] || '#ffffff'"
+                        [style.border]="'none'"
+                        [style.border-radius.px]="instance.parameters['borderRadius'] || 4"
+                        [style.padding]="getButtonPadding(instance.parameters['size'] || 'medium')"
+                        [style.font-size]="getButtonFontSize(instance.parameters['size'] || 'medium')"
+                        [style.cursor]="'pointer'"
+                        [style.transition]="'all 0.2s'">
+                  {{ instance.parameters['text'] || 'Click Me' }}
+                </button>
+              </div>
+
+              <!-- Form Component -->
+              <div *ngSwitchCase="'form-component'" class="form-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'">
+                <h3 *ngIf="instance.parameters['title']">{{ instance.parameters['title'] }}</h3>
+                <form>
+                  <div class="form-group" [style.margin-bottom]="'15px'">
+                    <label *ngIf="instance.parameters['showLabels']">Name</label>
+                    <input type="text" placeholder="Your name" 
+                           [style.width]="'100%'"
+                           [style.padding]="'8px'"
+                           [style.border]="'1px solid #ddd'"
+                           [style.border-radius.px]="4">
+                  </div>
+                  <div class="form-group" [style.margin-bottom]="'15px'">
+                    <label *ngIf="instance.parameters['showLabels']">Email</label>
+                    <input type="email" placeholder="Your email" 
+                           [style.width]="'100%'"
+                           [style.padding]="'8px'"
+                           [style.border]="'1px solid #ddd'"
+                           [style.border-radius.px]="4">
+                  </div>
+                  <div class="form-group" [style.margin-bottom]="'15px'">
+                    <label *ngIf="instance.parameters['showLabels']">Message</label>
+                    <textarea placeholder="Your message" 
+                              [style.width]="'100%'"
+                              [style.padding]="'8px'"
+                              [style.border]="'1px solid #ddd'"
+                              [style.border-radius.px]="4"
+                              [style.min-height]="'80px'"></textarea>
+                  </div>
+                  <button type="submit"
+                          [style.background-color]="'#007bff'"
+                          [style.color]="'white'"
+                          [style.border]="'none'"
+                          [style.padding]="'10px 20px'"
+                          [style.border-radius.px]="4">
+                    {{ instance.parameters['submitText'] || 'Submit' }}
+                  </button>
+                </form>
+              </div>
+
+              <!-- Card Component -->
+              <div *ngSwitchCase="'card-component'" class="card-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'"
+                   [style.border-radius.px]="instance.parameters['borderRadius'] || 8"
+                   [style.box-shadow]="instance.parameters['showShadow'] ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'"
+                   [style.overflow]="'hidden'">
+                <div *ngIf="instance.parameters['showImage'] && instance.parameters['imageUrl']" 
+                     class="card-image"
+                     [style.height]="'40%'"
+                     [style.background-image]="'url(' + instance.parameters['imageUrl'] + ')'"
+                     [style.background-size]="'cover'"
+                     [style.background-position]="'center'">
+                </div>
+                <div class="card-content" [style.padding]="'16px'">
+                  <h4 *ngIf="instance.parameters['title']" 
+                      [style.margin]="'0 0 8px 0'">
+                    {{ instance.parameters['title'] }}
+                  </h4>
+                  <p *ngIf="instance.parameters['content']"
+                     [style.color]="'#6c757d'"
+                     [style.margin-bottom]="'16px'">
+                    {{ instance.parameters['content'] }}
+                  </p>
+                  <button *ngIf="instance.parameters['buttonText']"
+                          type="button"
+                          [style.background-color]="'#007bff'"
+                          [style.color]="'white'"
+                          [style.border]="'none'"
+                          [style.padding]="'8px 16px'"
+                          [style.border-radius.px]="4">
+                    {{ instance.parameters['buttonText'] }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Image Component -->
+              <div *ngSwitchCase="'image-component'" class="image-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.display]="'flex'"
+                   [style.flex-direction]="'column'">
+                <img [src]="instance.parameters['imageUrl'] || 'https://via.placeholder.com/400x300'"
+                     [alt]="instance.parameters['altText'] || 'Image description'"
+                     [style.width]="'100%'"
+                     [style.flex]="'1'"
+                     [style.object-fit]="instance.parameters['objectFit'] || 'cover'"
+                     [style.border-radius.px]="instance.parameters['borderRadius'] || 0">
+                <div *ngIf="instance.parameters['showCaption'] && instance.parameters['caption']"
+                     class="image-caption"
+                     [style.padding]="'8px'"
+                     [style.font-size]="'14px'"
+                     [style.color]="'#6c757d'"
+                     [style.text-align]="'center'">
+                  {{ instance.parameters['caption'] }}
+                </div>
+              </div>
+
+              <!-- Video Component -->
+              <div *ngSwitchCase="'video-component'" class="video-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'">
+                <div *ngIf="instance.parameters['title']" 
+                     class="video-title"
+                     [style.padding]="'8px 0'"
+                     [style.font-weight]="'bold'">
+                  {{ instance.parameters['title'] }}
+                </div>
+                <video [src]="instance.parameters['videoUrl']"
+                       [controls]="instance.parameters['controls'] ?? true"
+                       [autoplay]="instance.parameters['autoplay'] || false"
+                       [loop]="instance.parameters['loop'] || false"
+                       [muted]="instance.parameters['muted'] || false"
+                       [style.width]="'100%'"
+                       [style.height]="instance.parameters['title'] ? 'calc(100% - 40px)' : '100%'"
+                       [style.object-fit]="'cover'">
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+
+              <!-- Header Component -->
+              <div *ngSwitchCase="'header-component'" class="header-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#f8f9fa'"
+                   [style.color]="instance.parameters['textColor'] || '#333333'"
+                   [style.background-image]="instance.parameters['backgroundImage'] ? 'url(' + instance.parameters['backgroundImage'] + ')' : 'none'"
+                   [style.background-size]="'cover'"
+                   [style.background-position]="'center'"
+                   [style.display]="'flex'"
+                   [style.flex-direction]="'column'"
+                   [style.justify-content]="'center'"
+                   [style.align-items]="'center'"
+                   [style.text-align]="'center'"
+                   [style.padding]="'40px 20px'">
+                <h1 [style.margin]="'0 0 8px 0'">{{ instance.parameters['title'] || 'Page Header' }}</h1>
+                <p *ngIf="instance.parameters['subtitle']" 
+                   [style.margin]="'0'"
+                   [style.opacity]="'0.8'">
+                  {{ instance.parameters['subtitle'] }}
+                </p>
+                <nav *ngIf="instance.parameters['showBreadcrumbs']" 
+                     class="breadcrumbs"
+                     [style.margin-top]="'16px'">
+                  <span>Home</span> > <span>Current Page</span>
+                </nav>
+              </div>
+
+              <!-- Footer Component -->
+              <div *ngSwitchCase="'footer-component'" class="footer-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.background-color]="'#2c3e50'"
+                   [style.color]="'#ffffff'"
+                   [style.padding]="'20px'"
+                   [style.display]="'flex'"
+                   [style.justify-content]="'space-between'"
+                   [style.align-items]="'flex-start'">
+                <div class="footer-content">
+                  <h4>{{ instance.parameters['companyName'] || 'Company Name' }}</h4>
+                  <p [style.margin]="'8px 0'">{{ instance.parameters['description'] || 'Your company description' }}</p>
+                </div>
+                <div class="footer-links">
+                  <div>About</div>
+                  <div>Services</div>
+                  <div>Contact</div>
+                </div>
+              </div>
+
+              <!-- Booking Calendar -->
+              <div *ngSwitchCase="'booking-calendar'" class="booking-calendar"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'20px'">
+                <h3>{{ instance.parameters['title'] || 'Book an Appointment' }}</h3>
+                <div class="calendar-section" [style.margin-top.px]="15">
+                  <div class="calendar-header" 
+                       [style.display]="'flex'"
+                       [style.justify-content]="'space-between'"
+                       [style.align-items]="'center'"
+                       [style.margin-bottom.px]="15">
+                    <button [style.background]="'none'" [style.border]="'none'" [style.font-size.px]="18">‹</button>
+                    <h4>March 2024</h4>
+                    <button [style.background]="'none'" [style.border]="'none'" [style.font-size.px]="18">›</button>
+                  </div>
+                  <div class="calendar-grid" 
+                       [style.display]="'grid'"
+                       [style.grid-template-columns]="'repeat(7, 1fr)'"
+                       [style.gap.px]="5"
+                       [style.margin-bottom.px]="15">
+                    <div class="day-header" 
+                         *ngFor="let day of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']"
+                         [style.text-align]="'center'"
+                         [style.font-weight]="'bold'"
+                         [style.padding.px]="8">
+                      {{ day }}
+                    </div>
+                    <div class="calendar-day available" 
+                         *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]"
+                         [style.text-align]="'center'"
+                         [style.padding.px]="8"
+                         [style.border]="'1px solid #ddd'"
+                         [style.cursor]="'pointer'"
+                         [style.background-color]="i === 15 ? '#007bff' : '#f8f9fa'"
+                         [style.color]="i === 15 ? 'white' : 'black'">
+                      {{ i }}
+                    </div>
+                  </div>
+                  <div *ngIf="instance.parameters['showTimeSlots']" class="time-slots">
+                    <h4>Available Times for March 15</h4>
+                    <div class="time-grid" 
+                         [style.display]="'grid'"
+                         [style.grid-template-columns]="'repeat(4, 1fr)'"
+                         [style.gap.px]="8"
+                         [style.margin-top.px]="10">
+                      <button *ngFor="let time of ['9:00 AM', '10:00 AM', '11:00 AM', '2:00 PM', '3:00 PM', '4:00 PM']"
+                              class="time-slot"
+                              [style.padding]="'8px'"
+                              [style.border]="'1px solid #007bff'"
+                              [style.background-color]="'transparent'"
+                              [style.color]="'#007bff'"
+                              [style.border-radius.px]="4"
+                              [style.cursor]="'pointer'">
+                        {{ time }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Alert Component -->
+              <div *ngSwitchCase="'alert-component'" class="alert-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'16px'">
+                <div class="alert" 
+                     [style.padding]="'12px 16px'"
+                     [style.border-radius.px]="4"
+                     [style.border]="'1px solid'"
+                     [style.background-color]="getAlertBackgroundColor(instance.parameters['alertType'] || 'info')"
+                     [style.border-color]="getAlertBorderColor(instance.parameters['alertType'] || 'info')"
+                     [style.color]="getAlertTextColor(instance.parameters['alertType'] || 'info')"
+                     [style.display]="'flex'"
+                     [style.align-items]="'flex-start'"
+                     [style.gap]="'8px'">
+                  <i *ngIf="instance.parameters['showIcon']" 
+                     [class]="getAlertIcon(instance.parameters['alertType'] || 'info')"
+                     [style.margin-top]="'2px'"></i>
+                  <div class="alert-content" [style.flex]="'1'">
+                    <h5 *ngIf="instance.parameters['alertTitle']" 
+                        [style.margin]="'0 0 4px 0'"
+                        [style.font-weight]="'600'"
+                        [style.font-size]="'14px'">
+                      {{ instance.parameters['alertTitle'] }}
+                    </h5>
+                    <p [style.margin]="'0'"
+                       [style.font-size]="'14px'">
+                      {{ instance.parameters['alertMessage'] || 'Alert message' }}
+                    </p>
+                  </div>
+                  <button *ngIf="instance.parameters['dismissible']"
+                          type="button"
+                          [style.background]="'none'"
+                          [style.border]="'none'"
+                          [style.font-size]="'18px'"
+                          [style.cursor]="'pointer'"
+                          [style.padding]="'0'"
+                          [style.margin-left]="'8px'"
+                          [style.color]="'inherit'"
+                          [style.opacity]="'0.7'">
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <!-- Alert Component (alternative naming) -->
+              <div *ngSwitchCase="'alert'" class="alert-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'16px'">
+                <div class="alert" 
+                     [style.padding]="'12px 16px'"
+                     [style.border-radius.px]="4"
+                     [style.border]="'1px solid'"
+                     [style.background-color]="getAlertBackgroundColor(instance.parameters['alertType'] || 'info')"
+                     [style.border-color]="getAlertBorderColor(instance.parameters['alertType'] || 'info')"
+                     [style.color]="getAlertTextColor(instance.parameters['alertType'] || 'info')"
+                     [style.display]="'flex'"
+                     [style.align-items]="'flex-start'"
+                     [style.gap]="'8px'">
+                  <i *ngIf="instance.parameters['showIcon']" 
+                     [class]="getAlertIcon(instance.parameters['alertType'] || 'info')"
+                     [style.margin-top]="'2px'"></i>
+                  <div class="alert-content" [style.flex]="'1'">
+                    <h5 *ngIf="instance.parameters['alertTitle']" 
+                        [style.margin]="'0 0 4px 0'"
+                        [style.font-weight]="'600'"
+                        [style.font-size]="'14px'">
+                      {{ instance.parameters['alertTitle'] }}
+                    </h5>
+                    <p [style.margin]="'0'"
+                       [style.font-size]="'14px'">
+                      {{ instance.parameters['alertMessage'] || 'Alert message' }}
+                    </p>
+                  </div>
+                  <button *ngIf="instance.parameters['dismissible']"
+                          type="button"
+                          [style.background]="'none'"
+                          [style.border]="'none'"
+                          [style.font-size]="'18px'"
+                          [style.cursor]="'pointer'"
+                          [style.padding]="'0'"
+                          [style.margin-left]="'8px'"
+                          [style.color]="'inherit'"
+                          [style.opacity]="'0.7'">
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <!-- Input Field Component -->
+              <div *ngSwitchCase="'input-field-component'" class="input-field-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'16px'">
+                <div class="form-group">
+                  <label *ngIf="instance.parameters['fieldLabel']" 
+                         [style.display]="'block'"
+                         [style.margin-bottom]="'8px'"
+                         [style.font-weight]="'500'"
+                         [style.color]="instance.parameters['labelColor'] || '#333'"
+                         [style.font-size]="instance.parameters['labelSize'] || '14px'">
+                    {{ instance.parameters['fieldLabel'] }}
+                    <span *ngIf="instance.parameters['requiredField']" 
+                          [style.color]="'#dc3545'"
+                          [style.margin-left]="'4px'">*</span>
+                  </label>
+                  <input [type]="instance.parameters['inputType'] || 'text'"
+                         [placeholder]="instance.parameters['placeholderText'] || 'Enter value'"
+                         [required]="instance.parameters['requiredField'] || false"
+                         [disabled]="instance.parameters['disabled'] || false"
+                         [style.width]="instance.parameters['fullWidth'] ? '100%' : 'auto'"
+                         [style.padding]="instance.parameters['padding'] || '12px'"
+                         [style.border]="'1px solid ' + (instance.parameters['borderColor'] || '#ddd')"
+                         [style.border-radius]="instance.parameters['borderRadius'] || '4px'"
+                         [style.font-size]="instance.parameters['fontSize'] || '14px'"
+                         [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'"
+                         [style.color]="instance.parameters['textColor'] || '#333'"
+                         [style.outline]="'none'"
+                         [style.transition]="'border-color 0.3s ease'">
+                  <small *ngIf="instance.parameters['helpText']" 
+                         [style.display]="'block'"
+                         [style.margin-top]="'4px'"
+                         [style.color]="'#6c757d'"
+                         [style.font-size]="'12px'">
+                    {{ instance.parameters['helpText'] }}
+                  </small>
+                  <small *ngIf="instance.parameters['validationRules']" 
+                         [style.display]="'block'"
+                         [style.margin-top]="'4px'"
+                         [style.color]="'#dc3545'"
+                         [style.font-size]="'12px'">
+                    {{ instance.parameters['validationRules'] }}
+                  </small>
+                </div>
+              </div>
+
+              <!-- Input Field Component (alternative naming) -->
+              <div *ngSwitchCase="'input-field'" class="input-field-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'16px'">
+                <div class="form-group">
+                  <label *ngIf="instance.parameters['fieldLabel']" 
+                         [style.display]="'block'"
+                         [style.margin-bottom]="'8px'"
+                         [style.font-weight]="'500'"
+                         [style.color]="instance.parameters['labelColor'] || '#333'"
+                         [style.font-size]="instance.parameters['labelSize'] || '14px'">
+                    {{ instance.parameters['fieldLabel'] }}
+                    <span *ngIf="instance.parameters['requiredField']" 
+                          [style.color]="'#dc3545'"
+                          [style.margin-left]="'4px'">*</span>
+                  </label>
+                  <input [type]="instance.parameters['inputType'] || 'text'"
+                         [placeholder]="instance.parameters['placeholderText'] || 'Enter value'"
+                         [required]="instance.parameters['requiredField'] || false"
+                         [disabled]="instance.parameters['disabled'] || false"
+                         [style.width]="instance.parameters['fullWidth'] ? '100%' : 'auto'"
+                         [style.padding]="instance.parameters['padding'] || '12px'"
+                         [style.border]="'1px solid ' + (instance.parameters['borderColor'] || '#ddd')"
+                         [style.border-radius]="instance.parameters['borderRadius'] || '4px'"
+                         [style.font-size]="instance.parameters['fontSize'] || '14px'"
+                         [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'"
+                         [style.color]="instance.parameters['textColor'] || '#333'"
+                         [style.outline]="'none'"
+                         [style.transition]="'border-color 0.3s ease'">
+                  <small *ngIf="instance.parameters['helpText']" 
+                         [style.display]="'block'"
+                         [style.margin-top]="'4px'"
+                         [style.color]="'#6c757d'"
+                         [style.font-size]="'12px'">
+                    {{ instance.parameters['helpText'] }}
+                  </small>
+                  <small *ngIf="instance.parameters['validationRules']" 
+                         [style.display]="'block'"
+                         [style.margin-top]="'4px'"
+                         [style.color]="'#dc3545'"
+                         [style.font-size]="'12px'">
+                    {{ instance.parameters['validationRules'] }}
+                  </small>
+                </div>
+              </div>
+
+              <!-- Carousel Component -->
+              <div *ngSwitchCase="'carousel-component'" class="carousel-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'16px'"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'">
+                <div class="carousel-container" 
+                     [style.position]="'relative'"
+                     [style.overflow]="'hidden'"
+                     [style.border-radius]="instance.parameters['borderRadius'] || '8px'"
+                     [style.box-shadow]="instance.parameters['showShadow'] ? '0 4px 6px rgba(0,0,0,0.1)' : 'none'">
+                  <div class="carousel-content" 
+                       [style.display]="'flex'"
+                       [style.transition]="'transform 0.3s ease'">
+                    <!-- Slide 1 -->
+                    <div *ngIf="instance.parameters['slide1Image'] || instance.parameters['slide1Title']" 
+                         class="carousel-slide" 
+                         [style.min-width]="'100%'"
+                         [style.height]="instance.parameters['slideHeight'] || '300px'"
+                         [style.position]="'relative'"
+                         [style.background-image]="instance.parameters['slide1Image'] ? 'url(' + instance.parameters['slide1Image'] + ')' : 'none'"
+                         [style.background-size]="'cover'"
+                         [style.background-position]="'center'"
+                         [style.background-color]="instance.parameters['slide1Color'] || '#f8f9fa'">
+                      <div class="slide-overlay" 
+                           [style.position]="'absolute'"
+                           [style.bottom]="'0'"
+                           [style.left]="'0'"
+                           [style.right]="'0'"
+                           [style.background]="'linear-gradient(transparent, rgba(0,0,0,0.7))'"
+                           [style.color]="'white'"
+                           [style.padding]="'20px'">
+                        <h3 *ngIf="instance.parameters['slide1Title']" 
+                            [style.margin]="'0 0 8px 0'">
+                          {{ instance.parameters['slide1Title'] }}
+                        </h3>
+                        <p *ngIf="instance.parameters['slide1Description']" 
+                           [style.margin]="'0'"
+                           [style.opacity]="'0.9'">
+                          {{ instance.parameters['slide1Description'] }}
+                        </p>
+                      </div>
+                    </div>
+                    <!-- Slide 2 -->
+                    <div *ngIf="instance.parameters['slide2Image'] || instance.parameters['slide2Title']" 
+                         class="carousel-slide" 
+                         [style.min-width]="'100%'"
+                         [style.height]="instance.parameters['slideHeight'] || '300px'"
+                         [style.position]="'relative'"
+                         [style.background-image]="instance.parameters['slide2Image'] ? 'url(' + instance.parameters['slide2Image'] + ')' : 'none'"
+                         [style.background-size]="'cover'"
+                         [style.background-position]="'center'"
+                         [style.background-color]="instance.parameters['slide2Color'] || '#f8f9fa'">
+                      <div class="slide-overlay" 
+                           [style.position]="'absolute'"
+                           [style.bottom]="'0'"
+                           [style.left]="'0'"
+                           [style.right]="'0'"
+                           [style.background]="'linear-gradient(transparent, rgba(0,0,0,0.7))'"
+                           [style.color]="'white'"
+                           [style.padding]="'20px'">
+                        <h3 *ngIf="instance.parameters['slide2Title']" 
+                            [style.margin]="'0 0 8px 0'">
+                          {{ instance.parameters['slide2Title'] }}
+                        </h3>
+                        <p *ngIf="instance.parameters['slide2Description']" 
+                           [style.margin]="'0'"
+                           [style.opacity]="'0.9'">
+                          {{ instance.parameters['slide2Description'] }}
+                        </p>
+                      </div>
+                    </div>
+                    <!-- Slide 3 -->
+                    <div *ngIf="instance.parameters['slide3Image'] || instance.parameters['slide3Title']" 
+                         class="carousel-slide" 
+                         [style.min-width]="'100%'"
+                         [style.height]="instance.parameters['slideHeight'] || '300px'"
+                         [style.position]="'relative'"
+                         [style.background-image]="instance.parameters['slide3Image'] ? 'url(' + instance.parameters['slide3Image'] + ')' : 'none'"
+                         [style.background-size]="'cover'"
+                         [style.background-position]="'center'"
+                         [style.background-color]="instance.parameters['slide3Color'] || '#f8f9fa'">
+                      <div class="slide-overlay" 
+                           [style.position]="'absolute'"
+                           [style.bottom]="'0'"
+                           [style.left]="'0'"
+                           [style.right]="'0'"
+                           [style.background]="'linear-gradient(transparent, rgba(0,0,0,0.7))'"
+                           [style.color]="'white'"
+                           [style.padding]="'20px'">
+                        <h3 *ngIf="instance.parameters['slide3Title']" 
+                            [style.margin]="'0 0 8px 0'">
+                          {{ instance.parameters['slide3Title'] }}
+                        </h3>
+                        <p *ngIf="instance.parameters['slide3Description']" 
+                           [style.margin]="'0'"
+                           [style.opacity]="'0.9'">
+                          {{ instance.parameters['slide3Description'] }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Navigation buttons -->
+                  <button *ngIf="instance.parameters['showNavigation']" 
+                          class="carousel-nav prev"
+                          [style.position]="'absolute'"
+                          [style.left]="'10px'"
+                          [style.top]="'50%'"
+                          [style.transform]="'translateY(-50%)'"
+                          [style.background]="'rgba(0,0,0,0.5)'"
+                          [style.color]="'white'"
+                          [style.border]="'none'"
+                          [style.border-radius]="'50%'"
+                          [style.width]="'40px'"
+                          [style.height]="'40px'"
+                          [style.cursor]="'pointer'">
+                    ‹
+                  </button>
+                  <button *ngIf="instance.parameters['showNavigation']" 
+                          class="carousel-nav next"
+                          [style.position]="'absolute'"
+                          [style.right]="'10px'"
+                          [style.top]="'50%'"
+                          [style.transform]="'translateY(-50%)'"
+                          [style.background]="'rgba(0,0,0,0.5)'"
+                          [style.color]="'white'"
+                          [style.border]="'none'"
+                          [style.border-radius]="'50%'"
+                          [style.width]="'40px'"
+                          [style.height]="'40px'"
+                          [style.cursor]="'pointer'">
+                    ›
+                  </button>
+                  <!-- Indicators -->
+                  <div *ngIf="instance.parameters['showIndicators']" 
+                       class="carousel-indicators"
+                       [style.position]="'absolute'"
+                       [style.bottom]="'10px'"
+                       [style.left]="'50%'"
+                       [style.transform]="'translateX(-50%)'"
+                       [style.display]="'flex'"
+                       [style.gap]="'8px'">
+                    <button class="indicator active"
+                            [style.width]="'12px'"
+                            [style.height]="'12px'"
+                            [style.border-radius]="'50%'"
+                            [style.border]="'none'"
+                            [style.background]="'white'"
+                            [style.cursor]="'pointer'">
+                    </button>
+                    <button class="indicator"
+                            [style.width]="'12px'"
+                            [style.height]="'12px'"
+                            [style.border-radius]="'50%'"
+                            [style.border]="'none'"
+                            [style.background]="'rgba(255,255,255,0.5)'"
+                            [style.cursor]="'pointer'">
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Carousel (alternative naming) -->
+              <div *ngSwitchCase="'carousel'" class="carousel-component"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.padding]="'16px'"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#ffffff'">
+                <div class="carousel-container" 
+                     [style.position]="'relative'"
+                     [style.overflow]="'hidden'"
+                     [style.border-radius]="instance.parameters['borderRadius'] || '8px'"
+                     [style.box-shadow]="instance.parameters['showShadow'] ? '0 4px 6px rgba(0,0,0,0.1)' : 'none'">
+                  <div class="carousel-content" 
+                       [style.display]="'flex'"
+                       [style.transition]="'transform 0.3s ease'">
+                    <!-- Default slides when no content configured -->
+                    <div *ngIf="!instance.parameters['slide1Image'] && !instance.parameters['slide1Title']" 
+                         class="carousel-slide" 
+                         [style.min-width]="'100%'"
+                         [style.height]="instance.parameters['slideHeight'] || '300px'"
+                         [style.display]="'flex'"
+                         [style.align-items]="'center'"
+                         [style.justify-content]="'center'"
+                         [style.background-color]="'#f8f9fa'"
+                         [style.color]="'#6c757d'">
+                      <div [style.text-align]="'center'">
+                        <i class="pi pi-images" [style.font-size]="'48px'" [style.margin-bottom]="'16px'"></i>
+                        <p>{{ instance.parameters['emptyMessage'] || 'Configure slides in properties panel' }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Default case for unknown components -->
               <div *ngSwitchDefault class="unknown-component"
                    [style.width]="'100%'"
                    [style.height]="'100%'">
-                <p>{{ getComponentDefinition(instance.type)?.name || instance.type }} Component</p>
-                <small>Component ID: {{ instance.id }}</small>
+                
+                <!-- Universal Scalable API Component Rendering -->
+                <div *ngIf="isApiComponent(instance.type); else staticPlaceholder" 
+                     class="universal-api-component"
+                     [style.padding]="'16px'"
+                     [style.width]="'100%'"
+                     [style.height]="'100%'">
+                  
+                  <!-- Universal component wrapper with ALL styling parameters applied -->
+                  <div class="component-wrapper"
+                       [style.max-width.px]="getParameterValue(instance, 'maxWidth') || getParameterValue(instance, 'Max Width (px)')"
+                       [style.width]="getParameterValue(instance, 'width') || '100%'"
+                       [style.height]="getParameterValue(instance, 'height') || 'auto'"
+                       [style.padding.px]="getParameterValue(instance, 'padding') || getParameterValue(instance, 'Padding')"
+                       [style.margin.px]="getParameterValue(instance, 'margin') || getParameterValue(instance, 'Margin')"
+                       [style.background-color]="getParameterValue(instance, 'backgroundColor') || getParameterValue(instance, 'Background Color')"
+                       [style.color]="getParameterValue(instance, 'textColor') || getParameterValue(instance, 'color')"
+                       [style.border-radius.px]="getParameterValue(instance, 'borderRadius') || getParameterValue(instance, 'Border Radius')"
+                       [style.border]="getParameterValue(instance, 'border') || (getParameterValue(instance, 'borderColor') ? '1px solid ' + getParameterValue(instance, 'borderColor') : '')"
+                       [style.font-size.px]="getParameterValue(instance, 'fontSize')"
+                       [style.font-weight]="getParameterValue(instance, 'fontWeight')"
+                       [style.text-align]="getParameterValue(instance, 'textAlign') || getParameterValue(instance, 'alignment') || (getParameterValue(instance, 'centerContent') || getParameterValue(instance, 'Center Content') ? 'center' : '')"
+                       [style.display]="getParameterValue(instance, 'centerContent') || getParameterValue(instance, 'Center Content') ? 'flex' : 'block'"
+                       [style.align-items]="getParameterValue(instance, 'centerContent') || getParameterValue(instance, 'Center Content') ? 'center' : 'initial'"
+                       [style.justify-content]="getParameterValue(instance, 'centerContent') || getParameterValue(instance, 'Center Content') ? 'center' : 'initial'"
+                       [style.min-height]="'40px'">
+                    
+                    <!-- Universal Dynamic Parameter Renderer - Works for ANY Component! -->
+                    <div class="universal-parameter-renderer">
+                      
+                      <!-- Render ALL parameters as UI elements dynamically -->
+                      <div *ngFor="let param of getApiComponentTypeParameters(instance.type)" class="parameter-element">
+                        
+                        <!-- TEXT INPUT FIELDS -->
+                        <div *ngIf="isTextInputParameter(param) && getParameterValue(instance, param.name)" 
+                             class="text-input-renderer" [style.margin-bottom]="'12px'">
+                          <label [style.display]="'block'" [style.margin-bottom]="'4px'" [style.font-weight]="'500'">
+                            {{ param.label }}
+                          </label>
+                          <input [type]="getInputTypeFromParameter(param)"
+                                 [value]="getParameterValue(instance, param.name)"
+                                 [placeholder]="param.label"
+                                 [style.width]="'100%'"
+                                 [style.padding]="'8px 12px'"
+                                 [style.border]="'1px solid #ddd'"
+                                 [style.border-radius.px]="4"
+                                 readonly>
+                        </div>
+                        
+                        <!-- BUTTON ELEMENTS -->
+                        <button *ngIf="isButtonParameter(param) && getParameterValue(instance, param.name)"
+                                type="button"
+                                [style.background-color]="getParameterValue(instance, 'buttonColor') || getParameterValue(instance, 'backgroundColor') || '#007bff'"
+                                [style.color]="getParameterValue(instance, 'buttonTextColor') || '#ffffff'"
+                                [style.border]="'none'"
+                                [style.border-radius.px]="4"
+                                [style.padding]="'8px 16px'"
+                                [style.cursor]="'pointer'"
+                                [style.margin]="'8px 0'">
+                          {{ getParameterValue(instance, param.name) }}
+                        </button>
+                        
+                        <!-- IMAGE ELEMENTS -->
+                        <div *ngIf="isImageParameter(param) && getParameterValue(instance, param.name)" 
+                             class="image-renderer" [style.margin]="'8px 0'">
+                          <img [src]="getParameterValue(instance, param.name)"
+                               [alt]="param.label"
+                               [style.width]="'100%'"
+                               [style.height]="'auto'"
+                               [style.max-height]="'200px'"
+                               [style.object-fit]="'cover'"
+                               [style.border-radius.px]="4">
+                        </div>
+                        
+                        <!-- RATING DISPLAY -->
+                        <div *ngIf="isRatingParameter(param) && getParameterValue(instance, param.name)" 
+                             class="rating-renderer" [style.margin]="'8px 0'">
+                          <label [style.font-weight]="'500'" [style.margin-right]="'8px'">{{ param.label }}:</label>
+                          <span class="rating-stars" [style.color]="'#ffc107'" [style.font-size]="'16px'">
+                            {{ generateStars(getParameterValue(instance, param.name)) }}
+                          </span>
+                          <span [style.margin-left]="'4px'" [style.color]="'#6c757d'">
+                            ({{ getParameterValue(instance, param.name) }}/5)
+                          </span>
+                        </div>
+                        
+                        <!-- PROGRESS BAR -->
+                        <div *ngIf="isProgressParameter(param) && getParameterValue(instance, param.name)" 
+                             class="progress-renderer" [style.margin]="'8px 0'">
+                          <label [style.font-weight]="'500'" [style.margin-bottom]="'4px'" [style.display]="'block'">
+                            {{ param.label }}
+                          </label>
+                          <div class="progress-wrapper" [style.position]="'relative'">
+                            <div class="progress-bg" 
+                                 [style.width]="'100%'"
+                                 [style.height]="'20px'"
+                                 [style.background-color]="'#e9ecef'"
+                                 [style.border-radius]="'10px'"
+                                 [style.overflow]="'hidden'">
+                              <div class="progress-fill" 
+                                   [style.width.%]="getParameterValue(instance, param.name)"
+                                   [style.height]="'100%'"
+                                   [style.background-color]="getParameterValue(instance, 'progressColor') || '#28a745'"
+                                   [style.transition]="'width 0.3s ease'">
+                              </div>
+                            </div>
+                            <span [style.position]="'absolute'"
+                                  [style.top]="'50%'"
+                                  [style.left]="'50%'"
+                                  [style.transform]="'translate(-50%, -50%)'"
+                                  [style.font-size]="'12px'"
+                                  [style.font-weight]="'bold'"
+                                  [style.color]="'#fff'">
+                              {{ getParameterValue(instance, param.name) }}%
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <!-- TEXT CONTENT (Titles, Quotes, etc.) -->
+                        <div *ngIf="isTextContentParameter(param) && getParameterValue(instance, param.name)" 
+                             class="text-content-renderer" [style.margin]="'8px 0'">
+                          <!-- Large text (titles, quotes) -->
+                          <h3 *ngIf="isLargeTextParameter(param)" 
+                              [style.margin]="'0 0 8px 0'"
+                              [style.color]="getParameterValue(instance, 'titleColor') || 'inherit'"
+                              [style.font-size]="'18px'"
+                              [style.font-weight]="'600'">
+                            {{ getParameterValue(instance, param.name) }}
+                          </h3>
+                          <!-- Medium text (subtitles, names) -->
+                          <h5 *ngIf="isMediumTextParameter(param)" 
+                              [style.margin]="'0 0 4px 0'"
+                              [style.color]="getParameterValue(instance, 'subtitleColor') || '#6c757d'"
+                              [style.font-size]="'14px'"
+                              [style.font-weight]="'500'">
+                            {{ getParameterValue(instance, param.name) }}
+                          </h5>
+                          <!-- Regular text (descriptions, content) -->
+                          <p *ngIf="isRegularTextParameter(param)" 
+                             [style.margin]="'0'"
+                             [style.line-height]="'1.5'"
+                             [style.color]="getParameterValue(instance, 'textColor') || 'inherit'">
+                            {{ getParameterValue(instance, param.name) }}
+                          </p>
+                        </div>
+                        
+                        <!-- COLOR DISPLAY -->
+                        <div *ngIf="isColorParameter(param) && getParameterValue(instance, param.name)" 
+                             class="color-renderer" [style.margin]="'4px 0'">
+                          <label [style.font-size]="'12px'" [style.color]="'#6c757d'" [style.margin-right]="'8px'">
+                            {{ param.label }}:
+                          </label>
+                          <span class="color-swatch" 
+                                [style.display]="'inline-block'"
+                                [style.width]="'16px'"
+                                [style.height]="'16px'"
+                                [style.background-color]="getParameterValue(instance, param.name)"
+                                [style.border]="'1px solid #ddd'"
+                                [style.border-radius]="'3px'"
+                                [style.margin-right]="'4px'">
+                          </span>
+                          <span [style.font-size]="'12px'" [style.color]="'#495057'">
+                            {{ getParameterValue(instance, param.name) }}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <!-- Empty state for components with no parameters -->
+                      <div *ngIf="getApiComponentTypeParameters(instance.type).length === 0" 
+                           class="no-parameters-state"
+                           [style.text-align]="'center'"
+                           [style.padding]="'20px'"
+                           [style.color]="'#6c757d'">
+                        <h4 [style.margin]="'0 0 8px 0'">{{ getApiComponentType(instance.type)?.name || 'Component' }}</h4>
+                        <small>This component has no configurable parameters</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <ng-template #staticPlaceholder>
+                  <p>{{ getComponentDefinition(instance.type)?.name || instance.type }} Component</p>
+                  <small>Component ID: {{ instance.id }}</small>
+                </ng-template>
               </div>
               
             </div>
             
             <!-- Component overlay for selection -->
             <div class="component-overlay" *ngIf="selectedComponentInstance?.id === instance.id">
-              <span class="component-label">{{ getComponentDefinition(instance.type)?.name || instance.type }}</span>
+              <span class="component-label">{{ getComponentDefinition(instance.type)?.name || getApiComponentType(instance.type)?.name || instance.type }}</span>
               <small class="edit-hint">✏️ Editing properties</small>
             </div>
             
@@ -1028,8 +2235,8 @@
         <!-- Component Properties (when component is selected) -->
         <div *ngIf="selectedComponentInstance" class="component-properties">
           <div class="selected-component-info">
-            <h4>{{ selectedComponentInstance.type === 'built-in-navigation' ? 'Built-in Navigation' : (getComponentDefinition(selectedComponentInstance.type)?.name || selectedComponentInstance.type) }}</h4>
-            <small>{{ selectedComponentInstance.type === 'built-in-navigation' ? 'Configure your website navigation bar and logo' : getComponentDefinition(selectedComponentInstance.type)?.description }}</small>
+            <h4>{{ selectedComponentInstance.type === 'built-in-navigation' ? 'Built-in Navigation' : (getComponentDefinition(selectedComponentInstance.type)?.name || getApiComponentType(selectedComponentInstance.type)?.name || selectedComponentInstance.type) }}</h4>
+            <small>{{ selectedComponentInstance.type === 'built-in-navigation' ? 'Configure your website navigation bar and logo' : (getComponentDefinition(selectedComponentInstance.type)?.description || getApiComponentType(selectedComponentInstance.type)?.description || 'Configure this component using the properties below') }}</small>
             <div class="edit-status">
               <i class="pi pi-pencil"></i>
               <span>Edit properties below - changes apply instantly</span>
@@ -1136,7 +2343,7 @@
           
           <!-- Dynamic parameter inputs for regular components -->
           <div *ngIf="selectedComponentInstance.type !== 'built-in-navigation'">
-          <div *ngFor="let param of getComponentDefinition(selectedComponentInstance.type)?.parameters" class="property-group">
+          <div *ngFor="let param of getComponentDefinition(selectedComponentInstance.type)?.parameters || getApiComponentTypeParameters(selectedComponentInstance.type)" class="property-group">
             <label>{{ param.label }}</label>
             
             <!-- Text input -->
@@ -1563,4 +2770,3 @@
     </div>
   </div>
 </div>
-

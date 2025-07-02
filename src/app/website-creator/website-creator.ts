@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, effect } from '@angular/core'
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { WebsiteBuilderService, ComponentDefinition, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/website-builder';
+import { WebsiteBuilderService, ComponentDefinition, ComponentParameter, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/website-builder';
 import { WorkspaceProject } from './workspace-selection.component';
 import { CreateWorkspaceDto, UpdateWorkspaceDto, ComponentType } from '../models/workspace.models';
 
@@ -101,31 +101,53 @@ export class WebsiteCreatorComponent implements OnInit {
     // Show workspace selection first - don't initialize builder until project is selected
     console.log('Website Creator initialized - showing workspace selection');
     
-    // Load API component types for business workspace
-    this.loadApiComponentTypes();
-    
-    // Subscribe to API component types changes
+    // Subscribe to API component types changes (but don't load yet)
     this.subscribeToApiComponentTypes();
   }
 
   // API Component Types Methods
   private loadApiComponentTypes(): void {
+    console.log('🚀 loadApiComponentTypes method called');
+    console.log('🚀 Initial state:', {
+      isLoadingApiComponents: this.isLoadingApiComponents,
+      apiComponentsLoadError: this.apiComponentsLoadError,
+      apiComponentTypesLength: this.apiComponentTypes.length
+    });
+    
     this.isLoadingApiComponents = true;
     this.apiComponentsLoadError = null;
     
-    console.log('Loading API component types...');
+    console.log('🚀 Loading API component types...');
+    console.log('🚀 Current project:', this.currentProject);
+    console.log('🚀 Business ID:', this.currentProject?.businessId);
     
     this.websiteBuilder.getApiComponentTypesForBusinessWorkspace().subscribe({
       next: (componentTypes: ComponentType[]) => {
         this.apiComponentTypes = componentTypes;
         this.isLoadingApiComponents = false;
-        console.log('API Component types loaded successfully:', componentTypes.length, 'components');
+        console.log('✅ API Component types loaded successfully:', componentTypes.length, 'components');
         console.log('Available categories:', this.websiteBuilder.getApiComponentCategories());
+        console.log('Component types:', componentTypes.map(c => ({ id: c.id, name: c.name, category: c.category })));
+        
+        // Register API components with the website builder service for drag/drop
+        this.registerApiComponentsWithBuilder(componentTypes);
+        
+        // Update component categories with newly loaded API components
+        this.updateComponentCategories();
       },
       error: (error) => {
         this.isLoadingApiComponents = false;
         this.apiComponentsLoadError = 'Failed to load component types from API';
-        console.error('Error loading API component types:', error);
+        console.error('❌ Error loading API component types:', error);
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url
+        });
+        
+        // Reset cache on error to allow retry
+        this.websiteBuilder.resetApiComponentTypesCache();
       }
     });
   }
@@ -136,6 +158,9 @@ export class WebsiteCreatorComponent implements OnInit {
       next: (componentTypes: ComponentType[]) => {
         this.apiComponentTypes = componentTypes;
         console.log('API Component types updated:', componentTypes.length, 'components');
+        
+        // Update component categories when API components change
+        this.updateComponentCategories();
       },
       error: (error) => {
         console.error('Error in API component types subscription:', error);
@@ -166,20 +191,26 @@ export class WebsiteCreatorComponent implements OnInit {
 
   // Refresh API component types
   refreshApiComponentTypes(): void {
-    console.log('Refreshing API component types...');
+    console.log('🔄 Refreshing API component types...');
     this.isLoadingApiComponents = true;
     this.apiComponentsLoadError = null;
+    
+    // Clear any existing cache first
+    this.websiteBuilder.resetApiComponentTypesCache();
     
     this.websiteBuilder.refreshApiComponentTypes().subscribe({
       next: (componentTypes: ComponentType[]) => {
         this.apiComponentTypes = componentTypes;
         this.isLoadingApiComponents = false;
-        console.log('API Component types refreshed successfully');
+        console.log('✅ API Component types refreshed successfully:', componentTypes.length, 'components');
+        
+        // Update component categories after refresh
+        this.updateComponentCategories();
       },
       error: (error) => {
         this.isLoadingApiComponents = false;
         this.apiComponentsLoadError = 'Failed to refresh component types';
-        console.error('Error refreshing API component types:', error);
+        console.error('❌ Error refreshing API component types:', error);
       }
     });
   }
@@ -202,9 +233,34 @@ export class WebsiteCreatorComponent implements OnInit {
     };
   }
 
+  // Register API components with website builder for drag/drop functionality
+  private registerApiComponentsWithBuilder(apiComponents: ComponentType[]): void {
+    console.log('📝 Registering', apiComponents.length, 'API components with website builder...');
+    
+    // Convert API components to ComponentDefinition format and add to available components
+    const apiComponentDefinitions = apiComponents.map(apiComp => this.convertApiComponentToDefinition(apiComp));
+    
+    // Add them to the website builder's component registry
+    apiComponentDefinitions.forEach(compDef => {
+      this.websiteBuilder.registerComponent(compDef);
+    });
+    
+    console.log('✅ API components registered successfully for drag/drop');
+  }
+
+  // Get raw local components by category (without search filtering)
+  private getRawLocalComponentsByCategory(category: string): ComponentDefinition[] {
+    if (category === 'All') {
+      return this.availableComponents;
+    }
+    return this.availableComponents.filter(comp => 
+      comp.category.toLowerCase() === category.toLowerCase()
+    );
+  }
+
   // Get combined components (local + API) for display
   getCombinedComponentsByCategory(category: string): ComponentDefinition[] {
-    const localComponents = this.getFilteredComponentsByCategory(category);
+    const localComponents = this.getRawLocalComponentsByCategory(category);
     
     if (!this.hasApiComponents()) {
       return localComponents;
@@ -244,6 +300,183 @@ export class WebsiteCreatorComponent implements OnInit {
   // Get API component type by ID
   getApiComponentType(componentId: string): ComponentType | undefined {
     return this.apiComponentTypes.find(comp => comp.id === componentId);
+  }
+
+  // Get API component type parameters by parsing the parametersSchema
+  getApiComponentTypeParameters(componentId: string): ComponentParameter[] {
+    const apiComponent = this.getApiComponentType(componentId);
+    if (!apiComponent || !apiComponent.parametersSchema) {
+      return [];
+    }
+    
+    try {
+      return JSON.parse(apiComponent.parametersSchema);
+    } catch (error) {
+      console.error('Error parsing parametersSchema for component:', componentId, error);
+      return [];
+    }
+  }
+
+  // Universal helper method to get parameter values with multiple naming conventions
+  getParameterValue(instance: any, parameterName: string): any {
+    if (!instance || !instance.parameters) {
+      return null;
+    }
+    
+    // Direct parameter name
+    if (instance.parameters[parameterName] !== undefined) {
+      return instance.parameters[parameterName];
+    }
+    
+    // Try common variations
+    const variations = [
+      parameterName.toLowerCase(),
+      parameterName.charAt(0).toLowerCase() + parameterName.slice(1), // camelCase
+      parameterName.replace(/([A-Z])/g, '_$1').toLowerCase(), // snake_case
+      parameterName.replace(/([A-Z])/g, ' $1').trim(), // Space separated
+      parameterName.replace(/([a-z])([A-Z])/g, '$1 $2'), // Add spaces before caps
+    ];
+    
+    for (const variation of variations) {
+      if (instance.parameters[variation] !== undefined) {
+        return instance.parameters[variation];
+      }
+    }
+    
+    return null;
+  }
+
+  // Check if a component has a specific parameter
+  hasParameter(instance: any, parameterName: string): boolean {
+    return this.getParameterValue(instance, parameterName) !== null;
+  }
+
+  // UNIVERSAL SCALABLE COMPONENT RENDERING METHODS
+  // These methods work for ANY component by analyzing parameter characteristics
+
+  // Detect if parameter should render as a text input field
+  isTextInputParameter(param: ComponentParameter): boolean {
+    const inputKeywords = ['input', 'field', 'placeholder', 'search', 'email', 'password', 'url'];
+    return param.type === 'text' && inputKeywords.some(keyword => 
+      param.name.toLowerCase().includes(keyword) || param.label.toLowerCase().includes(keyword)
+    );
+  }
+
+  // Detect if parameter should render as a button
+  isButtonParameter(param: ComponentParameter): boolean {
+    const buttonKeywords = ['button', 'btn', 'action', 'submit', 'cta', 'call to action'];
+    return buttonKeywords.some(keyword => 
+      param.name.toLowerCase().includes(keyword) || param.label.toLowerCase().includes(keyword)
+    );
+  }
+
+  // Detect if parameter should render as an image
+  isImageParameter(param: ComponentParameter): boolean {
+    const imageKeywords = ['image', 'img', 'photo', 'picture', 'avatar', 'logo', 'icon'];
+    return param.type === 'image-asset' || 
+           imageKeywords.some(keyword => param.name.toLowerCase().includes(keyword)) ||
+           (param.type === 'text' && this.getParameterValue({ type: '', parameters: { [param.name]: 'test' } }, param.name)?.toString().includes('http') && 
+            this.getParameterValue({ type: '', parameters: { [param.name]: 'test' } }, param.name)?.toString().match(/\.(jpg|jpeg|png|gif|svg|webp)/i));
+  }
+
+  // Detect if parameter should render as a rating display
+  isRatingParameter(param: ComponentParameter): boolean {
+    const ratingKeywords = ['rating', 'rate', 'star', 'score', 'review'];
+    return (param.type === 'number' || param.type === 'select') && 
+           ratingKeywords.some(keyword => 
+             param.name.toLowerCase().includes(keyword) || param.label.toLowerCase().includes(keyword)
+           );
+  }
+
+  // Detect if parameter should render as a progress bar
+  isProgressParameter(param: ComponentParameter): boolean {
+    const progressKeywords = ['progress', 'percent', 'completion', 'value', 'level'];
+    return param.type === 'number' && 
+           progressKeywords.some(keyword => 
+             param.name.toLowerCase().includes(keyword) || param.label.toLowerCase().includes(keyword)
+           ) &&
+           !this.isRatingParameter(param); // Don't treat ratings as progress
+  }
+
+  // Detect if parameter should render as text content
+  isTextContentParameter(param: ComponentParameter): boolean {
+    return param.type === 'text' && 
+           !this.isTextInputParameter(param) && 
+           !this.isButtonParameter(param) && 
+           !this.isImageParameter(param);
+  }
+
+  // Detect if parameter should render as large text (titles, quotes)
+  isLargeTextParameter(param: ComponentParameter): boolean {
+    const largeTextKeywords = ['title', 'quote', 'heading', 'headline', 'name', 'header'];
+    return this.isTextContentParameter(param) && 
+           largeTextKeywords.some(keyword => 
+             param.name.toLowerCase().includes(keyword) || param.label.toLowerCase().includes(keyword)
+           );
+  }
+
+  // Detect if parameter should render as medium text (subtitles, author names)
+  isMediumTextParameter(param: ComponentParameter): boolean {
+    const mediumTextKeywords = ['subtitle', 'author', 'by', 'from', 'subheading', 'caption'];
+    return this.isTextContentParameter(param) && 
+           !this.isLargeTextParameter(param) &&
+           mediumTextKeywords.some(keyword => 
+             param.name.toLowerCase().includes(keyword) || param.label.toLowerCase().includes(keyword)
+           );
+  }
+
+  // Detect if parameter should render as regular text (descriptions, content)
+  isRegularTextParameter(param: ComponentParameter): boolean {
+    return this.isTextContentParameter(param) && 
+           !this.isLargeTextParameter(param) && 
+           !this.isMediumTextParameter(param);
+  }
+
+  // Detect if parameter should render as a color display
+  isColorParameter(param: ComponentParameter): boolean {
+    return param.type === 'color' || 
+           param.name.toLowerCase().includes('color') || 
+           param.label.toLowerCase().includes('color');
+  }
+
+  // Get appropriate input type for text input parameters
+  getInputTypeFromParameter(param: ComponentParameter): string {
+    const name = param.name.toLowerCase();
+    const label = param.label.toLowerCase();
+    
+    if (name.includes('email') || label.includes('email')) return 'email';
+    if (name.includes('password') || label.includes('password')) return 'password';
+    if (name.includes('url') || label.includes('url')) return 'url';
+    if (name.includes('tel') || name.includes('phone') || label.includes('phone')) return 'tel';
+    if (name.includes('number') || param.type === 'number') return 'number';
+    
+    return 'text';
+  }
+
+  // Generate star display for ratings
+  generateStars(rating: number): string {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+    const emptyStars = 5 - Math.ceil(rating);
+    
+    let stars = '';
+    
+    // Full stars
+    for (let i = 0; i < fullStars; i++) {
+      stars += '★';
+    }
+    
+    // Half star
+    if (hasHalfStar) {
+      stars += '☆';
+    }
+    
+    // Empty stars
+    for (let i = 0; i < emptyStars; i++) {
+      stars += '☆';
+    }
+    
+    return stars;
   }
 
   // Search and filter methods
@@ -506,12 +739,8 @@ export class WebsiteCreatorComponent implements OnInit {
 
   // Component filtering helper
   getFilteredComponentsByCategory(category: string): ComponentDefinition[] {
-    let filtered = this.availableComponents;
-    
-    // Filter by category
-    if (category !== 'All') {
-      filtered = filtered.filter(comp => comp.category === category);
-    }
+    // Use combined components (local + API)
+    let filtered = this.getCombinedComponentsByCategory(category);
     
     // Filter by search term
     if (this.searchTerm) {
@@ -719,11 +948,24 @@ export class WebsiteCreatorComponent implements OnInit {
   }
 
   updateComponentCategories() {
-    this.componentCategories = [
-      { name: 'All', count: this.availableComponents.length },
-      { name: 'UI', count: this.availableComponents.filter(c => c.category === 'UI').length },
-      { name: 'Data', count: this.availableComponents.filter(c => c.category === 'Data').length }
-    ];
+    // Get all available categories from both local and API components
+    const allCategories = this.getAllAvailableCategories();
+    
+    // Calculate counts for each category
+    this.componentCategories = allCategories.map(categoryName => {
+      if (categoryName === 'All') {
+        const localCount = this.availableComponents.length;
+        const apiCount = this.apiComponentTypes.length;
+        return { name: categoryName, count: localCount + apiCount };
+      } else {
+        const localCount = this.availableComponents.filter(c => 
+          c.category.toLowerCase() === categoryName.toLowerCase()
+        ).length;
+        const apiCount = this.getApiComponentsByCategory(categoryName).length;
+        return { name: categoryName, count: localCount + apiCount };
+      }
+    });
+    
     console.log('Updated category counts:', this.componentCategories);
   }
 
@@ -787,9 +1029,20 @@ export class WebsiteCreatorComponent implements OnInit {
 
   // Workspace selection methods
   onWorkspaceProjectSelected(project: WorkspaceProject): void {
-    console.log('Project selected:', project);
+    console.log('🔥 onWorkspaceProjectSelected called with project:', project);
+    console.log('🔥 Current state before selection:', {
+      showWorkspaceSelection: this.showWorkspaceSelection,
+      currentProject: this.currentProject,
+      isLoadingApiComponents: this.isLoadingApiComponents,
+      apiComponentTypesLength: this.apiComponentTypes.length
+    });
+    
     this.currentProject = project;
     this.showWorkspaceSelection = false;
+    
+    // Now that we have a project with business context, load API components
+    console.log('🔥 About to load API components for business:', project.businessId);
+    this.loadApiComponentTypes();
     
     // Initialize the website builder with this project
     this.websiteBuilder.createNewProject(project.name, project.description);
@@ -811,12 +1064,18 @@ export class WebsiteCreatorComponent implements OnInit {
         alert('Error loading workspace data. Starting with a blank workspace.');
       }
     }
+    
+    console.log('🔥 onWorkspaceProjectSelected completed');
   }
 
   onWorkspaceProjectCreated(project: WorkspaceProject): void {
     console.log('New project created:', project);
     this.currentProject = project;
     this.showWorkspaceSelection = false;
+    
+    // Now that we have a project with business context, load API components
+    console.log('Loading API components for business:', project.businessId);
+    this.loadApiComponentTypes();
     
     // Initialize the website builder with this project
     this.websiteBuilder.createNewProject(project.name, project.description);
@@ -834,6 +1093,9 @@ export class WebsiteCreatorComponent implements OnInit {
   private initializeWebsiteBuilder(): void {
     // Initialize pages and components after project is set
     this.websiteBuilder.initializePages();
+
+    // Ensure API components are loaded (safeguard in case project selection didn't trigger it)
+    this.ensureApiComponentsLoaded();
 
     // Subscribe to observables
     this.websiteBuilder.availableComponents$.subscribe((components: ComponentDefinition[]) => {
@@ -872,6 +1134,20 @@ export class WebsiteCreatorComponent implements OnInit {
     });
   }
 
+  // Safeguard method to ensure API components are loaded
+  private ensureApiComponentsLoaded(): void {
+    if (!this.isLoadingApiComponents && this.apiComponentTypes.length === 0 && !this.apiComponentsLoadError) {
+      console.log('🔒 Safeguard: API components not loaded, triggering load...');
+      this.loadApiComponentTypes();
+    } else {
+      console.log('API components status:', {
+        isLoading: this.isLoadingApiComponents,
+        hasComponents: this.apiComponentTypes.length > 0,
+        hasError: !!this.apiComponentsLoadError
+      });
+    }
+  }
+
   // Assets Management Methods
   onTabChange(tab: 'components' | 'assets'): void {
     this.activeTab = tab;
@@ -901,8 +1177,6 @@ export class WebsiteCreatorComponent implements OnInit {
         }
       });
   }
-
-
 
   uploadImage(): void {
     if (!this.selectedImageFile) {
@@ -986,8 +1260,6 @@ export class WebsiteCreatorComponent implements OnInit {
     link.click();
     document.body.removeChild(link);
   }
-
-
 
   // Simplified upload button click handler
   onUploadButtonClick(): void {
@@ -1154,12 +1426,28 @@ export class WebsiteCreatorComponent implements OnInit {
   }
 
   getImageLogoSize(size: string): string {
-    const sizes = {
-      'small': '28px',
-      'normal': '36px',
-      'large': '44px'
-    };
-    return sizes[size as keyof typeof sizes] || sizes.normal;
+    switch (size) {
+      case 'small': return '32px';
+      case 'large': return '56px';
+      default: return '44px'; // normal
+    }
+  }
+
+  // Helper methods for button component
+  getButtonPadding(size: string): string {
+    switch (size) {
+      case 'small': return '6px 12px';
+      case 'large': return '12px 24px';
+      default: return '8px 16px'; // medium
+    }
+  }
+
+  getButtonFontSize(size: string): string {
+    switch (size) {
+      case 'small': return '12px';
+      case 'large': return '16px';
+      default: return '14px'; // medium
+    }
   }
 
   onBuiltInNavPropertiesChange(properties: { [key: string]: any }): void {
@@ -1309,6 +1597,75 @@ export class WebsiteCreatorComponent implements OnInit {
       console.error('Error updating workspace:', error);
       alert('Error updating website project. Please try again.');
     }
+  }
+
+  // Helper methods for alert component
+  getAlertBackgroundColor(type: string): string {
+    switch (type) {
+      case 'success': return '#d4edda';
+      case 'warning': return '#fff3cd';
+      case 'error': return '#f8d7da';
+      case 'danger': return '#f8d7da';
+      default: return '#d1ecf1'; // info
+    }
+  }
+
+  getAlertBorderColor(type: string): string {
+    switch (type) {
+      case 'success': return '#c3e6cb';
+      case 'warning': return '#ffeaa7';
+      case 'error': return '#f5c6cb';
+      case 'danger': return '#f5c6cb';
+      default: return '#bee5eb'; // info
+    }
+  }
+
+  getAlertTextColor(type: string): string {
+    switch (type) {
+      case 'success': return '#155724';
+      case 'warning': return '#856404';
+      case 'error': return '#721c24';
+      case 'danger': return '#721c24';
+      default: return '#0c5460'; // info
+    }
+  }
+
+  getAlertIcon(type: string): string {
+    switch (type) {
+      case 'success': return 'pi pi-check-circle';
+      case 'warning': return 'pi pi-exclamation-triangle';
+      case 'error': return 'pi pi-times-circle';
+      case 'danger': return 'pi pi-times-circle';
+      default: return 'pi pi-info-circle'; // info
+    }
+  }
+
+  // Helper method for order status colors
+  getOrderStatusColor(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'completed': return '#28a745';
+      case 'cancelled': return '#dc3545';
+      case 'pending': return '#ffc107';
+      case 'upcoming': return '#007bff';
+      case 'processing': return '#17a2b8';
+      case 'confirmed': return '#6f42c1';
+      default: return '#6c757d'; // default gray
+    }
+  }
+
+  // Helper method for generating rating stars
+  getRatingStars(rating: number): string {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    let stars = '⭐'.repeat(fullStars);
+    if (hasHalfStar) {
+      stars += '⭐'; // Using full star for simplicity, could use half-star character
+    }
+    stars += '☆'.repeat(emptyStars);
+    
+    return stars;
   }
 
 } 

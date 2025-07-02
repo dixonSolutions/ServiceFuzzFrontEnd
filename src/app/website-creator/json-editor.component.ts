@@ -32,10 +32,7 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
   sanitizedDataSize: number = 0;
   binaryFieldsRemoved: string[] = [];
   
-  // API Component Types
-  apiComponentTypes: ComponentType[] = [];
-  isLoadingApiComponents = false;
-  apiComponentsLoadError: string | null = null;
+
   
   constructor(
     private websiteBuilder: WebsiteBuilderService,
@@ -44,12 +41,6 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('JSON Editor component initialized');
-    
-    // Load API component types for business workspace
-    this.loadApiComponentTypes();
-    
-    // Subscribe to API component types changes
-    this.subscribeToApiComponentTypes();
     
     // Subscribe to pages
     this.websiteBuilder.pages$.pipe(takeUntil(this.destroy$)).subscribe(pages => {
@@ -76,75 +67,7 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // API Component Types Methods
-  private loadApiComponentTypes(): void {
-    this.isLoadingApiComponents = true;
-    this.apiComponentsLoadError = null;
-    
-    console.log('JSON Editor: Loading API component types...');
-    
-    this.websiteBuilder.getApiComponentTypesForBusinessWorkspace().pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (componentTypes: ComponentType[]) => {
-        this.apiComponentTypes = componentTypes;
-        this.isLoadingApiComponents = false;
-        console.log('JSON Editor: API Component types loaded successfully:', componentTypes.length, 'components');
-      },
-      error: (error) => {
-        this.isLoadingApiComponents = false;
-        this.apiComponentsLoadError = 'Failed to load component types from API';
-        console.error('JSON Editor: Error loading API component types:', error);
-      }
-    });
-  }
 
-  private subscribeToApiComponentTypes(): void {
-    // Subscribe to real-time updates of API component types
-    this.websiteBuilder.apiComponentTypes$.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (componentTypes: ComponentType[]) => {
-        this.apiComponentTypes = componentTypes;
-        console.log('JSON Editor: API Component types updated:', componentTypes.length, 'components');
-      },
-      error: (error) => {
-        console.error('JSON Editor: Error in API component types subscription:', error);
-      }
-    });
-  }
-
-  // Get API component type info for JSON generation
-  private getApiComponentInfo(componentType: string): { name: string; icon: string; category: string } | null {
-    const apiComponent = this.apiComponentTypes.find(comp => comp.id === componentType);
-    if (apiComponent) {
-      return {
-        name: apiComponent.name,
-        icon: apiComponent.icon || 'pi pi-box',
-        category: apiComponent.category
-      };
-    }
-    return null;
-  }
-
-  // Debug method to get API component status for the JSON editor
-  getApiComponentStatus(): string {
-    if (this.isLoadingApiComponents) {
-      return 'Loading API components...';
-    }
-    if (this.apiComponentsLoadError) {
-      return `Error: ${this.apiComponentsLoadError}`;
-    }
-    if (this.apiComponentTypes.length === 0) {
-      return 'No API components loaded';
-    }
-    return `${this.apiComponentTypes.length} API components available`;
-  }
-
-  // Check if a component is from API
-  isApiComponent(componentId: string): boolean {
-    return this.apiComponentTypes.some(comp => comp.id === componentId);
-  }
 
   // Store both versions of JSON
   private fullJsonContent: string = '';
@@ -426,9 +349,9 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
     }
     
     // Then check API component types
-    const apiComponentInfo = this.getApiComponentInfo(type);
-    if (apiComponentInfo) {
-      return apiComponentInfo.name;
+    const apiComponent = this.websiteBuilder.getCachedApiComponentTypes().find(comp => comp.id === type);
+    if (apiComponent) {
+      return apiComponent.name;
     }
     
     // Fallback mapping for known types
@@ -451,9 +374,9 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
     }
     
     // Then check API component types
-    const apiComponentInfo = this.getApiComponentInfo(type);
-    if (apiComponentInfo) {
-      return apiComponentInfo.icon;
+    const apiComponent = this.websiteBuilder.getCachedApiComponentTypes().find(comp => comp.id === type);
+    if (apiComponent) {
+      return apiComponent.icon || 'pi pi-box';
     }
     
     // Fallback mapping for known types
@@ -476,9 +399,9 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
     }
     
     // Then check API component types
-    const apiComponentInfo = this.getApiComponentInfo(type);
-    if (apiComponentInfo) {
-      return apiComponentInfo.category.toLowerCase();
+    const apiComponent = this.websiteBuilder.getCachedApiComponentTypes().find(comp => comp.id === type);
+    if (apiComponent) {
+      return apiComponent.category.toLowerCase();
     }
     
     // Fallback mapping for known types

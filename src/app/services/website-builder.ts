@@ -174,306 +174,11 @@ export class WebsiteBuilderService {
     });
   }
 
-  // Initialize available components
+  // Initialize available components - now all components come from API
   private initializeComponents(): void {
-    const components: ComponentDefinition[] = [
-      // UI Components
-      {
-        id: 'top-navigation',
-        name: 'Top Navigation',
-        category: 'UI',
-        icon: 'pi pi-bars',
-        description: 'Navigation bar with business name, optional logo, menu items, mobile hamburger menu',
-        defaultWidth: 100,
-        defaultHeight: 80,
-        parameters: [
-          { name: 'logoType', type: 'select', label: 'Logo Type', defaultValue: 'text', options: ['text', 'image'] },
-          { name: 'logoText', type: 'text', label: 'Business Name', defaultValue: 'My Business', required: true },
-          { name: 'logoImage', type: 'image-asset', label: 'Logo Image', defaultValue: '' },
-          { name: 'logoShape', type: 'select', label: 'Logo Shape', defaultValue: 'square', options: ['square', 'circle'] },
-          { name: 'logoSize', type: 'select', label: 'Logo Size', defaultValue: 'normal', options: ['small', 'normal', 'large'] },
-          { name: 'backgroundColor', type: 'color', label: 'Background Color', defaultValue: '#ffffff' },
-          { name: 'textColor', type: 'color', label: 'Text Color', defaultValue: '#000000' },
-          { name: 'isSticky', type: 'boolean', label: 'Sticky Navigation', defaultValue: true },
-          { name: 'showShadow', type: 'boolean', label: 'Drop Shadow', defaultValue: true }
-        ],
-        template: `<nav class="top-navigation" [style.background-color]="backgroundColor" [style.color]="textColor"></nav>`
-      },
-      {
-        id: 'hero-section',
-        name: 'Hero Section',
-        category: 'UI',
-        icon: 'pi pi-star',
-        description: 'Large banner area with title, subtitle, and call-to-action button',
-        defaultWidth: 100,
-        defaultHeight: 400,
-        parameters: [
-          { name: 'title', type: 'text', label: 'Title', defaultValue: 'Welcome to Our Website', required: true },
-          { name: 'subtitle', type: 'text', label: 'Subtitle', defaultValue: 'Discover amazing services and solutions' },
-          { name: 'ctaText', type: 'text', label: 'CTA Button Text', defaultValue: 'Get Started' },
-          { name: 'backgroundColor', type: 'color', label: 'Background Color', defaultValue: '#f8f9fa' },
-          { name: 'textColor', type: 'color', label: 'Text Color', defaultValue: '#333333' }
-        ],
-        template: `<section class="hero-section" [style.background-color]="backgroundColor" [style.color]="textColor"></section>`
-      },
-      {
-        id: 'footer',
-        name: 'Footer',
-        category: 'UI',
-        icon: 'pi pi-align-justify',
-        description: 'Bottom section with multiple columns and social links',
-        defaultWidth: 100,
-        defaultHeight: 200,
-        parameters: [
-          { name: 'companyName', type: 'text', label: 'Company Name', defaultValue: 'Company Name', required: true },
-          { name: 'description', type: 'text', label: 'Description', defaultValue: 'Your company description' },
-          { name: 'showSocialLinks', type: 'boolean', label: 'Show Social Links', defaultValue: true },
-          { name: 'backgroundColor', type: 'color', label: 'Background Color', defaultValue: '#2c3e50' },
-          { name: 'textColor', type: 'color', label: 'Text Color', defaultValue: '#ffffff' }
-        ],
-        template: `<footer class="footer" [style.background-color]="backgroundColor" [style.color]="textColor"></footer>`
-      },
-      {
-        id: 'text-block',
-        name: 'Text Block',
-        category: 'UI',
-        icon: 'pi pi-file-edit',
-        description: 'Editable text content with formatting options',
-        defaultWidth: 400,
-        defaultHeight: 150,
-        parameters: [
-          { name: 'title', type: 'text', label: 'Title', defaultValue: 'Text Block Title' },
-          { name: 'content', type: 'text', label: 'Content', defaultValue: 'Your text content goes here...' },
-          { name: 'alignment', type: 'select', label: 'Text Alignment', defaultValue: 'left', options: ['left', 'center', 'right'] },
-          { name: 'fontSize', type: 'number', label: 'Font Size', defaultValue: 16 },
-          { name: 'textColor', type: 'color', label: 'Text Color', defaultValue: '#333333' }
-        ],
-        template: `<div class="text-block" [style.color]="textColor"></div>`
-      },
-      {
-        id: 'image',
-        name: 'Image',
-        category: 'UI',
-        icon: 'pi pi-image',
-        description: 'Image display with alt text and sizing controls',
-        defaultWidth: 300,
-        defaultHeight: 200,
-        parameters: [
-          { name: 'imageUrl', type: 'image-asset', label: 'Select Image', defaultValue: 'https://via.placeholder.com/300x200' },
-          { name: 'altText', type: 'text', label: 'Alt Text', defaultValue: 'Image description' },
-          { name: 'borderRadius', type: 'number', label: 'Border Radius', defaultValue: 0 },
-          { name: 'objectFit', type: 'select', label: 'Object Fit', defaultValue: 'cover', options: ['cover', 'contain', 'fill'] }
-        ],
-        template: `<img class="image-component" [src]="imageUrl" [alt]="altText" [style.border-radius.px]="borderRadius">`
-      },
-      {
-        id: 'button',
-        name: 'Button',
-        category: 'UI',
-        icon: 'pi pi-tablet',
-        description: 'Clickable button with customizable styling',
-        defaultWidth: 150,
-        defaultHeight: 50,
-        parameters: [
-          { name: 'text', type: 'text', label: 'Button Text', defaultValue: 'Click Me', required: true },
-          { name: 'backgroundColor', type: 'color', label: 'Background Color', defaultValue: '#007bff' },
-          { name: 'textColor', type: 'color', label: 'Text Color', defaultValue: '#ffffff' },
-          { name: 'borderRadius', type: 'number', label: 'Border Radius', defaultValue: 4 },
-          { name: 'size', type: 'select', label: 'Size', defaultValue: 'medium', options: ['small', 'medium', 'large'] }
-        ],
-        template: `<button class="button-component" [style.background-color]="backgroundColor" [style.color]="textColor"></button>`
-      },
-      {
-        id: 'card-grid',
-        name: 'Card Grid',
-        category: 'UI',
-        icon: 'pi pi-th-large',
-        description: 'Responsive grid layout for displaying card-style content',
-        defaultWidth: 100,
-        defaultHeight: 300,
-        parameters: [
-          { name: 'columns', type: 'number', label: 'Columns', defaultValue: 3 },
-          { name: 'gap', type: 'number', label: 'Gap (px)', defaultValue: 20 },
-          { name: 'cardBackground', type: 'color', label: 'Card Background', defaultValue: '#ffffff' },
-          { name: 'showShadow', type: 'boolean', label: 'Show Shadow', defaultValue: true }
-        ],
-        template: `<div class="card-grid" [style.grid-template-columns]="'repeat(' + columns + ', 1fr)'" [style.gap.px]="gap"></div>`
-      },
-      {
-        id: 'section-divider',
-        name: 'Section Divider',
-        category: 'UI',
-        icon: 'pi pi-minus',
-        description: 'Visual separator between content sections',
-        defaultWidth: 100,
-        defaultHeight: 20,
-        parameters: [
-          { name: 'style', type: 'select', label: 'Style', defaultValue: 'line', options: ['line', 'dotted', 'dashed'] },
-          { name: 'color', type: 'color', label: 'Color', defaultValue: '#e9ecef' },
-          { name: 'thickness', type: 'number', label: 'Thickness (px)', defaultValue: 1 }
-        ],
-        template: `<hr class="section-divider" [style.border-color]="color" [style.border-width.px]="thickness">`
-      },
-      {
-        id: 'testimonial',
-        name: 'Testimonial',
-        category: 'UI',
-        icon: 'pi pi-comment',
-        description: 'Customer testimonial display with ratings and author info',
-        defaultWidth: 400,
-        defaultHeight: 200,
-        parameters: [
-          { name: 'quote', type: 'text', label: 'Quote', defaultValue: 'This is an amazing service!' },
-          { name: 'authorName', type: 'text', label: 'Author Name', defaultValue: 'John Doe' },
-          { name: 'authorTitle', type: 'text', label: 'Author Title', defaultValue: 'CEO, Company' },
-          { name: 'rating', type: 'number', label: 'Rating (1-5)', defaultValue: 5 },
-          { name: 'backgroundColor', type: 'color', label: 'Background Color', defaultValue: '#f8f9fa' }
-        ],
-        template: `<div class="testimonial" [style.background-color]="backgroundColor"></div>`
-      },
-
-      // Data Components
-      {
-        id: 'contact-info',
-        name: 'Contact Information',
-        category: 'Data',
-        icon: 'pi pi-phone',
-        description: 'Business contact details with interactive elements',
-        defaultWidth: 100,
-        defaultHeight: 300,
-        parameters: [
-          { name: 'businessName', type: 'text', label: 'Business Name', defaultValue: 'Your Business' },
-          { name: 'address', type: 'text', label: 'Address', defaultValue: '123 Main St, City, State 12345' },
-          { name: 'phone', type: 'text', label: 'Phone', defaultValue: '(555) 123-4567' },
-          { name: 'email', type: 'text', label: 'Email', defaultValue: 'info@yourbusiness.com' },
-          { name: 'hours', type: 'text', label: 'Business Hours', defaultValue: 'Mon-Fri: 9AM-6PM' },
-          { name: 'showMap', type: 'boolean', label: 'Show Map', defaultValue: true }
-        ],
-        template: `<div class="contact-info"></div>`
-      },
-      {
-        id: 'services-gallery',
-        name: 'Services Gallery',
-        category: 'Data',
-        icon: 'pi pi-list',
-        description: 'Professional service listings with booking functionality',
-        defaultWidth: 100,
-        defaultHeight: 400,
-        parameters: [
-          { name: 'title', type: 'text', label: 'Gallery Title', defaultValue: 'Our Services' },
-          { name: 'showPrices', type: 'boolean', label: 'Show Prices', defaultValue: true },
-          { name: 'showDuration', type: 'boolean', label: 'Show Duration', defaultValue: true },
-          { name: 'showBooking', type: 'boolean', label: 'Show Book Now Button', defaultValue: true },
-          { name: 'itemsPerRow', type: 'number', label: 'Items Per Row', defaultValue: 3 }
-        ],
-        template: `<div class="services-gallery"></div>`
-      },
-      {
-        id: 'checkout-summary',
-        name: 'Checkout Summary',
-        category: 'Data',
-        icon: 'pi pi-shopping-cart',
-        description: 'Complete checkout form with payment integration',
-        defaultWidth: 100,
-        defaultHeight: 500,
-        parameters: [
-          { name: 'title', type: 'text', label: 'Title', defaultValue: 'Checkout' },
-          { name: 'showTax', type: 'boolean', label: 'Show Tax', defaultValue: true },
-          { name: 'showShipping', type: 'boolean', label: 'Show Shipping', defaultValue: false },
-          { name: 'currency', type: 'select', label: 'Currency', defaultValue: 'USD', options: ['USD', 'EUR', 'GBP'] },
-          { name: 'paymentMethods', type: 'text', label: 'Payment Methods', defaultValue: 'Credit Card, PayPal, Apple Pay' }
-        ],
-        template: `<div class="checkout-summary"></div>`
-      },
-      {
-        id: 'payment-form',
-        name: 'Payment Form',
-        category: 'Data',
-        icon: 'pi pi-credit-card',
-        description: 'Secure payment form with validation',
-        defaultWidth: 100,
-        defaultHeight: 400,
-        parameters: [
-          { name: 'title', type: 'text', label: 'Title', defaultValue: 'Payment Details' },
-          { name: 'acceptedCards', type: 'text', label: 'Accepted Cards', defaultValue: 'Visa, MasterCard, American Express' },
-          { name: 'showSaveCard', type: 'boolean', label: 'Show Save Card Option', defaultValue: true },
-          { name: 'showBillingAddress', type: 'boolean', label: 'Show Billing Address', defaultValue: true }
-        ],
-        template: `<div class="payment-form"></div>`
-      },
-      {
-        id: 'product-grid',
-        name: 'Product Display',
-        category: 'Data',
-        icon: 'pi pi-table',
-        description: 'Professional service/product display with booking options',
-        defaultWidth: 100,
-        defaultHeight: 400,
-        parameters: [
-          { name: 'title', type: 'text', label: 'Title', defaultValue: 'Our Services' },
-          { name: 'columns', type: 'number', label: 'Columns', defaultValue: 3 },
-          { name: 'showPricing', type: 'boolean', label: 'Show Pricing', defaultValue: true },
-          { name: 'showDuration', type: 'boolean', label: 'Show Duration', defaultValue: true },
-          { name: 'showBooking', type: 'boolean', label: 'Show Book Now', defaultValue: true },
-          { name: 'showRatings', type: 'boolean', label: 'Show Ratings', defaultValue: true }
-        ],
-        template: `<div class="product-grid"></div>`
-      },
-      {
-        id: 'past-orders-display',
-        name: 'Past Orders Display',
-        category: 'Data',
-        icon: 'pi pi-history',
-        description: 'Customer order history with reschedule and cancel options',
-        defaultWidth: 100,
-        defaultHeight: 500,
-        parameters: [
-          { name: 'title', type: 'text', label: 'Title', defaultValue: 'Your Past Orders' },
-          { name: 'showStatus', type: 'boolean', label: 'Show Order Status', defaultValue: true },
-          { name: 'allowReschedule', type: 'boolean', label: 'Allow Rescheduling', defaultValue: true },
-          { name: 'allowCancel', type: 'boolean', label: 'Allow Cancellation', defaultValue: true },
-          { name: 'showDate', type: 'boolean', label: 'Show Service Date', defaultValue: true },
-          { name: 'itemsPerPage', type: 'number', label: 'Items Per Page', defaultValue: 10 }
-        ],
-        template: `<div class="past-orders-display"></div>`
-      },
-      {
-        id: 'authentication-form',
-        name: 'Authentication Form',
-        category: 'Data',
-        icon: 'pi pi-user',
-        description: 'Login/signup form with built-in authentication',
-        defaultWidth: 100,
-        defaultHeight: 400,
-        parameters: [
-          { name: 'title', type: 'text', label: 'Title', defaultValue: 'Sign In' },
-          { name: 'showRegister', type: 'boolean', label: 'Show Register Option', defaultValue: true },
-          { name: 'showForgotPassword', type: 'boolean', label: 'Show Forgot Password', defaultValue: true },
-          { name: 'showSocialLogin', type: 'boolean', label: 'Show Social Login', defaultValue: true },
-          { name: 'redirectAfterLogin', type: 'text', label: 'Redirect After Login', defaultValue: '/past-orders' }
-        ],
-        template: `<div class="authentication-form"></div>`
-      },
-      {
-        id: 'booking-calendar',
-        name: 'Booking Calendar',
-        category: 'Data',
-        icon: 'pi pi-calendar',
-        description: 'Interactive calendar for service booking and scheduling',
-        defaultWidth: 100,
-        defaultHeight: 500,
-        parameters: [
-          { name: 'title', type: 'text', label: 'Title', defaultValue: 'Book an Appointment' },
-          { name: 'showTimeSlots', type: 'boolean', label: 'Show Time Slots', defaultValue: true },
-          { name: 'allowMultipleServices', type: 'boolean', label: 'Allow Multiple Services', defaultValue: false },
-          { name: 'requireDeposit', type: 'boolean', label: 'Require Deposit', defaultValue: false },
-          { name: 'advanceBookingDays', type: 'number', label: 'Advance Booking Days', defaultValue: 30 }
-        ],
-        template: `<div class="booking-calendar"></div>`
-      }
-    ];
-
-    this._availableComponents.next(components);
+    // Start with empty components - all components now loaded from API
+    this._availableComponents.next([]);
+    console.log('🧹 Built-in components removed - all components now loaded from API');
   }
 
   // Project Management
@@ -1204,16 +909,28 @@ export class WebsiteBuilderService {
   loadAndCacheApiComponentTypes(): Observable<ComponentType[]> {
     if (this._apiComponentTypesLoaded) {
       // Return cached data if already loaded
+      console.log('Returning cached API component types:', this._apiComponentTypes.value.length, 'components');
       return this._apiComponentTypes.asObservable();
     }
 
+    console.log('Making API call to fetch component types...');
+    console.log('API URL:', `${this.apiBaseUrl}/api/businesswebsite/component-types`);
+
     return this.getAllComponentTypes().pipe(
       tap(response => {
+        console.log('✅ Raw API response received:', response);
         this._apiComponentTypes.next(response.componentTypes);
         this._apiComponentTypesLoaded = true;
+        console.log('✅ API component types cached successfully');
       }),
       map(response => response.componentTypes),
-      catchError(this.handleError)
+      catchError(error => {
+        console.error('❌ API component types request failed:', error);
+        console.error('Request URL:', `${this.apiBaseUrl}/api/businesswebsite/component-types`);
+        // Ensure cache flag remains false on error
+        this._apiComponentTypesLoaded = false;
+        return this.handleError(error);
+      })
     );
   }
 
@@ -1269,6 +986,33 @@ export class WebsiteBuilderService {
    */
   areApiComponentTypesLoaded(): boolean {
     return this._apiComponentTypesLoaded && this._apiComponentTypes.value.length > 0;
+  }
+
+  /**
+   * Reset API component types cache (useful for error recovery)
+   */
+  resetApiComponentTypesCache(): void {
+    this._apiComponentTypesLoaded = false;
+    this._apiComponentTypes.next([]);
+  }
+
+  /**
+   * Register a component definition (for API components)
+   */
+  registerComponent(componentDef: ComponentDefinition): void {
+    const currentComponents = this._availableComponents.value;
+    
+    // Check if component already exists, update if it does, add if new
+    const existingIndex = currentComponents.findIndex(comp => comp.id === componentDef.id);
+    
+    if (existingIndex >= 0) {
+      currentComponents[existingIndex] = componentDef;
+    } else {
+      currentComponents.push(componentDef);
+    }
+    
+    this._availableComponents.next([...currentComponents]);
+    console.log('Component registered:', componentDef.id, componentDef.name);
   }
 
   // ===================== WORKSPACE HELPER METHODS =====================
