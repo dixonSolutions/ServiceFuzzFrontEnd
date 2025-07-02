@@ -60,9 +60,9 @@
         <i class="pi pi-eye"></i>
         Preview
       </button>
-      <button class="toolbar-btn save-btn" (click)="onSave()">
-        <i class="pi pi-save"></i>
-        Save
+      <button class="toolbar-btn save-btn" (click)="onSave()" [disabled]="isSaving">
+        <i [class]="isSaving ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
+        {{ isSaving ? 'Saving...' : 'Save' }}
       </button>
       <button class="toolbar-btn publish-btn">
         <i class="pi pi-upload"></i>
@@ -84,34 +84,19 @@
       [componentCategories]="componentCategories"
       [isLoadingApiComponents]="isLoadingApiComponents"
       [apiComponentsLoadError]="apiComponentsLoadError"
-      [businessImages]="businessImages"
-      [isLoadingImages]="isLoadingImages"
-      [imageUploadError]="imageUploadError"
       [selectedComponentInstance]="selectedComponentInstance"
-      [selectedImageFile]="selectedImageFile"
-      [imageDescription]="imageDescription"
-      [showImageUploadDialog]="showImageUploadDialog"
-      [showAssetBrowserDialog]="showAssetBrowserDialog"
+      [currentProject]="currentProject"
+      [builtInNavProperties]="builtInNavProperties"
       [getFilteredComponentsByCategory]="getFilteredComponentsByCategory.bind(this)"
       [getComponentIcon]="getComponentIcon.bind(this)"
       [isApiComponent]="isApiComponent.bind(this)"
-      [getDisplayableImageUrl]="getDisplayableImageUrl.bind(this)"
-      [formatFileSize]="formatFileSize.bind(this)"
-      [formatUploadDate]="formatUploadDate.bind(this)"
       (tabChange)="onTabChange($event)"
       (searchChange)="onSearchChange($event)"
       (categoryChange)="onCategoryChange($event)"
       (refreshApiComponents)="refreshApiComponentTypes()"
       (dragStart)="onDragStart($event.event, $event.component)"
-      (uploadDialogOpen)="openUploadDialog()"
-      (imageSelect)="selectImageForComponent($event)"
-      (imageDownload)="downloadImage($event)"
-      (fileSelected)="onFileSelected($event)"
-      (imageDescriptionChange)="imageDescription = $event"
-      (uploadButtonClick)="onUploadButtonClick()"
-      (uploadCancel)="cancelImageUpload()"
-      (fileInputTrigger)="triggerFileInput()"
-      (fileRemove)="removeSelectedFile()">
+      (builtInNavPropertiesChange)="onBuiltInNavPropertiesChange($event)"
+      (componentInstanceUpdated)="onComponentInstanceUpdated($event)">
     </app-left-sidebar>
 
     <!-- Canvas Component -->
@@ -155,7 +140,7 @@
       (deletePage)="onDeletePage($event)"
       (addPage)="onAddPage()"
       (deviceChange)="onDeviceChange($event)"
-      (drop)="onDrop($event)"
+          (drop)="onDrop($event)"
       (dragOver)="onDragOver($event)"
       (selectBuiltInNavigation)="selectBuiltInNavigation()"
       (selectComponentInstance)="selectComponentInstance($event)"
@@ -454,179 +439,7 @@
   </div>
 </div>
 
-<!-- PrimeNG Upload Dialog -->
-<p-dialog 
-  header="Upload New Image" 
-  [modal]="true" 
-  [(visible)]="showImageUploadDialog" 
-  [style]="{ width: '450px' }"
-  [breakpoints]="{ '960px': '75vw', '641px': '90vw' }"
-  [draggable]="false"
-  [resizable]="false">
-  
-  <div class="upload-dialog-content">
-    <!-- File Selection Section -->
-    <div class="file-selection-section" *ngIf="!selectedImageFile">
-      <div class="upload-drop-zone" 
-           (click)="triggerFileInput()"
-           style="border: 2px dashed #e9ecef; padding: 40px; text-align: center; cursor: pointer; border-radius: 8px; background: #f8f9fa;">
-        <i class="pi pi-cloud-upload" style="font-size: 3rem; color: #6c757d; margin-bottom: 16px;"></i>
-        <h4 style="margin: 0 0 8px 0; color: #495057;">Choose an image file</h4>
-        <p style="margin: 0; color: #6c757d; font-size: 14px;">
-          Click here to browse or drag and drop an image
-        </p>
-        <small style="color: #6c757d; display: block; margin-top: 8px;">
-          Supported formats: JPG, PNG, GIF (Max 10MB)
-        </small>
-      </div>
-      
-      <input 
-        #fileInput
-        type="file" 
-        accept="image/*" 
-        (change)="onFileSelected($event)"
-        style="display: none;">
-    </div>
-    
-    <!-- File Preview Section -->
-    <div class="file-preview-section" *ngIf="selectedImageFile">
-      <div class="selected-file-info" 
-           style="background: #e3f2fd; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <i class="pi pi-image" style="font-size: 2rem; color: #1976d2;"></i>
-          <div style="flex: 1;">
-            <div style="font-weight: 600; color: #1976d2;">{{ selectedImageFile?.name }}</div>
-            <div style="font-size: 12px; color: #6c757d;">{{ formatFileSize(selectedImageFile?.size || 0) }}</div>
-          </div>
-          <button 
-            type="button"
-            (click)="removeSelectedFile()"
-            style="background: none; border: none; color: #6c757d; cursor: pointer;">
-            <i class="pi pi-times"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Description Input -->
-    <div class="form-group" style="margin-bottom: 16px;">
-      <label for="imageDescription" style="display: block; margin-bottom: 8px; font-weight: 500;">
-        Description (Optional)
-      </label>
-      <textarea 
-        id="imageDescription"
-        [(ngModel)]="imageDescription" 
-        placeholder="Add a description for this image..."
-        pInputTextarea
-        [autoResize]="true"
-        rows="3"
-        style="width: 100%;"></textarea>
-    </div>
-    
-    <!-- Error Message -->
-    <p-message 
-      *ngIf="imageUploadError" 
-      severity="error" 
-      [text]="imageUploadError"
-      [style]="{'margin-bottom': '16px'}">
-    </p-message>
-  </div>
-  
-  <ng-template #footer>
-    <p-button 
-      label="Cancel" 
-      icon="pi pi-times" 
-      [text]="true" 
-      (click)="cancelImageUpload()" />
-    <p-button 
-      [label]="isLoadingImages ? 'Uploading...' : 'Upload Image'"
-      [icon]="isLoadingImages ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"
-      (click)="onUploadButtonClick()"
-      [disabled]="!selectedImageFile || isLoadingImages" />
-  </ng-template>
-</p-dialog>
-
-<!-- Asset Browser Dialog -->
-<p-dialog 
-  header="Select Image from Assets" 
-  [modal]="true" 
-  [(visible)]="showAssetBrowserDialog" 
-  [style]="{ width: '700px', height: '600px' }"
-  [breakpoints]="{ '960px': '80vw', '641px': '95vw' }"
-  [draggable]="false"
-  [resizable]="true">
-  
-  <div class="asset-browser-content">
-    <!-- Header Info -->
-    <div class="browser-header">
-      <div class="header-info">
-        <i class="pi pi-images" style="color: #007bff; margin-right: 8px;"></i>
-        <span>Choose an image for your <strong>{{ selectedComponentInstance?.type }}</strong> component</span>
-      </div>
-      <p-button 
-        label="Upload New" 
-        icon="pi pi-plus" 
-        [text]="true"
-        (click)="openUploadDialog(); closeAssetBrowser()" />
-    </div>
-
-    <!-- Loading State -->
-    <div *ngIf="isLoadingImages" class="loading-state" style="padding: 40px; text-align: center;">
-      <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: #007bff; margin-bottom: 16px;"></i>
-      <p>Loading your images...</p>
-    </div>
-
-    <!-- Error State -->
-    <div *ngIf="imageUploadError && !isLoadingImages" class="error-state" style="padding: 40px; text-align: center;">
-      <i class="pi pi-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 16px;"></i>
-      <p>{{ imageUploadError }}</p>
-      <p-button label="Try Again" icon="pi pi-refresh" (click)="loadBusinessImages()" />
-    </div>
-
-    <!-- Images Grid -->
-    <div class="asset-browser-grid" *ngIf="!isLoadingImages && !imageUploadError && businessImages.length > 0">
-      <div 
-        *ngFor="let image of businessImages"
-        class="asset-browser-item"
-        (click)="selectImageFromAssetBrowser(image)">
-        <div class="asset-image-preview">
-          <img [src]="getDisplayableImageUrl(image)" [alt]="image.fileName">
-          <div class="asset-overlay">
-            <i class="pi pi-check"></i>
-            <span>Select</span>
-          </div>
-        </div>
-        <div class="asset-info">
-          <div class="asset-name" [title]="image.fileName">{{ image.fileName }}</div>
-          <div class="asset-meta">
-            <span>{{ formatFileSize(image.fileSize) }}</span>
-          </div>
-          <div class="asset-description" *ngIf="image.description">{{ image.description }}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div class="empty-state" *ngIf="!isLoadingImages && !imageUploadError && businessImages.length === 0" 
-         style="padding: 40px; text-align: center;">
-      <i class="pi pi-image" style="font-size: 3rem; color: #dee2e6; margin-bottom: 16px;"></i>
-      <h4>No Images Yet</h4>
-      <p>Upload your first image to get started</p>
-      <p-button 
-        label="Upload First Image" 
-        icon="pi pi-cloud-upload" 
-        (click)="openUploadDialog(); closeAssetBrowser()" />
-    </div>
-  </div>
-  
-  <ng-template #footer>
-    <p-button 
-      label="Cancel" 
-      icon="pi pi-times" 
-      [text]="true" 
-      (click)="closeAssetBrowser()" />
-  </ng-template>
-</p-dialog>
+<!-- Asset dialogs have been moved to left sidebar component -->
 
 <!-- New Project Dialog -->
 <div class="dialog-overlay" *ngIf="showNewProjectDialog" (click)="showNewProjectDialog = false">

@@ -203,3 +203,134 @@
     </div>
   </div>
 </div>
+
+<!-- Image Upload Dialog -->
+<div class="modal-overlay" *ngIf="showImageUploadDialog" (click)="cancelImageUpload()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Upload New Image</h3>
+      <button class="close-btn" (click)="cancelImageUpload()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- File Input -->
+      <div class="file-input-section">
+        <input 
+          type="file" 
+          accept="image/*" 
+          (change)="onFileSelected($event)"
+          style="display: none"
+          #fileInput>
+        
+        <div class="file-drop-zone" (click)="onTriggerFileInput()">
+          <div class="drop-zone-content" *ngIf="!selectedImageFile">
+            <i class="pi pi-cloud-upload"></i>
+            <p>Click to select an image</p>
+            <small>Supported formats: JPG, PNG, GIF (max 10MB)</small>
+          </div>
+          
+          <div class="selected-file" *ngIf="selectedImageFile">
+            <i class="pi pi-file"></i>
+            <span>{{ selectedImageFile.name }}</span>
+            <button class="remove-file-btn" (click)="onRemoveSelectedFile(); $event.stopPropagation()">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Description Input -->
+      <div class="form-group">
+        <label for="imageDescription">Description (optional)</label>
+        <input 
+          type="text" 
+          id="imageDescription"
+          class="form-control"
+          placeholder="Enter image description..."
+          [(ngModel)]="imageDescription">
+      </div>
+      
+      <!-- Error Message -->
+      <div class="error-message" *ngIf="imageUploadError">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>{{ imageUploadError }}</span>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cancelImageUpload()">
+        Cancel
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="onUploadButtonClick()"
+        [disabled]="!selectedImageFile || isLoadingImages">
+        <i class="pi pi-spin pi-spinner" *ngIf="isLoadingImages"></i>
+        <i class="pi pi-upload" *ngIf="!isLoadingImages"></i>
+        {{ isLoadingImages ? 'Uploading...' : 'Upload' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Asset Browser Dialog -->
+<div class="modal-overlay" *ngIf="showAssetBrowserDialog" (click)="closeAssetBrowser()">
+  <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Select Image</h3>
+      <button class="close-btn" (click)="closeAssetBrowser()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoadingImages">
+        <div class="loading-spinner">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        <p>Loading images...</p>
+      </div>
+      
+      <!-- Images Grid -->
+      <div class="images-grid" *ngIf="!isLoadingImages && businessImages.length > 0">
+        <div 
+          *ngFor="let image of businessImages"
+          class="image-item selectable"
+          (click)="selectImageFromAssetBrowser(image)">
+          <div class="image-preview">
+            <img [src]="getDisplayableImageUrl(image)" [alt]="image.fileName">
+            <div class="image-overlay">
+              <button class="overlay-btn select-btn" title="Select this image">
+                <i class="pi pi-check"></i>
+              </button>
+            </div>
+          </div>
+          <div class="image-info">
+            <div class="image-name" [title]="image.fileName">{{ image.fileName }}</div>
+            <div class="image-meta">
+              <span class="file-size">{{ formatFileSize(image.fileSize) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!isLoadingImages && businessImages.length === 0">
+        <div class="empty-icon">
+          <i class="pi pi-image"></i>
+        </div>
+        <p>No images available</p>
+        <small>Upload some images first to use them here</small>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeAssetBrowser()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

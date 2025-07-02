@@ -67,16 +67,9 @@ export class WebsiteCreatorComponent implements OnInit {
   componentCategories: { name: string; count: number }[] = [];
   selectedPageId: string = '1';
 
-  // Assets Management
+  // Assets Management (moved to left sidebar)
   activeTab: 'components' | 'assets' = 'components';
-  businessImages: BusinessImage[] = [];
-  isLoadingImages = false;
-  imageUploadError: string | null = null;
-  selectedImageFile: File | null = null;
-  imageDescription = '';
-  showImageUploadDialog = false;
-  showAssetBrowserDialog = false;
-  currentImageAssetProperty: string | null = null;
+  isSaving = false;
   
   // Built-in navigation properties (separate from page components)
   builtInNavProperties: { [key: string]: any } = {
@@ -707,6 +700,11 @@ export class WebsiteCreatorComponent implements OnInit {
       return;
     }
 
+    if (this.isSaving) {
+      return; // Prevent multiple save requests
+    }
+
+    this.isSaving = true;
     console.log('Saving project...', this.currentProject);
     
     // Convert current website state to JSON
@@ -1174,225 +1172,7 @@ export class WebsiteCreatorComponent implements OnInit {
   // Assets Management Methods
   onTabChange(tab: 'components' | 'assets'): void {
     this.activeTab = tab;
-    if (tab === 'assets' && this.businessImages.length === 0) {
-      this.loadBusinessImages();
-    }
-  }
-
-  loadBusinessImages(): void {
-    if (!this.currentProject?.businessId) {
-      this.imageUploadError = 'No business selected. Please select a business to view images.';
-      return;
-    }
-
-    this.isLoadingImages = true;
-    this.imageUploadError = null;
-
-    this.websiteBuilder.getBusinessImages(this.currentProject.businessId)
-      .subscribe({
-        next: (response: BusinessImagesResponse) => {
-          this.businessImages = response.images;
-          this.isLoadingImages = false;
-        },
-        error: (error) => {
-          this.imageUploadError = 'Failed to load images. Please try again.';
-          this.isLoadingImages = false;
-        }
-      });
-  }
-
-  uploadImage(): void {
-    if (!this.selectedImageFile) {
-      this.imageUploadError = 'No file selected';
-      return;
-    }
-
-    let businessId = this.currentProject?.businessId;
-    if (!businessId) {
-      this.imageUploadError = 'No business selected. Please select a business first.';
-      return;
-    }
-
-    this.isLoadingImages = true;
-    this.imageUploadError = null;
-
-    this.websiteBuilder.uploadBusinessImage(
-      businessId,
-      this.selectedImageFile,
-      this.imageDescription
-    ).subscribe({
-      next: (response) => {
-        this.selectedImageFile = null;
-        this.imageDescription = '';
-        this.showImageUploadDialog = false;
-        this.isLoadingImages = false;
-        this.loadBusinessImages(); // Refresh the images list
-      },
-      error: (error) => {
-        this.imageUploadError = 'Failed to upload image. Please try again.';
-        this.isLoadingImages = false;
-      }
-    });
-  }
-
-  cancelImageUpload(): void {
-    this.selectedImageFile = null;
-    this.imageDescription = '';
-    this.showImageUploadDialog = false;
-    this.imageUploadError = null;
-  }
-
-  getDisplayableImageUrl(image: BusinessImage): string {
-    return this.websiteBuilder.getDisplayableImageUrl(image);
-  }
-
-  formatFileSize(bytes: number): string {
-    return this.websiteBuilder.formatFileSize(bytes);
-  }
-
-  formatUploadDate(dateString: string): string {
-    return this.websiteBuilder.formatUploadDate(dateString);
-  }
-
-  selectImageForComponent(image: BusinessImage): void {
-    if (this.selectedComponentInstance?.type === 'image') {
-      // Update the selected image component with the chosen image
-      const imageUrl = this.getDisplayableImageUrl(image);
-      this.selectedComponentInstance.parameters['imageUrl'] = imageUrl;
-      this.selectedComponentInstance.parameters['altText'] = image.description || image.fileName;
-      
-      // Update in the service/page data
-      const currentPage = this.websiteBuilder.getCurrentPage();
-      if (currentPage) {
-        const componentIndex = currentPage.components.findIndex(c => c.id === this.selectedComponentInstance.id);
-        if (componentIndex !== -1) {
-          currentPage.components[componentIndex].parameters['imageUrl'] = imageUrl;
-          currentPage.components[componentIndex].parameters['altText'] = image.description || image.fileName;
-        }
-      }
-      
-      console.log('Image selected for component:', image.fileName);
-    }
-  }
-
-  downloadImage(image: BusinessImage): void {
-    const link = document.createElement('a');
-    link.href = this.getDisplayableImageUrl(image);
-    link.download = image.fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  // Simplified upload button click handler
-  onUploadButtonClick(): void {
-    this.uploadImage();
-  }
-
-  // User-friendly method to open upload dialog
-  openUploadDialog(): void {
-    this.selectedImageFile = null;
-    this.imageDescription = '';
-    this.imageUploadError = null;
-    this.showImageUploadDialog = true;
-  }
-
-  // Trigger file input click
-  triggerFileInput(): void {
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.click();
-    }
-  }
-
-  // Handle file selection in dialog (replaces onImageFileSelected)
-  onFileSelected(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        this.imageUploadError = 'Please select a valid image file';
-        return;
-      }
-      
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        this.imageUploadError = 'File size must be less than 10MB';
-        return;
-      }
-      
-      this.selectedImageFile = file;
-      this.imageUploadError = null;
-    }
-  }
-
-  // Remove selected file
-  removeSelectedFile(): void {
-    this.selectedImageFile = null;
-    this.imageUploadError = null;
-    // Reset file input
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
-  }
-
-  // Open asset browser for image selection
-  openAssetBrowser(propertyName: string): void {
-    this.currentImageAssetProperty = propertyName;
-    this.showAssetBrowserDialog = true;
-    // Load business images if not already loaded
-    if (this.businessImages.length === 0 && !this.isLoadingImages) {
-      this.loadBusinessImages();
-    }
-  }
-
-  // Close asset browser
-  closeAssetBrowser(): void {
-    this.showAssetBrowserDialog = false;
-    this.currentImageAssetProperty = null;
-  }
-
-  // Select image from asset browser for component property
-  selectImageFromAssetBrowser(image: BusinessImage): void {
-    if (this.selectedComponentInstance && this.currentImageAssetProperty) {
-      const imageUrl = this.getDisplayableImageUrl(image);
-      
-      // Handle built-in navigation separately
-      if (this.selectedComponentInstance.id === 'built-in-nav') {
-        this.builtInNavProperties[this.currentImageAssetProperty] = imageUrl;
-        console.log('Logo selected for built-in navigation:', image.fileName);
-        this.closeAssetBrowser();
-        return;
-      }
-      
-      // Update the component instance
-      this.selectedComponentInstance.parameters[this.currentImageAssetProperty] = imageUrl;
-      
-      // Also update alt text if it's the default
-      if (this.currentImageAssetProperty === 'imageUrl' && 
-          this.selectedComponentInstance.parameters['altText'] === 'Image description') {
-        this.selectedComponentInstance.parameters['altText'] = image.description || image.fileName;
-      }
-      
-      // Update in the service/page data
-      const currentPage = this.websiteBuilder.getCurrentPage();
-      if (currentPage) {
-        const componentIndex = currentPage.components.findIndex(c => c.id === this.selectedComponentInstance.id);
-        if (componentIndex !== -1) {
-          currentPage.components[componentIndex].parameters[this.currentImageAssetProperty] = imageUrl;
-          if (this.currentImageAssetProperty === 'imageUrl' && 
-              currentPage.components[componentIndex].parameters['altText'] === 'Image description') {
-            currentPage.components[componentIndex].parameters['altText'] = image.description || image.fileName;
-          }
-        }
-      }
-      
-      console.log('Image selected from asset browser:', image.fileName);
-      this.closeAssetBrowser();
-    }
+    // Asset loading is now handled by left sidebar component
   }
 
   // Select built-in navigation for editing
@@ -1421,12 +1201,16 @@ export class WebsiteCreatorComponent implements OnInit {
 
   // Open asset browser for built-in navigation
   openAssetBrowserForBuiltInNav(propertyName: string): void {
-    this.currentImageAssetProperty = propertyName;
-    this.showAssetBrowserDialog = true;
-    // Load business images if not already loaded
-    if (this.businessImages.length === 0 && !this.isLoadingImages) {
-      this.loadBusinessImages();
-    }
+    // Asset browser functionality has been moved to the left sidebar component
+    // For now, this is a placeholder - the left sidebar would need to be expanded to handle this
+    console.log('Asset browser for built-in nav should be handled by left sidebar');
+  }
+
+  // Placeholder for opening asset browser from properties panel
+  openAssetBrowser(propertyName: string): void {
+    // Asset browser functionality has been moved to the left sidebar component
+    // This would need to be handled by the left sidebar component
+    console.log('Asset browser should be handled by left sidebar for property:', propertyName);
   }
 
   // Helper methods for logo sizing
@@ -1475,6 +1259,19 @@ export class WebsiteCreatorComponent implements OnInit {
 
   onBuiltInNavPropertiesChange(properties: { [key: string]: any }): void {
     this.builtInNavProperties = { ...properties };
+  }
+
+  onComponentInstanceUpdated(updatedInstance: any): void {
+    // Update in the service/page data
+    const currentPage = this.websiteBuilder.getCurrentPage();
+    if (currentPage) {
+      const componentIndex = currentPage.components.findIndex(c => c.id === updatedInstance.id);
+      if (componentIndex !== -1) {
+        currentPage.components[componentIndex] = { ...updatedInstance };
+        this.invalidateComponentsCache();
+      }
+    }
+    console.log('Component instance updated from left sidebar:', updatedInstance);
   }
 
   // ===================== WORKSPACE SAVE/LOAD METHODS =====================
@@ -1579,15 +1376,18 @@ export class WebsiteCreatorComponent implements OnInit {
           this.currentProject!.isNew = false;
           console.log('New workspace saved with ID:', response.workspaceId);
           alert('Website project saved successfully!');
+          this.isSaving = false;
         },
         error: (error) => {
           console.error('Error saving workspace:', error);
           alert('Error saving website project. Please try again.');
+          this.isSaving = false;
         }
       });
     } catch (error) {
       console.error('Error saving new workspace:', error);
       alert('Error saving website project. Please try again.');
+      this.isSaving = false;
     }
   }
 
@@ -1610,15 +1410,18 @@ export class WebsiteCreatorComponent implements OnInit {
           this.currentProject!.lastModified = new Date();
           console.log('Workspace updated:', response);
           alert('Website project updated successfully!');
+          this.isSaving = false;
         },
         error: (error) => {
           console.error('Error updating workspace:', error);
-          alert('Error updating website project. Please try again.');
+          alert('Error updating workspace project. Please try again.');
+          this.isSaving = false;
         }
       });
     } catch (error) {
       console.error('Error updating workspace:', error);
       alert('Error updating website project. Please try again.');
+      this.isSaving = false;
     }
   }
 

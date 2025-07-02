@@ -88,6 +88,7 @@ import { JsonEditorComponent } from './website-creator/json-editor.component';
 import { WorkspaceSelectionComponent } from './website-creator/workspace-selection.component';
 import { LeftSidebar } from './website-creator/left-sidebar/left-sidebar';
 import { Canvas } from './website-creator/canvas/canvas';
+import { AssetManagerComponent } from './website-creator/asset-manager/asset-manager';
 
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
@@ -109,7 +110,8 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     JsonEditorComponent,
     WorkspaceSelectionComponent,
     LeftSidebar,
-    Canvas
+    Canvas,
+    AssetManagerComponent
   ],
   imports: [
     BrowserModule,
