@@ -60,6 +60,7 @@
 
     <!-- Canvas -->
     <div 
+      #canvas
       class="canvas" 
       [class]="'device-' + selectedDevice"
       (drop)="onDrop($event)"
@@ -134,7 +135,25 @@
            [style.top.px]="instance.y"
            [style.width.px]="instance.width"
            [style.height.px]="instance.height"
-           [style.z-index]="instance.zIndex">
+           [style.z-index]="instance.zIndex"
+           [style.border]="selectedComponentInstance?.id === instance.id ? '2px solid #007bff' : '1px solid transparent'"
+           [style.cursor]="'move'">
+        
+        <!-- Selection and Resize Handles -->
+        <div *ngIf="selectedComponentInstance?.id === instance.id" class="component-controls">
+          <!-- Delete Button -->
+          <button class="delete-component-btn" 
+                  (click)="deleteComponentHandler($event, instance.id)"
+                  title="Delete Component">
+            <i class="pi pi-times"></i>
+          </button>
+          
+          <!-- Resize Handles -->
+          <div class="resize-handle nw" (mousedown)="startResizeHandler($event, instance, 'nw')"></div>
+          <div class="resize-handle ne" (mousedown)="startResizeHandler($event, instance, 'ne')"></div>
+          <div class="resize-handle sw" (mousedown)="startResizeHandler($event, instance, 'sw')"></div>
+          <div class="resize-handle se" (mousedown)="startResizeHandler($event, instance, 'se')"></div>
+        </div>
         
         <!-- Render component based on type -->
         <div [ngSwitch]="instance.type">

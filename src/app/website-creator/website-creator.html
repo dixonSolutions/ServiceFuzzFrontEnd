@@ -78,76 +78,28 @@
   <div class="main-layout" [style.display]="showJsonEditor ? 'none' : 'flex'">
     <!-- Left Sidebar Component -->
     <app-left-sidebar
+      #leftSidebar
       [activeTab]="activeTab"
-      [searchTerm]="searchTerm"
-      [selectedCategory]="selectedCategory"
-      [componentCategories]="componentCategories"
-      [isLoadingApiComponents]="isLoadingApiComponents"
-      [apiComponentsLoadError]="apiComponentsLoadError"
       [selectedComponentInstance]="selectedComponentInstance"
       [currentProject]="currentProject"
       [builtInNavProperties]="builtInNavProperties"
-      [getFilteredComponentsByCategory]="getFilteredComponentsByCategory.bind(this)"
-      [getComponentIcon]="getComponentIcon.bind(this)"
-      [isApiComponent]="isApiComponent.bind(this)"
       (tabChange)="onTabChange($event)"
-      (searchChange)="onSearchChange($event)"
-      (categoryChange)="onCategoryChange($event)"
-      (refreshApiComponents)="refreshApiComponentTypes()"
       (dragStart)="onDragStart($event.event, $event.component)"
       (builtInNavPropertiesChange)="onBuiltInNavPropertiesChange($event)"
-      (componentInstanceUpdated)="onComponentInstanceUpdated($event)">
+      (componentInstanceUpdated)="onComponentInstanceUpdated($event)"
+      (componentSelectionChange)="onComponentSelectionChange($event)">
     </app-left-sidebar>
 
     <!-- Canvas Component -->
     <app-canvas
-      [pages]="pages"
-      [currentPageId]="currentPageId"
+      #canvas
       [selectedDevice]="selectedDevice"
-      [currentPageComponents]="currentPageComponents"
-      [selectedComponentInstance]="selectedComponentInstance"
       [builtInNavProperties]="builtInNavProperties"
-      [getComponentDefinition]="getComponentDefinition.bind(this)"
-      [getApiComponentType]="getApiComponentType.bind(this)"
-      [getApiComponentTypeParameters]="getApiComponentTypeParameters.bind(this)"
-      [isApiComponent]="isApiComponent.bind(this)"
-      [getParameterValue]="getParameterValue.bind(this)"
-      [trackByInstanceId]="trackByInstanceId.bind(this)"
-      [getAvatarSize]="getAvatarSize.bind(this)"
-      [getImageLogoSize]="getImageLogoSize.bind(this)"
-      [getLogoSize]="getLogoSize.bind(this)"
-      [getRatingStars]="getRatingStars.bind(this)"
-      [getOrderStatusColor]="getOrderStatusColor.bind(this)"
-      [getAlertBackgroundColor]="getAlertBackgroundColor.bind(this)"
-      [getAlertBorderColor]="getAlertBorderColor.bind(this)"
-      [getAlertTextColor]="getAlertTextColor.bind(this)"
-      [getAlertIcon]="getAlertIcon.bind(this)"
-      [getButtonPadding]="getButtonPadding.bind(this)"
-      [getButtonFontSize]="getButtonFontSize.bind(this)"
-      [generateStars]="generateStars.bind(this)"
-      [isTextInputParameter]="isTextInputParameter.bind(this)"
-      [getInputTypeFromParameter]="getInputTypeFromParameter.bind(this)"
-      [isButtonParameter]="isButtonParameter.bind(this)"
-      [isImageParameter]="isImageParameter.bind(this)"
-      [isRatingParameter]="isRatingParameter.bind(this)"
-      [isProgressParameter]="isProgressParameter.bind(this)"
-      [isTextContentParameter]="isTextContentParameter.bind(this)"
-      [isLargeTextParameter]="isLargeTextParameter.bind(this)"
-      [isMediumTextParameter]="isMediumTextParameter.bind(this)"
-      [isRegularTextParameter]="isRegularTextParameter.bind(this)"
-      [isColorParameter]="isColorParameter.bind(this)"
-      (pageTabClick)="onPageTabClick($event)"
-      (deletePage)="onDeletePage($event)"
-      (addPage)="onAddPage()"
-      (deviceChange)="onDeviceChange($event)"
-          (drop)="onDrop($event)"
-      (dragOver)="onDragOver($event)"
-      (selectBuiltInNavigation)="selectBuiltInNavigation()"
-      (selectComponentInstance)="selectComponentInstance($event)"
-      (startDrag)="startDrag($event.event, $event.instance)"
-      (navigationClick)="onNavigationClick($event.event, $event.pageId)"
-      (startResize)="startResize($event.event, $event.instance, $event.direction)"
-      (deleteComponent)="deleteComponent($event.event, $event.instanceId)">
+      (componentInstanceSelectionChange)="onComponentInstanceSelectionChange($event)"
+      (builtInNavPropertiesChange)="onBuiltInNavPropertiesChange($event)"
+      (pageDataChange)="onPageDataChange($event)"
+      (currentPageChange)="onCurrentPageChange($event)"
+      (navigationClick)="onNavigationClick($event)">
     </app-canvas>
 
     <!-- Right Properties Panel -->

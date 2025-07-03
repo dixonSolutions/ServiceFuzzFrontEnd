@@ -176,9 +176,9 @@ export class WebsiteBuilderService {
 
   // Initialize available components - now all components come from API
   private initializeComponents(): void {
-    // Start with empty components - all components now loaded from API
+    // Start with empty components - all components loaded from API
     this._availableComponents.next([]);
-    console.log('🧹 Built-in components removed - all components now loaded from API');
+    console.log('🔄 Components will be loaded from API');
   }
 
   // Project Management
@@ -922,6 +922,14 @@ export class WebsiteBuilderService {
         this._apiComponentTypes.next(response.componentTypes);
         this._apiComponentTypesLoaded = true;
         console.log('✅ API component types cached successfully');
+        
+        // Register API components as available components for drag and drop
+        response.componentTypes.forEach(apiComponent => {
+          const componentDefinition = this.convertApiComponentToDefinition(apiComponent);
+          this.registerComponent(componentDefinition);
+        });
+        
+        console.log('✅ API components registered for drag and drop');
       }),
       map(response => response.componentTypes),
       catchError(error => {
@@ -997,6 +1005,35 @@ export class WebsiteBuilderService {
   }
 
   /**
+   * Convert API component type to component definition
+   */
+  private convertApiComponentToDefinition(apiComponent: ComponentType): ComponentDefinition {
+    // Parse parameters from schema if available
+    let parameters: ComponentParameter[] = [];
+    if (apiComponent.parametersSchema) {
+      try {
+        const schema = JSON.parse(apiComponent.parametersSchema);
+        parameters = schema.parameters || [];
+      } catch (error) {
+        console.error('Error parsing parameters schema:', error);
+      }
+    }
+
+    return {
+      id: apiComponent.id,
+      name: apiComponent.name,
+      icon: apiComponent.icon || 'pi pi-box',
+      category: apiComponent.category,
+      description: apiComponent.description || '',
+      parameters: parameters,
+      template: '', // API components don't have templates in this context
+      styles: '',
+      defaultWidth: apiComponent.defaultWidth || 300,
+      defaultHeight: apiComponent.defaultHeight || 100
+    };
+  }
+
+  /**
    * Register a component definition (for API components)
    */
   registerComponent(componentDef: ComponentDefinition): void {
@@ -1012,6 +1049,10 @@ export class WebsiteBuilderService {
     }
     
     this._availableComponents.next([...currentComponents]);
+    
+    // Update filtered components to include newly registered component
+    this.filterComponents();
+    
     console.log('Component registered:', componentDef.id, componentDef.name);
   }
 
