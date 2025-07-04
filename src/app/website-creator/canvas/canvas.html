@@ -333,7 +333,225 @@
             </div>
           </div>
           
-          <!-- Default case for unknown components (includes ALL component types) -->
+          <!-- Counter Component -->
+          <div *ngSwitchCase="'counter'" class="counter-component"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.display]="'flex'"
+               [style.flex-direction]="'column'"
+               [style.align-items]="'center'"
+               [style.justify-content]="'center'"
+               [style.text-align]="'center'"
+               [style.padding]="'20px'">
+            <div class="counter-value" 
+                 [style.font-size]="'2.5em'"
+                 [style.font-weight]="'bold'"
+                 [style.color]="instance.parameters['color'] || '#007bff'"
+                 [style.margin-bottom]="'8px'">
+              {{ instance.parameters['prefix'] || '' }}{{ instance.parameters['value'] || 1000 }}{{ instance.parameters['suffix'] || '' }}
+            </div>
+            <div class="counter-title" 
+                 *ngIf="instance.parameters['title']"
+                 [style.font-size]="'1em'"
+                 [style.color]="'#6c757d'">
+              {{ instance.parameters['title'] }}
+            </div>
+          </div>
+
+          <!-- Progress Bar Component -->
+          <div *ngSwitchCase="'progress-bar'" class="progress-bar-component"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.display]="'flex'"
+               [style.flex-direction]="'column'"
+               [style.justify-content]="'center'"
+               [style.padding]="'20px'">
+            <div class="progress-label" 
+                 *ngIf="instance.parameters['label']"
+                 [style.margin-bottom]="'8px'"
+                 [style.font-weight]="'500'">
+              {{ instance.parameters['label'] }}
+            </div>
+            <div class="progress-wrapper" [style.position]="'relative'">
+              <div class="progress-bg" 
+                   [style.width]="'100%'"
+                   [style.height.px]="instance.parameters['height'] || 20"
+                   [style.background-color]="instance.parameters['backgroundColor'] || '#e9ecef'"
+                   [style.border-radius]="'10px'"
+                   [style.overflow]="'hidden'">
+                <div class="progress-fill" 
+                     [style.width.%]="instance.parameters['value'] || 75"
+                     [style.height]="'100%'"
+                     [style.background-color]="instance.parameters['color'] || '#28a745'"
+                     [style.transition]="'width 0.3s ease'">
+                </div>
+              </div>
+              <span *ngIf="instance.parameters['showPercentage']"
+                    [style.position]="'absolute'"
+                    [style.top]="'50%'"
+                    [style.left]="'50%'"
+                    [style.transform]="'translate(-50%, -50%)'"
+                    [style.font-size]="'12px'"
+                    [style.font-weight]="'bold'"
+                    [style.color]="'#fff'">
+                {{ instance.parameters['value'] || 75 }}%
+              </span>
+            </div>
+          </div>
+
+          <!-- Alert Component -->
+          <div *ngSwitchCase="'alert'" class="alert-component"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.padding]="'16px'"
+               [style.border-radius]="'8px'"
+               [style.display]="'flex'"
+               [style.align-items]="'flex-start'"
+               [style.background-color]="getAlertBackgroundColor(instance.parameters['type'] || 'info')"
+               [style.border]="'1px solid ' + getAlertBorderColor(instance.parameters['type'] || 'info')"
+               [style.color]="getAlertTextColor(instance.parameters['type'] || 'info')">
+            <i *ngIf="instance.parameters['showIcon']" 
+               [class]="getAlertIcon(instance.parameters['type'] || 'info')"
+               [style.margin-right]="'12px'"
+               [style.margin-top]="'2px'">
+            </i>
+            <div class="alert-content" [style.flex]="'1'">
+              <div *ngIf="instance.parameters['title']" 
+                   class="alert-title" 
+                   [style.font-weight]="'600'"
+                   [style.margin-bottom]="'4px'">
+                {{ instance.parameters['title'] }}
+              </div>
+              <div class="alert-message">
+                {{ instance.parameters['message'] || 'This is an alert message' }}
+              </div>
+            </div>
+            <button *ngIf="instance.parameters['dismissible']" 
+                    class="alert-close"
+                    [style.background]="'none'"
+                    [style.border]="'none'"
+                    [style.color]="'inherit'"
+                    [style.cursor]="'pointer'"
+                    [style.padding]="'0'"
+                    [style.margin-left]="'12px'">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+
+          <!-- Testimonial Component -->
+          <div *ngSwitchCase="'testimonial'" class="testimonial-component"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.padding]="'24px'"
+               [style.background-color]="instance.parameters['backgroundColor'] || '#f8f9fa'"
+               [style.border-radius]="'12px'"
+               [style.text-align]="'center'"
+               [style.display]="'flex'"
+               [style.flex-direction]="'column'"
+               [style.justify-content]="'center'">
+            <div class="testimonial-quote" 
+                 [style.font-size]="'1.2em'"
+                 [style.font-style]="'italic'"
+                 [style.margin-bottom]="'16px'"
+                 [style.line-height]="'1.5'">
+              "{{ instance.parameters['quote'] || 'This is an amazing service!' }}"
+            </div>
+            <div class="testimonial-rating" 
+                 *ngIf="instance.parameters['rating']"
+                 [style.margin-bottom]="'12px'"
+                 [style.color]="'#ffc107'"
+                 [style.font-size]="'1.2em'">
+              {{ getRatingStars(instance.parameters['rating']) }}
+            </div>
+            <div class="testimonial-author">
+              <div class="author-name" 
+                   [style.font-weight]="'600'"
+                   [style.margin-bottom]="'4px'">
+                {{ instance.parameters['authorName'] || 'John Doe' }}
+              </div>
+              <div class="author-title" 
+                   [style.color]="'#6c757d'"
+                   [style.font-size]="'0.9em'">
+                {{ instance.parameters['authorTitle'] || 'CEO, Company' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Button Component -->
+          <div *ngSwitchCase="'button'" class="button-component"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.display]="'flex'"
+               [style.align-items]="'center'"
+               [style.justify-content]="'center'">
+            <button [style.background-color]="instance.parameters['backgroundColor'] || '#007bff'"
+                    [style.color]="instance.parameters['textColor'] || '#ffffff'"
+                    [style.padding]="getButtonPadding(instance.parameters['size'] || 'medium')"
+                    [style.font-size]="getButtonFontSize(instance.parameters['size'] || 'medium')"
+                    [style.border]="'none'"
+                    [style.border-radius.px]="instance.parameters['borderRadius'] || 4"
+                    [style.cursor]="'pointer'">
+              {{ instance.parameters['text'] || 'Click Me' }}
+            </button>
+          </div>
+
+          <!-- Text Block Component -->
+          <div *ngSwitchCase="'text-block'" class="text-block-component"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.padding]="'16px'"
+               [style.text-align]="instance.parameters['alignment'] || 'left'"
+               [style.color]="instance.parameters['textColor'] || '#333333'"
+               [style.font-size.px]="instance.parameters['fontSize'] || 16">
+            <h3 *ngIf="instance.parameters['title']" 
+                [style.margin-top]="'0'"
+                [style.margin-bottom]="'12px'">
+              {{ instance.parameters['title'] }}
+            </h3>
+            <p [style.margin]="'0'"
+               [style.line-height]="'1.5'">
+              {{ instance.parameters['content'] || 'Your text content goes here...' }}
+            </p>
+          </div>
+
+          <!-- Hero Section Component -->
+          <div *ngSwitchCase="'hero-section'" class="hero-component"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.background-color]="instance.parameters['backgroundColor'] || '#f8f9fa'"
+               [style.color]="instance.parameters['textColor'] || '#333333'"
+               [style.display]="'flex'"
+               [style.flex-direction]="'column'"
+               [style.align-items]="'center'"
+               [style.justify-content]="'center'"
+               [style.text-align]="'center'"
+               [style.padding]="'40px 20px'">
+            <h1 [style.font-size]="'2.5em'"
+                [style.font-weight]="'bold'"
+                [style.margin-bottom]="'16px'"
+                [style.margin-top]="'0'">
+              {{ instance.parameters['title'] || 'Welcome to Our Website' }}
+            </h1>
+            <p *ngIf="instance.parameters['subtitle']"
+               [style.font-size]="'1.2em'"
+               [style.margin-bottom]="'24px'"
+               [style.margin-top]="'0'"
+               [style.opacity]="'0.8'">
+              {{ instance.parameters['subtitle'] }}
+            </p>
+            <button *ngIf="instance.parameters['ctaText']"
+                    [style.background-color]="'#007bff'"
+                    [style.color]="'white'"
+                    [style.padding]="'12px 32px'"
+                    [style.border]="'none'"
+                    [style.border-radius]="'6px'"
+                    [style.font-size]="'1.1em'"
+                    [style.cursor]="'pointer'">
+              {{ instance.parameters['ctaText'] }}
+            </button>
+          </div>
+
+          <!-- Default case for unknown components (includes remaining component types) -->
           <div *ngSwitchDefault class="unknown-component"
                [style.width]="'100%'"
                [style.height]="'100%'">
@@ -557,7 +775,6 @@
         <div class="drop-icon">⊕</div>
         <p>Select a Component</p>
         <small>Click on any component in the canvas to edit its properties</small>
-      </div>
     </div>
   </div>
 </div>

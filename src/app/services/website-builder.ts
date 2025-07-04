@@ -554,6 +554,19 @@ export class WebsiteBuilderService {
     this._pages.next(defaultPages);
   }
 
+  // Load existing pages data (used when loading from JSON)
+  loadPagesData(pages: WebsitePage[]): void {
+    console.log('📥 Loading pages data into website builder service:', pages);
+    this._pages.next(pages);
+    
+    // Set the current page to the first active page or home if none are active
+    const activePage = pages.find(p => p.isActive);
+    const currentPageId = activePage ? activePage.id : 'home';
+    this._currentPageId.next(currentPageId);
+    
+    console.log('✅ Pages loaded into website builder service, current page:', currentPageId);
+  }
+
   addPage(name: string, route: string): void {
     const currentPages = this._pages.value;
     const newPage: WebsitePage = {

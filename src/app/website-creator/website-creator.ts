@@ -25,7 +25,7 @@ export class WebsiteCreatorComponent implements OnInit {
   // Component selection and properties state
   selectedComponentInstance: any = null;
   selectedDevice: string = 'desktop';
-  
+
   // Dialogs
   showNewProjectDialog = false;
   showExportDialog = false;
@@ -64,26 +64,33 @@ export class WebsiteCreatorComponent implements OnInit {
   ngOnInit() {
     // Show workspace selection first
     console.log('Website Creator initialized - showing workspace selection');
+    
+    // Initialize parameters array
+    this.selectedComponentParameters = [];
   }
 
   // Workspace Management
   onWorkspaceProjectSelected(project: WorkspaceProject): void {
-    console.log('Project selected:', project);
+    console.log('🎯 Project selected:', project);
     this.currentProject = project;
     this.showWorkspaceSelection = false;
     
     // Initialize the website builder with this project
     this.websiteBuilder.createNewProject(project.name, project.description);
+    
+    // CRITICAL FIX: Load existing website data BEFORE initializing pages
+    // This prevents the default pages from overriding the loaded data
+    if (project.websiteJson) {
+      console.log('📥 Loading existing website data first...');
+      this.loadWebsiteDataFromJson(project.websiteJson);
+    }
+    
+    // Initialize website builder with proper page data
     this.initializeWebsiteBuilder();
     
     // Notify left sidebar to load API components
     if (this.leftSidebar) {
       this.leftSidebar.onProjectChange(project);
-    }
-    
-    // Load existing website data if available
-    if (project.websiteJson) {
-      this.loadWebsiteDataFromJson(project.websiteJson);
     }
   }
 
@@ -109,10 +116,23 @@ export class WebsiteCreatorComponent implements OnInit {
   }
 
   private initializeWebsiteBuilder(): void {
-    this.websiteBuilder.initializePages();
+    // Only initialize default pages if no pages have been loaded from JSON
+    if (!this.pages || this.pages.length === 0) {
+      console.log('🆕 No existing pages found, initializing default pages...');
+      this.websiteBuilder.initializePages();
+    } else {
+      console.log('✅ Using existing pages from JSON:', this.pages);
+      // Convert Page[] to WebsitePage[] format and load into website builder
+      const websitePages = this.pages.map(page => ({
+        ...page,
+        isActive: page.isActive !== undefined ? page.isActive : (page.id === this.currentPageId)
+      }));
+      this.websiteBuilder.loadPagesData(websitePages);
+    }
     
     // Subscribe to page changes
     this.websiteBuilder.pages$.subscribe((pages: any[]) => {
+      console.log('📄 Website builder pages updated:', pages);
       this.pages = pages;
       if (this.canvas) {
         this.canvas.loadPageData(pages);
@@ -120,6 +140,7 @@ export class WebsiteCreatorComponent implements OnInit {
     });
 
     this.websiteBuilder.currentPageId$.subscribe((pageId: string) => {
+      console.log('📍 Website builder current page ID updated:', pageId);
       this.currentPageId = pageId;
     });
   }
@@ -127,23 +148,88 @@ export class WebsiteCreatorComponent implements OnInit {
   // Component Selection Coordination
   onComponentInstanceSelectionChange(instance: ComponentInstance | null): void {
     this.selectedComponentInstance = instance;
-    console.log('Component selection changed:', instance);
+    console.log('🎯 Component selection changed:', instance);
+    
+    // Debug the parameters that should be available
+    if (instance && instance.type !== 'built-in-navigation') {
+      console.log('🔍 Component type:', instance.type);
+      console.log('📋 Current parameters:', instance.parameters);
+      
+      const apiParams = this.getApiComponentTypeParameters(instance.type);
+      console.log('⚙️ Available API parameters:', apiParams);
+      
+      const componentDef = this.getComponentDefinition(instance.type);
+      console.log('📝 Component definition:', componentDef);
+    }
+    
+    // Force change detection for parameters
+    this.updateSelectedComponentParameters();
+  }
+
+  // Computed property for selected component parameters
+  selectedComponentParameters: ComponentParameter[] = [];
+
+  private updateSelectedComponentParameters(): void {
+    if (!this.selectedComponentInstance || this.selectedComponentInstance.type === 'built-in-navigation') {
+      this.selectedComponentParameters = [];
+      return;
+    }
+
+    // First try to get parameters from API component (since these are more comprehensive)
+    const apiParams = this.getApiComponentTypeParameters(this.selectedComponentInstance.type);
+    if (apiParams && apiParams.length > 0) {
+      this.selectedComponentParameters = apiParams;
+      console.log('📊 Using API component parameters:', this.selectedComponentParameters);
+      return;
+    }
+
+    // Fallback to component definition parameters
+    const componentDef = this.getComponentDefinition(this.selectedComponentInstance.type);
+    if (componentDef && componentDef.parameters) {
+      this.selectedComponentParameters = componentDef.parameters;
+      console.log('📊 Using component definition parameters:', this.selectedComponentParameters);
+      return;
+    }
+
+    // No parameters found
+    this.selectedComponentParameters = [];
+    console.log('📊 No parameters found for component type:', this.selectedComponentInstance.type);
   }
 
   onComponentSelectionChange(instance: any): void {
     this.selectedComponentInstance = instance;
+    this.updateSelectedComponentParameters();
   }
 
   // Page Management Coordination
   onPageDataChange(pages: Page[]): void {
-    this.pages = pages;
+    console.log('📄 Page data changed, updating main component...', pages);
+    
+    // Deep copy to ensure we have our own reference
+    this.pages = pages.map(page => ({
+      ...page,
+      components: page.components.map(comp => ({ ...comp }))
+    }));
+    
     // Update website builder with new page data
-    console.log('Pages updated:', pages);
+    console.log('✅ Pages updated in main component:', this.pages);
+    
+    // Also update the current page components if needed
+    this.updateCurrentPageComponents();
   }
 
   onCurrentPageChange(pageId: string): void {
     this.currentPageId = pageId;
-    console.log('Current page changed to:', pageId);
+    console.log('📍 Current page changed to:', pageId);
+    this.updateCurrentPageComponents();
+  }
+  
+  private updateCurrentPageComponents(): void {
+    // Ensure we have the latest data for the current page
+    const currentPage = this.pages.find(p => p.id === this.currentPageId);
+    if (currentPage) {
+      console.log(`🔄 Current page (${this.currentPageId}) has ${currentPage.components.length} components`);
+    }
   }
 
   // Component Instance Updates
@@ -209,12 +295,20 @@ export class WebsiteCreatorComponent implements OnInit {
       value = parseFloat(value) || 0;
     }
     
+    // Initialize parameters object if it doesn't exist
+    if (!this.selectedComponentInstance.parameters) {
+      this.selectedComponentInstance.parameters = {};
+    }
+    
     this.selectedComponentInstance.parameters[parameterName] = value;
     
     // Notify canvas of the update
     if (this.canvas) {
       this.canvas.updateComponentInstance(this.selectedComponentInstance);
     }
+    
+    // Emit component instance update for other components that need it
+    this.onComponentInstanceUpdated(this.selectedComponentInstance);
     
     console.log('Updated parameter:', parameterName, 'to:', value);
   }
@@ -234,10 +328,10 @@ export class WebsiteCreatorComponent implements OnInit {
     // Add to current page through canvas
     if (this.canvas) {
       const currentPage = this.canvas.pages.find(p => p.id === this.currentPageId);
-      if (currentPage) {
-        currentPage.components.push(newInstance);
+    if (currentPage) {
+      currentPage.components.push(newInstance);
         // Component list will update automatically through canvas internal logic
-        this.selectedComponentInstance = newInstance;
+      this.selectedComponentInstance = newInstance;
       }
     }
   }
@@ -264,8 +358,20 @@ export class WebsiteCreatorComponent implements OnInit {
     
     this.isSaving = true;
     
-    // Export current website data
+    // CRITICAL FIX: Get the latest page data from canvas before saving
+    // This ensures all components from all pages are included
+    if (this.canvas && this.canvas.pages && this.canvas.pages.length > 0) {
+      console.log('📋 Getting latest page data from canvas for save...');
+      this.pages = [...this.canvas.pages]; // Deep sync with canvas data
+      console.log('✅ Synced pages with canvas:', this.pages);
+    } else {
+      console.warn('⚠️ Canvas data not available, using main component pages');
+    }
+    
+    // Export current website data with latest page data
     this.currentProject.websiteJson = this.exportWebsiteDataAsJson();
+    
+    console.log('💾 Saving website data:', this.currentProject.websiteJson);
     
     // Save based on whether it's a new project or existing
     if (this.currentProject.isNew) {
@@ -371,68 +477,116 @@ export class WebsiteCreatorComponent implements OnInit {
 
   // Data Import/Export
   private exportWebsiteDataAsJson(): string {
+    console.log('📤 Exporting website data...');
+    console.log('📄 Pages to export:', this.pages);
+    
+    // Validate that we have proper page data
+    if (!this.pages || this.pages.length === 0) {
+      console.warn('⚠️ No pages found, creating default home page');
+      this.pages = [{
+        id: 'home',
+        name: 'Home',
+        route: '/',
+        isDeletable: false,
+        isActive: true,
+        components: []
+      }];
+    }
+    
+    // Count total components across all pages
+    const totalComponents = this.pages.reduce((total, page) => total + page.components.length, 0);
+    console.log(`📊 Exporting ${this.pages.length} pages with ${totalComponents} total components`);
+    
     const websiteData = {
       builtInNavigation: this.builtInNavProperties,
-      pages: this.pages.map(page => ({
-        id: page.id,
-        name: page.name,
-        route: page.route,
-        components: page.components.map(comp => ({
-          id: comp.id,
-          type: comp.type,
-          x: comp.x,
-          y: comp.y,
-          width: comp.width,
-          height: comp.height,
-          zIndex: comp.zIndex,
-          parameters: comp.parameters
-        }))
-      }))
+      pages: this.pages.map(page => {
+        console.log(`📋 Page "${page.name}" (${page.id}): ${page.components.length} components`);
+        return {
+          id: page.id,
+          name: page.name,
+          route: page.route,
+          isDeletable: page.isDeletable,
+          components: page.components.map(comp => ({
+            id: comp.id,
+            type: comp.type,
+            x: comp.x,
+            y: comp.y,
+            width: comp.width,
+            height: comp.height,
+            zIndex: comp.zIndex,
+            parameters: comp.parameters
+          }))
+        };
+      })
     };
     
-    return JSON.stringify(websiteData, null, 2);
+    const jsonString = JSON.stringify(websiteData, null, 2);
+    console.log('✅ Website data exported successfully');
+    
+    return jsonString;
   }
 
   private loadWebsiteDataFromJson(jsonString: string): void {
     try {
-      if (!jsonString) return;
+      if (!jsonString) {
+        console.warn('⚠️ No JSON data to load');
+        return;
+      }
 
+      console.log('📥 Loading website data from JSON...');
       const websiteData = JSON.parse(jsonString);
-      
+
       // Load built-in navigation properties
       if (websiteData.builtInNavigation) {
         this.builtInNavProperties = { ...websiteData.builtInNavigation };
+        console.log('✅ Built-in navigation properties loaded');
       }
 
       // Load pages and components
       if (websiteData.pages && Array.isArray(websiteData.pages)) {
-        this.pages = websiteData.pages.map((page: any) => ({
-          id: page.id,
-          name: page.name,
-          route: page.route,
-          components: page.components.map((comp: any) => ({
-            id: comp.id,
-            type: comp.type,
-            x: comp.x || 0,
-            y: comp.y || 0,
-            width: comp.width || 300,
-            height: comp.height || 100,
-            zIndex: comp.zIndex || 1,
-            parameters: comp.parameters || {}
-          })),
-          isDeletable: page.id !== 'home',
+        this.pages = websiteData.pages.map((page: any) => {
+          const loadedPage = {
+            id: page.id,
+            name: page.name,
+            route: page.route,
+            isDeletable: page.isDeletable !== undefined ? page.isDeletable : (page.id !== 'home'),
+            isActive: page.id === this.currentPageId,
+            components: page.components.map((comp: any) => ({
+              id: comp.id,
+              type: comp.type,
+              x: comp.x || 0,
+              y: comp.y || 0,
+              width: comp.width || 300,
+              height: comp.height || 100,
+              zIndex: comp.zIndex || 1,
+              parameters: comp.parameters || {}
+            }))
+          };
+          
+          console.log(`📋 Loaded page "${loadedPage.name}" (${loadedPage.id}): ${loadedPage.components.length} components`);
+          return loadedPage;
+        });
+
+        const totalComponents = this.pages.reduce((total, page) => total + page.components.length, 0);
+        console.log(`📊 Loaded ${this.pages.length} pages with ${totalComponents} total components`);
+
+        // Set the current page to the first page if not already set
+        if (!this.currentPageId && this.pages.length > 0) {
+          this.currentPageId = this.pages[0].id;
+        }
+
+        // Update page active states based on current page
+        this.pages = this.pages.map(page => ({
+          ...page,
           isActive: page.id === this.currentPageId
         }));
 
-        // Load pages into canvas
-        if (this.canvas) {
-          this.canvas.loadPageData(this.pages);
-        }
+        console.log('✅ Website data loaded successfully');
+      } else {
+        console.warn('⚠️ No pages found in JSON data');
       }
-
-      console.log('Website data loaded successfully');
     } catch (error) {
-      console.error('Error loading website data:', error);
+      console.error('❌ Error loading website data:', error);
       alert('Error loading website data. Using default configuration.');
     }
   }
@@ -599,25 +753,56 @@ export class WebsiteCreatorComponent implements OnInit {
     return this.websiteBuilder.getComponentDefinition(componentType);
   }
 
-  // Get API component info (delegate to left sidebar)
+  // Get API component info (use direct service access)
   getApiComponentType(componentType: string): ComponentType | undefined {
-    if (this.leftSidebar) {
-      return this.leftSidebar.getApiComponentType(componentType);
-    }
-    return undefined;
+    return this.websiteBuilder.getCachedApiComponentTypes().find(comp => comp.id === componentType);
   }
 
   getApiComponentTypeParameters(componentType: string): ComponentParameter[] {
-    if (this.leftSidebar) {
-      return this.leftSidebar.getApiComponentTypeParameters(componentType);
+    console.log('🔍 Getting API component type parameters for:', componentType);
+    const apiComponent = this.getApiComponentType(componentType);
+    console.log('📋 Found API component:', apiComponent);
+    
+    if (apiComponent && apiComponent.parametersSchema) {
+      try {
+        console.log('📝 Raw parameters schema:', apiComponent.parametersSchema);
+        
+        // The parametersSchema is a JSON string, parse it directly
+        let parameters;
+        if (typeof apiComponent.parametersSchema === 'string') {
+          parameters = JSON.parse(apiComponent.parametersSchema);
+        } else {
+          parameters = apiComponent.parametersSchema;
+        }
+        
+        console.log('📄 Parsed parameters:', parameters);
+        
+        // If it's an array, return it directly
+        if (Array.isArray(parameters)) {
+          console.log('⚙️ Extracted parameters (array):', parameters);
+          return parameters;
+        }
+        
+        // If it's an object with parameters property, extract it
+        if (parameters && parameters.parameters) {
+          console.log('⚙️ Extracted parameters (object.parameters):', parameters.parameters);
+          return parameters.parameters;
+        }
+        
+        console.log('⚠️ Parameters schema format not recognized, returning empty array');
+        return [];
+        
+      } catch (error) {
+        console.error('❌ Error parsing parameters schema:', error);
+        console.error('📝 Schema content was:', apiComponent.parametersSchema);
+      }
+    } else {
+      console.log('❌ No API component found or no parameters schema for:', componentType);
     }
     return [];
   }
 
   isApiComponent(componentType: string): boolean {
-    if (this.leftSidebar) {
-      return this.leftSidebar.isApiComponent(componentType);
-    }
-    return false;
+    return this.websiteBuilder.getCachedApiComponentTypes().some(comp => comp.id === componentType);
   }
 } 

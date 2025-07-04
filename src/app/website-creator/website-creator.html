@@ -221,8 +221,19 @@
           
           <!-- Dynamic parameter inputs for regular components -->
           <div *ngIf="selectedComponentInstance.type !== 'built-in-navigation'">
-          <div *ngFor="let param of getComponentDefinition(selectedComponentInstance.type)?.parameters || getApiComponentTypeParameters(selectedComponentInstance.type)" class="property-group">
-            <label>{{ param.label }}</label>
+          <!-- Debug info -->
+          <div style="background: #f0f0f0; padding: 8px; margin: 8px 0; font-size: 11px; border-radius: 4px;">
+            <strong>🐛 Debug Info:</strong><br/>
+            Selected Component Type: {{ selectedComponentInstance.type }}<br/>
+            Component Definition Found: {{ getComponentDefinition(selectedComponentInstance.type) ? 'Yes' : 'No' }}<br/>
+            API Component Found: {{ getApiComponentType(selectedComponentInstance.type) ? 'Yes' : 'No' }}<br/>
+            API Parameters Count: {{ getApiComponentTypeParameters(selectedComponentInstance.type).length }}<br/>
+            Has Parameters Schema: {{ getApiComponentType(selectedComponentInstance.type)?.parametersSchema ? 'Yes' : 'No' }}<br/>
+            <strong>Computed Parameters Count: {{ selectedComponentParameters.length }}</strong>
+          </div>
+          
+          <div *ngFor="let param of selectedComponentParameters" class="property-group">
+            <label>{{ param.label }} <small style="color: #666;">({{ param.type }})</small></label>
             
             <!-- Text input -->
             <input 

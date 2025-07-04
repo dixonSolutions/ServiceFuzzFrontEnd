@@ -169,29 +169,64 @@ export class Canvas implements OnInit {
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
 
-      // Create new component instance
+      console.log('🎯 Dropping component:', component);
+
+      // Get default parameters for the component
+      const defaultParameters = this.getDefaultProps(component.id);
+      console.log('⚙️ Default parameters for component:', defaultParameters);
+
+      // Calculate next z-index (ensure components don't overlap in z-space)
+      const currentPage = this.pages.find(p => p.id === this.currentPageId);
+      const maxZIndex = currentPage && currentPage.components.length > 0 
+        ? Math.max(...currentPage.components.map(c => c.zIndex)) 
+        : 0;
+
+      // Calculate smart positioning to avoid overlaps
+      let finalX = Math.max(0, x - 50);
+      let finalY = Math.max(80, y - 25); // Start below navigation bar
+      
+      // If dropping near existing components, offset position
+      if (currentPage && currentPage.components.length > 0) {
+        const componentAtPosition = currentPage.components.find(c => 
+          Math.abs(c.x - finalX) < 50 && Math.abs(c.y - finalY) < 50
+        );
+        
+        if (componentAtPosition) {
+          // Offset by 20px to create a cascade effect
+          const offset = (currentPage.components.length % 10) * 20;
+          finalX += offset;
+          finalY += offset;
+        }
+      }
+
+      // Create new component instance with proper positioning and z-index
       const newInstance: ComponentInstance = {
         id: this.generateUniqueId(),
         type: component.id,
-        x: Math.max(0, x - 50),
-        y: Math.max(0, y - 25),
-        width: 300,
-        height: 100,
-        zIndex: 1,
-        parameters: this.getDefaultProps(component.id)
+        x: finalX,
+        y: finalY,
+        width: component.defaultWidth || 300,
+        height: component.defaultHeight || 100,
+        zIndex: maxZIndex + 1, // Ensure new component is on top
+        parameters: defaultParameters
       };
 
+      console.log('📋 Created new component instance:', newInstance);
+
       // Add to current page
-      const currentPage = this.pages.find(p => p.id === this.currentPageId);
       if (currentPage) {
         currentPage.components.push(newInstance);
         this.updateCurrentPageComponents();
         this.pageDataChange.emit(this.pages);
+        
+        // Select the newly created component
+        this.selectedComponentInstance = newInstance;
+        this.componentInstanceSelectionChange.emit(newInstance);
+        
+        console.log('✅ Component added to page and selected:', newInstance);
       }
-
-      console.log('Component dropped:', newInstance);
     } catch (error) {
-      console.error('Error dropping component:', error);
+      console.error('❌ Error dropping component:', error);
     }
   }
 
@@ -201,31 +236,59 @@ export class Canvas implements OnInit {
   }
 
   private getDefaultProps(componentType: string): any {
-    // Get component definition from service
-    const componentDef = this.websiteBuilder.getComponentDefinition(componentType);
+    console.log('🔍 Getting default props for component type:', componentType);
+    
+    // Check if it's a built-in component first
+    const componentDef = this.getComponentDefinition(componentType);
     if (componentDef) {
-      const props: any = {};
+      console.log('📝 Found built-in component definition:', componentDef);
+      const defaultProps: any = {};
       componentDef.parameters.forEach(param => {
-        props[param.name] = param.defaultValue;
+        defaultProps[param.name] = param.defaultValue;
       });
-      return props;
+      console.log('⚙️ Built-in component default props:', defaultProps);
+      return defaultProps;
     }
 
     // Check if it's an API component
     const apiComponent = this.getApiComponentType(componentType);
     if (apiComponent) {
-      const props: any = {};
-      // Parse parameters from schema if available
+      console.log('📋 Found API component:', apiComponent);
+      
+      // Get default parameters from API component
+      let defaultProps: any = {};
+      
+      // Parse defaultParameters if available
       if (apiComponent.defaultParameters) {
         try {
-          return JSON.parse(apiComponent.defaultParameters);
+          defaultProps = JSON.parse(apiComponent.defaultParameters);
+          console.log('✅ Parsed default parameters from API component:', defaultProps);
         } catch (error) {
-          console.error('Error parsing default parameters:', error);
+          console.error('❌ Error parsing default parameters:', error);
         }
       }
-      return props;
+      
+      // If no default parameters, try to get them from schema
+      if (Object.keys(defaultProps).length === 0 && apiComponent.parametersSchema) {
+        try {
+          const parameters = JSON.parse(apiComponent.parametersSchema);
+          if (Array.isArray(parameters)) {
+            parameters.forEach((param: any) => {
+              if (param.defaultValue !== undefined) {
+                defaultProps[param.name] = param.defaultValue;
+              }
+            });
+          }
+          console.log('✅ Generated default props from schema:', defaultProps);
+        } catch (error) {
+          console.error('❌ Error parsing parameters schema:', error);
+        }
+      }
+      
+      return defaultProps;
     }
 
+    console.log('❌ No component definition found, returning empty props');
     return {};
   }
 
@@ -358,7 +421,34 @@ export class Canvas implements OnInit {
 
   // Navigation Handling (migrated from main component)
   onNavigationClick(event: Event, pageId: string): void {
-    this.navigationClick.emit({event: event as MouseEvent, pageId});
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('🧭 Navigation clicked:', pageId);
+    
+    // Update current page
+    this.currentPageId = pageId;
+    
+    // Update page active states
+    this.pages.forEach(page => {
+      page.isActive = page.id === pageId;
+    });
+    
+    // Update current page components
+    this.updateCurrentPageComponents();
+    
+    // Notify website builder service
+    this.websiteBuilder.setCurrentPage(pageId);
+    
+    // Emit navigation event to parent
+    this.navigationClick.emit({ event: event as MouseEvent, pageId });
+    this.currentPageChange.emit(pageId);
+    
+    // Clear component selection when navigating to new page
+    this.selectedComponentInstance = null;
+    this.componentInstanceSelectionChange.emit(null);
+    
+    console.log('✅ Navigation updated to page:', pageId);
   }
 
   // Utility Methods (migrated from main component)
@@ -392,14 +482,45 @@ export class Canvas implements OnInit {
   }
 
   getApiComponentTypeParameters(componentType: string): ComponentParameter[] {
+    console.log('🔍 Canvas: Getting API component type parameters for:', componentType);
     const apiComponent = this.getApiComponentType(componentType);
+    console.log('📋 Canvas: Found API component:', apiComponent);
+    
     if (apiComponent && apiComponent.parametersSchema) {
       try {
-        const schema = JSON.parse(apiComponent.parametersSchema);
-        return schema.parameters || [];
+        console.log('📝 Canvas: Raw parameters schema:', apiComponent.parametersSchema);
+        
+        // The parametersSchema is a JSON string, parse it directly
+        let parameters;
+        if (typeof apiComponent.parametersSchema === 'string') {
+          parameters = JSON.parse(apiComponent.parametersSchema);
+        } else {
+          parameters = apiComponent.parametersSchema;
+        }
+        
+        console.log('📄 Canvas: Parsed parameters:', parameters);
+        
+        // If it's an array, return it directly
+        if (Array.isArray(parameters)) {
+          console.log('⚙️ Canvas: Extracted parameters (array):', parameters);
+          return parameters;
+        }
+        
+        // If it's an object with parameters property, extract it
+        if (parameters && parameters.parameters) {
+          console.log('⚙️ Canvas: Extracted parameters (object.parameters):', parameters.parameters);
+          return parameters.parameters;
+        }
+        
+        console.log('⚠️ Canvas: Parameters schema format not recognized, returning empty array');
+        return [];
+        
       } catch (error) {
-        console.error('Error parsing parameters schema:', error);
+        console.error('❌ Canvas: Error parsing parameters schema:', error);
+        console.error('📝 Canvas: Schema content was:', apiComponent.parametersSchema);
       }
+    } else {
+      console.log('❌ Canvas: No API component found or no parameters schema for:', componentType);
     }
     return [];
   }

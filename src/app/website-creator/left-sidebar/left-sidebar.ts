@@ -409,13 +409,13 @@ export class LeftSidebar implements OnInit {
         this.imageUploadError = 'Please select an image file';
         return;
       }
-
+      
       // Validate file size (10MB limit)
       if (file.size > 10 * 1024 * 1024) {
         this.imageUploadError = 'Image must be less than 10MB';
         return;
       }
-
+      
       this.selectedImageFile = file;
       this.imageUploadError = null;
     }
