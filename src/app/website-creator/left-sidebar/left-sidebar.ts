@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { ComponentDefinition, ComponentParameter, BusinessImage, BusinessImagesResponse, WebsiteBuilderService } from '../../services/website-builder';
 import { ComponentType } from '../../models/workspace.models';
+import { ComponentRendererService } from '../../services/component-renderer.service';
 
 @Component({
   selector: 'app-left-sidebar',
@@ -12,7 +13,7 @@ export class LeftSidebar implements OnInit {
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
 
   // Inputs from parent component
-  @Input() activeTab: 'components' | 'assets' = 'components';
+  @Input() activeTab: 'components' | 'properties' | 'assets' = 'components';
   @Input() searchTerm: string = '';
   @Input() selectedCategory: string = 'All';
   @Input() selectedComponentInstance: any = null;
@@ -20,7 +21,7 @@ export class LeftSidebar implements OnInit {
   @Input() builtInNavProperties: any = {};
 
   // Outputs to parent component
-  @Output() tabChange = new EventEmitter<'components' | 'assets'>();
+  @Output() tabChange = new EventEmitter<'components' | 'properties' | 'assets'>();
   @Output() searchChange = new EventEmitter<Event>();
   @Output() categoryChange = new EventEmitter<string>();
   @Output() dragStart = new EventEmitter<{ event: DragEvent, component: ComponentDefinition }>();
@@ -46,7 +47,14 @@ export class LeftSidebar implements OnInit {
   showAssetBrowserDialog = false;
   currentImageAssetProperty: string | null = null;
 
-  constructor(private websiteBuilder: WebsiteBuilderService) { }
+  // Component Properties Management
+  componentParameterForm: { [key: string]: any } = {};
+  componentFormErrors: { [key: string]: string } = {};
+
+  constructor(
+    private websiteBuilder: WebsiteBuilderService,
+    private componentRenderer: ComponentRendererService
+  ) { }
 
   ngOnInit(): void {
     this.initializeComponentManagement();
@@ -247,11 +255,16 @@ export class LeftSidebar implements OnInit {
   }
 
   // Event handlers
-  onTabChange(tab: 'components' | 'assets'): void {
+  onTabChange(tab: 'components' | 'properties' | 'assets'): void {
     this.activeTab = tab;
     this.tabChange.emit(tab);
     if (tab === 'assets' && this.businessImages.length === 0) {
       this.loadBusinessImages();
+    }
+    
+    // Initialize component properties form when properties tab is selected
+    if (tab === 'properties' && this.selectedComponentInstance) {
+      this.initializeComponentPropertiesForm();
     }
   }
 
@@ -464,6 +477,69 @@ export class LeftSidebar implements OnInit {
   }
 
   // Method to trigger API component loading when project changes
+  // Component Properties Management
+  initializeComponentPropertiesForm(): void {
+    if (!this.selectedComponentInstance) {
+      return;
+    }
+
+    const componentType = this.getApiComponentType(this.selectedComponentInstance.type);
+    if (!componentType || !componentType.parametersSchema) {
+      return;
+    }
+
+    const parameters = this.componentRenderer.parseParameterSchema(componentType.parametersSchema);
+    const currentParameters = this.selectedComponentInstance.parameters || {};
+
+    this.componentParameterForm = this.componentRenderer.generateFormFields(parameters, currentParameters);
+    this.componentFormErrors = {};
+  }
+
+  onParameterChange(parameterName: string, value: any): void {
+    this.componentParameterForm[parameterName].value = value;
+    
+    // Update the component instance
+    if (this.selectedComponentInstance) {
+      if (!this.selectedComponentInstance.parameters) {
+        this.selectedComponentInstance.parameters = {};
+      }
+      this.selectedComponentInstance.parameters[parameterName] = value;
+      
+      // Emit updated instance
+      this.componentInstanceUpdated.emit(this.selectedComponentInstance);
+    }
+    
+    // Clear any previous errors for this parameter
+    if (this.componentFormErrors[parameterName]) {
+      delete this.componentFormErrors[parameterName];
+    }
+  }
+
+  getParameterFormField(parameterName: string): any {
+    return this.componentParameterForm[parameterName];
+  }
+
+  hasParameterError(parameterName: string): boolean {
+    return !!this.componentFormErrors[parameterName];
+  }
+
+  getParameterError(parameterName: string): string {
+    return this.componentFormErrors[parameterName] || '';
+  }
+
+  getSelectedComponentParameters(): any[] {
+    if (!this.selectedComponentInstance) {
+      return [];
+    }
+
+    const componentType = this.getApiComponentType(this.selectedComponentInstance.type);
+    if (!componentType || !componentType.parametersSchema) {
+      return [];
+    }
+
+    return this.componentRenderer.parseParameterSchema(componentType.parametersSchema);
+  }
+
   onProjectChange(project: any): void {
     this.currentProject = project;
     if (project?.businessId) {

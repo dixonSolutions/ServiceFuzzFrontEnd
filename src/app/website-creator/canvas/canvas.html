@@ -156,48 +156,58 @@
         </div>
         
         <!-- Render component based on type -->
-        <div [ngSwitch]="instance.type">
-          
-          <!-- Hero Section -->
-          <section *ngSwitchCase="'hero-section'" class="hero" 
-                   [style.background-color]="instance.parameters['backgroundColor'] || '#f8f9fa'"
-                   [style.color]="instance.parameters['textColor'] || '#333333'"
-                   [style.width]="'100%'"
-                   [style.height]="'100%'">
-            <h1>{{ instance.parameters['title'] || 'Welcome to Our Website' }}</h1>
-            <p>{{ instance.parameters['subtitle'] || 'Discover amazing services and solutions' }}</p>
-            <button class="hero-btn" 
-                    [style.background-color]="instance.parameters['ctaButtonColor'] || '#007bff'"
-                    [style.color]="'white'">
-              {{ instance.parameters['ctaText'] || 'Get Started' }}
-            </button>
-          </section>
-          
-          <!-- Text Block -->
-          <div *ngSwitchCase="'text-block'" class="text-block"
-               [style.text-align]="instance.parameters['alignment'] || 'left'"
-               [style.color]="instance.parameters['textColor'] || '#333333'"
-               [style.font-size.px]="instance.parameters['fontSize'] || 16"
+        <div class="component-renderer">
+          <!-- New Component System (with HTML templates) -->
+          <div *ngIf="isNewComponentSystem(instance.type)" 
+               class="new-component-system"
+               [innerHTML]="getComponentRenderContext(instance.id)?.renderedHTML"
                [style.width]="'100%'"
                [style.height]="'100%'">
-            <h3 *ngIf="instance.parameters['title']">{{ instance.parameters['title'] }}</h3>
-            <p>{{ instance.parameters['content'] || 'Your text content goes here...' }}</p>
           </div>
           
-          <!-- Image -->
-          <div *ngSwitchCase="'image'" class="image-block" 
-               [style.width]="'100%'"
-               [style.height]="'100%'"
-               [style.text-align]="'center'">
-            <img [src]="instance.parameters['imageUrl'] || 'https://via.placeholder.com/300x200'" 
-                 [alt]="instance.parameters['altText'] || 'Image description'"
+          <!-- Legacy Component System (fallback) -->
+          <div *ngIf="!isNewComponentSystem(instance.type)" [ngSwitch]="instance.type">
+            
+            <!-- Hero Section -->
+            <section *ngSwitchCase="'hero-section'" class="hero" 
+                     [style.background-color]="instance.parameters['backgroundColor'] || '#f8f9fa'"
+                     [style.color]="instance.parameters['textColor'] || '#333333'"
+                     [style.width]="'100%'"
+                     [style.height]="'100%'">
+              <h1>{{ instance.parameters['title'] || 'Welcome to Our Website' }}</h1>
+              <p>{{ instance.parameters['subtitle'] || 'Discover amazing services and solutions' }}</p>
+              <button class="hero-btn" 
+                      [style.background-color]="instance.parameters['ctaButtonColor'] || '#007bff'"
+                      [style.color]="'white'">
+                {{ instance.parameters['ctaText'] || 'Get Started' }}
+              </button>
+            </section>
+            
+            <!-- Text Block -->
+            <div *ngSwitchCase="'text-block'" class="text-block"
+                 [style.text-align]="instance.parameters['alignment'] || 'left'"
+                 [style.color]="instance.parameters['textColor'] || '#333333'"
+                 [style.font-size.px]="instance.parameters['fontSize'] || 16"
+                 [style.width]="'100%'"
+                 [style.height]="'100%'">
+              <h3 *ngIf="instance.parameters['title']">{{ instance.parameters['title'] }}</h3>
+              <p>{{ instance.parameters['content'] || 'Your text content goes here...' }}</p>
+            </div>
+            
+            <!-- Image -->
+            <div *ngSwitchCase="'image'" class="image-block" 
                  [style.width]="'100%'"
                  [style.height]="'100%'"
-                 [style.object-fit]="instance.parameters['objectFit'] || 'cover'"
-                 [style.border-radius.px]="instance.parameters['borderRadius'] || 0">
-          </div>
-          
-          <!-- Button -->
+                 [style.text-align]="'center'">
+              <img [src]="instance.parameters['imageUrl'] || 'https://via.placeholder.com/300x200'" 
+                   [alt]="instance.parameters['altText'] || 'Image description'"
+                   [style.width]="'100%'"
+                   [style.height]="'100%'"
+                   [style.object-fit]="instance.parameters['objectFit'] || 'cover'"
+                   [style.border-radius.px]="instance.parameters['borderRadius'] || 0">
+            </div>
+            
+            <!-- Button -->
           <div *ngSwitchCase="'button'" class="button-block" 
                [style.text-align]="instance.parameters['alignment'] || 'center'"
                [style.width]="'100%'"

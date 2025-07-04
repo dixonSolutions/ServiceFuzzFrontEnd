@@ -37,7 +37,7 @@ export class WebsiteCreatorComponent implements OnInit {
   importData = '';
 
   // Assets Management
-  activeTab: 'components' | 'assets' = 'components';
+  activeTab: 'components' | 'properties' | 'assets' = 'components';
   isSaving = false;
   
   // Built-in navigation properties (shared state)
@@ -391,8 +391,13 @@ export class WebsiteCreatorComponent implements OnInit {
   }
 
   // Tab Management
-  onTabChange(tab: 'components' | 'assets'): void {
+  onTabChange(tab: 'components' | 'properties' | 'assets'): void {
     this.activeTab = tab;
+    
+    // Switch to properties tab when component is selected
+    if (this.selectedComponentInstance && tab === 'properties') {
+      // Properties tab will auto-initialize when component is selected
+    }
   }
 
   // Drag and Drop

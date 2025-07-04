@@ -1,6 +1,8 @@
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { ComponentDefinition, ComponentParameter, ComponentInstance, WebsiteBuilderService } from '../../services/website-builder';
-import { ComponentType } from '../../models/workspace.models';
+import { ComponentType, ComponentRenderContext } from '../../models/workspace.models';
+import { ComponentRendererService } from '../../services/component-renderer.service';
+import { Subscription } from 'rxjs';
 
 export interface Page {
   id: string;
@@ -21,7 +23,7 @@ export interface BuiltInNavProperties {
   templateUrl: './canvas.html',
   styleUrl: './canvas.css'
 })
-export class Canvas implements OnInit {
+export class Canvas implements OnInit, OnDestroy {
   @ViewChild('canvas', { static: true }) canvasElement!: ElementRef<HTMLDivElement>;
 
   // Inputs from parent component
@@ -55,10 +57,21 @@ export class Canvas implements OnInit {
     mobile: '375px'
   };
 
-  constructor(private websiteBuilder: WebsiteBuilderService) { }
+  // Component rendering
+  componentRenderContexts: Map<string, ComponentRenderContext> = new Map();
+  private subscriptions: Subscription[] = [];
+
+  constructor(
+    private websiteBuilder: WebsiteBuilderService,
+    private componentRenderer: ComponentRendererService
+  ) { }
 
   ngOnInit(): void {
     this.initializeCanvas();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   // Initialize canvas operations (migrated from main component)
@@ -108,7 +121,46 @@ export class Canvas implements OnInit {
     const currentPage = this.pages.find(p => p.id === this.currentPageId);
     if (currentPage) {
       this.currentPageComponents = currentPage.components;
+      this.updateComponentRenderContexts();
     }
+  }
+
+  // Component Rendering Methods
+  private updateComponentRenderContexts(): void {
+    this.componentRenderContexts.clear();
+    
+    this.currentPageComponents.forEach(component => {
+      const componentType = this.getApiComponentType(component.type);
+      if (componentType) {
+        // Convert from website builder ComponentInstance to models ComponentInstance
+        const modelComponent = this.convertToModelComponent(component);
+        const renderContext = this.componentRenderer.renderComponent(componentType, modelComponent);
+        this.componentRenderContexts.set(component.id, renderContext);
+      }
+    });
+  }
+
+  private convertToModelComponent(component: any): any {
+    return {
+      id: component.id,
+      componentTypeId: component.type,
+      parameters: component.parameters || {},
+      customStyles: component.customStyles || {},
+      xPosition: component.x || 0,
+      yPosition: component.y || 0,
+      width: component.width || 100,
+      height: component.height || 100,
+      zIndex: component.zIndex || 1
+    };
+  }
+
+  getComponentRenderContext(componentId: string): ComponentRenderContext | undefined {
+    return this.componentRenderContexts.get(componentId);
+  }
+
+  isNewComponentSystem(componentType: string): boolean {
+    const apiComponentType = this.getApiComponentType(componentType);
+    return !!(apiComponentType && apiComponentType.htmlTemplate);
   }
 
   // Page Management (migrated from main component)

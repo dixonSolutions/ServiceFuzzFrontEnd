@@ -77,6 +77,7 @@ export interface ComponentType {
   description?: string;
   parametersSchema?: string;
   defaultParameters?: string;
+  htmlTemplate?: string;
   defaultWidth: number;
   defaultHeight: number;
   isActive: boolean;
@@ -129,4 +130,67 @@ export interface DeploymentListResponse {
   workspaceId: string;
   totalDeployments: number;
   deployments: WorkspaceDeployment[];
+}
+
+// Enhanced component system interfaces
+export interface ComponentParameter {
+  name: string;
+  type: 'text' | 'number' | 'boolean' | 'color' | 'select' | 'image-asset';
+  label: string;
+  required?: boolean;
+  options?: string[];
+  defaultValue?: any;
+}
+
+export interface ComponentInstance {
+  id: string;
+  componentTypeId: string;
+  parameters: { [key: string]: any };
+  customStyles?: { [key: string]: string };
+  xPosition: number;
+  yPosition: number;
+  width: number;
+  height: number;
+  zIndex: number;
+}
+
+export interface WebsiteCSS {
+  global?: string;
+  components?: { [componentId: string]: string };
+}
+
+export interface WebsiteData {
+  pages: WebsitePage[];
+  globalCSS?: string;
+  componentCSS?: { [componentId: string]: string };
+  metadata?: {
+    title?: string;
+    description?: string;
+    favicon?: string;
+  };
+}
+
+export interface WebsitePage {
+  id: string;
+  name: string;
+  slug: string;
+  components: ComponentInstance[];
+  pageCSS?: string;
+  isHomePage?: boolean;
+}
+
+export interface ParameterFormField {
+  parameter: ComponentParameter;
+  value: any;
+  touched: boolean;
+  valid: boolean;
+  errorMessage?: string;
+}
+
+export interface ComponentRenderContext {
+  component: ComponentInstance;
+  componentType: ComponentType;
+  renderedHTML: string;
+  appliedCSS: string;
+  parameters: { [key: string]: any };
 } 

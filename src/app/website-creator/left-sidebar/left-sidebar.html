@@ -36,6 +36,13 @@
       </button>
       <button 
         class="tab-btn"
+        [class.active]="activeTab === 'properties'"
+        (click)="onTabChange('properties')">
+        <i class="pi pi-cog"></i>
+        <span>Properties</span>
+      </button>
+      <button 
+        class="tab-btn"
         [class.active]="activeTab === 'assets'"
         (click)="onTabChange('assets')">
         <i class="pi pi-image"></i>
@@ -114,6 +121,136 @@
         <small *ngIf="!searchTerm && selectedCategory !== 'All'">No components in this category</small>
       </div>
     </div>
+    </div>
+
+    <!-- Properties Tab Content -->
+    <div class="tab-content properties-tab-content" *ngIf="activeTab === 'properties'">
+      <!-- Component Selected State -->
+      <div *ngIf="selectedComponentInstance" class="component-properties">
+        <div class="properties-header">
+          <h3>{{ getApiComponentType(selectedComponentInstance.type)?.name || selectedComponentInstance.type }}</h3>
+          <p class="component-description">
+            {{ getApiComponentType(selectedComponentInstance.type)?.description || 'Configure component properties' }}
+          </p>
+        </div>
+
+        <!-- Component Parameters Form -->
+        <div class="parameters-form" *ngIf="getSelectedComponentParameters().length > 0">
+          <div 
+            *ngFor="let param of getSelectedComponentParameters()" 
+            class="parameter-field"
+            [class.has-error]="hasParameterError(param.name)">
+            
+            <label class="parameter-label">
+              {{ param.label }}
+              <span class="required-indicator" *ngIf="param.required">*</span>
+            </label>
+
+            <!-- Text Input -->
+            <input 
+              *ngIf="param.type === 'text'"
+              type="text"
+              class="parameter-input"
+              [value]="getParameterFormField(param.name)?.value || ''"
+              #textInput
+              (input)="onParameterChange(param.name, textInput.value)"
+              [placeholder]="param.label">
+
+            <!-- Number Input -->
+            <input 
+              *ngIf="param.type === 'number'"
+              type="number"
+              class="parameter-input"
+              [value]="getParameterFormField(param.name)?.value || 0"
+              #numberInput
+              (input)="onParameterChange(param.name, +numberInput.value)"
+              [placeholder]="param.label">
+
+            <!-- Color Input -->
+            <input 
+              *ngIf="param.type === 'color'"
+              type="color"
+              class="parameter-input color-input"
+              [value]="getParameterFormField(param.name)?.value || '#000000'"
+              #colorInput
+              (input)="onParameterChange(param.name, colorInput.value)">
+
+            <!-- Boolean Checkbox -->
+            <label class="checkbox-label" *ngIf="param.type === 'boolean'">
+              <input 
+                type="checkbox"
+                class="parameter-checkbox"
+                [checked]="getParameterFormField(param.name)?.value || false"
+                #checkboxInput
+                (change)="onParameterChange(param.name, checkboxInput.checked)">
+              <span class="checkmark"></span>
+              Enable {{ param.label }}
+            </label>
+
+            <!-- Select Dropdown -->
+            <select 
+              *ngIf="param.type === 'select'"
+              class="parameter-select"
+              [value]="getParameterFormField(param.name)?.value || ''"
+              #selectInput
+              (change)="onParameterChange(param.name, selectInput.value)">
+              <option value="">Select {{ param.label }}</option>
+              <option 
+                *ngFor="let option of param.options" 
+                [value]="option">
+                {{ option }}
+              </option>
+            </select>
+
+            <!-- Image Asset -->
+            <div *ngIf="param.type === 'image-asset'" class="image-asset-field">
+              <div class="current-image" *ngIf="getParameterFormField(param.name)?.value">
+                <img [src]="getParameterFormField(param.name)?.value" [alt]="param.label" class="preview-image">
+              </div>
+              <button 
+                type="button"
+                class="btn btn-secondary select-image-btn"
+                (click)="openAssetBrowser(param.name)">
+                <i class="pi pi-image"></i>
+                {{ getParameterFormField(param.name)?.value ? 'Change Image' : 'Select Image' }}
+              </button>
+            </div>
+
+            <!-- Error Message -->
+            <div class="parameter-error" *ngIf="hasParameterError(param.name)">
+              {{ getParameterError(param.name) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- No Parameters Message -->
+        <div class="no-parameters" *ngIf="getSelectedComponentParameters().length === 0">
+          <div class="no-parameters-icon">
+            <i class="pi pi-info-circle"></i>
+          </div>
+          <p>This component has no configurable properties.</p>
+        </div>
+
+        <!-- Component Info Message -->
+        <div class="component-info-message" *ngIf="selectedComponentInstance.type === 'shopping-cart' || selectedComponentInstance.type === 'checkout' || selectedComponentInstance.type === 'past-orders'">
+          <div class="info-icon">
+            <i class="pi pi-info-circle"></i>
+          </div>
+          <div class="info-content">
+            <h4>🛍️ Built-in Functionality!</h4>
+            <p>This component comes with full functionality from ServiceFuzz. No setup required - it will automatically work with your business data!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Component Selected State -->
+      <div *ngIf="!selectedComponentInstance" class="no-component-selected">
+        <div class="empty-icon">
+          <i class="pi pi-mouse-pointer"></i>
+        </div>
+        <h3>No Component Selected</h3>
+        <p>Click on a component in the canvas to edit its properties.</p>
+      </div>
     </div>
 
     <!-- Assets Tab Content -->
