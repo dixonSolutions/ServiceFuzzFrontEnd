@@ -61,12 +61,28 @@ export class WebsiteCreatorComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit() {
-    // Show workspace selection first
-    console.log('Website Creator initialized - showing workspace selection');
+  ngOnInit(): void {
+    console.log('🚀 WEBSITE CREATOR: Starting initialization');
     
-    // Initialize parameters array
-    this.selectedComponentParameters = [];
+    // Initialize pages first
+    this.websiteBuilder.initializePages();
+    
+    // Components will be loaded by the left sidebar - no need to load them here
+    console.log('🔄 WEBSITE CREATOR: Components will be loaded by left sidebar');
+    
+    // Subscribe to pages changes
+    this.websiteBuilder.pages$.subscribe(pages => {
+      console.log('📄 WEBSITE CREATOR: Pages updated:', pages.length);
+      this.pages = pages;
+    });
+    
+    // Subscribe to current page changes
+    this.websiteBuilder.currentPageId$.subscribe(pageId => {
+      console.log('📄 WEBSITE CREATOR: Current page changed:', pageId);
+      this.currentPageId = pageId;
+    });
+    
+    console.log('✅ WEBSITE CREATOR: Initialization complete');
   }
 
   // Workspace Management

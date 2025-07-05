@@ -58,7 +58,7 @@ export class Canvas implements OnInit, OnDestroy {
   };
 
   // Component rendering
-  componentRenderContexts: Map<string, ComponentRenderContext> = new Map();
+  componentRenderContexts: ComponentRenderContext[] = [];
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -78,6 +78,25 @@ export class Canvas implements OnInit, OnDestroy {
   private initializeCanvas(): void {
     this.initializePages();
     this.subscribeToPageChanges();
+    this.loadApiComponentTypes();
+  }
+
+  private loadApiComponentTypes(): void {
+    // Load API component types if not already loaded
+    if (!this.websiteBuilder.areApiComponentTypesLoaded()) {
+      this.websiteBuilder.loadAndCacheApiComponentTypes().subscribe({
+        next: (componentTypes) => {
+          console.log('✅ API component types loaded:', componentTypes.length);
+          this.updateComponentRenderContexts();
+        },
+        error: (error) => {
+          console.error('❌ Error loading API component types:', error);
+        }
+      });
+    } else {
+      console.log('✅ API component types already loaded');
+      this.updateComponentRenderContexts();
+    }
   }
 
   private initializePages(): void {
@@ -127,17 +146,28 @@ export class Canvas implements OnInit, OnDestroy {
 
   // Component Rendering Methods
   private updateComponentRenderContexts(): void {
-    this.componentRenderContexts.clear();
+    this.componentRenderContexts = [];
+    
+    console.log('🔄 Updating component render contexts for', this.currentPageComponents.length, 'components');
     
     this.currentPageComponents.forEach(component => {
       const componentType = this.getApiComponentType(component.type);
       if (componentType) {
+        console.log('✅ Found component type for', component.type, ':', componentType.name);
+        
         // Convert from website builder ComponentInstance to models ComponentInstance
         const modelComponent = this.convertToModelComponent(component);
         const renderContext = this.componentRenderer.renderComponent(componentType, modelComponent);
-        this.componentRenderContexts.set(component.id, renderContext);
+        this.componentRenderContexts.push(renderContext);
+        
+        console.log('🎨 Rendered component:', component.type, 'with HTML length:', renderContext.renderedHTML.length);
+      } else {
+        console.warn('❌ Component type not found for:', component.type);
+        console.log('Available component types:', this.websiteBuilder.getCachedApiComponentTypes().map(ct => ct.id));
       }
     });
+    
+    console.log('📊 Total render contexts created:', this.componentRenderContexts.length);
   }
 
   private convertToModelComponent(component: any): any {
@@ -155,12 +185,12 @@ export class Canvas implements OnInit, OnDestroy {
   }
 
   getComponentRenderContext(componentId: string): ComponentRenderContext | undefined {
-    return this.componentRenderContexts.get(componentId);
+    return this.componentRenderContexts.find(ctx => ctx.component.id === componentId);
   }
 
   isNewComponentSystem(componentType: string): boolean {
-    const apiComponentType = this.getApiComponentType(componentType);
-    return !!(apiComponentType && apiComponentType.htmlTemplate);
+    // All components should use the new dynamic system
+    return true;
   }
 
   // Page Management (migrated from main component)
@@ -251,31 +281,57 @@ export class Canvas implements OnInit, OnDestroy {
         }
       }
 
-      // Create new component instance with proper positioning and z-index
-      const newInstance: ComponentInstance = {
-        id: this.generateUniqueId(),
-        type: component.id,
-        x: finalX,
-        y: finalY,
-        width: component.defaultWidth || 300,
-        height: component.defaultHeight || 100,
-        zIndex: maxZIndex + 1, // Ensure new component is on top
-        parameters: defaultParameters
-      };
-
-      console.log('📋 Created new component instance:', newInstance);
-
-      // Add to current page
-      if (currentPage) {
-        currentPage.components.push(newInstance);
-        this.updateCurrentPageComponents();
-        this.pageDataChange.emit(this.pages);
+      // Use website builder service to add component (ensures proper component management)
+      try {
+        const newInstance = this.websiteBuilder.addComponent(component.id, finalX, finalY);
         
+        // Update z-index to ensure new component is on top
+        this.websiteBuilder.updateComponent(newInstance.id, { zIndex: maxZIndex + 1 });
+        
+        console.log('📋 Component added via website builder service:', newInstance);
+
         // Select the newly created component
         this.selectedComponentInstance = newInstance;
         this.componentInstanceSelectionChange.emit(newInstance);
         
+        // Update local page data from website builder service
+        this.websiteBuilder.pages$.subscribe(pages => {
+          this.pages = pages;
+          this.pageDataChange.emit(this.pages);
+        });
+        
         console.log('✅ Component added to page and selected:', newInstance);
+      } catch (error) {
+        console.error('❌ Error adding component via website builder service:', error);
+        // Fallback to manual addition if service fails
+        console.log('🔄 Falling back to manual component addition...');
+        
+        // Create new component instance with proper positioning and z-index
+        const newInstance: ComponentInstance = {
+          id: this.generateUniqueId(),
+          type: component.id,
+          x: finalX,
+          y: finalY,
+          width: component.defaultWidth || 300,
+          height: component.defaultHeight || 100,
+          zIndex: maxZIndex + 1, // Ensure new component is on top
+          parameters: defaultParameters
+        };
+
+        console.log('📋 Created new component instance manually:', newInstance);
+
+        // Add to current page
+        if (currentPage) {
+          currentPage.components.push(newInstance);
+          this.updateCurrentPageComponents();
+          this.pageDataChange.emit(this.pages);
+          
+          // Select the newly created component
+          this.selectedComponentInstance = newInstance;
+          this.componentInstanceSelectionChange.emit(newInstance);
+          
+          console.log('✅ Component added to page and selected manually:', newInstance);
+        }
       }
     } catch (error) {
       console.error('❌ Error dropping component:', error);
@@ -290,57 +346,19 @@ export class Canvas implements OnInit, OnDestroy {
   private getDefaultProps(componentType: string): any {
     console.log('🔍 Getting default props for component type:', componentType);
     
-    // Check if it's a built-in component first
+    // Check if it's an API component first
     const componentDef = this.getComponentDefinition(componentType);
     if (componentDef) {
-      console.log('📝 Found built-in component definition:', componentDef);
+      console.log('✅ Found API component definition:', componentDef.name);
       const defaultProps: any = {};
       componentDef.parameters.forEach(param => {
         defaultProps[param.name] = param.defaultValue;
       });
-      console.log('⚙️ Built-in component default props:', defaultProps);
+      console.log('⚙️ API component default props:', defaultProps);
       return defaultProps;
     }
-
-    // Check if it's an API component
-    const apiComponent = this.getApiComponentType(componentType);
-    if (apiComponent) {
-      console.log('📋 Found API component:', apiComponent);
-      
-      // Get default parameters from API component
-      let defaultProps: any = {};
-      
-      // Parse defaultParameters if available
-      if (apiComponent.defaultParameters) {
-        try {
-          defaultProps = JSON.parse(apiComponent.defaultParameters);
-          console.log('✅ Parsed default parameters from API component:', defaultProps);
-        } catch (error) {
-          console.error('❌ Error parsing default parameters:', error);
-        }
-      }
-      
-      // If no default parameters, try to get them from schema
-      if (Object.keys(defaultProps).length === 0 && apiComponent.parametersSchema) {
-        try {
-          const parameters = JSON.parse(apiComponent.parametersSchema);
-          if (Array.isArray(parameters)) {
-            parameters.forEach((param: any) => {
-              if (param.defaultValue !== undefined) {
-                defaultProps[param.name] = param.defaultValue;
-              }
-            });
-          }
-          console.log('✅ Generated default props from schema:', defaultProps);
-        } catch (error) {
-          console.error('❌ Error parsing parameters schema:', error);
-        }
-      }
-      
-      return defaultProps;
-    }
-
-    console.log('❌ No component definition found, returning empty props');
+    
+    console.log('❌ No component definition found for:', componentType);
     return {};
   }
 

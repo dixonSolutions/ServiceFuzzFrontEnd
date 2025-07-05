@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { tap, catchError, map, share } from 'rxjs/operators';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { 
   CreateWorkspaceDto, 
@@ -166,19 +166,40 @@ export class WebsiteBuilderService {
     
     // Initialize filtered components to show all components by default
     this.filterComponents();
-    
-    // Auto-load API component types for immediate availability
-    this.loadAndCacheApiComponentTypes().subscribe({
-      next: () => console.log('API Component types loaded and cached'),
-      error: (error) => console.warn('Failed to load API component types:', error)
-    });
   }
 
   // Initialize available components - now all components come from API
   private initializeComponents(): void {
-    // Start with empty components - all components loaded from API
+    // Clear all cached component data first to prevent stale definitions
+    this.clearAllComponentCache();
+    
+    // Start with empty components - all components loaded from API via left sidebar
     this._availableComponents.next([]);
-    console.log('🔄 Components will be loaded from API');
+    console.log('🔄 Components will be loaded from API via left sidebar');
+    
+    // No fallback loading - left sidebar handles all component loading with proper guards
+  }
+
+  /**
+   * Clear all component cache to ensure fresh start
+   */
+  private clearAllComponentCache(): void {
+    console.log('🧹 Clearing all component cache');
+    this._apiComponentTypes.next([]);
+    this._availableComponents.next([]);
+    this._filteredComponents.next([]);
+    this._apiComponentTypesLoaded = false;
+    
+    // Clear any browser storage that might contain cached components
+    try {
+      localStorage.removeItem('cached_components');
+      localStorage.removeItem('api_components');
+      sessionStorage.removeItem('cached_components');
+      sessionStorage.removeItem('api_components');
+      console.log('✅ Browser storage cleared');
+    } catch (error) {
+      console.warn('⚠️ Could not clear browser storage:', error);
+    }
   }
 
   // Project Management
@@ -443,7 +464,17 @@ export class WebsiteBuilderService {
 
   // Get component definition
   getComponentDefinition(componentType: string): ComponentDefinition | undefined {
-    return this._availableComponents.value.find(c => c.id === componentType);
+    console.log('🔍 getComponentDefinition called for:', componentType);
+    
+    // ONLY return API-based components, never cached "built-in" definitions
+    const apiComponent = this._apiComponentTypes.value.find(comp => comp.id === componentType);
+    if (apiComponent) {
+      console.log('✅ Found API component, converting to definition:', apiComponent.name);
+      return this.convertApiComponentToDefinition(apiComponent);
+    }
+    
+    console.log('❌ No API component found for:', componentType);
+    return undefined;
   }
 
   // Get all component definitions by category
@@ -464,11 +495,30 @@ export class WebsiteBuilderService {
   // Component categories
   getComponentCategories(): { name: string; count: number }[] {
     const components = this._availableComponents.value;
-    const categories = [
-      { name: 'All', count: components.length },
-      { name: 'UI', count: components.filter(c => c.category === 'UI').length },
-      { name: 'Data', count: components.filter(c => c.category === 'Data').length }
-    ];
+    
+    // Get all unique categories from available components
+    const categoryMap = new Map<string, number>();
+    
+    // Add "All" category first
+    categoryMap.set('All', components.length);
+    
+    // Count components by category
+    components.forEach(component => {
+      const category = component.category || 'Other';
+      categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+    });
+    
+    // Convert to array and sort
+    const categories = Array.from(categoryMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => {
+        // Keep "All" first, then sort alphabetically
+        if (a.name === 'All') return -1;
+        if (b.name === 'All') return 1;
+        return a.name.localeCompare(b.name);
+      });
+    
+    console.log('📊 Component categories calculated:', categories);
     return categories;
   }
 
@@ -932,17 +982,34 @@ export class WebsiteBuilderService {
     return this.getAllComponentTypes().pipe(
       tap(response => {
         console.log('✅ Raw API response received:', response);
+        console.log('🔍 Raw API component types count:', response.componentTypes.length);
+        
+        // Log raw API component names for debugging
+        const rawNames = response.componentTypes.map((comp: ComponentType) => comp.name);
+        console.log('📋 Raw API component names:', rawNames);
+        
+        // Check for duplicates in raw API response
+        const uniqueRawNames = [...new Set(rawNames)];
+        if (uniqueRawNames.length !== rawNames.length) {
+          console.warn('⚠️ DUPLICATES FOUND IN RAW API RESPONSE!');
+          rawNames.forEach((name, index) => {
+            const firstIndex = rawNames.indexOf(name);
+            if (firstIndex !== index) {
+              console.log(`  - API duplicate: "${name}" at index ${index} (first at ${firstIndex})`);
+              console.log(`    First API component:`, response.componentTypes[firstIndex]);
+              console.log(`    Duplicate API component:`, response.componentTypes[index]);
+            }
+          });
+        } else {
+          console.log('✅ No duplicates in raw API response');
+        }
+        
         this._apiComponentTypes.next(response.componentTypes);
         this._apiComponentTypesLoaded = true;
         console.log('✅ API component types cached successfully');
         
-        // Register API components as available components for drag and drop
-        response.componentTypes.forEach(apiComponent => {
-          const componentDefinition = this.convertApiComponentToDefinition(apiComponent);
-          this.registerComponent(componentDefinition);
-        });
-        
-        console.log('✅ API components registered for drag and drop');
+        // Components will be converted and made available through refreshApiComponentTypes or initializeComponents
+        console.log('✅ API components cached and ready for conversion');
       }),
       map(response => response.componentTypes),
       catchError(error => {
@@ -958,9 +1025,72 @@ export class WebsiteBuilderService {
   /**
    * Forces a refresh of the API component types cache
    */
+  private _isRefreshing = false;
+  private _currentRefreshObservable: Observable<ComponentType[]> | null = null;
+
   refreshApiComponentTypes(): Observable<ComponentType[]> {
+    console.log('🔄 refreshApiComponentTypes called');
+    
+    // GUARD: Prevent multiple concurrent API calls
+    if (this._isRefreshing) {
+      console.log('⚠️ API refresh already in progress, returning cached observable');
+      return this._currentRefreshObservable || of([]);
+    }
+    
+    // Set refresh flag and clear everything first to prevent duplicates
+    this._isRefreshing = true;
     this._apiComponentTypesLoaded = false;
-    return this.loadAndCacheApiComponentTypes();
+    this._apiComponentTypes.next([]);
+    this._availableComponents.next([]);
+    
+    console.log('🔄 Clearing component cache and reloading from API...');
+    
+    const refreshObservable = this.loadAndCacheApiComponentTypes().pipe(
+      tap((componentTypes) => {
+        // Convert API components to definitions and update available components
+        const componentDefinitions = componentTypes.map(apiComponent => this.convertApiComponentToDefinition(apiComponent));
+        
+        // CRITICAL FIX: Ensure unique components only - remove duplicates by ID
+        const uniqueComponentDefinitions = componentDefinitions.filter((component, index, array) => 
+          array.findIndex(c => c.id === component.id) === index
+        );
+        
+        console.log('🔍 Components before deduplication:', componentDefinitions.length);
+        console.log('🔍 Components after deduplication:', uniqueComponentDefinitions.length);
+        
+        if (componentDefinitions.length !== uniqueComponentDefinitions.length) {
+          console.log('✅ FIXED: Removed duplicate components!');
+          // Log which components were duplicated
+          const duplicateIds = componentDefinitions.map(c => c.id).filter((id, index, array) => 
+            array.indexOf(id) !== index
+          );
+          console.log('🎯 Duplicate IDs that were removed:', [...new Set(duplicateIds)]);
+        }
+        
+        this._availableComponents.next(uniqueComponentDefinitions);
+        console.log('✅ Available components refreshed from API:', uniqueComponentDefinitions.length);
+        
+        // Log component names for debugging
+        const componentNames = uniqueComponentDefinitions.map(c => c.name);
+        console.log('📋 Component names loaded:', componentNames);
+        
+        // Clear refresh flag when done
+        this._isRefreshing = false;
+        this._currentRefreshObservable = null;
+      }),
+      catchError(error => {
+        // Clear refresh flag on error
+        this._isRefreshing = false;
+        this._currentRefreshObservable = null;
+        return throwError(error);
+      }),
+      share() // Share the observable to prevent multiple HTTP requests
+    );
+    
+    // Store current refresh observable for concurrent calls
+    this._currentRefreshObservable = refreshObservable;
+    
+    return refreshObservable;
   }
 
   /**
@@ -989,6 +1119,13 @@ export class WebsiteBuilderService {
       .filter(category => !!category) as string[];
     
     return [...new Set(categories)];
+  }
+
+  /**
+   * Get a specific API component type by its ID
+   */
+  getApiComponentType(componentTypeId: string): ComponentType | undefined {
+    return this._apiComponentTypes.value.find(component => component.id === componentTypeId);
   }
 
   /**
@@ -1047,27 +1184,8 @@ export class WebsiteBuilderService {
   }
 
   /**
-   * Register a component definition (for API components)
+   * REMOVED: registerComponent method - Components are now automatically registered via convertApiComponentToDefinition
    */
-  registerComponent(componentDef: ComponentDefinition): void {
-    const currentComponents = this._availableComponents.value;
-    
-    // Check if component already exists, update if it does, add if new
-    const existingIndex = currentComponents.findIndex(comp => comp.id === componentDef.id);
-    
-    if (existingIndex >= 0) {
-      currentComponents[existingIndex] = componentDef;
-    } else {
-      currentComponents.push(componentDef);
-    }
-    
-    this._availableComponents.next([...currentComponents]);
-    
-    // Update filtered components to include newly registered component
-    this.filterComponents();
-    
-    console.log('Component registered:', componentDef.id, componentDef.name);
-  }
 
   // ===================== WORKSPACE HELPER METHODS =====================
 

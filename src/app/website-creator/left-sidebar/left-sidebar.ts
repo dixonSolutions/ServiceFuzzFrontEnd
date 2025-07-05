@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { ComponentDefinition, ComponentParameter, BusinessImage, BusinessImagesResponse, WebsiteBuilderService } from '../../services/website-builder';
 import { ComponentType } from '../../models/workspace.models';
 import { ComponentRendererService } from '../../services/component-renderer.service';
@@ -9,7 +9,7 @@ import { ComponentRendererService } from '../../services/component-renderer.serv
   templateUrl: './left-sidebar.html',
   styleUrl: './left-sidebar.css'
 })
-export class LeftSidebar implements OnInit {
+export class LeftSidebar implements OnInit, OnChanges {
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
 
   // Inputs from parent component
@@ -29,10 +29,9 @@ export class LeftSidebar implements OnInit {
   @Output() componentInstanceUpdated = new EventEmitter<any>();
   @Output() componentSelectionChange = new EventEmitter<any>();
 
-  // Component Management State (migrated from main component)
+  // Component Management State (unified - only use website builder service)
   availableComponents: ComponentDefinition[] = [];
   filteredComponents: ComponentDefinition[] = [];
-  apiComponentTypes: ComponentType[] = [];
   isLoadingApiComponents = false;
   apiComponentsLoadError: string | null = null;
   componentCategories: { name: string; count: number }[] = [];
@@ -57,46 +56,88 @@ export class LeftSidebar implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    console.log('🚀 LEFT SIDEBAR STARTING INITIALIZATION');
+    console.log('🔍 Initial currentProject:', this.currentProject);
+    console.log('🔍 Initial availableComponents count:', this.availableComponents.length);
     this.initializeComponentManagement();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('🔄 LEFT SIDEBAR: Input changes detected:', changes);
+    
+    if (changes['currentProject'] && changes['currentProject'].currentValue) {
+      const project = changes['currentProject'].currentValue;
+      console.log('🔍 Project changed via @Input:', project);
+      console.log('🔍 Business ID from @Input:', project?.businessId);
+      
+      if (project?.businessId) {
+        console.log('✅ Business ID available via @Input, loading components...');
+        this.loadApiComponentTypes();
+      }
+    }
   }
 
   // Initialize component management (migrated from main component)
   private initializeComponentManagement(): void {
     // Subscribe to component updates
     this.websiteBuilder.availableComponents$.subscribe((components: ComponentDefinition[]) => {
+      console.log('🔄 Left sidebar received components update:', components.length);
+      console.log('📋 Component names in left sidebar:', components.map(c => c.name));
+      
       this.availableComponents = components;
       this.updateComponentCategories();
       this.filterComponents();
+      
+      // Check for duplicates in left sidebar
+      const names = components.map(c => c.name);
+      const uniqueNames = [...new Set(names)];
+      if (uniqueNames.length !== names.length) {
+        console.warn('⚠️ Left sidebar detected duplicate components!');
+        names.forEach((name, index) => {
+          const firstIndex = names.indexOf(name);
+          if (firstIndex !== index) {
+            console.log(`  - Left sidebar duplicate: "${name}" at index ${index} (first at ${firstIndex})`);
+          }
+        });
+      }
     });
 
     this.websiteBuilder.filteredComponents$.subscribe((filtered: ComponentDefinition[]) => {
       this.filteredComponents = filtered;
     });
 
-    // Subscribe to API component types
-    this.subscribeToApiComponentTypes();
+    // Load API components immediately when left sidebar initializes
+    this.loadApiComponentTypes();
   }
 
-  // API Component Management (migrated from main component)
+  // API Component Management (unified through website builder service)
   loadApiComponentTypes(): void {
+    console.log('🔄 loadApiComponentTypes called in left sidebar');
+    console.log('🔍 Current project:', this.currentProject);
+    
+    // GUARD: Prevent multiple concurrent API calls
+    if (this.isLoadingApiComponents) {
+      console.log('⚠️ API components already loading, skipping duplicate call');
+      return;
+    }
+    
     if (!this.currentProject?.businessId) {
       console.log('No business ID available for loading API components');
       return;
     }
 
+    console.log('✅ Business ID available, loading components...');
     this.isLoadingApiComponents = true;
     this.apiComponentsLoadError = null;
     
-    this.websiteBuilder.getApiComponentTypesForBusinessWorkspace().subscribe({
+    // Force refresh API components in website builder service
+    this.websiteBuilder.refreshApiComponentTypes().subscribe({
       next: (componentTypes: ComponentType[]) => {
-        this.apiComponentTypes = componentTypes;
         this.isLoadingApiComponents = false;
-        console.log('✅ API Component types loaded successfully:', componentTypes.length, 'components');
+        console.log('✅ API Component types refreshed successfully:', componentTypes.length, 'components');
         
-        // Register API components with the website builder service
-        this.registerApiComponentsWithBuilder(componentTypes);
-        
-        // Update component categories
+        // The website builder service handles the conversion and registration automatically
+        // Components will be available through availableComponents$ subscription
         this.updateComponentCategories();
       },
       error: (error) => {
@@ -110,64 +151,17 @@ export class LeftSidebar implements OnInit {
     });
   }
 
-  private subscribeToApiComponentTypes(): void {
-    this.websiteBuilder.apiComponentTypes$.subscribe({
-      next: (componentTypes: ComponentType[]) => {
-        this.apiComponentTypes = componentTypes;
-        this.updateComponentCategories();
-      },
-      error: (error) => {
-        console.error('Error in API component types subscription:', error);
-      }
-    });
-  }
-
-  private registerApiComponentsWithBuilder(apiComponents: ComponentType[]): void {
-    const convertedComponents = apiComponents.map(this.convertApiComponentToDefinition);
-    
-    // Register with builder service for drag/drop
-    convertedComponents.forEach(component => {
-      this.websiteBuilder.registerComponent(component);
-    });
-  }
-
-  private convertApiComponentToDefinition(apiComponent: ComponentType): ComponentDefinition {
-    // Parse parameters from schema if available
-    let parameters: ComponentParameter[] = [];
-    if (apiComponent.parametersSchema) {
-      try {
-        const schema = JSON.parse(apiComponent.parametersSchema);
-        parameters = schema.parameters || [];
-      } catch (error) {
-        console.error('Error parsing parameters schema:', error);
-      }
-    }
-
-    return {
-      id: apiComponent.id,
-      name: apiComponent.name,
-      icon: apiComponent.icon || 'pi pi-box',
-      category: apiComponent.category,
-      description: apiComponent.description || '',
-      parameters: parameters,
-      template: '', // API components don't have templates in this context
-      styles: '',
-      defaultWidth: apiComponent.defaultWidth || 300,
-      defaultHeight: apiComponent.defaultHeight || 100
-    };
-  }
+  // Removed duplicate component registration methods - handled by website builder service
 
   // Component Filtering (migrated from main component)
   private filterComponents(): void {
     let components: ComponentDefinition[] = [];
     
+    // Only use available components from website builder service (which are already converted from API)
     if (this.selectedCategory === 'All') {
-      components = [...this.availableComponents, ...this.getApiComponentDefinitions()];
+      components = [...this.availableComponents];
     } else {
-      components = [
-        ...this.getRawLocalComponentsByCategory(this.selectedCategory),
-        ...this.getApiComponentsByCategory(this.selectedCategory).map(this.convertApiComponentToDefinition)
-      ];
+      components = this.availableComponents.filter(comp => comp.category === this.selectedCategory);
     }
 
     if (this.searchTerm) {
@@ -177,56 +171,57 @@ export class LeftSidebar implements OnInit {
       );
     }
 
+    console.log('🔍 FILTERED COMPONENTS for display:');
+    console.log('📋 Total filtered components:', components.length);
+    console.log('📋 Component names for display:', components.map(c => c.name));
+    
+    // Check for duplicates in what will be displayed
+    const displayNames = components.map(c => c.name);
+    const uniqueDisplayNames = [...new Set(displayNames)];
+    if (uniqueDisplayNames.length !== displayNames.length) {
+      console.warn('⚠️ DUPLICATES IN DISPLAY LIST!');
+      displayNames.forEach((name, index) => {
+        const firstIndex = displayNames.indexOf(name);
+        if (firstIndex !== index) {
+          console.log(`  - Display duplicate: "${name}" at index ${index} (first at ${firstIndex})`);
+          console.log(`    First component ID:`, components[firstIndex].id);
+          console.log(`    Duplicate component ID:`, components[index].id);
+        }
+      });
+    } else {
+      console.log('✅ No duplicates in display list');
+    }
+
     this.filteredComponents = components;
   }
 
-  private getRawLocalComponentsByCategory(category: string): ComponentDefinition[] {
-    return this.availableComponents.filter(comp => comp.category === category);
-  }
-
-  private getApiComponentDefinitions(): ComponentDefinition[] {
-    return this.apiComponentTypes.map(this.convertApiComponentToDefinition);
-  }
-
-  getApiComponentsByCategory(category: string): ComponentType[] {
-    return this.websiteBuilder.getCachedApiComponentTypesByCategory(category);
-  }
+  // Removed unused helper methods - now using only website builder service components
 
   // Category Management (migrated from main component)
   updateComponentCategories(): void {
-    const localCategories = this.websiteBuilder.getComponentCategories();
-    const apiCategories = this.websiteBuilder.getApiComponentCategories();
-    
-    // Combine and count categories
-    const categoryMap = new Map<string, number>();
-    
-    // Add local categories
-    localCategories.forEach(cat => {
-      categoryMap.set(cat.name, cat.count);
-    });
-    
-    // Add API categories
-    apiCategories.forEach(category => {
-      const count = this.getApiComponentsByCategory(category).length;
-      const existing = categoryMap.get(category) || 0;
-      categoryMap.set(category, existing + count);
-    });
-
-    this.componentCategories = Array.from(categoryMap.entries()).map(([name, count]) => ({
-      name,
-      count
-    }));
+    // Only use categories from website builder service (which are already converted from API)
+    const categories = this.websiteBuilder.getComponentCategories();
+    this.componentCategories = categories;
   }
 
   // Component Utility Methods (migrated from main component)
   getFilteredComponentsByCategory(category: string): ComponentDefinition[] {
+    let filtered: ComponentDefinition[];
     if (category === 'All') {
-      return [...this.availableComponents, ...this.getApiComponentDefinitions()];
+      filtered = [...this.availableComponents];
+    } else {
+      filtered = this.availableComponents.filter(comp => comp.category === category);
     }
-    return [
-      ...this.getRawLocalComponentsByCategory(category),
-      ...this.getApiComponentsByCategory(category).map(this.convertApiComponentToDefinition)
-    ];
+    
+    // Apply search filter if present
+    if (this.searchTerm) {
+      filtered = filtered.filter(comp =>
+        comp.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        comp.category.toLowerCase().includes(this.searchTerm.toLowerCase())
+      );
+    }
+    
+    return filtered;
   }
 
   getComponentIcon(icon: string): string {
@@ -234,11 +229,11 @@ export class LeftSidebar implements OnInit {
   }
 
   isApiComponent(componentId: string): boolean {
-    return this.apiComponentTypes.some(comp => comp.id === componentId);
+    return this.websiteBuilder.getCachedApiComponentTypes().some((comp: ComponentType) => comp.id === componentId);
   }
 
   getApiComponentType(componentId: string): ComponentType | undefined {
-    return this.apiComponentTypes.find(comp => comp.id === componentId);
+    return this.websiteBuilder.getCachedApiComponentTypes().find((comp: ComponentType) => comp.id === componentId);
   }
 
   getApiComponentTypeParameters(componentId: string): ComponentParameter[] {
@@ -541,9 +536,16 @@ export class LeftSidebar implements OnInit {
   }
 
   onProjectChange(project: any): void {
+    console.log('🔄 LEFT SIDEBAR: Project changed!');
+    console.log('🔍 New project:', project);
+    console.log('🔍 Business ID:', project?.businessId);
+    
     this.currentProject = project;
     if (project?.businessId) {
+      console.log('✅ Business ID found, calling loadApiComponentTypes...');
       this.loadApiComponentTypes();
+    } else {
+      console.log('❌ No business ID, skipping component loading');
     }
   }
 }
