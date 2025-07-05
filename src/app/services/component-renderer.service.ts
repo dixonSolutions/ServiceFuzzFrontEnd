@@ -31,7 +31,7 @@ export class ComponentRendererService {
 
     // Get effective parameters (defaults merged with instance parameters)
     const effectiveParameters = this.getEffectiveParameters(componentType, instance);
-    
+      
     // Process the HTML template with parameter substitution
     const processedHTML = this.processTemplate(componentType.htmlTemplate, effectiveParameters);
     
@@ -48,8 +48,6 @@ export class ComponentRendererService {
    * Process template with parameter replacement
    */
   private processTemplate(template: string, parameters: { [key: string]: any }): string {
-    console.log('🔄 Processing template with parameters:', parameters);
-    
     let processedTemplate = template;
     
     // Replace simple parameters first
@@ -98,7 +96,6 @@ export class ComponentRendererService {
       }
     }
     
-    console.log('✅ Template processed successfully');
     return processedTemplate;
   }
 
@@ -218,6 +215,26 @@ export class ComponentRendererService {
       return this.evaluateCondition(expression, parameters);
     }
     
+    // Handle logical OR for fallback values (e.g., backgroundColor || '#ffffff')
+    if (expression.includes('||')) {
+      const parts = expression.split('||').map(s => s.trim());
+      for (const part of parts) {
+        const value = this.evaluateExpression(part, parameters);
+        if (value !== null && value !== undefined && value !== '') {
+          return value;
+        }
+      }
+      // Clean up the fallback value (remove quotes if present)
+      let fallback = parts[parts.length - 1];
+      if (fallback.startsWith("'") && fallback.endsWith("'")) {
+        fallback = fallback.slice(1, -1);
+      }
+      if (fallback.startsWith('"') && fallback.endsWith('"')) {
+        fallback = fallback.slice(1, -1);
+      }
+      return fallback;
+    }
+
     // Handle arithmetic operations
     if (expression.includes('+') || expression.includes('-') || expression.includes('*') || expression.includes('/')) {
       return this.evaluateArithmeticExpression(expression, parameters);
@@ -393,7 +410,50 @@ export class ComponentRendererService {
       Object.assign(parameters, instance.parameters);
     }
     
-    console.log('📊 Effective parameters:', parameters);
+    // Ensure all parameters have values (use sensible defaults if missing)
+    if (componentType.parametersSchema) {
+      try {
+        const schema = typeof componentType.parametersSchema === 'string' 
+          ? JSON.parse(componentType.parametersSchema) 
+          : componentType.parametersSchema;
+        
+        if (Array.isArray(schema)) {
+          schema.forEach((param: any) => {
+            if (param.name && (parameters[param.name] === undefined || parameters[param.name] === null)) {
+              // Set sensible default value based on parameter type
+              switch (param.type) {
+                case 'color':
+                  parameters[param.name] = param.name === 'backgroundColor' ? '#ffffff' : '#333333';
+                  break;
+                case 'text':
+                  parameters[param.name] = param.name === 'title' ? 'Sample Title' : 'Sample description';
+                  break;
+                case 'select':
+                  parameters[param.name] = param.options?.[0] || 'left';
+                  break;
+                case 'boolean':
+                  parameters[param.name] = false;
+                  break;
+                case 'number':
+                  parameters[param.name] = 0;
+                  break;
+                default:
+                  parameters[param.name] = '';
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error('❌ Error parsing parameter schema:', error);
+      }
+    }
+    
+    console.log('🎯 Component parameters merged:', { 
+      componentType: componentType.id,
+      instanceId: instance.id,
+      finalParams: parameters 
+    });
+    
     return parameters;
   }
 

@@ -2,7 +2,9 @@ import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, 
 import { ComponentDefinition, ComponentParameter, ComponentInstance, WebsiteBuilderService } from '../../services/website-builder';
 import { ComponentType, ComponentRenderContext } from '../../models/workspace.models';
 import { ComponentRendererService } from '../../services/component-renderer.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 export interface Page {
   id: string;
@@ -63,7 +65,8 @@ export class Canvas implements OnInit, OnDestroy {
 
   constructor(
     private websiteBuilder: WebsiteBuilderService,
-    private componentRenderer: ComponentRendererService
+    private componentRenderer: ComponentRendererService,
+    private domSanitizer: DomSanitizer
   ) { }
 
   ngOnInit(): void {
@@ -174,7 +177,7 @@ export class Canvas implements OnInit, OnDestroy {
     return {
       id: component.id,
       componentTypeId: component.type,
-      parameters: component.parameters || {},
+      parameters: component.properties || component.parameters || {},
       customStyles: component.customStyles || {},
       xPosition: component.x || 0,
       yPosition: component.y || 0,
@@ -186,6 +189,14 @@ export class Canvas implements OnInit, OnDestroy {
 
   getComponentRenderContext(componentId: string): ComponentRenderContext | undefined {
     return this.componentRenderContexts.find(ctx => ctx.component.id === componentId);
+  }
+
+  getSafeHtml(componentId: string): SafeHtml {
+    const renderContext = this.getComponentRenderContext(componentId);
+    if (renderContext?.renderedHTML) {
+      return this.domSanitizer.bypassSecurityTrustHtml(renderContext.renderedHTML);
+    }
+    return this.domSanitizer.bypassSecurityTrustHtml('<div>Loading...</div>');
   }
 
   isNewComponentSystem(componentType: string): boolean {
@@ -305,31 +316,31 @@ export class Canvas implements OnInit, OnDestroy {
         console.error('❌ Error adding component via website builder service:', error);
         // Fallback to manual addition if service fails
         console.log('🔄 Falling back to manual component addition...');
-        
-        // Create new component instance with proper positioning and z-index
-        const newInstance: ComponentInstance = {
-          id: this.generateUniqueId(),
-          type: component.id,
-          x: finalX,
-          y: finalY,
-          width: component.defaultWidth || 300,
-          height: component.defaultHeight || 100,
-          zIndex: maxZIndex + 1, // Ensure new component is on top
-          parameters: defaultParameters
-        };
+
+      // Create new component instance with proper positioning and z-index
+      const newInstance: ComponentInstance = {
+        id: this.generateUniqueId(),
+        type: component.id,
+        x: finalX,
+        y: finalY,
+        width: component.defaultWidth || 300,
+        height: component.defaultHeight || 100,
+        zIndex: maxZIndex + 1, // Ensure new component is on top
+        parameters: defaultParameters
+      };
 
         console.log('📋 Created new component instance manually:', newInstance);
 
-        // Add to current page
-        if (currentPage) {
-          currentPage.components.push(newInstance);
-          this.updateCurrentPageComponents();
-          this.pageDataChange.emit(this.pages);
-          
-          // Select the newly created component
-          this.selectedComponentInstance = newInstance;
-          this.componentInstanceSelectionChange.emit(newInstance);
-          
+      // Add to current page
+      if (currentPage) {
+        currentPage.components.push(newInstance);
+        this.updateCurrentPageComponents();
+        this.pageDataChange.emit(this.pages);
+        
+        // Select the newly created component
+        this.selectedComponentInstance = newInstance;
+        this.componentInstanceSelectionChange.emit(newInstance);
+        
           console.log('✅ Component added to page and selected manually:', newInstance);
         }
       }
@@ -357,7 +368,7 @@ export class Canvas implements OnInit, OnDestroy {
       console.log('⚙️ API component default props:', defaultProps);
       return defaultProps;
     }
-    
+
     console.log('❌ No component definition found for:', componentType);
     return {};
   }
@@ -378,9 +389,62 @@ export class Canvas implements OnInit, OnDestroy {
     this.componentInstanceSelectionChange.emit(builtInNavInstance);
   }
 
-  selectComponentInstanceHandler(instance: ComponentInstance): void {
+  selectComponentInstanceHandler(instance: ComponentInstance, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
     this.selectedComponentInstance = instance;
     this.componentInstanceSelectionChange.emit(instance);
+  }
+
+  handleComponentClick(instance: ComponentInstance, event: Event): void {
+    event.stopPropagation();
+    
+    // Check if this is a button component with navigation
+    // Handle both 'parameters' and 'properties' (component data structure compatibility)
+    if (instance.type === 'button') {
+      const params = instance.parameters || (instance as any).properties || {};
+      const navigateTo = params['navigateTo'];
+      const customUrl = params['customUrl'];
+      const openInNewTab = params['openInNewTab'];
+      
+      // Handle navigation if specified
+      if (navigateTo || customUrl) {
+        this.handleButtonNavigation(navigateTo, customUrl, openInNewTab);
+        return; // Don't select the component, just navigate
+      }
+    }
+    
+    // Default behavior: select the component
+    this.selectComponentInstanceHandler(instance, event);
+  }
+
+  private handleButtonNavigation(navigateTo: string, customUrl: string, openInNewTab: boolean): void {
+    let targetUrl = '';
+    
+    if (customUrl) {
+      targetUrl = customUrl;
+    } else if (navigateTo) {
+      // Check if it's a page ID
+      const targetPage = this.pages.find(p => p.id === navigateTo);
+      if (targetPage) {
+        targetUrl = targetPage.route;
+      }
+    }
+    
+    if (targetUrl) {
+      if (openInNewTab) {
+        window.open(targetUrl, '_blank');
+      } else {
+        // Use Angular router or simple navigation
+        if (targetUrl.startsWith('http') || targetUrl.startsWith('//')) {
+          window.location.href = targetUrl;
+        } else {
+          // Internal navigation - emit event to parent to handle routing
+          this.onNavigationClick(new Event('click'), navigateTo);
+        }
+      }
+    }
   }
 
   // Component Manipulation (migrated from main component)

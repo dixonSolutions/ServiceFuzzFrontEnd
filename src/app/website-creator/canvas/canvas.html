@@ -127,8 +127,6 @@
       <div *ngFor="let instance of currentPageComponents; trackBy: trackByInstanceId" 
            class="component-instance"
            [id]="'component-' + instance.id"
-           (click)="selectComponentInstanceHandler(instance)"
-           (mousedown)="startDragHandler($event, instance)"
            [class.selected]="selectedComponentInstance?.id === instance.id"
            [style.position]="'absolute'"
            [style.left.px]="instance.x"
@@ -140,29 +138,66 @@
            [style.cursor]="'move'">
         
         <!-- Selection and Resize Handles -->
-        <div *ngIf="selectedComponentInstance?.id === instance.id" class="component-controls">
+        <div *ngIf="selectedComponentInstance?.id === instance.id" 
+             class="component-controls"
+             [style.position]="'absolute'"
+             [style.top]="'0'"
+             [style.left]="'0'"
+             [style.width]="'100%'"
+             [style.height]="'100%'"
+             [style.z-index]="'20'"
+             [style.pointer-events]="'none'">
           <!-- Delete Button -->
           <button class="delete-component-btn" 
                   (click)="deleteComponentHandler($event, instance.id)"
-                  title="Delete Component">
+                  title="Delete Component"
+                  [style.pointer-events]="'auto'"
+                  [style.position]="'absolute'"
+                  [style.top]="'-10px'"
+                  [style.right]="'-10px'"
+                  [style.z-index]="'30'">
             <i class="pi pi-times"></i>
           </button>
           
           <!-- Resize Handles -->
-          <div class="resize-handle nw" (mousedown)="startResizeHandler($event, instance, 'nw')"></div>
-          <div class="resize-handle ne" (mousedown)="startResizeHandler($event, instance, 'ne')"></div>
-          <div class="resize-handle sw" (mousedown)="startResizeHandler($event, instance, 'sw')"></div>
-          <div class="resize-handle se" (mousedown)="startResizeHandler($event, instance, 'se')"></div>
+          <div class="resize-handle nw" 
+               (mousedown)="startResizeHandler($event, instance, 'nw')"
+               [style.pointer-events]="'auto'"></div>
+          <div class="resize-handle ne" 
+               (mousedown)="startResizeHandler($event, instance, 'ne')"
+               [style.pointer-events]="'auto'"></div>
+          <div class="resize-handle sw" 
+               (mousedown)="startResizeHandler($event, instance, 'sw')"
+               [style.pointer-events]="'auto'"></div>
+          <div class="resize-handle se" 
+               (mousedown)="startResizeHandler($event, instance, 'se')"
+               [style.pointer-events]="'auto'"></div>
         </div>
         
         <!-- Render component based on type -->
-        <div class="component-renderer">
+        <div class="component-renderer" [style.position]="'relative'">
           <!-- New Component System (with HTML templates) -->
           <div *ngIf="isNewComponentSystem(instance.type)" 
                class="new-component-system"
-               [innerHTML]="getComponentRenderContext(instance.id)?.renderedHTML"
+               [innerHTML]="getSafeHtml(instance.id)"
                [style.width]="'100%'"
-               [style.height]="'100%'">
+               [style.height]="'100%'"
+               [style.pointer-events]="'none'">
+          </div>
+          
+                     <!-- Transparent overlay for click handling -->
+           <div *ngIf="isNewComponentSystem(instance.type)"
+                class="component-click-overlay"
+                [style.position]="'absolute'"
+                [style.top]="'0'"
+                [style.left]="'0'"
+                [style.width]="'100%'"
+                [style.height]="'100%'"
+                [style.background]="'transparent'"
+                [style.cursor]="'pointer'"
+                [style.z-index]="'10'"
+                (click)="handleComponentClick(instance, $event)"
+                (mousedown)="startDragHandler($event, instance)">
           </div>
           
           <!-- Fallback for components that fail to render -->
@@ -182,33 +217,19 @@
               <div>Component Error: {{ instance.type }}</div>
               <div [style.font-size]="'12px'">Template not found or failed to render</div>
             </div>
-          </div>
+        </div>
         
         <!-- Component overlay for selection -->
-        <div class="component-overlay" *ngIf="selectedComponentInstance?.id === instance.id">
+        <div class="component-overlay" 
+             *ngIf="selectedComponentInstance?.id === instance.id"
+             [style.position]="'absolute'"
+             [style.top]="'-25px'"
+             [style.left]="'0'"
+             [style.z-index]="'25'"
+             [style.pointer-events]="'none'">
           <span class="component-label">{{ getComponentDefinition(instance.type)?.name || getApiComponentType(instance.type)?.name || instance.type }}</span>
           <small class="edit-hint">✏️ Editing properties</small>
         </div>
-        
-        <!-- Resize handles for selected component -->
-        <div class="resize-handles" *ngIf="selectedComponentInstance?.id === instance.id">
-          <div class="resize-handle nw" 
-               (mousedown)="startResizeHandler($event, instance, 'nw')"></div>
-          <div class="resize-handle ne" 
-               (mousedown)="startResizeHandler($event, instance, 'ne')"></div>
-          <div class="resize-handle sw" 
-               (mousedown)="startResizeHandler($event, instance, 'sw')"></div>
-          <div class="resize-handle se" 
-               (mousedown)="startResizeHandler($event, instance, 'se')"></div>
-        </div>
-        
-        <!-- Delete button for selected component -->
-        <button class="delete-btn" 
-                *ngIf="selectedComponentInstance?.id === instance.id"
-                (click)="deleteComponentHandler($event, instance.id)"
-                title="Delete Component">
-          <i class="pi pi-times"></i>
-        </button>
       </div>
       
       <!-- Drop indicator -->
