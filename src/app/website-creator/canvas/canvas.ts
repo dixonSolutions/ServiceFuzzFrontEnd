@@ -5,6 +5,7 @@ import { ComponentRendererService } from '../../services/component-renderer.serv
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { AccordionModule } from 'primeng/accordion';
 
 export interface Page {
   id: string;
@@ -197,6 +198,36 @@ export class Canvas implements OnInit, OnDestroy {
       return this.domSanitizer.bypassSecurityTrustHtml(renderContext.renderedHTML);
     }
     return this.domSanitizer.bypassSecurityTrustHtml('<div>Loading...</div>');
+  }
+
+  // Scalable Angular component detection and handling
+  isAngularComponent(componentType: string): boolean {
+    // Only components that are actually implemented in the switch statement
+    const angularComponentIds = [
+      'prime-accordion-001'
+    ];
+    
+    return angularComponentIds.includes(componentType);
+  }
+
+  // Generic parameter value getter for any component
+  getComponentParameterValue(componentId: string, paramName: string): any {
+    const component = this.currentPageComponents.find(c => c.id === componentId);
+    if (!component) return null;
+    
+    const renderContext = this.getComponentRenderContext(componentId);
+    if (renderContext?.parameters) {
+      return renderContext.parameters[paramName];
+    }
+    
+    // Fallback to component parameters
+    return component.parameters[paramName];
+  }
+
+  // Get accordion value for proper PrimeNG binding
+  getAccordionValue(componentId: string): string[] {
+    const isExpanded = this.getComponentParameterValue(componentId, 'isExpanded');
+    return isExpanded ? ['0'] : [];
   }
 
   isNewComponentSystem(componentType: string): boolean {
@@ -399,24 +430,53 @@ export class Canvas implements OnInit, OnDestroy {
 
   handleComponentClick(instance: ComponentInstance, event: Event): void {
     event.stopPropagation();
+    console.log('🔍 Component clicked:', instance.type, instance.id);
     
-    // Check if this is a button component with navigation
-    // Handle both 'parameters' and 'properties' (component data structure compatibility)
-    if (instance.type === 'button') {
-      const params = instance.parameters || (instance as any).properties || {};
-      const navigateTo = params['navigateTo'];
-      const customUrl = params['customUrl'];
-      const openInNewTab = params['openInNewTab'];
+    this.selectComponentInstanceHandler(instance, event);
+    
+    // Handle any special component behaviors
+    const properties = instance.parameters || {};
+    
+    // Handle button navigation
+    if (instance.type === 'button' && properties['navigateTo']) {
+      const navigateTo = properties['navigateTo'];
+      const customUrl = properties['customUrl'] || '';
+      const openInNewTab = properties['openInNewTab'] || false;
       
-      // Handle navigation if specified
-      if (navigateTo || customUrl) {
-        this.handleButtonNavigation(navigateTo, customUrl, openInNewTab);
-        return; // Don't select the component, just navigate
-      }
+      this.handleButtonNavigation(navigateTo, customUrl, openInNewTab);
+    }
+  }
+
+  // Handle selection for Angular components without blocking their functionality
+  handleAngularComponentSelection(instance: ComponentInstance, event: Event): void {
+    // Only select on background clicks, not on PrimeNG component clicks
+    const target = event.target as HTMLElement;
+    
+    // If clicking on PrimeNG component elements, don't interfere
+    if (target.closest('p-accordion, p-button, p-card, p-dialog, p-table, p-tabs, p-progressbar, p-carousel, p-timeline, p-chip, p-avatar, p-badge, p-tag, p-divider')) {
+      return; // Let PrimeNG handle the click
     }
     
-    // Default behavior: select the component
-    this.selectComponentInstanceHandler(instance, event);
+    // Only select if clicking on the wrapper itself
+    if (target.classList.contains('angular-component-wrapper')) {
+      event.stopPropagation();
+      this.selectComponentInstanceHandler(instance, event);
+    }
+  }
+
+  // Handle drag for Angular components
+  handleAngularComponentDrag(instance: ComponentInstance, event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    
+    // Only allow drag from wrapper background, not from PrimeNG components
+    if (target.closest('p-accordion, p-button, p-card, p-dialog, p-table, p-tabs, p-progressbar, p-carousel, p-timeline, p-chip, p-avatar, p-badge, p-tag, p-divider')) {
+      return; // Don't interfere with PrimeNG component interactions
+    }
+    
+    // Only drag if clicking on the wrapper itself
+    if (target.classList.contains('angular-component-wrapper')) {
+      this.startDragHandler(event, instance);
+    }
   }
 
   private handleButtonNavigation(navigateTo: string, customUrl: string, openInNewTab: boolean): void {

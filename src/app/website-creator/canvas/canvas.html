@@ -176,17 +176,61 @@
         
         <!-- Render component based on type -->
         <div class="component-renderer" [style.position]="'relative'">
-          <!-- New Component System (with HTML templates) -->
-          <div *ngIf="isNewComponentSystem(instance.type)" 
-               class="new-component-system"
+                              <!-- Angular Components (auto-detected) -->
+          <div *ngIf="isAngularComponent(instance.type)" 
+               class="angular-component-wrapper"
+               [style.width]="'100%'"
+               [style.height]="'100%'"
+               [style.position]="'absolute'"
+               [style.top]="'0'"
+               [style.left]="'0'"
+               (click)="selectComponentInstanceHandler(instance, $event)"
+               (mousedown)="startDragHandler($event, instance)">
+             
+             <!-- PrimeNG Accordion -->
+             <div *ngIf="instance.type === 'prime-accordion-001'" style="width: 100%; height: 100%;">
+               <p-accordion [value]="getAccordionValue(instance.id)">
+                 <p-accordion-panel value="0">
+                   <p-accordion-header>
+                     <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                       <div *ngIf="getComponentParameterValue(instance.id, 'showImage') && getComponentParameterValue(instance.id, 'image')" 
+                            style="width: 40px; height: 40px; border-radius: 6px; overflow: hidden; flex-shrink: 0;">
+                         <img [src]="getComponentParameterValue(instance.id, 'image')" 
+                              [alt]="getComponentParameterValue(instance.id, 'title')" 
+                              style="width: 100%; height: 100%; object-fit: cover;">
+                       </div>
+                       <span [style.font-size]="'18px'" 
+                             [style.font-weight]="'600'" 
+                             [style.color]="getComponentParameterValue(instance.id, 'textColor') || '#333'">
+                         {{ getComponentParameterValue(instance.id, 'title') }}
+                       </span>
+                     </div>
+                   </p-accordion-header>
+                   <p-accordion-content>
+                     <p [style.margin]="'0'" 
+                        [style.font-size]="'16px'" 
+                        [style.line-height]="'1.6'" 
+                        [style.color]="getComponentParameterValue(instance.id, 'textColor') || '#333'">
+                       {{ getComponentParameterValue(instance.id, 'content') }}
+                     </p>
+                   </p-accordion-content>
+                 </p-accordion-panel>
+               </p-accordion>
+             </div>
+
+          </div>
+          
+          <!-- Standard HTML Components (non-Angular) -->
+          <div *ngIf="isNewComponentSystem(instance.type) && !isAngularComponent(instance.type)" 
+               class="html-component-wrapper"
                [innerHTML]="getSafeHtml(instance.id)"
                [style.width]="'100%'"
                [style.height]="'100%'"
                [style.pointer-events]="'none'">
           </div>
           
-                     <!-- Transparent overlay for click handling -->
-           <div *ngIf="isNewComponentSystem(instance.type)"
+          <!-- Transparent overlay for click handling (only for non-Angular components) -->
+           <div *ngIf="isNewComponentSystem(instance.type) && !isAngularComponent(instance.type)"
                 class="component-click-overlay"
                 [style.position]="'absolute'"
                 [style.top]="'0'"
@@ -199,6 +243,7 @@
                 (click)="handleComponentClick(instance, $event)"
                 (mousedown)="startDragHandler($event, instance)">
           </div>
+
           
           <!-- Fallback for components that fail to render -->
           <div *ngIf="!getComponentRenderContext(instance.id)?.renderedHTML" 
