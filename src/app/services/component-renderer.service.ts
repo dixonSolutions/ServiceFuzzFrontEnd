@@ -498,7 +498,7 @@ export class ComponentRendererService {
         cssObject[property] = value;
       }
     });
-    
+
     return cssObject;
   }
 
@@ -508,8 +508,8 @@ export class ComponentRendererService {
   parseParameterSchema(parametersSchema: string | undefined): ComponentParameter[] {
     if (!parametersSchema) {
       return [];
-    }
-    
+  }
+
     try {
       const schema = typeof parametersSchema === 'string' 
         ? JSON.parse(parametersSchema) 
@@ -539,7 +539,7 @@ export class ComponentRendererService {
         errorMessage: ''
       };
     });
-    
+
     return formFields;
   }
 } 

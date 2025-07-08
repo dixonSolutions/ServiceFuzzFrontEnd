@@ -43,6 +43,135 @@
   margin-top: 16px;
 }
 
+/* Subscription Card Styles */
+.subscription-section {
+  margin-top: 32px;
+}
+
+.subscription-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  margin-bottom: 24px;
+}
+
+.subscription-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.subscription-card mat-card-header {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.05));
+  padding: 16px;
+}
+
+.subscription-card [mat-card-avatar] {
+  background: linear-gradient(135deg, #ffc107, #ff9800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subscription-card [mat-card-avatar] mat-icon {
+  color: white;
+}
+
+.active-subscription {
+  color: #ffc107 !important;
+}
+
+.subscription-info {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.subscription-info .info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #666;
+}
+
+.subscription-info .info-row mat-icon {
+  color: #999;
+}
+
+.subscription-info .info-row mat-icon[class*="check_circle"] {
+  color: #4CAF50;
+}
+
+.subscription-info .info-row mat-icon[class*="cancel"] {
+  color: #f44336;
+}
+
+.premium-benefits {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(76, 175, 80, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid #4CAF50;
+}
+
+.premium-benefits h4 {
+  margin: 0 0 12px 0;
+  color: #4CAF50;
+  font-size: 1.1rem;
+}
+
+.benefits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+}
+
+.benefit-item mat-icon {
+  color: #4CAF50;
+  font-size: 1.2rem;
+}
+
+.upgrade-prompt {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(255, 193, 7, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+  text-align: center;
+}
+
+.upgrade-prompt h4 {
+  margin: 0 0 8px 0;
+  color: #ff6f00;
+  font-size: 1.1rem;
+}
+
+.upgrade-prompt p {
+  margin: 0 0 16px 0;
+  color: #666;
+}
+
+.loading-subscription {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.loading-subscription p {
+  color: #666;
+  margin: 0;
+}
+
 /* Trial Card Styles */
 .trial-section {
   margin-top: 32px;
@@ -202,8 +331,9 @@ mat-card-actions {
   margin-top: 32px;
   border-radius: 20px !important;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #a5a3a8 100%);
   color: white;
+  text-color: #000000;
   box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
@@ -404,6 +534,288 @@ mat-card-actions {
   
   .package-content {
     padding: 24px !important;
+  }
+}
+
+/* Free Trial Form Styles */
+.free-trial-form-container {
+  margin: 32px 0;
+}
+
+.free-trial-form-card .p-card {
+  border-radius: 20px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ffffff 0%, #949494 100%);
+  border: none !important;
+}
+
+.form-header {
+  text-align: center;
+  padding: 32px 24px 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+  color: #333;
+  border-radius: 20px 20px 0 0;
+}
+
+.form-header h2 {
+  margin: 16px 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.form-header p {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 16px;
+}
+
+.form-content {
+  padding: 32px 24px;
+  background: white;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-field p-datepicker {
+  width: 100%;
+}
+
+.form-field p-datepicker .p-datepicker {
+  width: 100%;
+}
+
+.form-field p-datepicker .p-inputtext {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e6ed;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.form-field p-datepicker .p-inputtext:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+.trial-info-summary {
+  margin-top: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 16px;
+  border: 1px solid #dee2e6;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #495057;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-item i {
+  color: #667eea;
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.info-item span {
+  font-weight: 500;
+}
+
+.form-validation {
+  margin-top: 16px;
+}
+
+.form-validation p-message {
+  width: 100%;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 0 0 20px 20px;
+}
+
+.form-actions p-button {
+  min-width: 120px;
+}
+
+.form-actions .p-button {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.form-actions .p-button-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  color: white;
+}
+
+.form-actions .p-button-primary:hover {
+  background: linear-gradient(135deg, #5a6fd8, #6a4190);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+}
+
+.form-actions .p-button-secondary {
+  background: white;
+  border: 2px solid #dee2e6;
+  color: #6c757d;
+}
+
+.form-actions .p-button-secondary:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+  transform: translateY(-2px);
+}
+
+/* Fallback date input styling */
+.fallback-date-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e6ed;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: white;
+  color: #333;
+}
+
+.fallback-date-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  outline: none;
+}
+
+/* Form Responsive Design */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .form-header {
+    padding: 24px 16px 16px;
+  }
+  
+  .form-header h2 {
+    font-size: 24px;
+  }
+  
+  .form-content {
+    padding: 24px 16px;
+  }
+  
+  .form-actions {
+    padding: 16px;
+    flex-direction: column;
+  }
+  
+  .form-actions p-button {
+    width: 100%;
+  }
+}
+
+/* Trial Actions Styles */
+.trial-actions {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 193, 7, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.upgrade-button {
+  min-width: 180px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  transition: all 0.3s ease;
+}
+
+.upgrade-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.upgrade-button mat-icon {
+  margin-right: 0.5rem;
+}
+
+.upgrade-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem;
+  background: rgba(33, 150, 243, 0.1);
+  border-radius: 6px;
+  color: #1976d2;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.upgrade-note mat-icon {
+  color: #1976d2;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .trial-actions .action-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .trial-actions .upgrade-button {
+    min-width: unset;
+    width: 100%;
   }
 }
 

@@ -10,6 +10,7 @@ import { Subscription } from 'rxjs';
 import { BusinessSpecificAdr } from '../models/business-specific-adr';
 import { S2CareaSpecification } from '../models/s2c-area-specification';
 import { StaffMember, defaultStaffMember } from '../models/staff-member';
+import { GoogleMapsPickerComponent, MapPickerResult } from '../components/google-maps-picker/google-maps-picker.component';
 
 @Component({
   selector: 'app-business',
@@ -976,5 +977,42 @@ export class BusinessComponent implements OnInit, OnDestroy {
     
     // Update the data service with the new assignments
     this.data.updateBusinessRegistration(this.registration);
+  }
+
+  // Google Maps integration methods
+  onSpecificAddressSelected(result: MapPickerResult): void {
+    const place: BusinessSpecificAdr = {
+      streetAdr: result.components.streetAddress || '',
+      city: result.components.city || '',
+      state: result.components.state || '',
+      country: result.components.country || '',
+      suburbPostcode: result.components.postalCode || '',
+      placeID: this.data.generateId(),
+      businessID: ''
+    };
+
+    this.specificPlaces.push(place);
+    this.data.openSnackBar('Address added successfully from map', 'Close', 2000);
+    this.saveCurrentStep();
+  }
+
+  onAreaSelected(result: MapPickerResult): void {
+    const area: S2CareaSpecification = {
+      country: result.components.country || '',
+      state: result.components.state || '',
+      city: result.components.city || '',
+      suburbPostcode: result.components.postalCode || '',
+      placeID: this.data.generateId(),
+      businessID: ''
+    };
+
+    this.areaPlaces.push(area);
+    this.data.openSnackBar('Service area added successfully from map', 'Close', 2000);
+    this.saveCurrentStep();
+  }
+
+  onMapSelectionCleared(): void {
+    // Handle when user clears the map selection
+    // This is optional - you might want to show a message or reset something
   }
 }

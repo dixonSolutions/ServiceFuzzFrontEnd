@@ -68,6 +68,8 @@ import { MenuModule } from 'primeng/menu';
 import { AccordionModule } from 'primeng/accordion';
 import { TableModule } from 'primeng/table';
 import { StepsModule } from 'primeng/steps';
+import { DatePickerModule } from 'primeng/datepicker';
+
 
 
 import { AppComponent } from './app.component';
@@ -90,6 +92,7 @@ import { WorkspaceSelectionComponent } from './website-creator/workspace-selecti
 import { LeftSidebar } from './website-creator/left-sidebar/left-sidebar';
 import { Canvas } from './website-creator/canvas/canvas';
 import { AssetManagerComponent } from './website-creator/asset-manager/asset-manager';
+import { GoogleMapsPickerComponent } from './components/google-maps-picker/google-maps-picker.component';
 
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
@@ -182,7 +185,10 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     MenuModule,
     AccordionModule,
     TableModule,
-    StepsModule
+    StepsModule,
+    DatePickerModule,
+    BusinessEditComponent,
+    GoogleMapsPickerComponent
   ],
   providers: [
     providePrimeNG({

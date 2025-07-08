@@ -775,3 +775,232 @@ mat-divider {
 mat-card-content {
   margin-top: 32px;
 }
+
+/* Google Maps Integration Styles */
+.maps-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f6f9fc 0%, #e9ecef 100%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.maps-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+}
+
+.maps-card mat-card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px 24px;
+  border-radius: 12px 12px 0 0;
+  position: relative;
+}
+
+.maps-card mat-card-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+}
+
+.maps-card mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.maps-card mat-card-title mat-icon {
+  font-size: 24px;
+  color: #ffffff;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.maps-card mat-card-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.maps-card mat-card-content {
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  margin-top: 0;
+}
+
+.maps-integration-section {
+  width: 100%;
+}
+
+.maps-picker-wrapper {
+  margin-bottom: 16px;
+}
+
+.maps-picker-wrapper h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.maps-picker-wrapper h4 mat-icon {
+  color: #667eea;
+  font-size: 20px;
+}
+
+/* Enhanced Places List */
+.places-list-section {
+  margin-top: 32px;
+}
+
+.places-list-section h4 {
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.places-list-section h4::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+.places-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.place-card {
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.place-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-color: #667eea;
+}
+
+.place-card mat-card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 16px;
+  border-radius: 8px 8px 0 0;
+}
+
+.place-card mat-card-actions {
+  padding: 12px 16px;
+  background: #fafafa;
+  border-top: 1px solid #e0e0e0;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Enhanced Form Card for Manual Entry */
+.form-card:not(.maps-card) {
+  background: #fff;
+  transition: all 0.3s ease;
+}
+
+.form-card:not(.maps-card):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.form-card:not(.maps-card) mat-card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 16px 24px;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.form-card:not(.maps-card) mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.form-card:not(.maps-card) mat-card-title mat-icon {
+  color: #667eea;
+  font-size: 20px;
+}
+
+.form-card:not(.maps-card) mat-card-subtitle {
+  color: #666;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.form-card:not(.maps-card) mat-card-actions {
+  padding: 16px 24px;
+  background: #fafafa;
+  border-top: 1px solid #e0e0e0;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Responsive Design for Maps */
+@media (max-width: 768px) {
+  .maps-card mat-card-title {
+    font-size: 18px;
+  }
+  
+  .maps-card mat-card-content {
+    padding: 16px;
+  }
+  
+  .maps-picker-wrapper h4 {
+    font-size: 14px;
+  }
+  
+  .places-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Animation for Google Maps picker */
+.maps-integration-section {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -404,10 +404,60 @@
                 </mat-card-content>
               </mat-card>
               
-              <!-- Place Form -->
+              <!-- Google Maps Integration -->
+              <mat-card class="form-card maps-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-icon>map</mat-icon>
+                    Use Google Maps
+                  </mat-card-title>
+                  <mat-card-subtitle>Search and select addresses or areas using interactive maps</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="maps-integration-section">
+                    <!-- Specific Address Maps Picker -->
+                    <div class="maps-picker-wrapper" *ngIf="placeType === 'specific'">
+                      <h4>
+                        <mat-icon>location_on</mat-icon>
+                        Search for Specific Address
+                      </h4>
+                      <app-google-maps-picker
+                        mode="address"
+                        placeholder="Search for your business address..."
+                        [showMap]="true"
+                        mapHeight="350px"
+                        (placeSelected)="onSpecificAddressSelected($event)"
+                        (placeCleared)="onMapSelectionCleared()">
+                      </app-google-maps-picker>
+                    </div>
+
+                    <!-- Area/Region Maps Picker -->
+                    <div class="maps-picker-wrapper" *ngIf="placeType === 'area'">
+                      <h4>
+                        <mat-icon>map</mat-icon>
+                        Search for Service Area
+                      </h4>
+                      <app-google-maps-picker
+                        mode="area"
+                        placeholder="Search for cities, regions, or areas you serve..."
+                        [showMap]="true"
+                        mapHeight="350px"
+                        (placeSelected)="onAreaSelected($event)"
+                        (placeCleared)="onMapSelectionCleared()">
+                      </app-google-maps-picker>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Manual Place Form -->
               <mat-card class="form-card">
                 <mat-card-header>
-                  <mat-card-title>{{ editingPlaceId ? 'Edit Place' : 'Add New Place' }}</mat-card-title>
+                  <mat-card-title>
+                    <mat-icon>edit_location</mat-icon>
+                    {{ editingPlaceId ? 'Edit Place' : 'Add Place Manually' }}
+                  </mat-card-title>
+                  <mat-card-subtitle>Or enter address details manually</mat-card-subtitle>
                 </mat-card-header>
                 <mat-card-content>
                   <mat-form-field class="full-width">

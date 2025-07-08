@@ -1,5 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 
+/* Import Leaflet CSS for OpenStreetMap functionality */
+@import '~leaflet/dist/leaflet.css';
+
 /* Explicit Material Design button styles to ensure modern appearance */
 .mat-mdc-raised-button.mat-primary {
   background-color: #1976d2 !important;

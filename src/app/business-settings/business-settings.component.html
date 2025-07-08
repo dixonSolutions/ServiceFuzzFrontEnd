@@ -12,6 +12,81 @@
     </mat-card-content>
   </mat-card>
 
+  <!-- Subscription Status -->
+  <div class="subscription-section" *ngIf="data.currentUser">
+    <mat-card class="subscription-card">
+      <mat-card-header>
+        <div mat-card-avatar>
+          <mat-icon [class.active-subscription]="subscriptionStatus?.isSubscribed">
+            {{ subscriptionStatus?.isSubscribed ? 'star' : 'star_border' }}
+          </mat-icon>
+        </div>
+        <mat-card-title>Subscription Status</mat-card-title>
+        <mat-card-subtitle>
+          {{ subscriptionStatus?.isSubscribed ? 'Premium Member' : 'Free Account' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="subscription-info" *ngIf="subscriptionStatus && !isLoadingSubscription">
+          <div class="info-row">
+            <mat-icon>{{ subscriptionStatus.isSubscribed ? 'check_circle' : 'cancel' }}</mat-icon>
+            <span>Status: {{ subscriptionStatus.status }}</span>
+          </div>
+          <div class="info-row" *ngIf="subscriptionStatus.subscriptionId">
+            <mat-icon>receipt</mat-icon>
+            <span>Subscription ID: {{ subscriptionStatus.subscriptionId }}</span>
+          </div>
+          <div class="info-row" *ngIf="subscriptionStatus.currentPeriodEnd">
+            <mat-icon>schedule</mat-icon>
+            <span>Current Period Ends: {{ subscriptionStatus.currentPeriodEnd | date:'mediumDate' }}</span>
+          </div>
+          
+          <!-- Premium Benefits -->
+          <div class="premium-benefits" *ngIf="subscriptionStatus.isSubscribed">
+            <mat-divider></mat-divider>
+            <h4>Premium Benefits Active:</h4>
+            <div class="benefits-list">
+              <div class="benefit-item">
+                <mat-icon>check</mat-icon>
+                <span>Unlimited businesses</span>
+              </div>
+              <div class="benefit-item">
+                <mat-icon>check</mat-icon>
+                <span>Advanced analytics</span>
+              </div>
+              <div class="benefit-item">
+                <mat-icon>check</mat-icon>
+                <span>Priority support</span>
+              </div>
+              <div class="benefit-item">
+                <mat-icon>check</mat-icon>
+                <span>Custom integrations</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Upgrade Prompt for Non-Subscribers -->
+          <div class="upgrade-prompt" *ngIf="!subscriptionStatus.isSubscribed">
+            <mat-divider></mat-divider>
+            <h4>Upgrade to Premium</h4>
+            <p>Get access to all features and priority support</p>
+            <button mat-raised-button color="primary" (click)="upgradeToPremium()">
+              <mat-icon>upgrade</mat-icon>
+              Subscribe Now
+            </button>
+          </div>
+        </div>
+        
+        <!-- Loading State -->
+        <div class="loading-subscription" *ngIf="isLoadingSubscription">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Checking subscription status...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
   <!-- Free Trial Information -->
   <div class="trial-section" *ngIf="data.currentUser">
     <mat-card class="trial-card">
@@ -47,9 +122,9 @@
           </div>
         </div>
 
-        <div class="no-trial-message" *ngIf="!data.freeTrialDetails">
+        <div class="no-trial-message" *ngIf="!data.freeTrialDetails && !showFreeTrialForm">
           <h1>Start your free trial</h1>
-          <button mat-raised-button color="primary">
+          <button mat-raised-button color="primary" (click)="startFreeTrial()">
             <mat-icon>add</mat-icon>
             Start Free Trial
           </button>
@@ -62,8 +137,148 @@
               Subscribe Now
             </button>
           </div>
+        </div>
 
-          <!-- Business Package Card -->
+        <!-- Active Trial Actions -->
+        <div class="trial-actions" *ngIf="data.freeTrialDetails">
+          <mat-divider></mat-divider>
+          <div class="action-buttons">
+            <button mat-raised-button color="accent" class="upgrade-button" (click)="upgradeToPremium()">
+              <mat-icon>star</mat-icon>
+              {{ data.freeTrialDetails.isActive ? 'Upgrade to Premium' : 'Subscribe Now' }}
+            </button>
+            <button mat-stroked-button (click)="showTrialFAQ()">
+              <mat-icon>help</mat-icon>
+              Trial FAQ
+            </button>
+          </div>
+          <p class="upgrade-note" *ngIf="data.freeTrialDetails.isActive">
+            <mat-icon>info</mat-icon>
+            Upgrade anytime to continue seamlessly when your trial ends
+          </p>
+        </div>
+
+        <!-- Free Trial Form -->
+        <div class="free-trial-form-container" *ngIf="showFreeTrialForm">
+          <p-card styleClass="free-trial-form-card">
+            <ng-template pTemplate="header">
+              <div class="form-header">
+                <i class="pi pi-calendar" style="font-size: 2rem; color: var(--primary-color);"></i>
+                <h2>Start Your Free Trial</h2>
+                <p>Choose your trial period and start exploring ServiceFuzz</p>
+              </div>
+            </ng-template>
+            
+            <ng-template pTemplate="content">
+              <div class="form-content">
+                <div class="form-row" *ngIf="isBrowser">
+                  <div class="form-field">
+                    <label for="startDate">Start Date</label>
+                    <p-datepicker 
+                      inputId="startDate"
+                      [(ngModel)]="freeTrialStartDate"
+                      [minDate]="minDate"
+                      [showIcon]="true"
+                      [iconDisplay]="'input'"
+                      [fluid]="true"
+                      (onSelect)="onStartDateChange()"
+                      dateFormat="dd/mm/yy"
+                      placeholder="Select start date"
+                      [showOnFocus]="true"
+                      [appendTo]="'body'">
+                    </p-datepicker>
+                  </div>
+                  
+                  <div class="form-field">
+                    <label for="endDate">End Date</label>
+                    <p-datepicker 
+                      inputId="endDate"
+                      [(ngModel)]="freeTrialEndDate"
+                      [minDate]="freeTrialStartDate"
+                      [showIcon]="true"
+                      [iconDisplay]="'input'"
+                      [fluid]="true"
+                      (onSelect)="onEndDateChange()"
+                      dateFormat="dd/mm/yy"
+                      placeholder="Select end date"
+                      [showOnFocus]="true"
+                      [appendTo]="'body'">
+                    </p-datepicker>
+                  </div>
+                </div>
+                
+                <!-- Fallback form for non-browser environments -->
+                <div class="form-row" *ngIf="!isBrowser">
+                  <div class="form-field">
+                    <label for="startDateFallback">Start Date</label>
+                    <input 
+                      type="date" 
+                      id="startDateFallback"
+                      [value]="formatDateForInput(freeTrialStartDate)"
+                      (change)="onStartDateInputChange($event)"
+                      class="fallback-date-input">
+                  </div>
+                  
+                  <div class="form-field">
+                    <label for="endDateFallback">End Date</label>
+                    <input 
+                      type="date" 
+                      id="endDateFallback"
+                      [value]="formatDateForInput(freeTrialEndDate)"
+                      (change)="onEndDateInputChange($event)"
+                      class="fallback-date-input">
+                  </div>
+                </div>
+                
+                <div class="trial-info-summary" *ngIf="freeTrialFormValid">
+                  <p-divider></p-divider>
+                  <div class="info-item">
+                    <i class="pi pi-clock"></i>
+                    <span>Trial Duration: {{ (freeTrialEndDate.getTime() - freeTrialStartDate.getTime()) / (1000 * 60 * 60 * 24) | number:'1.0-0' }} days</span>
+                  </div>
+                  <div class="info-item">
+                    <i class="pi pi-check-circle"></i>
+                    <span>Full access to all ServiceFuzz features</span>
+                  </div>
+                  <div class="info-item">
+                    <i class="pi pi-shield"></i>
+                    <span>No credit card required</span>
+                  </div>
+                </div>
+                
+                <div class="form-validation" *ngIf="!freeTrialFormValid && (freeTrialStartDate || freeTrialEndDate)">
+                  <p-message severity="warn" text="Please ensure start date is today or later, and end date is after start date"></p-message>
+                </div>
+              </div>
+            </ng-template>
+            
+            <ng-template pTemplate="footer">
+              <div class="form-actions">
+                <p-button 
+                  label="Cancel" 
+                  icon="pi pi-times" 
+                  [text]="true" 
+                  styleClass="p-button-secondary"
+                  (onClick)="hideFreeTrialForm()">
+                </p-button>
+                
+                <p-button 
+                  label="Start Free Trial" 
+                  icon="pi pi-check" 
+                  [disabled]="!freeTrialFormValid || isSubmittingTrial"
+                  [loading]="isSubmittingTrial"
+                  loadingIcon="pi pi-spinner"
+                  styleClass="p-button-primary"
+                  (onClick)="submitFreeTrial()">
+                </p-button>
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Business Package Card -->
           <mat-card class="business-package-card">
             <mat-card-header class="package-header">
               <div mat-card-avatar class="package-avatar">

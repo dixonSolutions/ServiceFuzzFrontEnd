@@ -1,0 +1,109 @@
+<div class="maps-picker-container">
+  <!-- Search Input -->
+  <div class="search-section">
+    <div class="search-input-wrapper">
+      <input 
+        #searchInput
+        type="text"
+        class="search-input"
+        [placeholder]="placeholder"
+        (input)="onInputChange($event)"
+        autocomplete="off">
+      
+      <div class="search-buttons">
+        <!-- Loading indicator -->
+        <div class="search-loading" *ngIf="isSearching">
+          <span class="material-icons rotating">refresh</span>
+        </div>
+
+        <!-- Search button -->
+        <button 
+          type="button"
+          class="search-btn"
+          (click)="searchManually()"
+          [disabled]="isSearching"
+          title="Search">
+          <span class="material-icons">search</span>
+        </button>
+        
+        <!-- Current Location button -->
+        <button 
+          type="button"
+          class="location-btn"
+          (click)="getCurrentLocation()"
+          title="Use Current Location">
+          <span class="material-icons">my_location</span>
+        </button>
+        
+        <!-- Clear button -->
+        <button 
+          type="button"
+          class="clear-btn"
+          (click)="clearSelection()"
+          title="Clear">
+          <span class="material-icons">clear</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Results Dropdown -->
+    <div class="search-results" *ngIf="searchResults.length > 0">
+      <div class="search-results-header">
+        <span class="material-icons">place</span>
+        <span>Search Results</span>
+      </div>
+      <div class="search-results-list">
+        <div 
+          class="search-result-item"
+          *ngFor="let place of searchResults; let i = index"
+          (click)="selectSearchResult(place)"
+          [class.selected]="selectedPlace?.place_id === place.place_id">
+          <div class="result-icon">
+            <span class="material-icons">{{ mode === 'address' ? 'location_on' : 'map' }}</span>
+          </div>
+          <div class="result-content">
+            <div class="result-name">{{ place.name }}</div>
+            <div class="result-address">{{ place.formatted_address }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="search-mode-indicator">
+      <span class="mode-icon material-icons">
+        {{ mode === 'address' ? 'location_on' : 'map' }}
+      </span>
+      <span class="mode-text">
+        {{ mode === 'address' ? 'Searching for specific addresses' : 'Searching for service areas' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Map Container -->
+  <div 
+    class="map-section" 
+    *ngIf="showMap && isBrowser"
+    [style.height]="mapHeight">
+    
+    <div class="map-loading" *ngIf="!isMapLoaded">
+      <div class="loading-spinner">
+        <span class="material-icons rotating">refresh</span>
+      </div>
+      <p>Loading map...</p>
+    </div>
+    
+    <div 
+      #mapContainer 
+      class="map-container"
+      [style.height]="mapHeight">
+    </div>
+  </div>
+
+  <!-- Map Not Available (SSR) -->
+  <div class="map-not-available" *ngIf="showMap && !isBrowser">
+    <div class="not-available-content">
+      <span class="material-icons">map_off</span>
+      <p>Map preview not available during server-side rendering</p>
+    </div>
+  </div>
+</div> 
