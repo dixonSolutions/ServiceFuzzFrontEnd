@@ -64,15 +64,338 @@
         <i [class]="isSaving ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
         {{ isSaving ? 'Saving...' : 'Save' }}
       </button>
-      <button class="toolbar-btn publish-btn">
-        <i class="pi pi-upload"></i>
-        Publish
+      <button class="toolbar-btn publish-btn" (click)="onPublish()" [disabled]="isDeploying">
+        <i [class]="isDeploying ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"></i>
+        {{ isDeploying ? 'Publishing...' : 'Publish' }}
+      </button>
+      <button class="toolbar-btn history-btn" (click)="onShowDeploymentHistory()" title="View Deployment History">
+        <i class="pi pi-history"></i>
+        History
       </button>
     </div>
   </div>
 
   <!-- JSON Editor (full screen overlay) -->
   <app-json-editor *ngIf="showJsonEditor" [builtInNavProperties]="builtInNavProperties" (builtInNavPropertiesChange)="onBuiltInNavPropertiesChange($event)" (close)="onJsonEditor()"></app-json-editor>
+
+  <!-- Deployment Dialog -->
+  <div *ngIf="showDeploymentDialog" class="deployment-dialog-overlay">
+    <div class="deployment-dialog">
+      <div class="dialog-header">
+        <h3>
+          <i class="pi pi-upload"></i>
+          Publish Your Website
+        </h3>
+        <button class="close-btn" (click)="onCloseDeploymentDialog()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+      
+      <div class="dialog-content">
+        <div class="publish-intro">
+          <div class="intro-icon">
+            <i class="pi pi-globe"></i>
+          </div>
+          <h4>Choose Your Website Address</h4>
+          <p>Your website will be published at a custom ServiceFuzz URL. Choose a unique name that represents your business.</p>
+        </div>
+
+        <div class="website-name-section">
+          <label for="websiteName" class="field-label">
+            <i class="pi pi-link"></i>
+            Website Name
+          </label>
+          
+          <div class="url-preview-container">
+            <span class="url-prefix">https://servicefuzz.com/</span>
+            <input 
+              type="text" 
+              id="websiteName"
+              class="website-name-input"
+                             [(ngModel)]="websiteName"
+               (input)="onWebsiteNameChange()"
+               placeholder="your-business-name"
+               [class.invalid]="!websiteNameValidation.isValid && websiteName.length > 0"
+               [class.valid]="websiteNameValidation.isValid"
+               maxlength="50">
+          </div>
+
+          <!-- URL Preview -->
+          <div class="url-preview" *ngIf="websiteName">
+            <i class="pi pi-eye"></i>
+            <span>Preview: </span>
+            <a [href]="getPreviewUrl()" target="_blank" class="preview-link">{{ getPreviewUrl() }}</a>
+          </div>
+
+                     <!-- Validation Messages -->
+           <div class="validation-messages">
+             <!-- Format validation -->
+             <div *ngIf="!websiteNameValidation.isValid && websiteName.length > 0" class="validation-error">
+               <i class="pi pi-times-circle"></i>
+               {{ websiteNameValidation.error }}
+             </div>
+ 
+             <!-- Success message for valid names -->
+             <div *ngIf="websiteNameValidation.isValid && websiteName.length > 0" class="validation-success">
+               <i class="pi pi-check-circle"></i>
+               Website name format is valid! Ready to publish.
+             </div>
+
+                         <!-- Format requirements -->
+             <div class="format-requirements">
+               <h6><i class="pi pi-info-circle"></i> Requirements:</h6>
+               <ul>
+                 <li [class.requirement-met]="hasValidLength()">3-50 characters long</li>
+                 <li [class.requirement-met]="isLowercase()">Lowercase letters only</li>
+                 <li [class.requirement-met]="isValidCharacters()">Letters, numbers, and hyphens only</li>
+                 <li [class.requirement-met]="hasValidHyphens()">Cannot start or end with hyphen</li>
+               </ul>
+             </div>
+          </div>
+
+          <!-- Suggested name -->
+          <div class="suggested-name" *ngIf="suggestedWebsiteName && websiteName !== suggestedWebsiteName">
+            <div class="suggestion-header">
+              <i class="pi pi-lightbulb"></i>
+              <span>Suggestion based on your project name:</span>
+            </div>
+            <button class="suggestion-btn" (click)="websiteName = suggestedWebsiteName; onWebsiteNameChange()">
+              <span>{{ suggestedWebsiteName }}</span>
+              <i class="pi pi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+                 <!-- Deployment Limit Check -->
+         <div *ngIf="deploymentLimitCheck && !deploymentLimitCheck.canDeploy" class="deployment-limit-error">
+           <div class="error-content">
+             <i class="pi pi-times-circle"></i>
+             <div class="error-text">
+               <span class="error-message">{{ deploymentLimitCheck.message }}</span>
+               <small>Please delete some deployments first or enable auto-cleanup.</small>
+             </div>
+           </div>
+         </div>
+         
+         <!-- Deployment Warning -->
+         <div *ngIf="deploymentLimitCheck && deploymentLimitCheck.canDeploy && deploymentLimitCheck.isAtWarningThreshold" 
+              class="deployment-limit-warning limit-warning">
+           <div class="warning-content">
+             <i class="pi pi-exclamation-triangle"></i>
+             <div class="warning-text">
+               <span class="warning-message">{{ deploymentLimitCheck.message }}</span>
+             </div>
+           </div>
+         </div>
+
+         <!-- Deployment Preview -->
+         <div class="deployment-preview" *ngIf="websiteNameValidation.isValid">
+          <div class="preview-header">
+            <i class="pi pi-check-circle"></i>
+            <h5>Ready to Publish</h5>
+          </div>
+          <div class="preview-details">
+            <div class="preview-item">
+              <label>Project:</label>
+              <span>{{ currentProject?.name }}</span>
+            </div>
+            <div class="preview-item">
+              <label>Website URL:</label>
+              <span class="preview-url">{{ getPreviewUrl() }}</span>
+            </div>
+            <div class="preview-item">
+              <label>Status:</label>
+              <span class="status-ready">Ready for deployment</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="dialog-footer">
+        <button class="btn btn-secondary" (click)="onCloseDeploymentDialog()" [disabled]="isDeploying">
+          Cancel
+        </button>
+                 <button 
+           class="btn btn-primary publish-btn-final" 
+           (click)="confirmDeployment()" 
+           [disabled]="!websiteNameValidation.isValid || isDeploying || (deploymentLimitCheck && !deploymentLimitCheck.canDeploy)">
+          <i [class]="isDeploying ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"></i>
+          {{ isDeploying ? 'Publishing...' : 'Publish Website' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deployment History Dialog -->
+  <div *ngIf="showDeploymentHistory" class="deployment-history-overlay">
+    <div class="deployment-history-dialog">
+      <div class="dialog-header">
+        <h3>
+          <i class="pi pi-history"></i>
+          Deployment History
+        </h3>
+        <button class="close-btn" (click)="onCloseDeploymentHistory()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+      
+      <div class="dialog-content">
+        <div *ngIf="isLoadingDeployments" class="loading-state">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Loading deployment history...</span>
+        </div>
+        
+        <div *ngIf="!isLoadingDeployments && deploymentHistory.length === 0" class="empty-state">
+          <i class="pi pi-info-circle"></i>
+          <p>No deployments found for this workspace.</p>
+          <small>Publish your website to see deployment history here.</small>
+        </div>
+        
+        <div *ngIf="!isLoadingDeployments && deploymentHistory.length > 0" class="deployments-list">
+          <!-- Deployment Limits Warning -->
+          <div *ngIf="showDeploymentLimitWarning && deploymentLimitCheck" 
+               class="deployment-limits-warning" 
+               [ngClass]="getDeploymentLimitClass()">
+            <div class="warning-content">
+              <i [class]="deploymentLimitCheck.canDeploy ? 'pi pi-exclamation-triangle' : 'pi pi-times-circle'"></i>
+              <div class="warning-text">
+                <span class="warning-message">{{ deploymentLimitCheck.message }}</span>
+                <span class="limit-status">{{ getDeploymentLimitStatus() }}</span>
+              </div>
+            </div>
+            <button *ngIf="!deploymentLimitCheck.canDeploy" 
+                    class="btn btn-outline-danger btn-sm cleanup-btn"
+                    (click)="onDeleteAllDeployments()"
+                    title="Clean up deployments to make space">
+              <i class="pi pi-broom"></i>
+              Clean Up
+            </button>
+          </div>
+
+          <div class="deployment-summary">
+            <div class="summary-info">
+              <span>Total deployments: <strong>{{ deploymentHistory.length }}</strong></span>
+              <span *ngIf="deploymentLimitCheck" class="limit-indicator" [ngClass]="getDeploymentLimitClass()">
+                {{ getDeploymentLimitStatus() }}
+              </span>
+            </div>
+            
+            <!-- Delete All Button or Confirmation -->
+            <div class="delete-all-section">
+              <button *ngIf="!showDeleteAllConfirmation" 
+                      class="btn btn-danger btn-sm delete-all-btn" 
+                      (click)="onDeleteAllDeployments()"
+                      [disabled]="isDeletingAllDeployments"
+                      title="Delete all deployments">
+                <i class="pi pi-trash"></i>
+                Delete All
+              </button>
+              
+              <!-- Inline Delete All Confirmation -->
+              <div *ngIf="showDeleteAllConfirmation" class="inline-delete-all-confirmation">
+                <div class="confirmation-message">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span>Delete all {{ deploymentHistory.length }} deployments?</span>
+                </div>
+                <div class="confirmation-actions">
+                  <button class="btn btn-secondary btn-sm" 
+                          (click)="onDeleteAllDeployments()"
+                          [disabled]="isDeletingAllDeployments">
+                    Cancel
+                  </button>
+                  <button class="btn btn-danger btn-sm" 
+                          (click)="confirmDeleteAllDeployments()"
+                          [disabled]="isDeletingAllDeployments">
+                    <i [class]="isDeletingAllDeployments ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"></i>
+                    {{ isDeletingAllDeployments ? 'Deleting...' : 'Delete All' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngFor="let deployment of deploymentHistory; let i = index" class="deployment-item">
+            <div class="deployment-header">
+              <div class="status-badge" [style.background-color]="getDeploymentStatusColor(deployment.deploymentStatus)">
+                <i [class]="'pi ' + getDeploymentStatusIcon(deployment.deploymentStatus)"></i>
+                <span>{{ deployment.deploymentStatus | titlecase }}</span>
+              </div>
+              <div class="deployment-actions">
+                <div class="deployment-date">
+                  {{ formatDeploymentDate(deployment.deployedAt) }}
+                </div>
+                <button *ngIf="!isShowingDeleteConfirmation(deployment)" 
+                        class="btn btn-danger btn-sm delete-deployment-btn" 
+                        (click)="onDeleteDeployment(deployment)"
+                        [disabled]="isDeletingDeployment"
+                        title="Delete this deployment">
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Inline Delete Confirmation -->
+            <div *ngIf="isShowingDeleteConfirmation(deployment)" class="inline-delete-confirmation">
+              <div class="confirmation-message">
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>Delete this deployment? This action cannot be undone.</span>
+              </div>
+              <div class="confirmation-actions">
+                <button class="btn btn-secondary btn-sm" 
+                        (click)="onDeleteDeployment(deployment)"
+                        [disabled]="isDeletingDeployment">
+                  Cancel
+                </button>
+                <button class="btn btn-danger btn-sm" 
+                        (click)="confirmDeleteDeployment()"
+                        [disabled]="isDeletingDeployment">
+                  <i [class]="isDeletingDeployment ? 'pi pi-spin pi-spinner' : 'pi pi-trash'"></i>
+                  {{ isDeletingDeployment ? 'Deleting...' : 'Delete' }}
+                </button>
+              </div>
+            </div>
+            
+            <div class="deployment-details">
+              <div class="detail-row">
+                <label>Deployment ID:</label>
+                <span class="deployment-id">{{ deployment.id }}</span>
+              </div>
+              
+              <div class="detail-row" *ngIf="deployment.deploymentUrl">
+                <label>URL:</label>
+                <div class="url-container">
+                  <a [href]="deployment.deploymentUrl" target="_blank" class="deployment-url">
+                    {{ deployment.deploymentUrl }}
+                  </a>
+                  <button class="url-open-btn" (click)="openDeploymentUrl(deployment.deploymentUrl!)" title="Open in new tab">
+                    <i class="pi pi-external-link"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="detail-row">
+                <label>Deployed by:</label>
+                <span>{{ deployment.deployedBy }}</span>
+              </div>
+              
+              <div class="detail-row" *ngIf="deployment.errorMessage">
+                <label>Error:</label>
+                <span class="error-message">{{ deployment.errorMessage }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="dialog-footer">
+        <button class="btn btn-secondary" (click)="onCloseDeploymentHistory()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+
 
   <!-- Main Layout -->
   <div class="main-layout" [style.display]="showJsonEditor ? 'none' : 'flex'">

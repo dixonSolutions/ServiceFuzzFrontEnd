@@ -85,18 +85,35 @@ export interface ComponentType {
 }
 
 export interface DeployWorkspaceDto {
-  workspaceId: string;
-  deployedBy: string;
+  workspaceId: string;     // The workspace ID to deploy
+  deployedBy: string;      // User ID who initiated the deployment
+  websiteName: string;     // Unique website name (e.g., "my-awesome-business")
+}
+
+// Enhanced deployment response interface
+export interface DeployWorkspaceResponse {
+  message: string;
+  deploymentUrl: string;      // Simple format: https://servicefuzz.com/websitename
+  deploymentId: string;       // Unique ID for this deployment
+  deploymentStatus: string;   // Current deployment status ("deploying", "deployed", "failed")
+  deployedAt: string;         // ISO timestamp when deployment was initiated
+  workspaceId: string;        // The workspace ID being deployed
+}
+
+// Website name validation interface
+export interface WebsiteNameValidation {
+  isValid: boolean;
+  error?: string;
 }
 
 export interface WorkspaceDeployment {
   id: string;
   workspaceId: string;
-  deploymentStatus: string;
-  deploymentUrl?: string;
-  errorMessage?: string;
-  deployedBy: string;
-  deployedAt: Date;
+  deploymentStatus: string;      // "deploying", "deployed", "failed"
+  deploymentUrl?: string;        // URL where website is deployed
+  errorMessage?: string;         // Error message if deployment failed
+  deployedBy: string;           // User ID who initiated deployment
+  deployedAt: string;           // ISO timestamp of deployment
 }
 
 // Response wrapper interfaces
@@ -130,6 +147,35 @@ export interface DeploymentListResponse {
   workspaceId: string;
   totalDeployments: number;
   deployments: WorkspaceDeployment[];
+}
+
+// Delete deployment response interfaces
+export interface DeleteDeploymentResponse {
+  message: string;
+  deletedDeploymentId: string;
+  success: boolean;
+}
+
+export interface DeleteAllDeploymentsResponse {
+  message: string;
+  deletedCount: number;
+  workspaceId: string;
+  success: boolean;
+}
+
+// Deployment limits configuration
+export interface DeploymentLimits {
+  maxDeployments: number;
+  autoDeleteOldest?: boolean;
+  warningThreshold?: number; // Show warning when approaching limit
+}
+
+export interface DeploymentLimitCheck {
+  canDeploy: boolean;
+  currentCount: number;
+  maxAllowed: number;
+  isAtWarningThreshold: boolean;
+  message?: string;
 }
 
 // Enhanced component system interfaces

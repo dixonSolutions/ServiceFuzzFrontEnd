@@ -11,12 +11,18 @@ import {
   WorkspaceComponentResponseDto,
   ComponentType,
   DeployWorkspaceDto,
+  DeployWorkspaceResponse,
   WorkspaceDeployment,
   WorkspaceListResponse,
   ComponentListResponse,
   ComponentTypeListResponse,
   DeploymentListResponse,
-  ApiResponse
+  ApiResponse,
+  WebsiteNameValidation,
+  DeleteDeploymentResponse,
+  DeleteAllDeploymentsResponse,
+  DeploymentLimits,
+  DeploymentLimitCheck
 } from '../models/workspace.models';
 
 // Component Parameter Interface
@@ -118,12 +124,21 @@ export interface BusinessImagesResponse {
   images: BusinessImage[];
 }
 
+
+
 @Injectable({
   providedIn: 'root'
 })
 export class WebsiteBuilderService {
   // API Configuration
   private readonly apiBaseUrl = 'https://servicefuzzapi-atf8b4dqawc8dsa9.australiaeast-01.azurewebsites.net';
+
+  // Deployment limits configuration
+  private deploymentLimits: DeploymentLimits = {
+    maxDeployments: 2, // Default limit
+    autoDeleteOldest: false,
+    warningThreshold: 2 // Show warning at 8 deployments
+  };
 
   // Signals for reactive state management
   private _currentProject = signal<WebsiteProject | null>(null);
@@ -837,11 +852,11 @@ export class WebsiteBuilderService {
   }
 
   /**
-   * Deploys a workspace
+   * Deploys a workspace with enhanced response
    */
-  deployWorkspace(workspaceId: string, deployedBy: string): Observable<{ message: string }> {
-    const deployDto: DeployWorkspaceDto = { workspaceId, deployedBy };
-    return this.http.post<{ message: string }>(
+  deployWorkspace(workspaceId: string, deployedBy: string, websiteName: string): Observable<DeployWorkspaceResponse> {
+    const deployDto: DeployWorkspaceDto = { workspaceId, deployedBy, websiteName };
+    return this.http.post<DeployWorkspaceResponse>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/deploy`, 
       deployDto
     ).pipe(
@@ -858,6 +873,71 @@ export class WebsiteBuilderService {
     ).pipe(
       catchError(this.handleError)
     );
+  }
+
+  /**
+   * Gets deployment history with enhanced error handling and formatting
+   */
+  async getDeploymentHistory(workspaceId: string): Promise<DeploymentListResponse> {
+    try {
+      const response = await this.getWorkspaceDeployments(workspaceId).toPromise();
+      
+      console.log(`📊 Found ${response?.totalDeployments || 0} deployments for workspace ${workspaceId}`);
+      
+      // Log deployment details for debugging
+      response?.deployments?.forEach((deployment, index) => {
+        console.log(`--- Deployment ${index + 1} ---`);
+        console.log('ID:', deployment.id);
+        console.log('Status:', deployment.deploymentStatus);
+        console.log('URL:', deployment.deploymentUrl || 'N/A');
+        console.log('Deployed by:', deployment.deployedBy);
+        console.log('Deployed at:', new Date(deployment.deployedAt).toLocaleString());
+        if (deployment.errorMessage) {
+          console.log('Error:', deployment.errorMessage);
+        }
+      });
+      
+      return response || { workspaceId, totalDeployments: 0, deployments: [] };
+    } catch (error) {
+      console.error('❌ Failed to get deployment history:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Validates website name format and rules
+   */
+  validateWebsiteName(name: string): WebsiteNameValidation {
+    if (!name || name.length < 3 || name.length > 50) {
+      return { isValid: false, error: 'Website name must be between 3 and 50 characters' };
+    }
+    
+    if (name.startsWith('-') || name.endsWith('-')) {
+      return { isValid: false, error: 'Website name cannot start or end with a hyphen' };
+    }
+    
+    if (!/^[a-z0-9-]+$/.test(name)) {
+      return { isValid: false, error: 'Website name can only contain lowercase letters, numbers, and hyphens' };
+    }
+    
+    return { isValid: true };
+  }
+
+
+
+  /**
+   * Generates a suggested website name based on business name
+   */
+  generateWebsiteName(businessName: string): string {
+    if (!businessName) return '';
+    
+    return businessName
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove invalid characters
+      .trim()
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .substring(0, 50); // Limit length
   }
 
   // ===================== WORKSPACE COMPONENT METHODS =====================
@@ -1311,5 +1391,110 @@ export class WebsiteBuilderService {
   private handleError = (error: any): Observable<never> => {
     console.error('Workspace API Error:', error);
     throw error;
+  }
+
+  /**
+   * Delete a specific deployment
+   */
+  deleteDeployment(deploymentId: string): Observable<DeleteDeploymentResponse> {
+    return this.http.delete<DeleteDeploymentResponse>(
+      `${this.apiBaseUrl}/api/BusinessWebsite/deployments/${deploymentId}`
+    ).pipe(
+      catchError(error => {
+        console.error('❌ Error deleting deployment:', error);
+        if (error.status === 404) {
+          throw new Error('Deployment not found');
+        }
+        throw new Error(`Failed to delete deployment: ${error.statusText || 'Unknown error'}`);
+      })
+    );
+  }
+
+  /**
+   * Delete all deployments for a workspace
+   */
+  deleteAllWorkspaceDeployments(workspaceId: string): Observable<DeleteAllDeploymentsResponse> {
+    return this.http.delete<DeleteAllDeploymentsResponse>(
+      `${this.apiBaseUrl}/api/BusinessWebsite/workspaces/${workspaceId}/deployments`
+    ).pipe(
+      catchError(error => {
+        console.error('❌ Error deleting workspace deployments:', error);
+        if (error.status === 404) {
+          throw new Error('No deployments found for this workspace');
+        }
+        throw new Error(`Failed to delete workspace deployments: ${error.statusText || 'Unknown error'}`);
+      })
+    );
+  }
+
+  /**
+   * Get deployment limits configuration
+   */
+  getDeploymentLimits(): DeploymentLimits {
+    return { ...this.deploymentLimits };
+  }
+
+  /**
+   * Update deployment limits configuration
+   */
+  updateDeploymentLimits(limits: Partial<DeploymentLimits>): void {
+    this.deploymentLimits = { ...this.deploymentLimits, ...limits };
+  }
+
+  /**
+   * Check if deployment is allowed based on current limits
+   */
+  checkDeploymentLimit(currentDeployments: WorkspaceDeployment[]): DeploymentLimitCheck {
+    const currentCount = currentDeployments.length;
+    const maxAllowed = this.deploymentLimits.maxDeployments;
+    const warningThreshold = this.deploymentLimits.warningThreshold || Math.max(1, maxAllowed - 2);
+
+    const check: DeploymentLimitCheck = {
+      canDeploy: currentCount < maxAllowed,
+      currentCount,
+      maxAllowed,
+      isAtWarningThreshold: currentCount >= warningThreshold
+    };
+
+    if (!check.canDeploy) {
+      check.message = `Deployment limit reached (${currentCount}/${maxAllowed}). Please delete some deployments first.`;
+    } else if (check.isAtWarningThreshold) {
+      check.message = `Approaching deployment limit (${currentCount}/${maxAllowed}). Consider cleaning up old deployments.`;
+    }
+
+    return check;
+  }
+
+  /**
+   * Auto-cleanup old deployments if enabled and at limit
+   */
+  async autoCleanupDeployments(workspaceId: string, deployments: WorkspaceDeployment[]): Promise<WorkspaceDeployment[]> {
+    if (!this.deploymentLimits.autoDeleteOldest) {
+      return deployments;
+    }
+
+    const maxAllowed = this.deploymentLimits.maxDeployments;
+    if (deployments.length >= maxAllowed) {
+      // Sort by deployment date (oldest first) and delete excess
+      const sortedDeployments = [...deployments].sort((a, b) => 
+        new Date(a.deployedAt).getTime() - new Date(b.deployedAt).getTime()
+      );
+      
+      const deploymentsToDelete = sortedDeployments.slice(0, sortedDeployments.length - maxAllowed + 1);
+      
+      try {
+        for (const deployment of deploymentsToDelete) {
+          await this.deleteDeployment(deployment.id).toPromise();
+        }
+        
+        // Return updated list without deleted deployments
+        return deployments.filter(d => !deploymentsToDelete.some(del => del.id === d.id));
+      } catch (error) {
+        console.error('❌ Error during auto-cleanup:', error);
+        return deployments;
+      }
+    }
+
+    return deployments;
   }
 }

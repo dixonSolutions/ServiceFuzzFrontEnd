@@ -3,10 +3,25 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WebsiteBuilderService, ComponentDefinition, ComponentParameter, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/website-builder';
+import { DataSvrService } from '../services/data-svr.service';
 import { WorkspaceProject } from './workspace-selection.component';
-import { CreateWorkspaceDto, UpdateWorkspaceDto, ComponentType } from '../models/workspace.models';
+import { CreateWorkspaceDto, UpdateWorkspaceDto, ComponentType, DeploymentListResponse, WorkspaceDeployment, WebsiteNameValidation } from '../models/workspace.models';
 import { LeftSidebar } from './left-sidebar/left-sidebar';
 import { Canvas, Page } from './canvas/canvas';
+
+interface DeploymentLimitCheck {
+  currentCount: number;
+  maxAllowed: number;
+  canDeploy: boolean;
+  isAtWarningThreshold: boolean;
+  message?: string;
+}
+
+interface DeployWorkspaceDto {
+  workspaceId: string;
+  deployedBy: string;
+  websiteName: string;
+}
 
 @Component({
   selector: 'app-website-creator',
@@ -39,6 +54,29 @@ export class WebsiteCreatorComponent implements OnInit {
   // Assets Management
   activeTab: 'components' | 'properties' | 'assets' = 'components';
   isSaving = false;
+  isDeploying = false;
+  
+  // Deployment History
+  showDeploymentHistory = false;
+  deploymentHistory: WorkspaceDeployment[] = [];
+  isLoadingDeployments = false;
+
+  // Deployment limits
+  deploymentLimitCheck: DeploymentLimitCheck | null = null;
+  showDeploymentLimitWarning = false;
+
+  // Delete deployment states
+  showDeleteConfirmation = false;
+  showDeleteAllConfirmation = false;
+  deploymentToDelete: WorkspaceDeployment | null = null;
+  isDeletingDeployment = false;
+  isDeletingAllDeployments = false;
+
+  // Deployment Dialog
+  showDeploymentDialog = false;
+  websiteName = '';
+  websiteNameValidation: WebsiteNameValidation = { isValid: false };
+  suggestedWebsiteName = '';
   
   // Built-in navigation properties (shared state)
   builtInNavProperties: { [key: string]: any } = {
@@ -58,7 +96,8 @@ export class WebsiteCreatorComponent implements OnInit {
 
   constructor(
     private websiteBuilder: WebsiteBuilderService,
-    private router: Router
+    private router: Router,
+    private dataSvrService: DataSvrService
   ) {}
 
   ngOnInit(): void {
@@ -369,37 +408,257 @@ export class WebsiteCreatorComponent implements OnInit {
   }
 
   // Project Management
-  onSave(): void {
+  async onSave(): Promise<void> {
     if (!this.currentProject) return;
     
     this.isSaving = true;
     
-    // CRITICAL FIX: Get the latest page data from canvas before saving
-    // This ensures all components from all pages are included
-    if (this.canvas && this.canvas.pages && this.canvas.pages.length > 0) {
-      console.log('📋 Getting latest page data from canvas for save...');
-      this.pages = [...this.canvas.pages]; // Deep sync with canvas data
-      console.log('✅ Synced pages with canvas:', this.pages);
-    } else {
-      console.warn('⚠️ Canvas data not available, using main component pages');
-    }
-    
-    // Export current website data with latest page data
-    this.currentProject.websiteJson = this.exportWebsiteDataAsJson();
-    
-    console.log('💾 Saving website data:', this.currentProject.websiteJson);
-    
-    // Save based on whether it's a new project or existing
-    if (this.currentProject.isNew) {
-      this.saveNewWorkspace();
-    } else {
-      this.updateExistingWorkspace();
+    try {
+      // CRITICAL FIX: Get the latest page data from canvas before saving
+      // This ensures all components from all pages are included
+      if (this.canvas && this.canvas.pages && this.canvas.pages.length > 0) {
+        console.log('📋 Getting latest page data from canvas for save...');
+        this.pages = [...this.canvas.pages]; // Deep sync with canvas data
+        console.log('✅ Synced pages with canvas:', this.pages);
+      } else {
+        console.warn('⚠️ Canvas data not available, using main component pages');
+      }
+      
+      // Export current website data with latest page data
+      this.currentProject.websiteJson = this.exportWebsiteDataAsJson();
+      
+      console.log('💾 Saving website data:', this.currentProject.websiteJson);
+      
+      // Save based on whether it's a new project or existing
+      if (this.currentProject.isNew) {
+        await this.saveNewWorkspace();
+      } else {
+        await this.updateExistingWorkspace();
+      }
+    } finally {
+      this.isSaving = false;
     }
   }
 
   onPreview(): void {
     console.log('Preview clicked');
     // Implement preview functionality
+  }
+
+  onPublish(): void {
+    if (!this.currentProject) {
+      console.error('No project selected for publishing');
+      return;
+    }
+
+    // Generate suggested website name
+    this.suggestedWebsiteName = this.websiteBuilder.generateWebsiteName(this.currentProject.name);
+    this.websiteName = this.suggestedWebsiteName;
+    
+    // Validate the suggested name
+    this.validateCurrentWebsiteName();
+    
+    // Check deployment limits when opening dialog
+    this.checkDeploymentLimitsForDialog();
+    
+    // Show the deployment dialog
+    this.showDeploymentDialog = true;
+  }
+
+  private async checkDeploymentLimitsForDialog(): Promise<void> {
+    if (!this.currentProject) return;
+    
+    try {
+      const response = await this.websiteBuilder.getWorkspaceDeployments(this.currentProject.id).toPromise();
+      
+      if (response?.deployments) {
+        this.deploymentHistory = response.deployments;
+        this.deploymentLimitCheck = this.websiteBuilder.checkDeploymentLimit(this.deploymentHistory);
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not check deployment limits:', error);
+      this.deploymentLimitCheck = null;
+    }
+  }
+
+  async confirmDeployment(): Promise<void> {
+    if (!this.currentProject || !this.websiteNameValidation.isValid) {
+      return;
+    }
+
+    // Check deployment limits before deploying
+    if (this.deploymentHistory.length > 0) {
+      const limitCheck = this.websiteBuilder.checkDeploymentLimit(this.deploymentHistory);
+      
+      if (!limitCheck.canDeploy) {
+        this.showErrorMessage(limitCheck.message || 'Deployment limit reached');
+        return;
+      }
+      
+      // Auto-cleanup if enabled
+      try {
+        this.deploymentHistory = await this.websiteBuilder.autoCleanupDeployments(
+          this.currentProject.id, 
+          this.deploymentHistory
+        );
+      } catch (error) {
+        console.warn('⚠️ Auto-cleanup failed:', error);
+      }
+    }
+
+    this.isDeploying = true;
+    this.showDeploymentDialog = false;
+
+    try {
+      // Save project first
+      await this.onSave();
+
+             const response = await this.websiteBuilder.deployWorkspace(
+         this.currentProject.id,
+                   this.dataSvrService.currentUser?.userID || 'unknown',
+         this.websiteName
+       ).toPromise();
+      
+      if (response?.deploymentUrl) {
+        // Show success message with deployment details
+        const confirmationMessage = `
+🎉 Website published successfully!
+
+📍 Your website is now live at:
+${response.deploymentUrl}
+
+🆔 Deployment ID: ${response.deploymentId}
+📅 Published: ${new Date().toLocaleString()}
+
+Would you like to visit your website now?
+        `.trim();
+
+        if (confirm(confirmationMessage)) {
+          window.open(response.deploymentUrl, '_blank');
+        }
+
+        console.log('✅ Deployment successful:', response);
+        
+        // Refresh deployment history if dialog is open
+        if (this.showDeploymentHistory) {
+          await this.onShowDeploymentHistory();
+        }
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Error deploying workspace:', error);
+      
+      // Handle specific error cases
+      let errorMessage = 'Unknown error occurred';
+      if (error.message) {
+        if (error.message.includes('already taken')) {
+          errorMessage = 'Website name is already taken. Please choose a different name.';
+        } else if (error.message.includes('lowercase letters')) {
+          errorMessage = 'Invalid website name format. Use only lowercase letters, numbers, and hyphens.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(`❌ Failed to publish website: ${errorMessage}`);
+    } finally {
+      this.isDeploying = false;
+    }
+  }
+
+  onWebsiteNameChange(): void {
+    this.validateCurrentWebsiteName();
+  }
+
+  private validateCurrentWebsiteName(): void {
+    this.websiteNameValidation = this.websiteBuilder.validateWebsiteName(this.websiteName);
+  }
+
+  onCloseDeploymentDialog(): void {
+    this.showDeploymentDialog = false;
+    this.websiteName = '';
+    this.websiteNameValidation = { isValid: false };
+  }
+
+  getPreviewUrl(): string {
+    if (!this.websiteName) return '';
+    return `https://servicefuzz.com/${this.websiteName}`;
+  }
+
+  isValidCharacters(): boolean {
+    return /^[a-z0-9-]*$/.test(this.websiteName);
+  }
+
+  hasValidLength(): boolean {
+    return this.websiteName.length >= 3 && this.websiteName.length <= 50;
+  }
+
+  isLowercase(): boolean {
+    return this.websiteName === this.websiteName.toLowerCase();
+  }
+
+  hasValidHyphens(): boolean {
+    return !this.websiteName.startsWith('-') && !this.websiteName.endsWith('-');
+  }
+
+  async onShowDeploymentHistory(): Promise<void> {
+    this.showDeploymentHistory = true;
+    this.isLoadingDeployments = true;
+    
+    if (this.currentProject) {
+      try {
+        const response = await this.websiteBuilder.getWorkspaceDeployments(this.currentProject.id).toPromise();
+        
+        if (response?.deployments) {
+          this.deploymentHistory = response.deployments;
+          
+          // Check deployment limits
+          this.deploymentLimitCheck = this.websiteBuilder.checkDeploymentLimit(this.deploymentHistory);
+          this.showDeploymentLimitWarning = this.deploymentLimitCheck.isAtWarningThreshold || !this.deploymentLimitCheck.canDeploy;
+          
+          console.log('✅ Deployment history loaded:', response);
+        }
+      } catch (error) {
+        console.error('❌ Error loading deployment history:', error);
+        this.deploymentHistory = [];
+        this.deploymentLimitCheck = null;
+      } finally {
+        this.isLoadingDeployments = false;
+      }
+    }
+  }
+
+  onCloseDeploymentHistory(): void {
+    this.showDeploymentHistory = false;
+    this.deploymentHistory = [];
+  }
+
+  openDeploymentUrl(url: string): void {
+    if (url) {
+      window.open(url, '_blank');
+    }
+  }
+
+  getDeploymentStatusColor(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'deployed': return '#28a745';
+      case 'deploying': return '#ffc107';
+      case 'failed': return '#dc3545';
+      default: return '#6c757d';
+    }
+  }
+
+  getDeploymentStatusIcon(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'deployed': return 'pi-check-circle';
+      case 'deploying': return 'pi-spin pi-spinner';
+      case 'failed': return 'pi-times-circle';
+      default: return 'pi-question-circle';
+    }
+  }
+
+  formatDeploymentDate(dateString: string): string {
+    return new Date(dateString).toLocaleString();
   }
 
   onJsonEditor(): void {
@@ -825,5 +1084,111 @@ export class WebsiteCreatorComponent implements OnInit {
 
   isApiComponent(componentType: string): boolean {
     return this.websiteBuilder.getCachedApiComponentTypes().some(comp => comp.id === componentType);
+  }
+
+  // Delete deployment methods
+  onDeleteDeployment(deployment: WorkspaceDeployment): void {
+    // Toggle confirmation state for this specific deployment
+    if (deployment.id === this.deploymentToDelete?.id) {
+      this.deploymentToDelete = null;
+    } else {
+      this.deploymentToDelete = deployment;
+    }
+  }
+
+  onDeleteAllDeployments(): void {
+    this.showDeleteAllConfirmation = !this.showDeleteAllConfirmation;
+  }
+
+  onCancelDeleteConfirmation(): void {
+    this.showDeleteConfirmation = false;
+    this.showDeleteAllConfirmation = false;
+    this.deploymentToDelete = null;
+  }
+
+  isShowingDeleteConfirmation(deployment: WorkspaceDeployment): boolean {
+    return this.deploymentToDelete?.id === deployment.id;
+  }
+
+  async confirmDeleteDeployment(): Promise<void> {
+    if (!this.deploymentToDelete) return;
+
+    this.isDeletingDeployment = true;
+    
+    try {
+      const response = await this.websiteBuilder.deleteDeployment(this.deploymentToDelete.id).toPromise();
+      
+      if (response?.success) {
+        // Remove from local array
+        this.deploymentHistory = this.deploymentHistory.filter(
+          d => d.id !== this.deploymentToDelete!.id
+        );
+        
+        this.showSuccessMessage(`Deployment deleted successfully`);
+        console.log('✅ Deployment deleted:', response);
+      } else {
+        throw new Error('Delete operation failed');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error deleting deployment:', error);
+      this.showErrorMessage(error instanceof Error ? error.message : 'Failed to delete deployment');
+    } finally {
+      this.isDeletingDeployment = false;
+      this.onCancelDeleteConfirmation();
+    }
+  }
+
+  async confirmDeleteAllDeployments(): Promise<void> {
+    if (!this.currentProject) return;
+
+    this.isDeletingAllDeployments = true;
+    
+    try {
+      const response = await this.websiteBuilder.deleteAllWorkspaceDeployments(this.currentProject.id).toPromise();
+      
+      if (response?.success) {
+        // Clear local array
+        this.deploymentHistory = [];
+        
+        this.showSuccessMessage(`All deployments deleted successfully (${response.deletedCount} deployments)`);
+        console.log('✅ All deployments deleted:', response);
+      } else {
+        throw new Error('Delete all operation failed');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error deleting all deployments:', error);
+      this.showErrorMessage(error instanceof Error ? error.message : 'Failed to delete all deployments');
+    } finally {
+      this.isDeletingAllDeployments = false;
+      this.onCancelDeleteConfirmation();
+    }
+  }
+
+  // Notification methods
+  private showSuccessMessage(message: string): void {
+    // For now using alert, but this could be replaced with a toast notification system
+    alert(`✅ ${message}`);
+  }
+
+  private showErrorMessage(message: string): void {
+    // For now using alert, but this could be replaced with a toast notification system
+    alert(`❌ ${message}`);
+  }
+
+  getDeploymentLimitStatus(): string {
+    if (!this.deploymentLimitCheck) return '';
+    
+    const { currentCount, maxAllowed } = this.deploymentLimitCheck;
+    return `${currentCount}/${maxAllowed} deployments used`;
+  }
+
+  getDeploymentLimitClass(): string {
+    if (!this.deploymentLimitCheck) return '';
+    
+    if (!this.deploymentLimitCheck.canDeploy) return 'limit-exceeded';
+    if (this.deploymentLimitCheck.isAtWarningThreshold) return 'limit-warning';
+    return 'limit-ok';
   }
 } 
