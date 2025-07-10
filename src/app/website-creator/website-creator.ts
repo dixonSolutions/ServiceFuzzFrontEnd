@@ -414,25 +414,25 @@ export class WebsiteCreatorComponent implements OnInit {
     this.isSaving = true;
     
     try {
-      // CRITICAL FIX: Get the latest page data from canvas before saving
-      // This ensures all components from all pages are included
-      if (this.canvas && this.canvas.pages && this.canvas.pages.length > 0) {
-        console.log('📋 Getting latest page data from canvas for save...');
-        this.pages = [...this.canvas.pages]; // Deep sync with canvas data
-        console.log('✅ Synced pages with canvas:', this.pages);
-      } else {
-        console.warn('⚠️ Canvas data not available, using main component pages');
-      }
-      
-      // Export current website data with latest page data
-      this.currentProject.websiteJson = this.exportWebsiteDataAsJson();
-      
-      console.log('💾 Saving website data:', this.currentProject.websiteJson);
-      
-      // Save based on whether it's a new project or existing
-      if (this.currentProject.isNew) {
+    // CRITICAL FIX: Get the latest page data from canvas before saving
+    // This ensures all components from all pages are included
+    if (this.canvas && this.canvas.pages && this.canvas.pages.length > 0) {
+      console.log('📋 Getting latest page data from canvas for save...');
+      this.pages = [...this.canvas.pages]; // Deep sync with canvas data
+      console.log('✅ Synced pages with canvas:', this.pages);
+    } else {
+      console.warn('⚠️ Canvas data not available, using main component pages');
+    }
+    
+    // Export current website data with latest page data
+    this.currentProject.websiteJson = this.exportWebsiteDataAsJson();
+    
+    console.log('💾 Saving website data:', this.currentProject.websiteJson);
+    
+    // Save based on whether it's a new project or existing
+    if (this.currentProject.isNew) {
         await this.saveNewWorkspace();
-      } else {
+    } else {
         await this.updateExistingWorkspace();
       }
     } finally {
