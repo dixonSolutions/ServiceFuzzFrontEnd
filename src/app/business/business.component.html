@@ -405,50 +405,41 @@
               </mat-card>
               
               <!-- Google Maps Integration -->
-              <mat-card class="form-card maps-card">
-                <mat-card-header>
-                  <mat-card-title>
+              <mat-expansion-panel class="maps-accordion">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
                     <mat-icon>map</mat-icon>
-                    Use Google Maps
-                  </mat-card-title>
-                  <mat-card-subtitle>Search and select addresses or areas using interactive maps</mat-card-subtitle>
-                </mat-card-header>
-                <mat-card-content>
-                  <div class="maps-integration-section">
-                    <!-- Specific Address Maps Picker -->
-                    <div class="maps-picker-wrapper" *ngIf="placeType === 'specific'">
-                      <h4>
-                        <mat-icon>location_on</mat-icon>
-                        Search for Specific Address
-                      </h4>
-                      <app-google-maps-picker
-                        mode="address"
-                        placeholder="Search for your business address..."
-                        [showMap]="true"
-                        mapHeight="350px"
-                        (placeSelected)="onSpecificAddressSelected($event)"
-                        (placeCleared)="onMapSelectionCleared()">
-                      </app-google-maps-picker>
-                    </div>
-
-                    <!-- Area/Region Maps Picker -->
-                    <div class="maps-picker-wrapper" *ngIf="placeType === 'area'">
-                      <h4>
-                        <mat-icon>map</mat-icon>
-                        Search for Service Area
-                      </h4>
-                      <app-google-maps-picker
-                        mode="area"
-                        placeholder="Search for cities, regions, or areas you serve..."
-                        [showMap]="true"
-                        mapHeight="350px"
-                        (placeSelected)="onAreaSelected($event)"
-                        (placeCleared)="onMapSelectionCleared()">
-                      </app-google-maps-picker>
-                    </div>
+                    Search Location on Google Maps
+                  </mat-panel-title>
+                  <mat-panel-description>
+                    Search and explore addresses without leaving this page
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+                
+                <div class="maps-content">
+                  <p class="maps-instruction">
+                    Use the map below to search for your business address or service area. 
+                    You can search, zoom, and navigate to find the exact location, then manually enter the details in the form below.
+                  </p>
+                  
+                  <div class="maps-iframe-container">
+                    <iframe 
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387190.2799160891!2d-74.25987368715491!3d40.697670063849574!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2sus!4v1635959999999!5m2!1sen!2sus"
+                      width="100%" 
+                      height="400" 
+                      style="border:0; border-radius: 8px;" 
+                      allowfullscreen="" 
+                      loading="lazy" 
+                      referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
                   </div>
-                </mat-card-content>
-              </mat-card>
+                  
+                  <div class="maps-help">
+                    <mat-icon>info</mat-icon>
+                    <span>Use the search box in the map above to find your location, then fill out the address form below.</span>
+                  </div>
+                </div>
+              </mat-expansion-panel>
 
               <!-- Manual Place Form -->
               <mat-card class="form-card">
