@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataSvrService } from '../services/data-svr.service';
 import { RegisterBusinessService, RegisterBusinessResponse } from '../services/register-business.service';
@@ -10,6 +10,18 @@ import { Subscription } from 'rxjs';
 import { BusinessSpecificAdr } from '../models/business-specific-adr';
 import { S2CareaSpecification } from '../models/s2c-area-specification';
 import { StaffMember, defaultStaffMember } from '../models/staff-member';
+import { 
+  BusinessSchedule, 
+  ScheduleCycle, 
+  DaySchedule, 
+  OpeningPeriod, 
+  ScheduleException,
+  DayOfWeekEnum,
+  ScheduleCycleType,
+  DayAvailabilityStatus,
+  ExceptionType,
+  RecurrencePattern
+} from '../models/businessSchedules';
 
 
 @Component({
@@ -26,10 +38,11 @@ export class BusinessComponent implements OnInit, OnDestroy {
   specificPlaceForm!: FormGroup;
   areaPlaceForm!: FormGroup;
   staffForm!: FormGroup;
+  scheduleForm!: FormGroup;
 
   // Registration state
   currentStep = 0;
-  maxSteps = 4;
+  maxSteps = 5;
   registration: BusinessRegistration;
   
   // UI State
@@ -69,10 +82,57 @@ export class BusinessComponent implements OnInit, OnDestroy {
   editingStaffIndex: number | null = null;
   showStaffSection = false;
 
+  // Schedule management
+  businessSchedules: BusinessSchedule[] = [];
+  editingScheduleIndex: number | null = null;
+  showCustomScheduleForm = false;
+  
+  // Enums for template access
+  DayOfWeekEnum = DayOfWeekEnum;
+  ScheduleCycleType = ScheduleCycleType;
+  DayAvailabilityStatus = DayAvailabilityStatus;
+  ExceptionType = ExceptionType;
+  RecurrencePattern = RecurrencePattern;
+
+  // Helper arrays for template
+  dayOfWeekOptions = Object.values(DayOfWeekEnum).filter(value => typeof value === 'number');
+  scheduleCycleTypeOptions = Object.values(ScheduleCycleType).filter(value => typeof value === 'number');
+  dayAvailabilityStatusOptions = Object.values(DayAvailabilityStatus).filter(value => typeof value === 'number');
+
+  // Schedule type options for PrimeNG dropdown
+  scheduleTypeOptions = [
+    { label: 'Weekly (repeats every week)', value: ScheduleCycleType.Weekly },
+    { label: 'Bi-Weekly (repeats every 2 weeks)', value: ScheduleCycleType.BiWeekly },
+    { label: 'Monthly (repeats every month)', value: ScheduleCycleType.Monthly },
+    { label: 'Custom (set your own cycle)', value: ScheduleCycleType.Custom }
+  ];
+
+  // Days of week for simple form
+  daysOfWeek = [
+    { label: 'Monday', value: DayOfWeekEnum.Monday, selected: false, openTime: '09:00', closeTime: '17:00' },
+    { label: 'Tuesday', value: DayOfWeekEnum.Tuesday, selected: false, openTime: '09:00', closeTime: '17:00' },
+    { label: 'Wednesday', value: DayOfWeekEnum.Wednesday, selected: false, openTime: '09:00', closeTime: '17:00' },
+    { label: 'Thursday', value: DayOfWeekEnum.Thursday, selected: false, openTime: '09:00', closeTime: '17:00' },
+    { label: 'Friday', value: DayOfWeekEnum.Friday, selected: false, openTime: '09:00', closeTime: '17:00' },
+    { label: 'Saturday', value: DayOfWeekEnum.Saturday, selected: false, openTime: '10:00', closeTime: '16:00' },
+    { label: 'Sunday', value: DayOfWeekEnum.Sunday, selected: false, openTime: '12:00', closeTime: '16:00' }
+  ];
+
+  // Current schedule being edited
+  currentSchedule = {
+    name: '',
+    cycleType: ScheduleCycleType.Weekly,
+    cycleLengthInDays: 7,
+    cycleStartDate: new Date().toISOString().split('T')[0]
+  };
+
+
+
   constructor(
     private fb: FormBuilder, 
     public data: DataSvrService,
-    private registerService: RegisterBusinessService
+    private registerService: RegisterBusinessService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initializeForms();
     this.registration = this.data.currentBusinessRegistration;
@@ -93,11 +153,15 @@ export class BusinessComponent implements OnInit, OnDestroy {
         this.staffMembers = registration.staff || [];
         this.showStaffSection = this.operationType === 'with_staff';
         
+        // Sync schedule data
+        this.businessSchedules = registration.schedules || [];
+        
         // Update form control with current operation type
         this.basicInfoForm.patchValue({ operationType: this.operationType }, { emitEvent: false });
         
         console.log('Synced operation type:', this.operationType);
         console.log('Show staff section on load:', this.showStaffSection);
+        console.log('Synced schedules:', this.businessSchedules);
         
         // Ensure all services have proper IDs
         this.ensureServiceIDs();
@@ -182,6 +246,14 @@ export class BusinessComponent implements OnInit, OnDestroy {
       accessAll: [false],
       isActive: [true]
     });
+
+    this.scheduleForm = this.fb.group({
+      cycleType: [ScheduleCycleType.Weekly, Validators.required],
+      cycleLengthInDays: [7, [Validators.required, Validators.min(1)]],
+      cycleStartDate: [new Date().toISOString().split('T')[0], Validators.required],
+      cycles: this.fb.array([]),
+      exceptions: this.fb.array([])
+    });
   }
 
   nextStep(): void {
@@ -210,7 +282,8 @@ export class BusinessComponent implements OnInit, OnDestroy {
         return this.basicInfoForm.valid && (this.operationType === 'solo' || this.operationType === 'with_staff');
       case 1: return this.registration.services.length > 0;
       case 2: return this.specificPlaces.length > 0 || this.areaPlaces.length > 0;
-      case 3: return true;
+      case 3: return this.businessSchedules.length > 0; // Schedule step
+      case 4: return true; // Final summary step
       default: return false;
     }
   }
@@ -269,6 +342,11 @@ export class BusinessComponent implements OnInit, OnDestroy {
         }),
       ];
       this.registration.places = allPlaces;
+    }
+    // Save schedules when saving step 3
+    if (this.currentStep === 3) {
+      this.registration.schedules = [...this.businessSchedules];
+      this.data.updateBusinessRegistration(this.registration);
     }
   }
 
@@ -598,7 +676,8 @@ export class BusinessComponent implements OnInit, OnDestroy {
   private isRegistrationComplete(): boolean {
     return this.basicInfoForm.valid &&
            this.registration.services.length > 0 &&
-           (this.specificPlaces.length > 0 || this.areaPlaces.length > 0);
+           (this.specificPlaces.length > 0 || this.areaPlaces.length > 0) &&
+           this.businessSchedules.length > 0;
   }
 
   /**
@@ -641,8 +720,33 @@ export class BusinessComponent implements OnInit, OnDestroy {
           
           // Force sync the places to registration.places
           this.syncPlacesToRegistration();
-        } else if (this.currentStep === 3 && (data as any).assignments) {
-          // Update assignments in the UI
+        } else if (this.currentStep === 3 && (data as any).schedules) {
+          // Handle AI-generated schedules
+          if (Array.isArray((data as any).schedules)) {
+            console.log('AI Schedules received:', (data as any).schedules);
+            
+            // Add AI-generated schedules to businessSchedules
+            (data as any).schedules.forEach((aiSchedule: any) => {
+              const schedule: BusinessSchedule = {
+                ...aiSchedule,
+                businessId: this.registration.basicInfo.businessID || this.data.generateId()
+              };
+              this.businessSchedules.push(schedule);
+            });
+            
+            // Update the registration
+            this.registration.schedules = [...this.businessSchedules];
+            this.data.updateBusinessRegistration(this.registration);
+            
+            console.log('Updated schedules after AI generation:', this.businessSchedules);
+            this.data.jsConfetti.addConfetti({
+              emojis: ['🕒', '📅', '✨', '🎯', '⏰'],
+              confettiRadius: 6,
+              confettiNumber: 40,
+            });
+          }
+        } else if (this.currentStep === 4 && (data as any).assignments) {
+          // Update assignments in the UI (moved to step 4)
           if (Array.isArray((data as any).assignments)) {
             console.log('AI Assignments received:', (data as any).assignments);
             console.log('Current places:', this.registration.places.map(p => ({ id: p.placeID, name: p.placeName })));
@@ -700,6 +804,8 @@ export class BusinessComponent implements OnInit, OnDestroy {
       case 2:
         return 'Example: Add a second location in Brooklyn with a modern design. Include complete address and contact details.';
       case 3:
+        return 'Example: Create optimal business hours for a hair salon. Include weekend hours and consider peak customer times. Make it convenient for working customers.';
+      case 4:
         return 'Example: Assign hair cutting services to the main salon and coloring services to both locations. Make sure all services are properly distributed.';
       default:
         return 'Describe what you want for this section';
@@ -709,7 +815,9 @@ export class BusinessComponent implements OnInit, OnDestroy {
   getAIButtonText(): string {
     const hasData = this.currentStep === 0 ? this.basicInfoForm.valid :
                    this.currentStep === 1 ? this.registration.services.length > 0 :
-                   this.currentStep === 2 ? this.specificPlaces.length > 0 || this.areaPlaces.length > 0 : false;
+                   this.currentStep === 2 ? this.specificPlaces.length > 0 || this.areaPlaces.length > 0 :
+                   this.currentStep === 3 ? this.businessSchedules.length > 0 :
+                   this.currentStep === 4 ? this.registration.places.some(p => p.assignedServiceIDs?.length > 0) : false;
     
     return hasData ? 'Improve Section with AI' : '✨Fill Section with AI✨';
   }
@@ -978,6 +1086,256 @@ export class BusinessComponent implements OnInit, OnDestroy {
     // Update the data service with the new assignments
     this.data.updateBusinessRegistration(this.registration);
   }
+
+  // Schedule Management Methods
+  addSchedule(): void {
+    if (this.scheduleForm.invalid) {
+      this.data.openSnackBar('Please fill in all required schedule fields', 'Close', 3000);
+      return;
+    }
+
+    const formValue = this.scheduleForm.value;
+    const newSchedule: BusinessSchedule = {
+      businessId: this.registration.basicInfo.businessID || this.data.generateId(),
+      cycleType: formValue.cycleType,
+      cycleLengthInDays: formValue.cycleLengthInDays,
+      cycleStartDate: formValue.cycleStartDate,
+      cycles: formValue.cycles || [],
+      exceptions: formValue.exceptions || []
+    };
+
+    if (this.editingScheduleIndex !== null) {
+      this.businessSchedules[this.editingScheduleIndex] = newSchedule;
+      this.editingScheduleIndex = null;
+    } else {
+      this.businessSchedules.push(newSchedule);
+    }
+
+    this.registration.schedules = [...this.businessSchedules];
+    this.data.updateBusinessRegistration(this.registration);
+    this.resetScheduleForm();
+    this.data.openSnackBar('Schedule added successfully', 'Close', 3000);
+  }
+
+  editSchedule(index: number): void {
+    this.editingScheduleIndex = index;
+    const schedule = this.businessSchedules[index];
+    this.scheduleForm.patchValue({
+      cycleType: schedule.cycleType,
+      cycleLengthInDays: schedule.cycleLengthInDays,
+      cycleStartDate: schedule.cycleStartDate,
+      cycles: schedule.cycles,
+      exceptions: schedule.exceptions
+    });
+  }
+
+  deleteSchedule(index: number): void {
+    this.businessSchedules.splice(index, 1);
+    this.registration.schedules = [...this.businessSchedules];
+    this.data.updateBusinessRegistration(this.registration);
+    this.data.openSnackBar('Schedule deleted', 'Close', 3000);
+  }
+
+  resetScheduleForm(): void {
+    this.scheduleForm.reset();
+    this.scheduleForm.patchValue({
+      cycleType: ScheduleCycleType.Weekly,
+      cycleLengthInDays: 7,
+      cycleStartDate: new Date().toISOString().split('T')[0]
+    });
+    this.editingScheduleIndex = null;
+  }
+
+  // Helper methods for schedule UI
+  getScheduleTypeName(type: ScheduleCycleType): string {
+    switch (type) {
+      case ScheduleCycleType.Weekly: return 'Weekly';
+      case ScheduleCycleType.BiWeekly: return 'Bi-Weekly';
+      case ScheduleCycleType.Monthly: return 'Monthly';
+      case ScheduleCycleType.Custom: return 'Custom';
+      default: return 'Unknown';
+    }
+  }
+
+  getDayName(day: DayOfWeekEnum): string {
+    switch (day) {
+      case DayOfWeekEnum.Sunday: return 'Sunday';
+      case DayOfWeekEnum.Monday: return 'Monday';
+      case DayOfWeekEnum.Tuesday: return 'Tuesday';
+      case DayOfWeekEnum.Wednesday: return 'Wednesday';
+      case DayOfWeekEnum.Thursday: return 'Thursday';
+      case DayOfWeekEnum.Friday: return 'Friday';
+      case DayOfWeekEnum.Saturday: return 'Saturday';
+      default: return 'Unknown';
+    }
+  }
+
+  getScheduleSummary(): string {
+    const count = this.businessSchedules.length;
+    return `${count} schedule${count !== 1 ? 's' : ''} configured`;
+  }
+
+  // Add standard business hours schedule (Monday-Friday, 9-5)
+  addStandardSchedule(): void {
+    const standardSchedule: BusinessSchedule = {
+      businessId: this.registration.basicInfo.businessID || this.data.generateId(),
+      cycleType: ScheduleCycleType.Weekly,
+      cycleLengthInDays: 7,
+      cycleStartDate: new Date().toISOString().split('T')[0],
+      cycles: [{
+        businessId: this.registration.basicInfo.businessID || this.data.generateId(),
+        cycleId: 1,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
+        days: [
+          DayOfWeekEnum.Monday,
+          DayOfWeekEnum.Tuesday,
+          DayOfWeekEnum.Wednesday,
+          DayOfWeekEnum.Thursday,
+          DayOfWeekEnum.Friday
+        ].map(day => ({
+          businessId: this.registration.basicInfo.businessID || this.data.generateId(),
+          cycleId: 1,
+          day: day,
+          availabilityStatus: DayAvailabilityStatus.SpecificHours,
+          openingPeriods: [{
+            id: 1,
+            businessId: this.registration.basicInfo.businessID || this.data.generateId(),
+            cycleId: 1,
+            day: day,
+            openingTime: '09:00:00',
+            closingTime: '17:00:00'
+          }]
+        })),
+        isActive: true
+      }],
+      exceptions: []
+    };
+
+    this.businessSchedules.push(standardSchedule);
+    this.registration.schedules = [...this.businessSchedules];
+    this.data.updateBusinessRegistration(this.registration);
+    this.data.openSnackBar('Standard business hours added successfully!', 'Close', 3000);
+  }
+
+  // Add default business hours schedule (same as standard)
+  addDefaultSchedule(): void {
+    this.addStandardSchedule();
+  }
+
+  // Helper methods for PrimeNG schedule interface
+  getDayAbbreviation(day: DayOfWeekEnum): string {
+    switch (day) {
+      case DayOfWeekEnum.Sunday: return 'Sun';
+      case DayOfWeekEnum.Monday: return 'Mon';
+      case DayOfWeekEnum.Tuesday: return 'Tue';
+      case DayOfWeekEnum.Wednesday: return 'Wed';
+      case DayOfWeekEnum.Thursday: return 'Thu';
+      case DayOfWeekEnum.Friday: return 'Fri';
+      case DayOfWeekEnum.Saturday: return 'Sat';
+      default: return 'N/A';
+    }
+  }
+
+  formatTime(time: string): string {
+    if (!time) return '';
+    // Convert from HH:mm:ss or HH:mm to HH:mm format
+    const parts = time.split(':');
+    if (parts.length >= 2) {
+      return `${parts[0]}:${parts[1]}`;
+    }
+    return time;
+  }
+
+  isDaySelected(dayValue: DayOfWeekEnum): boolean {
+    return this.daysOfWeek.find(d => d.value === dayValue)?.selected || false;
+  }
+
+  onDayToggle(day: any): void {
+    // Update the day selection
+    const dayItem = this.daysOfWeek.find(d => d.value === day.value);
+    if (dayItem) {
+      dayItem.selected = day.selected;
+    }
+  }
+
+  cancelScheduleForm(): void {
+    this.showCustomScheduleForm = false;
+    this.editingScheduleIndex = null;
+    this.resetScheduleFormData();
+  }
+
+  saveCustomSchedule(): void {
+    if (!this.currentSchedule.name) {
+      this.data.openSnackBar('Please enter a name for your schedule', 'Close', 3000);
+      return;
+    }
+
+    const selectedDays = this.daysOfWeek.filter(d => d.selected);
+    if (selectedDays.length === 0) {
+      this.data.openSnackBar('Please select at least one day', 'Close', 3000);
+      return;
+    }
+
+    const newSchedule: BusinessSchedule = {
+      businessId: this.registration.basicInfo.businessID || this.data.generateId(),
+      cycleType: this.currentSchedule.cycleType,
+      cycleLengthInDays: this.currentSchedule.cycleLengthInDays,
+      cycleStartDate: this.currentSchedule.cycleStartDate,
+      cycles: [{
+        businessId: this.registration.basicInfo.businessID || this.data.generateId(),
+        cycleId: 1,
+        startDate: this.currentSchedule.cycleStartDate,
+        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
+        days: selectedDays.map(day => ({
+          businessId: this.registration.basicInfo.businessID || this.data.generateId(),
+          cycleId: 1,
+          day: day.value,
+          availabilityStatus: DayAvailabilityStatus.SpecificHours,
+          openingPeriods: [{
+            id: 1,
+            businessId: this.registration.basicInfo.businessID || this.data.generateId(),
+            cycleId: 1,
+            day: day.value,
+            openingTime: `${day.openTime}:00`,
+            closingTime: `${day.closeTime}:00`
+          }]
+        })),
+        isActive: true
+      }],
+      exceptions: []
+    };
+
+    if (this.editingScheduleIndex !== null) {
+      this.businessSchedules[this.editingScheduleIndex] = newSchedule;
+      this.data.openSnackBar('Schedule updated successfully!', 'Close', 3000);
+    } else {
+      this.businessSchedules.push(newSchedule);
+      this.data.openSnackBar('Custom schedule added successfully!', 'Close', 3000);
+    }
+
+    this.registration.schedules = [...this.businessSchedules];
+    this.data.updateBusinessRegistration(this.registration);
+    this.cancelScheduleForm();
+  }
+
+  private resetScheduleFormData(): void {
+    this.currentSchedule = {
+      name: '',
+      cycleType: ScheduleCycleType.Weekly,
+      cycleLengthInDays: 7,
+      cycleStartDate: new Date().toISOString().split('T')[0]
+    };
+    
+    // Reset all days to unselected
+    this.daysOfWeek.forEach(day => {
+      day.selected = false;
+      day.openTime = '09:00';
+      day.closeTime = '17:00';
+    });
+  }
+
+
 
 
 }

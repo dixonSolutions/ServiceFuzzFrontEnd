@@ -559,11 +559,171 @@ Current User Question: ${request}`;
     );
   }
 
+  generateOptimalScheduleWithAI(businessData: BusinessRegistration): Observable<any> {
+    const businessInfo = `
+Business Information:
+- Name: ${businessData.basicInfo?.bussinessName || 'Unknown Business'}
+- Description: ${businessData.basicInfo?.bussinessDescription || 'No description provided'}
+- Business Type: Based on description and services
+
+Services Offered:
+${businessData.services?.map(service => `
+- ${service.serviceName}: ${service.serviceDescription}
+  Duration: ${service.duration} minutes
+  Price: ${service.servicePrice} ${service.servicePriceCurrencyUnit}`).join('\n') || 'No services defined'}
+
+Current Schedule Count: ${businessData.schedules?.length || 0} schedules already created
+`;
+
+    const prompt = `You are an AI business consultant specializing in optimal scheduling for service-based businesses. Based on the business information provided, generate intelligent schedule recommendations that maximize customer accessibility while ensuring efficient operations.
+
+${businessInfo}
+
+Please analyze the business type, services, and industry best practices to recommend optimal operating schedules. Consider:
+
+1. Industry Standards: What are typical operating hours for this type of business?
+2. Service Duration: How do service lengths affect scheduling needs?
+3. Customer Convenience: When do customers typically need these services?
+4. Work-Life Balance: Reasonable hours for business owners and staff
+5. Competition: Standard industry practices
+
+Generate 2-3 different schedule options in the following JSON format:
+
+{
+  "recommendations": [
+    {
+      "title": "Standard Business Hours",
+      "description": "Traditional weekday schedule ideal for professional services",
+      "reasoning": "Brief explanation of why this schedule works for this business type",
+      "schedule": {
+        "cycleType": 0,
+        "cycleLengthInDays": 7,
+        "cycles": [
+          {
+            "days": [
+              {
+                "day": 1,
+                "availabilityStatus": 2,
+                "openingPeriods": [
+                  {
+                    "openingTime": "09:00:00",
+                    "closingTime": "17:00:00"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
+
+CRITICAL INSTRUCTIONS:
+1. cycleType: Use 0 for Weekly (most common)
+2. cycleLengthInDays: Use 7 for weekly schedules
+3. day: Use numbers 0-6 (0=Sunday, 1=Monday, 2=Tuesday, etc.)
+4. availabilityStatus: Use 2 for SpecificHours (most common), 0 for Open24Hours, 1 for Unavailable
+5. Time format: Use "HH:mm:ss" format (e.g., "09:00:00", "17:30:00")
+6. Generate realistic schedules based on business type
+7. Consider service duration for appointment scheduling
+8. Provide 2-3 different options (e.g., standard hours, extended hours, weekend-focused)
+9. Include brief reasoning for each recommendation
+10. Ensure schedules are practical and customer-friendly
+
+Examples by business type:
+- Hair Salon: Tue-Sat, 9 AM-7 PM (closed Sunday-Monday)
+- IT Services: Mon-Fri, 8 AM-6 PM (business hours)
+- Fitness Studio: Mon-Fri 6 AM-10 PM, Sat-Sun 8 AM-6 PM
+- Medical Practice: Mon-Fri 8 AM-5 PM (standard medical hours)
+- Restaurant: Tue-Thu 11 AM-9 PM, Fri-Sat 11 AM-10 PM, Sun 11 AM-8 PM (closed Monday)
+
+Make the recommendations specific to the business type and services offered.`;
+
+    return this.http.post<any>(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDLtw7CI2uBYCgJqgiBdnFYV4FJ8uQQemo`, {
+      "contents": [
+        {
+          "parts": [
+            {
+              "text": prompt
+            }
+          ]
+        }
+      ]
+    }).pipe(
+      map(response => {
+        const text = response.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        try {
+          // Extract JSON from the response text
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          const jsonStr = jsonMatch ? jsonMatch[0] : '{}';
+          const data = JSON.parse(jsonStr);
+          
+          if (data.recommendations && Array.isArray(data.recommendations)) {
+            // Process and validate each recommendation
+            data.recommendations = data.recommendations.map((rec: any) => ({
+              ...rec,
+              schedule: {
+                ...rec.schedule,
+                                 businessId: businessData.basicInfo?.businessID || '',
+                 cycleStartDate: new Date().toISOString(),
+                 cycles: rec.schedule.cycles?.map((cycle: any, index: number) => ({
+                   businessId: businessData.basicInfo?.businessID || '',
+                   cycleId: index + 1,
+                   startDate: new Date().toISOString(),
+                   endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
+                   isActive: true,
+                   days: cycle.days?.map((day: any) => ({
+                     businessId: businessData.basicInfo?.businessID || '',
+                     cycleId: index + 1,
+                     day: day.day,
+                     availabilityStatus: day.availabilityStatus,
+                     openingPeriods: day.openingPeriods?.map((period: any, periodIndex: number) => ({
+                       id: periodIndex + 1,
+                       businessId: businessData.basicInfo?.businessID || '',
+                       cycleId: index + 1,
+                       day: day.day,
+                       openingTime: period.openingTime,
+                       closingTime: period.closingTime
+                     })) || []
+                   })) || []
+                 })) || [],
+                exceptions: []
+              }
+            }));
+          }
+          
+          return data;
+        } catch (error) {
+          console.error('Error parsing AI schedule response:', error);
+          throw new Error('Failed to parse AI schedule recommendations');
+        }
+      })
+    );
+  }
+
   fillBusinessFormWithAI(description: string, currentData?: BusinessRegistration, currentStep?: number): Observable<{
     basicInfo?: BusinessBasicInfo;
     services?: ServicesForBusiness[];
     places?: BusinessPlace[];
+    schedules?: any[];
+    assignments?: any[];
   }> {
+    // Handle step 3 (schedules) separately with the specialized AI method
+    if (currentStep === 3) {
+      return this.generateOptimalScheduleWithAI(currentData!).pipe(
+        map(response => {
+          if (response && response.recommendations && Array.isArray(response.recommendations)) {
+            // Return the schedules in the expected format
+            return {
+              schedules: response.recommendations.map((rec: any) => rec.schedule)
+            };
+          }
+          return { schedules: [] };
+        })
+      );
+    }
+
     const currentFormData = currentData ? `
 Current Form Data:
 ${currentStep === 0 ? `
@@ -589,7 +749,7 @@ ${(currentData as any).specificPlaces?.map((place: any) => `- ${place.streetAdr}
 Area Specification Places:
 ${(currentData as any).areaPlaces?.map((area: any) => `- ${area.country}, ${area.state}, ${area.city} (ID: ${area.placeID})`).join('\n') || 'None'}` : ''}
 
-${currentStep === 3 ? `
+${currentStep === 4 ? `
 Service Assignment:
 Places with Current Assignments:
 ${currentData.places?.map((place: any) => `- Place: ${place.placeName} (ID: ${place.placeID})
@@ -613,7 +773,7 @@ You are currently editing step ${currentStep + 1} of the form:
 ${currentStep === 0 ? 'Basic Business Information' : ''}
 ${currentStep === 1 ? 'Business Services' : ''}
 ${currentStep === 2 ? 'Business Locations - ADD new locations to existing ones, do not replace existing locations' : ''}
-${currentStep === 3 ? 'Service Assignment - Assign services to places using their exact IDs' : ''}
+${currentStep === 4 ? 'Service Assignment - Assign services to places using their exact IDs' : ''}
 
 Please only modify the data for the current step.` : '';
 
@@ -720,7 +880,7 @@ CRITICAL INSTRUCTION:
   "businessID": "",
   "placeID": ""
 }` : ''}
-${currentStep === 3 ? `
+${currentStep === 4 ? `
 {
   "assignments": [
     { "placeId": "placeID1", "serviceIds": ["serviceID1", "serviceID2"] },
@@ -882,8 +1042,8 @@ Make sure to:
               (currentData as any).areaPlaces = (currentData as any).areaPlaces?.filter((a: any) => !data.deleteAreaPlaceIds.includes(a.placeID));
             }
 
-            // Handle assignments (step 3)
-            if (currentStep === 3 && data.assignments && Array.isArray(data.assignments)) {
+            // Handle assignments (step 4)
+            if (currentStep === 4 && data.assignments && Array.isArray(data.assignments)) {
               // Update registration.places as well as local arrays
               if (currentData && Array.isArray(currentData.places)) {
                 currentData.places.forEach((place: any) => {

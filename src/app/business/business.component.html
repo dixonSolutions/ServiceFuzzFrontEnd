@@ -574,7 +574,238 @@
             </div>
           </mat-step>
 
-          <!-- Step 4: Service Assignment -->
+          <!-- Step 4: Business Schedules -->
+          <mat-step [completed]="businessSchedules.length > 0" label="Schedules">
+            <div class="schedules-section">
+              <div class="schedule-header">
+                <h3><i class="pi pi-calendar"></i> Business Operating Hours</h3>
+                <p>Set your business hours so customers know when you're available</p>
+              </div>
+              
+              <!-- Quick Setup -->
+              <div class="quick-setup-section" *ngIf="businessSchedules.length === 0">
+                <p-card class="quick-setup-card">
+                  <ng-template pTemplate="header">
+                    <div class="quick-setup-header">
+                      <i class="pi pi-clock"></i>
+                      <span>Quick Setup</span>
+                    </div>
+                  </ng-template>
+                  <ng-template pTemplate="content">
+                    <div class="quick-setup-content">
+                      <p>Choose a common schedule to get started quickly:</p>
+                      <div class="quick-options">
+                        <p-button 
+                          label="Standard Business Hours" 
+                          icon="pi pi-briefcase" 
+                          (onClick)="addStandardSchedule()"
+                          class="p-button-lg">
+                        </p-button>
+                        <small>Monday - Friday, 9:00 AM - 5:00 PM</small>
+                      </div>
+                      <p-divider align="center">
+                        <span class="or-text">or</span>
+                      </p-divider>
+                      <div class="custom-option">
+                        <p-button 
+                          label="Create Custom Schedule" 
+                          icon="pi pi-plus" 
+                          severity="secondary"
+                          (onClick)="showCustomScheduleForm = true">
+                        </p-button>
+                      </div>
+                    </div>
+                  </ng-template>
+                </p-card>
+              </div>
+
+
+
+              <!-- Current Schedules Timeline -->
+              <div class="schedules-display" *ngIf="businessSchedules.length > 0">
+                <div class="schedules-header">
+                  <h4><i class="pi pi-list"></i> Your Business Hours</h4>
+                  <p-button 
+                    icon="pi pi-plus" 
+                    label="Add Another Schedule"
+                    size="small"
+                    (onClick)="showCustomScheduleForm = true">
+                  </p-button>
+                </div>
+
+                <!-- Beautiful Timeline Display -->
+                <div class="schedule-timeline-container">
+                  <div class="schedule-timeline">
+                    <p-card 
+                      *ngFor="let schedule of businessSchedules; let i = index" 
+                      class="schedule-timeline-card">
+                      
+                      <ng-template pTemplate="header">
+                        <div class="schedule-card-header">
+                          <div class="schedule-title">
+                            <i class="pi pi-calendar-clock"></i>
+                            <span>{{ getScheduleTypeName(schedule.cycleType) }}</span>
+                          </div>
+                          <div class="schedule-actions">
+                            <p-button 
+                              icon="pi pi-pencil" 
+                              size="small" 
+                              text="true"
+                              (onClick)="editSchedule(i)">
+                            </p-button>
+                            <p-button 
+                              icon="pi pi-trash" 
+                              size="small" 
+                              text="true"
+                              severity="danger"
+                              (onClick)="deleteSchedule(i)">
+                            </p-button>
+                          </div>
+                        </div>
+                      </ng-template>
+                      
+                      <ng-template pTemplate="content">
+                        <div class="schedule-card-content">
+                          <div class="schedule-info">
+                            <div class="info-row">
+                              <i class="pi pi-calendar"></i>
+                              <span>Starts: {{ schedule.cycleStartDate | date:'mediumDate' }}</span>
+                            </div>
+                            <div class="info-row">
+                              <i class="pi pi-refresh"></i>
+                              <span>Repeats every {{ schedule.cycleLengthInDays }} days</span>
+                            </div>
+                          </div>
+                          
+                          <!-- Days Preview -->
+                          <div class="days-preview" *ngIf="schedule.cycles?.[0]?.days">
+                            <div class="days-grid">
+                              <div 
+                                class="day-chip" 
+                                *ngFor="let day of schedule.cycles[0].days"
+                                [class.closed]="day.availabilityStatus === DayAvailabilityStatus.Unavailable">
+                                <div class="day-name">{{ getDayAbbreviation(day.day) }}</div>
+                                <div class="day-time" *ngIf="day.availabilityStatus === DayAvailabilityStatus.SpecificHours && day.openingPeriods[0]">
+                                  {{ formatTime(day.openingPeriods[0].openingTime) }}-{{ formatTime(day.openingPeriods[0].closingTime) }}
+                                </div>
+                                <div class="day-time" *ngIf="day.availabilityStatus === DayAvailabilityStatus.Open24Hours">
+                                  24h
+                                </div>
+                                <div class="day-time closed-text" *ngIf="day.availabilityStatus === DayAvailabilityStatus.Unavailable">
+                                  Closed
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </ng-template>
+                    </p-card>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Custom Schedule Form -->
+              <div class="custom-schedule-form" *ngIf="showCustomScheduleForm">
+                <p-card>
+                  <ng-template pTemplate="header">
+                    <div class="form-header">
+                      <i class="pi pi-plus-circle"></i>
+                      <span>{{ editingScheduleIndex !== null ? 'Edit Schedule' : 'Create Custom Schedule' }}</span>
+                    </div>
+                  </ng-template>
+                  
+                  <ng-template pTemplate="content">
+                    <div class="simple-schedule-form">
+                      <div class="form-grid">
+                        <!-- Schedule Name -->
+                        <div class="form-field">
+                          <label>Schedule Name</label>
+                          <input 
+                            pInputText 
+                            [(ngModel)]="currentSchedule.name"
+                            placeholder="e.g., Summer Hours, Weekend Schedule"
+                            class="w-full">
+                        </div>
+
+                        <!-- Schedule Type -->
+                        <div class="form-field">
+                          <label>How often does this repeat?</label>
+                          <p-dropdown 
+                            [options]="scheduleTypeOptions" 
+                            [(ngModel)]="currentSchedule.cycleType"
+                            optionLabel="label" 
+                            optionValue="value"
+                            placeholder="Select schedule type"
+                            class="w-full">
+                          </p-dropdown>
+                        </div>
+                      </div>
+
+                      <!-- Days and Hours -->
+                      <div class="days-hours-section">
+                        <label>Business Hours</label>
+                        <div class="days-selector">
+                          <div 
+                            class="day-selector" 
+                            *ngFor="let day of daysOfWeek"
+                            [class.selected]="isDaySelected(day.value)">
+                            
+                            <div class="day-header">
+                              <p-checkbox 
+                                [binary]="true"
+                                [(ngModel)]="day.selected"
+                                (onChange)="onDayToggle(day)">
+                              </p-checkbox>
+                              <span class="day-label">{{ day.label }}</span>
+                            </div>
+                            
+                            <div class="time-inputs" *ngIf="day.selected">
+                              <div class="time-input-group">
+                                <label>Open</label>
+                                <input 
+                                  type="time" 
+                                  [(ngModel)]="day.openTime"
+                                  class="time-input">
+                              </div>
+                              <div class="time-input-group">
+                                <label>Close</label>
+                                <input 
+                                  type="time" 
+                                  [(ngModel)]="day.closeTime"
+                                  class="time-input">
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </ng-template>
+                  
+                  <ng-template pTemplate="footer">
+                    <div class="form-actions">
+                      <p-button 
+                        label="Cancel" 
+                        severity="secondary" 
+                        (onClick)="cancelScheduleForm()">
+                      </p-button>
+                      <p-button 
+                        [label]="editingScheduleIndex !== null ? 'Update Schedule' : 'Save Schedule'"
+                        (onClick)="saveCustomSchedule()">
+                      </p-button>
+                    </div>
+                  </ng-template>
+                </p-card>
+              </div>
+
+              <!-- Schedule Summary -->
+              <div class="schedule-summary" *ngIf="businessSchedules.length > 0">
+                <i class="pi pi-check-circle"></i>
+                <span>{{ getScheduleSummary() }} ready for your customers</span>
+              </div>
+            </div>
+          </mat-step>
+
+          <!-- Step 5: Service Assignment -->
           <mat-step label="Service Assignment">
             <div class="assignment-section">
               <h3>Assign Services to Places</h3>
