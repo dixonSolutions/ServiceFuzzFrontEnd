@@ -1120,13 +1120,39 @@ export class BusinessComponent implements OnInit, OnDestroy {
   editSchedule(index: number): void {
     this.editingScheduleIndex = index;
     const schedule = this.businessSchedules[index];
-    this.scheduleForm.patchValue({
+    
+    // Populate currentSchedule object
+    this.currentSchedule = {
+      name: this.getScheduleTypeName(schedule.cycleType),
       cycleType: schedule.cycleType,
       cycleLengthInDays: schedule.cycleLengthInDays,
-      cycleStartDate: schedule.cycleStartDate,
-      cycles: schedule.cycles,
-      exceptions: schedule.exceptions
+      cycleStartDate: schedule.cycleStartDate
+    };
+    
+    // Reset all days first
+    this.daysOfWeek.forEach(day => {
+      day.selected = false;
+      day.openTime = '09:00';
+      day.closeTime = '17:00';
     });
+    
+    // Populate selected days and times from the schedule
+    if (schedule.cycles && schedule.cycles.length > 0 && schedule.cycles[0].days) {
+      schedule.cycles[0].days.forEach(scheduleDay => {
+        const dayOption = this.daysOfWeek.find(d => d.value === scheduleDay.day);
+        if (dayOption) {
+          dayOption.selected = true;
+          if (scheduleDay.openingPeriods && scheduleDay.openingPeriods.length > 0) {
+            const period = scheduleDay.openingPeriods[0];
+            dayOption.openTime = period.openingTime ? period.openingTime.substring(0, 5) : '09:00';
+            dayOption.closeTime = period.closingTime ? period.closingTime.substring(0, 5) : '17:00';
+          }
+        }
+      });
+    }
+    
+    // Show the form
+    this.showCustomScheduleForm = true;
   }
 
   deleteSchedule(index: number): void {
