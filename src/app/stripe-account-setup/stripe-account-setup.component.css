@@ -1,0 +1,583 @@
+/* Stripe Account Setup Component Styles */
+
+.stripe-setup-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Main Card Styling */
+:host ::ng-deep .stripe-main-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+:host ::ng-deep .stripe-main-card .p-card-header {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  padding: 2rem;
+  border-bottom: none;
+}
+
+.card-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: white;
+}
+
+.header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  backdrop-filter: blur(10px);
+}
+
+.header-text h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+}
+
+.header-text p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+}
+
+/* Info Card Styling */
+:host ::ng-deep .info-card {
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+:host ::ng-deep .info-card .p-card-header {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.info-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #475569;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.info-header i {
+  color: #6366f1;
+}
+
+/* Benefits Grid */
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.benefit-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.benefit-item i {
+  font-size: 1.5rem;
+  margin-top: 0.25rem;
+}
+
+.benefit-item h4 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.benefit-item p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Form Card Styling */
+:host ::ng-deep .form-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  margin-bottom: 2rem;
+}
+
+:host ::ng-deep .form-card .p-card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.form-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #374151;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.form-header i {
+  color: #6366f1;
+  font-size: 1.3rem;
+}
+
+/* Form Styling */
+.stripe-form {
+  padding: 2rem;
+}
+
+.form-field {
+  margin-bottom: 2rem;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.field-label i {
+  color: #6366f1;
+  font-size: 1rem;
+}
+
+.field-hint {
+  display: block;
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
+.error-messages {
+  margin-top: 0.5rem;
+}
+
+:host ::ng-deep input[pInputText] {
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+:host ::ng-deep input[pInputText]:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+:host ::ng-deep input[pInputText].ng-invalid.ng-touched {
+  border-color: #ef4444;
+}
+
+/* Country Dropdown Styling */
+:host ::ng-deep .country-dropdown .p-dropdown {
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+:host ::ng-deep .country-dropdown .p-dropdown:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.country-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.country-flag {
+  font-size: 1.2rem;
+}
+
+.country-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.country-code {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+:host ::ng-deep .form-actions .p-button {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  transition: all 0.3s ease;
+}
+
+:host ::ng-deep .form-actions .p-button:not(.p-button-text) {
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+:host ::ng-deep .form-actions .p-button:hover {
+  transform: translateY(-2px);
+}
+
+/* Success Card Styling */
+:host ::ng-deep .success-card {
+  border-radius: 12px;
+  border: 2px solid #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+:host ::ng-deep .success-card .p-card-header {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 1.5rem;
+}
+
+.success-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.success-content {
+  padding: 2rem;
+}
+
+.success-message h3 {
+  color: #065f46;
+  margin: 0 0 1rem 0;
+  font-size: 1.4rem;
+}
+
+.success-message p {
+  color: #047857;
+  margin: 0 0 2rem 0;
+  font-size: 1rem;
+}
+
+/* Account Details */
+.account-details {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #a7f3d0;
+}
+
+.account-details h4 {
+  margin: 0 0 1rem 0;
+  color: #065f46;
+  font-size: 1.1rem;
+}
+
+.details-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #d1fae5;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.detail-item code {
+  background: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+/* Onboarding Section */
+:host ::ng-deep .onboarding-card {
+  border-radius: 12px;
+  border: 2px solid #6366f1;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.onboarding-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.onboarding-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.onboarding-text h4 {
+  margin: 0 0 1rem 0;
+  color: #1e40af;
+  font-size: 1.2rem;
+}
+
+.onboarding-text p {
+  color: #1e40af;
+  margin: 0 0 1rem 0;
+}
+
+.onboarding-text ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #1e40af;
+}
+
+.onboarding-text li {
+  margin-bottom: 0.5rem;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0 2rem 2rem 2rem;
+}
+
+:host ::ng-deep .onboarding-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  font-size: 1rem;
+  padding: 1rem 2rem;
+}
+
+/* Error Card Styling */
+:host ::ng-deep .error-card {
+  border-radius: 12px;
+  border: 2px solid #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+:host ::ng-deep .error-card .p-card-header {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 1.5rem;
+}
+
+.error-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.error-content {
+  padding: 2rem;
+}
+
+.error-message {
+  color: #991b1b;
+  font-size: 1rem;
+  margin: 0 0 2rem 0;
+  line-height: 1.5;
+}
+
+.error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: 16px;
+}
+
+.loading-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+.loading-content h3 {
+  color: #374151;
+  margin: 1rem 0 0.5rem 0;
+  font-size: 1.3rem;
+}
+
+.loading-content p {
+  color: #64748b;
+  margin: 0;
+  font-size: 1rem;
+}
+
+:host ::ng-deep .custom-spinner .p-progress-spinner-circle {
+  stroke: #6366f1;
+  animation: p-progress-spinner-dash 1.5s ease-in-out infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stripe-setup-container {
+    padding: 0.5rem;
+  }
+
+  .card-header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .header-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .header-text h2 {
+    font-size: 1.5rem;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .benefit-item {
+    padding: 0.75rem;
+  }
+
+  .stripe-form {
+    padding: 1.5rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  :host ::ng-deep .form-actions .p-button {
+    width: 100%;
+  }
+
+  .onboarding-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .onboarding-actions {
+    flex-direction: column;
+    padding: 0 1.5rem 1.5rem 1.5rem;
+  }
+
+  :host ::ng-deep .onboarding-actions .p-button {
+    width: 100%;
+  }
+}
+
+/* Color Utility Classes */
+.text-green-500 {
+  color: #10b981;
+}
+
+.text-blue-500 {
+  color: #3b82f6;
+}
+
+.text-purple-500 {
+  color: #8b5cf6;
+}
+
+.text-orange-500 {
+  color: #f59e0b;
+}
+
+.text-red-500 {
+  color: #ef4444;
+}
+
+/* Animation for cards */
+:host ::ng-deep .stripe-main-card,
+:host ::ng-deep .info-card,
+:host ::ng-deep .form-card,
+:host ::ng-deep .success-card,
+:host ::ng-deep .error-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

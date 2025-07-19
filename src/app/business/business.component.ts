@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataSvrService } from '../services/data-svr.service';
 import { RegisterBusinessService, RegisterBusinessResponse } from '../services/register-business.service';
+import { StripeAccountResponse } from '../models/stripe-account.model';
 import { BusinessRegistration, BusinessPlaceAndServicesJunction } from '../models/business-registration';
 import { ServicesForBusiness } from '../models/services-for-business';
 import { BusinessPlace } from '../models/business-place';
@@ -42,7 +43,7 @@ export class BusinessComponent implements OnInit, OnDestroy {
 
   // Registration state
   currentStep = 0;
-  maxSteps = 5;
+  maxSteps = 6; // Added Stripe setup step
   registration: BusinessRegistration;
   
   // UI State
@@ -86,6 +87,11 @@ export class BusinessComponent implements OnInit, OnDestroy {
   businessSchedules: BusinessSchedule[] = [];
   editingScheduleIndex: number | null = null;
   showCustomScheduleForm = false;
+
+  // Stripe account setup
+  stripeAccountResponse: StripeAccountResponse | null = null;
+  isStripeSetupComplete = false;
+  skipStripeSetup = false;
   
   // Enums for template access
   DayOfWeekEnum = DayOfWeekEnum;
@@ -1361,7 +1367,53 @@ export class BusinessComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Stripe Account Setup Methods
+  onStripeAccountCreated(response: StripeAccountResponse): void {
+    console.log('Stripe account created in business component:', response);
+    this.stripeAccountResponse = response;
+    this.isStripeSetupComplete = true;
+    
+    // Show success message
+    this.data.openSnackBar(
+      'Stripe account created successfully! You can now accept payments.',
+      'Close',
+      5000
+    );
 
+    // Automatically move to next step after a brief delay
+    setTimeout(() => {
+      this.nextStep();
+    }, 2000);
+  }
 
+  onSkipStripeSetup(): void {
+    console.log('User skipped Stripe setup');
+    this.skipStripeSetup = true;
+    this.isStripeSetupComplete = false;
+    
+    // Show info message
+    this.data.openSnackBar(
+      'Stripe setup skipped. You can set up payments later in business settings.',
+      'Close',
+      4000
+    );
 
+    // Move to next step
+    this.nextStep();
+  }
+
+  // Check if Stripe step is complete
+  isStripeStepComplete(): boolean {
+    return this.isStripeSetupComplete || this.skipStripeSetup;
+  }
+
+  // Get business email for Stripe setup
+  getBusinessEmail(): string {
+    return this.registration.basicInfo.bussinessEmail || this.registration.basicInfo.ownerEmail || '';
+  }
+
+  // Get business name for Stripe setup
+  getBusinessName(): string {
+    return this.registration.basicInfo.bussinessName || '';
+  }
 }

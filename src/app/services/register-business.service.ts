@@ -18,6 +18,13 @@ import {
   StaffMemberDto
 } from '../models/business-registration-dto';
 import { DataSvrService } from './data-svr.service';
+import { 
+  CreateStripeAccountRequest, 
+  StripeAccountResponse,
+  StripeAccountCreationState,
+  STRIPE_SUPPORTED_COUNTRIES,
+  CountryOption
+} from '../models/stripe-account.model';
 
 export interface RegisterBusinessResponse {
   success: boolean;
@@ -427,5 +434,113 @@ export interface RegisterBusinessScheduleResponse {
           }));
         })
       );
+    }
+
+    /**
+     * Create Stripe account for business
+     */
+    createStripeAccount(request: CreateStripeAccountRequest): Observable<StripeAccountResponse> {
+      const jwtToken = this.dataSvr.jwtToken;
+
+      if (!jwtToken) {
+        return throwError(() => new Error('Authentication required. Please log in.'));
+      }
+
+      const headers = new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`,
+        'Accept': 'application/json'
+      });
+
+      return this.http.post<StripeAccountResponse>(
+        `${this.apiUrl}/api/Subscription/CreateStripeAccount`,
+        request,
+        { headers }
+      ).pipe(
+        map(response => ({
+          accountId: response.accountId,
+          secretKey: response.secretKey,
+          publishableKey: response.publishableKey,
+          onboardingUrl: response.onboardingUrl
+        })),
+        catchError(error => {
+          console.error('Stripe account creation error:', error);
+          let errorMessage = 'Failed to create Stripe account. Please try again.';
+
+          if (error.status === 400) {
+            errorMessage = 'Invalid request data. Please check your information.';
+          } else if (error.status === 401) {
+            errorMessage = 'Authentication failed. Please log in again.';
+          } else if (error.status === 404) {
+            errorMessage = 'Business not found. Please complete business registration first.';
+          } else if (error.status === 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else if (error.error && error.error.message) {
+            errorMessage = error.error.message;
+          }
+
+          return throwError(() => new Error(errorMessage));
+        })
+      );
+    }
+
+    /**
+     * Get supported countries for Stripe
+     */
+    getStripeCountries(): CountryOption[] {
+      return STRIPE_SUPPORTED_COUNTRIES;
+    }
+
+    /**
+     * Validate email format for Stripe account
+     */
+    validateEmail(email: string): boolean {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+
+    /**
+     * Validate country code for Stripe
+     */
+    validateCountryCode(countryCode: string): boolean {
+      return STRIPE_SUPPORTED_COUNTRIES.some(country => country.code === countryCode);
+    }
+
+    /**
+     * Create Stripe account for current business registration
+     */
+    createStripeAccountForCurrentBusiness(email: string, country: string): Observable<StripeAccountResponse> {
+      const currentBusiness = this.dataSvr.currentBusinessRegistration;
+      
+      if (!currentBusiness.basicInfo.bussinessName) {
+        return throwError(() => new Error('Business information is incomplete. Please complete basic info first.'));
+      }
+
+      // Use the business email if no email provided
+      const accountEmail = email || currentBusiness.basicInfo.bussinessEmail;
+      
+      if (!accountEmail) {
+        return throwError(() => new Error('Business email is required for Stripe account.'));
+      }
+
+      if (!this.validateEmail(accountEmail)) {
+        return throwError(() => new Error('Please provide a valid email address.'));
+      }
+
+      if (!this.validateCountryCode(country)) {
+        return throwError(() => new Error('Please select a valid country.'));
+      }
+
+      // Generate a business ID if not available (for demo purposes)
+      // In production, this should come from the backend after business registration
+      const businessId = currentBusiness.basicInfo.businessID || `BUS_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      const request: CreateStripeAccountRequest = {
+        email: accountEmail,
+        country: country,
+        businessId: businessId
+      };
+
+      return this.createStripeAccount(request);
     }
   }

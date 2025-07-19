@@ -1,0 +1,278 @@
+<div class="stripe-setup-container">
+  <!-- Main Content Card -->
+  <p-card styleClass="stripe-main-card">
+    <ng-template pTemplate="header">
+      <div class="card-header-content">
+        <div class="header-icon">
+          <i class="pi pi-credit-card" style="font-size: 2rem; color: #6366f1;"></i>
+        </div>
+        <div class="header-text">
+          <h2>Payment Setup</h2>
+          <p>Set up your Stripe account to accept payments from customers</p>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Setup Instructions -->
+    <div class="setup-instructions" *ngIf="!stripeState.isCreated">
+      <p-card styleClass="info-card">
+        <ng-template pTemplate="header">
+          <div class="info-header">
+            <i class="pi pi-info-circle"></i>
+            <span>Why Stripe?</span>
+          </div>
+        </ng-template>
+        
+        <div class="benefits-grid">
+          <div class="benefit-item">
+            <i class="pi pi-shield text-green-500"></i>
+            <div>
+              <h4>Secure Payments</h4>
+              <p>Bank-level security and fraud protection</p>
+            </div>
+          </div>
+          
+          <div class="benefit-item">
+            <i class="pi pi-globe text-blue-500"></i>
+            <div>
+              <h4>Global Reach</h4>
+              <p>Accept payments from 135+ currencies</p>
+            </div>
+          </div>
+          
+          <div class="benefit-item">
+            <i class="pi pi-mobile text-purple-500"></i>
+            <div>
+              <h4>Easy Integration</h4>
+              <p>Seamlessly integrated with your business</p>
+            </div>
+          </div>
+          
+          <div class="benefit-item">
+            <i class="pi pi-chart-line text-orange-500"></i>
+            <div>
+              <h4>Analytics</h4>
+              <p>Detailed reporting and insights</p>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Stripe Account Form -->
+    <div class="stripe-form-section" *ngIf="!stripeState.isCreated">
+      <p-card styleClass="form-card">
+        <ng-template pTemplate="header">
+          <div class="form-header">
+            <i class="pi pi-user-plus"></i>
+            <span>Create Your Stripe Account</span>
+          </div>
+        </ng-template>
+
+        <form [formGroup]="stripeForm" class="stripe-form">
+          <!-- Email Field -->
+          <div class="form-field">
+            <label for="email" class="field-label">
+              <i class="pi pi-envelope"></i>
+              Business Email Address
+            </label>
+            <input
+              pInputText
+              id="email"
+              formControlName="email"
+              placeholder="Enter your business email"
+              class="w-full"
+              [class.ng-invalid]="emailControl?.invalid && emailControl?.touched" />
+            
+            <small class="field-hint">
+              This will be your primary contact email for Stripe notifications
+            </small>
+            
+            <div class="error-messages" *ngIf="emailControl?.invalid && emailControl?.touched">
+              <small class="p-error" *ngIf="emailControl?.errors?.['required']">
+                Email is required
+              </small>
+              <small class="p-error" *ngIf="emailControl?.errors?.['email']">
+                Please enter a valid email address
+              </small>
+            </div>
+          </div>
+
+          <!-- Country Selection -->
+          <div class="form-field">
+            <label for="country" class="field-label">
+              <i class="pi pi-flag"></i>
+              Business Country
+            </label>
+            
+            <p-dropdown
+              [options]="countries"
+              formControlName="country"
+              optionLabel="name"
+              optionValue="code"
+              placeholder="Select your country"
+              styleClass="w-full country-dropdown"
+              [filter]="true"
+              filterBy="name,code"
+              [showClear]="false">
+              
+              <ng-template pTemplate="selectedItem" let-selectedOption>
+                <div class="country-item" *ngIf="selectedOption">
+                  <span class="country-flag">{{ getCountryByCode(selectedOption)?.flag }}</span>
+                  <span class="country-name">{{ getCountryByCode(selectedOption)?.name }}</span>
+                </div>
+              </ng-template>
+              
+              <ng-template pTemplate="item" let-country>
+                <div class="country-item">
+                  <span class="country-flag">{{ country.flag }}</span>
+                  <span class="country-name">{{ country.name }}</span>
+                  <span class="country-code">({{ country.code }})</span>
+                </div>
+              </ng-template>
+            </p-dropdown>
+            
+            <small class="field-hint">
+              Select the country where your business is legally registered
+            </small>
+            
+            <div class="error-messages" *ngIf="countryControl?.invalid && countryControl?.touched">
+              <small class="p-error" *ngIf="countryControl?.errors?.['required']">
+                Please select your business country
+              </small>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <p-button
+              label="Skip for Now"
+              icon="pi pi-times"
+              styleClass="p-button-text p-button-secondary"
+              (onClick)="skipSetup()"
+              [disabled]="stripeState.isCreating">
+            </p-button>
+            
+            <p-button
+              label="Create Stripe Account"
+              icon="pi pi-credit-card"
+              styleClass="p-button-raised"
+              (onClick)="createStripeAccount()"
+              [disabled]="!canCreateAccount"
+              [loading]="stripeState.isCreating">
+            </p-button>
+          </div>
+        </form>
+      </p-card>
+    </div>
+
+    <!-- Success State -->
+    <div class="success-section" *ngIf="showSuccess">
+      <p-card styleClass="success-card">
+        <ng-template pTemplate="header">
+          <div class="success-header">
+            <i class="pi pi-check-circle text-green-500"></i>
+            <span>Stripe Account Created!</span>
+          </div>
+        </ng-template>
+
+        <div class="success-content">
+          <div class="success-message">
+            <h3>🎉 Great! Your Stripe account has been created successfully.</h3>
+            <p>Now you need to complete the onboarding process to start accepting payments.</p>
+          </div>
+
+          <div class="account-details" *ngIf="stripeState.response">
+            <h4>Account Information</h4>
+            <div class="details-grid">
+              <div class="detail-item">
+                <label>Account ID:</label>
+                <code>{{ stripeState.response.accountId }}</code>
+              </div>
+              <div class="detail-item">
+                <label>Status:</label>
+                <p-tag value="Created" severity="success" icon="pi pi-check"></p-tag>
+              </div>
+            </div>
+          </div>
+
+          <div class="onboarding-section">
+            <p-card styleClass="onboarding-card">
+              <div class="onboarding-content">
+                <div class="onboarding-icon">
+                  <i class="pi pi-external-link" style="font-size: 2rem; color: #6366f1;"></i>
+                </div>
+                <div class="onboarding-text">
+                  <h4>Complete Your Onboarding</h4>
+                  <p>Click below to open Stripe's secure onboarding process. You'll need to provide:</p>
+                  <ul>
+                    <li>Business verification documents</li>
+                    <li>Bank account information</li>
+                    <li>Tax information</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div class="onboarding-actions">
+                <p-button
+                  label="Complete Onboarding"
+                  icon="pi pi-external-link"
+                  styleClass="p-button-raised p-button-success onboarding-btn"
+                  (onClick)="completeOnboarding()">
+                </p-button>
+                
+                <p-button
+                  label="Do This Later"
+                  icon="pi pi-clock"
+                  styleClass="p-button-text"
+                  (onClick)="skipSetup()">
+                </p-button>
+              </div>
+            </p-card>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-section" *ngIf="showError">
+      <p-card styleClass="error-card">
+        <ng-template pTemplate="header">
+          <div class="error-header">
+            <i class="pi pi-exclamation-triangle text-red-500"></i>
+            <span>Setup Failed</span>
+          </div>
+        </ng-template>
+
+        <div class="error-content">
+          <p class="error-message">{{ stripeState.error }}</p>
+          
+          <div class="error-actions">
+            <p-button
+              label="Try Again"
+              icon="pi pi-refresh"
+              styleClass="p-button-raised"
+              (onClick)="resetForm()">
+            </p-button>
+            
+            <p-button
+              label="Skip for Now"
+              icon="pi pi-times"
+              styleClass="p-button-text p-button-secondary"
+              (onClick)="skipSetup()">
+            </p-button>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" *ngIf="stripeState.isCreating">
+      <div class="loading-content">
+        <p-progressSpinner styleClass="custom-spinner"></p-progressSpinner>
+        <h3>Creating your Stripe account...</h3>
+        <p>This may take a few moments</p>
+      </div>
+    </div>
+  </p-card>
+</div> 

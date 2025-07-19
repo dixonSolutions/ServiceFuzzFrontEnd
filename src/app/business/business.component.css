@@ -1006,6 +1006,17 @@ mat-card-content {
   }
 }
 
+/* Stripe Setup Section */
+.stripe-section {
+  padding: 24px 0;
+  min-height: 400px;
+}
+
+.stripe-section app-stripe-account-setup {
+  display: block;
+  width: 100%;
+}
+
 /* Google Maps Accordion Styles */
 .maps-accordion {
   margin-bottom: 24px;

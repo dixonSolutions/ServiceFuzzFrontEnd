@@ -69,6 +69,7 @@ import { AccordionModule } from 'primeng/accordion';
 import { TableModule } from 'primeng/table';
 import { StepsModule } from 'primeng/steps';
 import { DatePickerModule } from 'primeng/datepicker';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 
 
@@ -93,6 +94,7 @@ import { LeftSidebar } from './website-creator/left-sidebar/left-sidebar';
 import { Canvas } from './website-creator/canvas/canvas';
 import { AssetManagerComponent } from './website-creator/asset-manager/asset-manager';
 import { GoogleMapsPickerComponent } from './components/google-maps-picker/google-maps-picker.component';
+import { StripeAccountSetupComponent } from './stripe-account-setup/stripe-account-setup.component';
 
 
 const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
@@ -115,7 +117,8 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     WorkspaceSelectionComponent,
     LeftSidebar,
     Canvas,
-    AssetManagerComponent
+    AssetManagerComponent,
+    StripeAccountSetupComponent
   ],
   imports: [
     BrowserModule,
@@ -187,6 +190,7 @@ const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.goo
     TableModule,
     StepsModule,
     DatePickerModule,
+    ProgressSpinnerModule,
     BusinessEditComponent,
     GoogleMapsPickerComponent
   ],
