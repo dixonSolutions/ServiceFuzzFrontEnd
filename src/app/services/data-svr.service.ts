@@ -357,10 +357,23 @@ export class DataSvrService {
       })
     );
   }
-  GenerateAndSendMagicLinkForLogIn(email: string): Observable<{ message: string }> {
+  GenerateAndSendMagicLinkForLogIn(email: string, customLinkFormat?: string): Observable<{ message: string }> {
+    // Get current URL and construct custom link format
+    const currentUrl = window.location.href;
+    const baseUrl = window.location.origin;
+    const defaultCustomLinkFormat = `${baseUrl}/auth/callback?userId={userId}&error={error}&source=magic-link`;
+    
+    const requestBody = {
+      email: email,
+      customLinkFormat: customLinkFormat || defaultCustomLinkFormat
+    };
+
+    console.log('Magic Link Request Body:', requestBody);
+    console.log('Current URL:', currentUrl);
+
     return this.http.post<{ message: string }>(
         `${this.apiUrl}/api/UserVerification/generate-magic-link`,
-        JSON.stringify(email),
+        requestBody,
         {
         headers: {
           'Content-Type': 'application/json'
@@ -372,10 +385,24 @@ export class DataSvrService {
       })
     );
   }
-  GenerateAndSendMagicLinkForSignUp(email: string): Observable<{ message: string }> {
+  
+  GenerateAndSendMagicLinkForSignUp(email: string, customLinkFormat?: string): Observable<{ message: string }> {
+    // Get current URL and construct custom link format  
+    const currentUrl = window.location.href;
+    const baseUrl = window.location.origin;
+    const defaultCustomLinkFormat = `${baseUrl}/auth/signup-callback?userId={userId}&error={error}&source=signup`;
+    
+    const requestBody = {
+      email: email,
+      customLinkFormat: customLinkFormat || defaultCustomLinkFormat
+    };
+
+    console.log('Signup Magic Link Request Body:', requestBody);
+    console.log('Current URL:', currentUrl);
+
     return this.http.post<{ message: string }>(
         `${this.apiUrl}/api/UserVerification/generate-signup-magic-link`,
-        { email: email },
+        requestBody,
         {
           headers: {
             'Content-Type': 'application/json'

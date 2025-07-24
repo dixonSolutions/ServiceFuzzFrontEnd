@@ -4,6 +4,7 @@ import { SocialAuthService, GoogleLoginProvider } from '@abacritt/angularx-socia
 import { Router, ActivatedRoute } from '@angular/router';
 import { DataSvrService } from '../services/data-svr.service';
 import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
+import { MagicLinkAuthService } from '../services/magic-link-auth.service';
 
 interface GoogleUserInfo {
   email: string;
@@ -41,7 +42,8 @@ export class SignInOrSignUpComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
-    private data: DataSvrService
+    private data: DataSvrService,
+    private magicLinkService: MagicLinkAuthService
   ) {
     this.authForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
@@ -94,12 +96,12 @@ export class SignInOrSignUpComponent implements OnInit {
       });
     }
 
-    // Check for magic link verification (userId parameter)  
+    // Store any redirect URL for after authentication
     this.route.queryParams.subscribe(params => {
-      const userId = params['userId'];
-      if (userId) {
-        this.handleMagicLinkVerification(userId);
-        return;
+      const redirectUrl = params['redirectTo'];
+      if (redirectUrl) {
+        this.magicLinkService.storeRedirectUrl(redirectUrl);
+        this.redirectUrl = redirectUrl;
       }
     });
 
@@ -133,34 +135,7 @@ export class SignInOrSignUpComponent implements OnInit {
     this.router.navigate([targetUrl], { replaceUrl: true });
   }
 
-  private handleMagicLinkVerification(userId: string) {
-    this.isLoading = true;
-    
-    this.data.getUserByID(userId).subscribe({
-      next: (user: ServiceFuzzAccount) => {
-        this.isAuthenticated = true;
-        this.serviceFuzzUser = user;
-        this.data.currentUser = user;
-        this.cdr.detectChanges();
-        
-        // Show success message
-        this.data.openSnackBar('Successfully signed in via magic link!', 'Close', 3000);
-        
-        // Navigate to redirect URL or home
-        this.navigateAfterAuth();
-      },
-      error: (error: any) => {
-        console.error('Error verifying magic link:', error);
-        this.data.openSnackBar('Invalid or expired magic link. Please try again.', 'Close', 5000);
-        
-        // Clear the URL parameters
-        this.router.navigate(['/sign'], { replaceUrl: true });
-      },
-      complete: () => {
-        this.isLoading = false;
-      }
-    });
-  }
+  // Magic link verification is now handled by the auth-callback component
 
   private initializeGoogleSignIn() {
     const container = document.querySelector('.social-login');
@@ -281,25 +256,44 @@ export class SignInOrSignUpComponent implements OnInit {
 
   sendMagicLink() {
     const email = this.authForm.get('email')?.value;
-    if (!email || !this.authForm.get('email')?.valid) {
+    
+    // Validate email
+    if (!email || !this.magicLinkService.isValidEmail(email)) {
       this.data.openSnackBar('Please enter a valid email address', 'Close', 3000);
       return;
     }
 
     this.isLoading = true;
 
-    // Note: Magic link redirect functionality is preserved through the userId parameter
-    // in the URL when the user clicks the magic link, which will trigger navigateAfterAuth()
+    // Store current redirect URL if exists
+    if (this.redirectUrl) {
+      this.magicLinkService.storeRedirectUrl(this.redirectUrl);
+    }
+
+    // Log magic link request
+    this.magicLinkService.logMagicLinkEvent('request', {
+      email,
+      isSignIn: this.isSignIn,
+      redirectUrl: this.redirectUrl
+    });
+
+    // Send magic link using the new service
     const magicLinkMethod = this.isSignIn ?
-      this.data.GenerateAndSendMagicLinkForLogIn(email) :
-      this.data.GenerateAndSendMagicLinkForSignUp(email);
+      this.magicLinkService.sendSignInMagicLink(email) :
+      this.magicLinkService.sendSignUpMagicLink(email);
 
     magicLinkMethod.subscribe({
       next: (response: { message: string }) => {
+        this.magicLinkService.logMagicLinkEvent('success', { email, isSignIn: this.isSignIn });
         this.data.openSnackBar(response.message, 'Close', 5000);
         this.isLoading = false;
       },
       error: (error: any) => {
+        this.magicLinkService.logMagicLinkEvent('error', { 
+          email, 
+          isSignIn: this.isSignIn, 
+          error: error.message 
+        });
         console.error(`Error sending magic link for ${this.isSignIn ? 'sign in' : 'sign up'}:`, error);
         this.data.openSnackBar(
           `Failed to send magic link. Please try again.`, 
