@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { DataSvrService } from '../services/data-svr.service';
 import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
 import { MagicLinkAuthService } from '../services/magic-link-auth.service';
+import { MessageService } from 'primeng/api';
 
 interface GoogleUserInfo {
   email: string;
@@ -43,7 +44,8 @@ export class SignInOrSignUpComponent implements OnInit {
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private data: DataSvrService,
-    private magicLinkService: MagicLinkAuthService
+    private magicLinkService: MagicLinkAuthService,
+    private messageService: MessageService
   ) {
     this.authForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
@@ -268,7 +270,11 @@ export class SignInOrSignUpComponent implements OnInit {
     
     // Validate email
     if (!email || !this.magicLinkService.isValidEmail(email)) {
-      this.data.openSnackBar('Please enter a valid email address', 'Close', 3000);
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Invalid Email',
+        detail: 'Please enter a valid email address'
+      });
       return;
     }
 
@@ -294,7 +300,12 @@ export class SignInOrSignUpComponent implements OnInit {
     magicLinkMethod.subscribe({
       next: (response: { message: string }) => {
         this.magicLinkService.logMagicLinkEvent('success', { email, isSignIn: this.isSignIn });
-        this.data.openSnackBar(response.message, 'Close', 5000);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Magic Link Sent',
+          detail: response.message,
+          life: 5000
+        });
         this.isLoading = false;
       },
       error: (error: any) => {
@@ -304,11 +315,12 @@ export class SignInOrSignUpComponent implements OnInit {
           error: error.message 
         });
         console.error(`Error sending magic link for ${this.isSignIn ? 'sign in' : 'sign up'}:`, error);
-        this.data.openSnackBar(
-          `Failed to send magic link. Please try again.`, 
-          'Close', 
-          3000
-        );
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Failed to Send Magic Link',
+          detail: 'Failed to send magic link. Please try again.',
+          life: 4000
+        });
         this.isLoading = false;
       }
     });

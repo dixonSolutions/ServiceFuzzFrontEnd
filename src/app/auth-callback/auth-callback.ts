@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DataSvrService } from '../services/data-svr.service';
 import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-auth-callback',
@@ -20,7 +21,8 @@ export class AuthCallback implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private data: DataSvrService
+    private data: DataSvrService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit() {
@@ -86,7 +88,12 @@ export class AuthCallback implements OnInit, OnDestroy {
     }
     
     this.errorMessage = message;
-    this.data.openSnackBar(message, 'Close', 5000);
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Authentication Failed',
+      detail: message,
+      life: 5000
+    });
     
     // Redirect to sign-in after showing error
     setTimeout(() => {
@@ -109,7 +116,12 @@ export class AuthCallback implements OnInit, OnDestroy {
         this.successMessage = `Successfully completed ${authType} via magic link!`;
         
         // Show success message
-        this.data.openSnackBar(this.successMessage, 'Close', 3000);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Authentication Successful',
+          detail: this.successMessage,
+          life: 4000
+        });
         
         this.isLoading = false;
         this.isProcessing = false;

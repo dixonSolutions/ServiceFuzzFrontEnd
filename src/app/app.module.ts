@@ -70,6 +70,8 @@ import { TableModule } from 'primeng/table';
 import { StepsModule } from 'primeng/steps';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 
 
@@ -193,6 +195,7 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     StepsModule,
     DatePickerModule,
     ProgressSpinnerModule,
+    ToastModule,
     BusinessEditComponent,
     GoogleMapsPickerComponent
   ],
@@ -204,6 +207,7 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     }),
     CookieService,
     ConfirmationService,
+    MessageService,
     {
       provide: 'SocialAuthServiceConfig',
       useValue: {
