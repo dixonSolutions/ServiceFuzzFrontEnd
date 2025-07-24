@@ -55,9 +55,25 @@ export class SignInOrSignUpComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Check for query parameters first (for redirect)
+    // Check for magic link parameters first and redirect to auth-callback if present
     this.route.queryParams.subscribe(params => {
-      this.redirectUrl = params['redirect'] || null;
+      const userId = params['userId'];
+      const error = params['error'];
+      const source = params['source'];
+      
+      // If this is a magic link callback, redirect to proper auth-callback route
+      if (userId || error || source) {
+        console.log('🔗 Magic link parameters detected, redirecting to auth-callback...', params);
+        // Preserve all query parameters when redirecting
+        this.router.navigate(['/auth/callback'], { 
+          queryParams: params,
+          replaceUrl: true 
+        });
+        return;
+      }
+      
+      // Handle normal redirect parameters
+      this.redirectUrl = params['redirect'] || params['redirectTo'] || null;
     });
 
     // Then check if we already have a user in the service
@@ -96,14 +112,7 @@ export class SignInOrSignUpComponent implements OnInit {
       });
     }
 
-    // Store any redirect URL for after authentication
-    this.route.queryParams.subscribe(params => {
-      const redirectUrl = params['redirectTo'];
-      if (redirectUrl) {
-        this.magicLinkService.storeRedirectUrl(redirectUrl);
-        this.redirectUrl = redirectUrl;
-      }
-    });
+    // Note: Redirect URL handling is now done above to avoid duplicate subscriptions
 
     // Then subscribe to auth state changes
     this.authService.authState.subscribe((user) => {

@@ -42,6 +42,8 @@ export class AuthCallback implements OnInit, OnDestroy {
   }
 
   private processAuthCallback(userId: string | null, error: string | null, source: string | null, token: string | null) {
+    console.log('🔗 Processing auth callback:', { userId, error, source, token, currentRoute: this.router.url });
+    
     // Handle error cases first
     if (error) {
       this.handleAuthError(error);
@@ -93,8 +95,12 @@ export class AuthCallback implements OnInit, OnDestroy {
   }
 
   private handleSuccessfulAuth(userId: string, source: string | null) {
+    console.log('🔗 Handling successful auth for userId:', userId, 'source:', source);
+    
     this.data.getUserByID(userId).subscribe({
       next: (user: ServiceFuzzAccount) => {
+        console.log('🔗 User verified successfully:', user);
+        
         // Update authentication state
         this.data.currentUser = user;
         
@@ -112,25 +118,20 @@ export class AuthCallback implements OnInit, OnDestroy {
         this.navigateAfterSuccess();
       },
       error: (error: any) => {
-        console.error('Error verifying magic link:', error);
+        console.error('🔗 Error verifying magic link:', error);
         this.handleAuthError('user-verification-failed');
       }
     });
   }
 
   private navigateAfterSuccess() {
-    // Clean the URL parameters first
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {},
-      replaceUrl: true
-    });
-
     // Get intended redirect URL from session storage or default to home
     const redirectUrl = sessionStorage.getItem('authRedirectUrl') || '/home';
     sessionStorage.removeItem('authRedirectUrl'); // Clean up
     
-    // Navigate after a brief delay to show success state
+    console.log('🔗 Navigating after successful auth to:', redirectUrl);
+    
+    // Navigate after a brief delay to show success state, cleaning URL in process
     setTimeout(() => {
       this.router.navigate([redirectUrl], { replaceUrl: true });
     }, 1500);
