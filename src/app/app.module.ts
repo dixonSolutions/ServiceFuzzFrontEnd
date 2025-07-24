@@ -97,7 +97,7 @@ import { GoogleMapsPickerComponent } from './components/google-maps-picker/googl
 import { StripeAccountSetupComponent } from './stripe-account-setup/stripe-account-setup.component';
 
 
-const GOOGLE_CLIENT_ID = '763839777363-2tclimqvmlkkagk6j5d14me4ec4iq2hl.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.googleusercontent.com';
 
 @NgModule({
   declarations: [
