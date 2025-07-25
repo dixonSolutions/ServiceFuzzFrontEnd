@@ -72,6 +72,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 
 
@@ -196,6 +197,7 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     DatePickerModule,
     ProgressSpinnerModule,
     ToastModule,
+    MultiSelectModule,
     BusinessEditComponent,
     GoogleMapsPickerComponent
   ],

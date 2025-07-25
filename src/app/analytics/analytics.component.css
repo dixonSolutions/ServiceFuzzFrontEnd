@@ -1,28 +1,4 @@
-/* All custom button appearance styles removed to allow Angular Material defaults. */
-
-/* Basic layout for test buttons */
-h3 {
-  margin: 20px 0 10px 0;
-  color: #333;
-}
-
-button {
-  margin: 5px;
-}
-
-/* Container for better organization */
-.test-section {
-  margin: 20px 0;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: #f9f9f9;
-}
-
-.test-section h4 {
-  margin: 0 0 10px 0;
-  color: #666;
-}
+/* Analytics Dashboard Styles */
 
 .analytics-container {
   padding: 24px;
@@ -63,20 +39,12 @@ button {
   align-items: center;
 }
 
-.date-filter, .refresh-btn {
+.refresh-btn {
   border-radius: 20px;
   padding: 8px 16px;
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0.1px;
-}
-
-.date-filter {
-  border: 1px solid var(--mat-outline);
-  color: var(--mat-on-surface);
-}
-
-.refresh-btn {
   background: var(--mat-primary-container);
   color: var(--mat-on-primary-container);
 }
@@ -559,5 +527,286 @@ button {
   
   .kpi-label {
     color: #333;
+  }
+}
+
+/* Loading, Error, and Empty States */
+.loading-container,
+.error-container,
+.empty-state {
+  grid-column: 1 / -1;
+  margin: 20px 0;
+}
+
+.loading-card,
+.error-card,
+.empty-card {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.loading-content,
+.error-content,
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loading-content p {
+  margin: 0;
+  color: var(--mat-on-surface-variant);
+}
+
+.error-icon,
+.empty-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--mat-error);
+  margin-bottom: 8px;
+}
+
+.empty-icon {
+  color: var(--mat-on-surface-variant);
+}
+
+.error-content h3,
+.empty-content h3 {
+  margin: 0;
+  color: var(--mat-on-surface);
+}
+
+.error-content p,
+.empty-content p {
+  margin: 0;
+  color: var(--mat-on-surface-variant);
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.loading-content mat-spinner {
+  margin-bottom: 8px;
+}
+
+/* Enhanced KPI Cards for Better Data Display */
+.kpi-trend.positive {
+  color: #4caf50;
+}
+
+.kpi-trend.neutral {
+  color: #757575;
+}
+
+.kpi-trend.negative {
+  color: #f44336;
+}
+
+/* Chart Loading State */
+.chart-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--mat-on-surface-variant);
+}
+
+.chart-loading mat-spinner {
+  margin-bottom: 16px;
+}
+
+/* Business Selection Styles */
+.business-selection-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.business-selection-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mat-on-surface);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.business-selection-label mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.business-selection-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.business-multiselect {
+  flex: 1;
+  min-width: 250px;
+}
+
+.refresh-businesses-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+}
+
+.selected-business-summary {
+  font-size: 0.875rem;
+  color: var(--mat-on-surface);
+  padding: 4px 0;
+}
+
+/* Enhanced Header Actions Layout */
+.header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+/* Business Selection Loading State */
+.business-selection-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--mat-surface-variant);
+  border-radius: 8px;
+  color: var(--mat-on-surface-variant);
+}
+
+.business-selection-loading mat-spinner {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Business Selection Error State */
+.business-selection-error {
+  color: var(--mat-error);
+  font-size: 0.75rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.business-selection-error mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Responsive Business Selection */
+@media (max-width: 1024px) {
+  .business-selection-container {
+    min-width: 250px;
+    max-width: 300px;
+  }
+
+  .business-multiselect {
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .business-selection-container {
+    width: 100%;
+    min-width: auto;
+    max-width: none;
+  }
+
+  .business-selection-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .business-multiselect {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .refresh-businesses-btn {
+    align-self: flex-end;
+    width: 40px;
+  }
+}
+
+/* Section Header with Business Selection Indicator */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.business-selection-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--mat-surface-container-high);
+  border-radius: 24px;
+  border: 1px solid var(--mat-outline-variant);
+}
+
+.business-selection-indicator mat-icon {
+  color: var(--mat-primary);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.business-selection-indicator span {
+  color: var(--mat-on-surface-variant);
+  font-weight: 500;
+}
+
+.show-all-btn {
+  min-width: auto;
+  padding: 6px 12px;
+  height: 32px;
+  font-size: 0.875rem;
+}
+
+.show-all-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+}
+
+/* Section Header Responsive */
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .business-selection-indicator {
+    width: 100%;
+    justify-content: space-between;
+    padding: 12px 16px;
+  }
+
+  .business-selection-indicator span {
+    font-size: 0.875rem;
   }
 }

@@ -30,7 +30,7 @@
   margin: 0;
   margin-left: calc(-50vw + 50%);
   margin-top: -20px;
-  background: linear-gradient(135deg, #ff8e8e 0%, #eedcff 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #9decf7 100%);
   display: flex;
   align-items: center;
   padding: 20px 0 0 0;
@@ -227,13 +227,12 @@
 
 /* Add ERP system highlighting */
 .erp-highlight {
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  background: linear-gradient(135deg, #234f91 0%, #021e5a 100%);
   color: white;
   padding: 0.2rem 0.6rem;
   border-radius: 8px;
   font-weight: 800;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
   display: inline-block;
   transform: scale(1.05);
   animation: pulse-glow 2s ease-in-out infinite alternate;

@@ -1,25 +1,5 @@
 
-<div class="card flex justify-center">
-  <p-button label="Check" />
-</div>
-<p-colorpicker />
 <div class="analytics-container">
-  <p-toolbar>
-    <ng-template #start>
-        <p-button icon="pi pi-plus" class="mr-2" text severity="secondary" />
-        <p-button icon="pi pi-print" class="mr-2" text severity="secondary" />
-        <p-button icon="pi pi-upload" text severity="secondary" />
-    </ng-template>
-    <ng-template #center>
-        <p-iconfield iconPosition="left">
-            <p-inputicon styleClass="pi pi-search" />
-            <input type="text" pInputText placeholder="Search" />
-        </p-iconfield>
-    </ng-template>
-    <ng-template #end>
-        <p-splitbutton label="Save" [model]="items" />
-    </ng-template>
-</p-toolbar>
   <!-- Header Section -->
   <div class="analytics-header">
     <div class="header-content">
@@ -27,12 +7,54 @@
       <p class="m3-body-large">Your command center for business intelligence and performance insights</p>
     </div>
     <div class="header-actions">
-      <button mat-button="outlined" class="date-filter m3-button">
-        <mat-icon>calendar_today</mat-icon>
-        This Month
-        <mat-icon>expand_more</mat-icon>
-      </button>
-      <button mat-button="elevated" class="refresh-btn m3-button">
+      <!-- Business Selection -->
+      <div class="business-selection-container">
+        <label class="business-selection-label m3-label-large">
+          <mat-icon>business</mat-icon>
+          Select Businesses
+        </label>
+        <div class="business-selection-controls">
+          <p-multiselect 
+            [options]="availableBusinesses" 
+            [ngModel]="businessSelectionState.selectedBusinessIds"
+            (ngModelChange)="onBusinessSelectionChange($event)"
+            optionLabel="businessName" 
+            optionValue="businessId"
+            placeholder="Select businesses to analyze"
+            [showToggleAll]="true"
+            [showClear]="true"
+            [showHeader]="true"
+            [loading]="loadingState.isLoadingBusinesses"
+            styleClass="business-multiselect">
+            <ng-template #selectedItems>
+              <div class="selected-business-summary">
+                <span *ngIf="businessSelectionState.isAllSelected; else specificSelection">
+                  All Businesses ({{ businessSelectionState.allBusinesses.length }})
+                </span>
+                <ng-template #specificSelection>
+                  {{ businessSelectionState.selectedBusinessIds.length }} of {{ businessSelectionState.allBusinesses.length }} businesses
+                </ng-template>
+              </div>
+            </ng-template>
+          </p-multiselect>
+          <button 
+            mat-icon-button 
+            class="refresh-businesses-btn" 
+            (click)="refreshBusinessList()"
+            [disabled]="loadingState.isLoadingBusinesses"
+                         matTooltip="Refresh business list">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+        
+        <!-- Business Selection Error -->
+        <div *ngIf="loadingState.businessSelectionError" class="business-selection-error">
+          <mat-icon>error_outline</mat-icon>
+          {{ loadingState.businessSelectionError }}
+        </div>
+      </div>
+
+      <button mat-button="elevated" class="refresh-btn m3-button" (click)="refreshData()">
         <mat-icon>refresh</mat-icon>
         Refresh Data
       </button>
@@ -41,75 +63,132 @@
 
   <!-- Top Section - Key Performance Indicators (KPIs) -->
   <div class="kpi-section">
-    <h2 class="section-title m3-headline-small">Key Performance Indicators</h2>
+    <div class="section-header">
+      <h2 class="section-title m3-headline-small">Key Performance Indicators</h2>
+      <div class="business-selection-indicator" *ngIf="!businessSelectionState.isAllSelected">
+        <mat-icon>filter_list</mat-icon>
+        <span class="m3-body-medium">
+          Showing {{ businessSelectionState.selectedBusinessIds.length }} of {{ businessSelectionState.allBusinesses.length }} businesses
+        </span>
+        <button mat-button (click)="onSelectAllBusinesses()" class="show-all-btn">
+          <mat-icon>visibility</mat-icon>
+          Show All
+        </button>
+      </div>
+    </div>
     <div class="kpi-grid">
-      <!-- Revenue KPI -->
-      <mat-card class="kpi-card revenue m3-card">
-        <div class="kpi-content">
-          <div class="kpi-icon">
-            <mat-icon>trending_up</mat-icon>
+      <!-- Loading State -->
+      <div *ngIf="loadingState.isLoading" class="loading-container">
+        <mat-card class="loading-card m3-card">
+          <div class="loading-content">
+            <mat-spinner></mat-spinner>
+            <p class="m3-body-large">Loading analytics data...</p>
           </div>
-          <div class="kpi-details">
-            <div class="kpi-value m3-headline-medium">$24,580</div>
-            <div class="kpi-label m3-label-large">Total Revenue</div>
-            <div class="kpi-trend positive">
-              <mat-icon>arrow_upward</mat-icon>
-              +12.5% vs last month
-            </div>
-          </div>
-        </div>
-      </mat-card>
+        </mat-card>
+      </div>
 
-      <!-- Appointments KPI -->
-      <mat-card class="kpi-card appointments m3-card">
-        <div class="kpi-content">
-          <div class="kpi-icon">
-            <mat-icon>event</mat-icon>
+      <!-- Error State -->
+      <div *ngIf="loadingState.hasError" class="error-container">
+        <mat-card class="error-card m3-card">
+          <div class="error-content">
+            <mat-icon class="error-icon">error</mat-icon>
+            <h3 class="m3-headline-small">Error Loading Analytics</h3>
+            <p class="m3-body-medium">{{ loadingState.errorMessage }}</p>
+            <button mat-raised-button color="primary" (click)="refreshData()">
+              <mat-icon>refresh</mat-icon>
+              Try Again
+            </button>
           </div>
-          <div class="kpi-details">
-            <div class="kpi-value m3-headline-medium">156</div>
-            <div class="kpi-label m3-label-large">Appointments</div>
-            <div class="kpi-trend positive">
-              <mat-icon>arrow_upward</mat-icon>
-              +8.2% vs last month
-            </div>
-          </div>
-        </div>
-      </mat-card>
+        </mat-card>
+      </div>
 
-      <!-- Customers KPI -->
-      <mat-card class="kpi-card customers m3-card">
-        <div class="kpi-content">
-          <div class="kpi-icon">
-            <mat-icon>people</mat-icon>
-          </div>
-          <div class="kpi-details">
-            <div class="kpi-value m3-headline-medium">89</div>
-            <div class="kpi-label m3-label-large">New Customers</div>
-            <div class="kpi-trend positive">
-              <mat-icon>arrow_upward</mat-icon>
-              +15.3% vs last month
+      <!-- Data State -->
+      <ng-container *ngIf="!loadingState.isLoading && !loadingState.hasError">
+        <!-- Revenue KPI -->
+        <mat-card class="kpi-card revenue m3-card">
+          <div class="kpi-content">
+            <div class="kpi-icon">
+              <mat-icon>trending_up</mat-icon>
+            </div>
+            <div class="kpi-details">
+              <div class="kpi-value m3-headline-medium">
+                ${{ analyticsSummary.totalRevenue | number:'1.0-0' }}
+              </div>
+              <div class="kpi-label m3-label-large">Total Revenue</div>
+              <div class="kpi-trend positive">
+                <mat-icon>arrow_upward</mat-icon>
+                {{ analyticsData.length }} businesses
+              </div>
             </div>
           </div>
-        </div>
-      </mat-card>
+        </mat-card>
 
-      <!-- Satisfaction KPI -->
-      <mat-card class="kpi-card satisfaction m3-card">
-        <div class="kpi-content">
-          <div class="kpi-icon">
-            <mat-icon>star</mat-icon>
-          </div>
-          <div class="kpi-details">
-            <div class="kpi-value m3-headline-medium">4.8</div>
-            <div class="kpi-label m3-label-large">Avg. Rating</div>
-            <div class="kpi-trend neutral">
-              <mat-icon>remove</mat-icon>
-              No change
+        <!-- Orders KPI -->
+        <mat-card class="kpi-card appointments m3-card">
+          <div class="kpi-content">
+            <div class="kpi-icon">
+              <mat-icon>event</mat-icon>
+            </div>
+            <div class="kpi-details">
+              <div class="kpi-value m3-headline-medium">{{ analyticsSummary.totalOrders | number }}</div>
+              <div class="kpi-label m3-label-large">Total Orders</div>
+              <div class="kpi-trend positive">
+                <mat-icon>arrow_upward</mat-icon>
+                Across all businesses
+              </div>
             </div>
           </div>
+        </mat-card>
+
+        <!-- Businesses KPI -->
+        <mat-card class="kpi-card customers m3-card">
+          <div class="kpi-content">
+            <div class="kpi-icon">
+              <mat-icon>people</mat-icon>
+            </div>
+            <div class="kpi-details">
+              <div class="kpi-value m3-headline-medium">{{ analyticsSummary.totalBusinesses }}</div>
+              <div class="kpi-label m3-label-large">Active Businesses</div>
+              <div class="kpi-trend positive">
+                <mat-icon>arrow_upward</mat-icon>
+                Currently tracked
+              </div>
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- Activity Score KPI -->
+        <mat-card class="kpi-card satisfaction m3-card">
+          <div class="kpi-content">
+            <div class="kpi-icon">
+              <mat-icon>star</mat-icon>
+            </div>
+            <div class="kpi-details">
+              <div class="kpi-value m3-headline-medium">{{ analyticsSummary.averageActivityScore | number:'1.1-1' }}</div>
+              <div class="kpi-label m3-label-large">Avg. Activity Score</div>
+              <div class="kpi-trend neutral">
+                <mat-icon>remove</mat-icon>
+                Performance metric
+              </div>
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- Empty State -->
+        <div *ngIf="analyticsData.length === 0" class="empty-state">
+          <mat-card class="empty-card m3-card">
+            <div class="empty-content">
+              <mat-icon class="empty-icon">analytics</mat-icon>
+              <h3 class="m3-headline-small">No Analytics Data Available</h3>
+              <p class="m3-body-medium">No business analytics data found. Make sure you have businesses registered and some order activity.</p>
+              <button mat-raised-button color="primary" (click)="refreshData()">
+                <mat-icon>refresh</mat-icon>
+                Refresh Data
+              </button>
+            </div>
+          </mat-card>
         </div>
-      </mat-card>
+      </ng-container>
     </div>
   </div>
 
@@ -237,21 +316,17 @@
       </mat-card-header>
       <mat-card-content>
         <div class="actions-grid">
-          <button mat-button="elevated" class="action-btn m3-button">
+          <button mat-button="elevated" class="action-btn m3-button" (click)="exportReport()">
             <mat-icon>download</mat-icon>
             Export Report
           </button>
-          <button mat-button="outlined" class="action-btn m3-button">
+          <button mat-button="outlined" class="action-btn m3-button" (click)="printDashboard()">
             <mat-icon>print</mat-icon>
             Print Dashboard
           </button>
-          <button mat-button="outlined" class="action-btn m3-button">
-            <mat-icon>share</mat-icon>
-            Share Insights
-          </button>
-          <button mat-button="outlined" class="action-btn m3-button">
-            <mat-icon>settings</mat-icon>
-            Customize Views
+          <button mat-button="outlined" class="action-btn m3-button" (click)="refreshData()">
+            <mat-icon>refresh</mat-icon>
+            Refresh Analytics
           </button>
         </div>
       </mat-card-content>
