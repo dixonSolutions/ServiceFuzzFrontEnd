@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MegaMenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-home',
@@ -35,6 +36,210 @@ export class HomeComponent implements OnInit {
     { label: 'Education & Training', value: 'education' },
     { label: 'Pet Services', value: 'pet-services' },
     { label: 'Other', value: 'other' }
+  ];
+
+  // Business categories for mega menu
+  businessCategories: MegaMenuItem[] = [
+    {
+      label: '🏥 Health & Wellness',
+      items: [
+        [
+          {
+            label: 'Medical Services',
+            items: [
+              { label: 'Medical & Dental Clinics' },
+              { label: 'Physical Therapy' },
+              { label: 'Mental Health Services' }
+            ]
+          }
+        ],
+        [
+          {
+            label: 'Wellness Centers',
+            items: [
+              { label: 'Wellness Centers' },
+              { label: 'Chiropractors' },
+              { label: 'Alternative Medicine' }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      label: '💄 Beauty & Personal Care',
+      items: [
+        [
+          {
+            label: 'Hair & Beauty',
+            items: [
+              { label: 'Hair Salons & Barbershops' },
+              { label: 'Nail Salons' },
+              { label: 'Makeup Artists' }
+            ]
+          }
+        ],
+        [
+          {
+            label: 'Spa & Wellness',
+            items: [
+              { label: 'Spa & Massage' },
+              { label: 'Aesthetics & Skincare' },
+              { label: 'Beauty Treatments' }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      label: '🏋️ Fitness & Sports',
+      items: [
+        [
+          {
+            label: 'Fitness Centers',
+            items: [
+              { label: 'Gyms & Fitness Centers' },
+              { label: 'Personal Trainers' },
+              { label: 'Yoga & Pilates Studios' }
+            ]
+          }
+        ],
+        [
+          {
+            label: 'Sports & Training',
+            items: [
+              { label: 'Martial Arts' },
+              { label: 'Sports Coaching' },
+              { label: 'Athletic Training' }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      label: '🏠 Home & Professional Services',
+      items: [
+        [
+          {
+            label: 'Home Maintenance',
+            items: [
+              { label: 'Cleaning Services' },
+              { label: 'Handyman & Repairs' },
+              { label: 'Landscaping & Gardening' }
+            ]
+          }
+        ],
+        [
+          {
+            label: 'Specialized Services',
+            items: [
+              { label: 'Pest Control' },
+              { label: 'Interior Design' },
+              { label: 'Home Inspection' }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      label: '🎓 Education & Training',
+      items: [
+        [
+          {
+            label: 'Learning Services',
+            items: [
+              { label: 'Tutoring Services' },
+              { label: 'Music Lessons' },
+              { label: 'Language Learning' }
+            ]
+          }
+        ],
+        [
+          {
+            label: 'Professional Development',
+            items: [
+              { label: 'Professional Training' },
+              { label: 'Skill Development' },
+              { label: 'Online Courses' }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      label: '🍽️ Food & Hospitality',
+      items: [
+        [
+          {
+            label: 'Food Services',
+            items: [
+              { label: 'Restaurants' },
+              { label: 'Catering Services' },
+              { label: 'Personal Chefs' }
+            ]
+          }
+        ],
+        [
+          {
+            label: 'Events & Venues',
+            items: [
+              { label: 'Food Delivery' },
+              { label: 'Event Venues' },
+              { label: 'Food Trucks' }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      label: '💼 Business & Professional',
+      items: [
+        [
+          {
+            label: 'Consulting',
+            items: [
+              { label: 'Consulting Services' },
+              { label: 'Legal Services' },
+              { label: 'Accounting & Tax' }
+            ]
+          }
+        ],
+        [
+          {
+            label: 'Creative Services',
+            items: [
+              { label: 'Marketing & Design' },
+              { label: 'Photography & Videography' },
+              { label: 'Web Development' }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      label: '🚗 Automotive',
+      items: [
+        [
+          {
+            label: 'Vehicle Services',
+            items: [
+              { label: 'Auto Repair & Maintenance' },
+              { label: 'Car Detailing' },
+              { label: 'Vehicle Inspection' }
+            ]
+          }
+        ],
+        [
+          {
+            label: 'Driving & Training',
+            items: [
+              { label: 'Driving Schools' },
+              { label: 'Automotive Training' },
+              { label: 'Fleet Services' }
+            ]
+          }
+        ]
+      ]
+    }
   ];
 
   // Feature details data
