@@ -958,7 +958,8 @@
           
           <button mat-raised-button color="accent" (click)="onSubmit()" 
                   *ngIf="currentStep === maxSteps - 1"
-                  [disabled]="isSubmitting || isRegistering || !isRegistrationCompletePublic()">
+                  
+                  >
             <mat-spinner diameter="20" *ngIf="isSubmitting || isRegistering"></mat-spinner>
             <span *ngIf="!isSubmitting && !isRegistering">Complete Registration</span>
             <span *ngIf="isRegistering">Registering...</span>

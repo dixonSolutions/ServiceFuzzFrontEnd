@@ -142,6 +142,9 @@ export class BusinessComponent implements OnInit, OnDestroy {
   ) {
     this.initializeForms();
     this.registration = this.data.currentBusinessRegistration;
+    
+    // Expose component to window for debugging
+    (window as any).businessComponent = this;
   }
 
   ngOnInit(): void {
@@ -198,7 +201,7 @@ export class BusinessComponent implements OnInit, OnDestroy {
     this.basicInfoForm = this.fb.group({
       bussinessName: ['', [Validators.required, Validators.minLength(2)]],
       bussinessDescription: ['', [Validators.required, Validators.minLength(10)]],
-      bussinessPhone: ['', [Validators.required, Validators.pattern('^[0-9+ -]{8,}$')]],
+      bussinessPhone: ['', [Validators.required, Validators.pattern('^[0-9+ ()-]{8,}$')]],
       bussinessEmail: ['', [Validators.required, Validators.email]],
       ownerEmail: [{ value: '', disabled: true }],
       operationType: ['solo', [Validators.required]]
@@ -260,6 +263,13 @@ export class BusinessComponent implements OnInit, OnDestroy {
       cycles: this.fb.array([]),
       exceptions: this.fb.array([])
     });
+    
+    // Set up area place custom validator after form is created
+    this.setupAreaPlaceValidator();
+  }
+  
+  private setupAreaPlaceValidator(): void {
+    this.areaPlaceForm.setValidators(this.areaPlaceValidator.bind(this));
   }
 
   nextStep(): void {
@@ -392,6 +402,10 @@ export class BusinessComponent implements OnInit, OnDestroy {
   }
 
   addPlace(): void {
+    console.log('🏠 Adding place - Type:', this.placeType);
+    console.log('🏠 Specific form valid:', this.specificPlaceForm.valid);
+    console.log('🏠 Area form valid:', this.areaPlaceForm.valid);
+    
     if (this.placeType === 'specific' && this.specificPlaceForm.valid) {
       const place: BusinessSpecificAdr = {
         ...this.specificPlaceForm.value,
@@ -399,9 +413,20 @@ export class BusinessComponent implements OnInit, OnDestroy {
         businessID: ''
       };
       this.specificPlaces.push(place);
+      
+      // CRITICAL: Also update the registration's specificPlaces array (like AI does)
+      (this.registration as any).specificPlaces = [...((this.registration as any).specificPlaces || []), place];
+      
+      console.log('✅ Added specific place:', place);
+      console.log('🏠 Total specific places:', this.specificPlaces.length);
+      console.log('🏠 Registration specific places:', ((this.registration as any).specificPlaces || []).length);
+      
       this.specificPlaceForm.reset({ country: 'USA' });
       this.data.openSnackBar('Specific address place saved successfully', 'Close', 2000);
-      this.saveCurrentStep();
+      
+      // Always sync places immediately after adding
+      this.syncPlacesToRegistration();
+      
     } else if (this.placeType === 'area' && this.areaPlaceForm.valid) {
       const area: S2CareaSpecification = {
         ...this.areaPlaceForm.value,
@@ -409,9 +434,35 @@ export class BusinessComponent implements OnInit, OnDestroy {
         businessID: ''
       };
       this.areaPlaces.push(area);
+      
+      // CRITICAL: Also update the registration's areaPlaces array (like AI does)
+      (this.registration as any).areaPlaces = [...((this.registration as any).areaPlaces || []), area];
+      
+      console.log('✅ Added area place:', area);
+      console.log('🏠 Total area places:', this.areaPlaces.length);
+      console.log('🏠 Registration area places:', ((this.registration as any).areaPlaces || []).length);
+      
       this.areaPlaceForm.reset({ country: 'USA' });
       this.data.openSnackBar('Area specification saved successfully', 'Close', 2000);
-      this.saveCurrentStep();
+      
+      // Always sync places immediately after adding
+      this.syncPlacesToRegistration();
+      
+    } else {
+      // Show validation errors
+      if (this.placeType === 'specific') {
+        console.log('❌ Specific place form invalid:', this.specificPlaceForm.errors);
+        Object.keys(this.specificPlaceForm.controls).forEach(key => {
+          const control = this.specificPlaceForm.get(key);
+          if (control && !control.valid) {
+            console.log(`  Field "${key}" invalid:`, control.errors);
+          }
+        });
+        this.data.openSnackBar('Please fill in all required fields for the specific address', 'Close', 3000);
+      } else if (this.placeType === 'area') {
+        console.log('❌ Area place form invalid:', this.areaPlaceForm.errors);
+        this.data.openSnackBar('Please provide at least a city or state for the service area', 'Close', 3000);
+      }
     }
   }
 
@@ -556,10 +607,20 @@ export class BusinessComponent implements OnInit, OnDestroy {
   }
 
   onSubmit(): void {
+    console.log('🚀 Complete Registration button clicked!');
+    console.log('- isRegistrationComplete:', this.isRegistrationComplete());
+    console.log('- isSubmitting:', this.isSubmitting);
+    console.log('- isRegistering:', this.isRegistering);
+    
     if (this.isRegistrationComplete()) {
+      console.log('✅ All validations passed, submitting registration...');
       this.submitBusinessRegistration();
     } else {
+      console.log('❌ Validation failed, showing error message');
       this.data.openSnackBar('Please complete all steps', 'Close', 3000);
+      
+      // Force check validation again to see detailed errors
+      this.isRegistrationCompletePublic();
     }
   }
 
@@ -690,7 +751,90 @@ export class BusinessComponent implements OnInit, OnDestroy {
    * Public method to check if registration is complete (for template)
    */
   isRegistrationCompletePublic(): boolean {
-    return this.isRegistrationComplete();
+    const isComplete = this.isRegistrationComplete();
+    
+    // Debug logging to help identify validation issues
+    if (!isComplete) {
+      console.log('🔍 Registration validation failed:');
+      console.log('- Basic info form valid:', this.basicInfoForm.valid);
+      if (!this.basicInfoForm.valid) {
+        console.log('  Basic info form errors:', this.basicInfoForm.errors);
+        Object.keys(this.basicInfoForm.controls).forEach(key => {
+          const control = this.basicInfoForm.get(key);
+          if (control && !control.valid) {
+            console.log(`  Field "${key}" invalid:`, control.errors, 'Value:', control.value);
+          }
+        });
+      }
+      console.log('- Services count:', this.registration.services.length);
+      console.log('- Specific places count:', this.specificPlaces.length);
+      console.log('- Area places count:', this.areaPlaces.length);
+      console.log('- Business schedules count:', this.businessSchedules.length);
+    }
+    
+    return isComplete;
+  }
+
+  /**
+   * Custom validator for area place form - requires at least city or state
+   */
+  private areaPlaceValidator(formGroup: any): any {
+    const city = formGroup.get('city')?.value;
+    const state = formGroup.get('state')?.value;
+    
+    if (!city && !state) {
+      return { areaRequired: 'Please provide at least a city or state' };
+    }
+    return null;
+  }
+
+  /**
+   * Debug method to check all validation requirements
+   * Call this from browser console: window.businessComponent.debugValidation()
+   */
+  debugValidation(): void {
+    console.log('🔍 COMPLETE VALIDATION DEBUG:');
+    console.log('='.repeat(50));
+    
+    // Basic Info Form
+    console.log('📝 BASIC INFO FORM:');
+    console.log('  Valid:', this.basicInfoForm.valid);
+    console.log('  Values:', this.basicInfoForm.value);
+    Object.keys(this.basicInfoForm.controls).forEach(key => {
+      const control = this.basicInfoForm.get(key);
+      console.log(`  ${key}:`, {
+        value: control?.value,
+        valid: control?.valid,
+        errors: control?.errors
+      });
+    });
+    
+    // Services
+    console.log('\n🛠️ SERVICES:');
+    console.log('  Count:', this.registration.services.length);
+    console.log('  Services:', this.registration.services);
+    
+    // Places
+    console.log('\n📍 PLACES:');
+    console.log('  Component specific places count:', this.specificPlaces.length);
+    console.log('  Component area places count:', this.areaPlaces.length);
+    console.log('  Registration specific places count:', ((this.registration as any).specificPlaces || []).length);
+    console.log('  Registration area places count:', ((this.registration as any).areaPlaces || []).length);
+    console.log('  Registration.places count:', this.registration.places.length);
+    console.log('  Component specific places:', this.specificPlaces);
+    console.log('  Component area places:', this.areaPlaces);
+    console.log('  Registration specific places:', (this.registration as any).specificPlaces);
+    console.log('  Registration area places:', (this.registration as any).areaPlaces);
+    
+    // Schedules
+    console.log('\n📅 SCHEDULES:');
+    console.log('  Business schedules count:', this.businessSchedules.length);
+    console.log('  Business schedules:', this.businessSchedules);
+    
+    // Overall
+    console.log('\n✅ OVERALL VALIDATION:');
+    console.log('  Registration complete:', this.isRegistrationComplete());
+    console.log('  Button should be enabled:', this.isRegistrationCompletePublic());
   }
 
   // Public getter methods for template
@@ -881,6 +1025,10 @@ export class BusinessComponent implements OnInit, OnDestroy {
   }
 
   private syncPlacesToRegistration(): void {
+    console.log('🔄 Syncing places to registration...');
+    console.log('🏠 Specific places to sync:', this.specificPlaces.length);
+    console.log('🏠 Area places to sync:', this.areaPlaces.length);
+    
     // Convert specificPlaces and areaPlaces to BusinessPlace objects and sync to registration.places
     const allPlaces: BusinessPlace[] = [
       ...this.specificPlaces.map(sp => {
@@ -921,8 +1069,10 @@ export class BusinessComponent implements OnInit, OnDestroy {
       })
     ];
     
+    console.log('🔄 Total places after sync:', allPlaces.length);
     this.registration.places = allPlaces;
     this.data.updateBusinessRegistration(this.registration);
+    console.log('✅ Places synced to registration.places');
   }
 
   private ensureServiceIDs(): void {
