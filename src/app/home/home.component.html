@@ -52,7 +52,10 @@
               <span>✨Mobile App</span>
             </div>
           </div>
-          
+          <p-button (click)="showDialog()" label="Watch Demo" />
+<p-dialog header="ServiceFuzz Demo" [modal]="true" [(visible)]="Videovisible" [style]="{ width: '50rem' }" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [maximizable]="true">
+    <iframe width="560" height="315" src="https://www.youtube.com/watch?v=dQw4w9WgXcQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</p-dialog>
           <p class="hero-subtitle">
             ServiceFuzz automates your service business so you can focus on what matters most: serving customers.
           </p>

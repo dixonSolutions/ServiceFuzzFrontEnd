@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MegaMenuItem } from 'primeng/api';
 
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
@@ -12,7 +13,7 @@ export class HomeComponent implements OnInit {
   // Modal states
   showRegistrationModal = false;
   registrationLoading = false;
-
+  Videovisible = false;
   // Feature panel states
   showFeaturePanel = false;
   activeFeature: any = null;
@@ -338,6 +339,20 @@ export class HomeComponent implements OnInit {
   openRegistrationModal(): void {
     this.showRegistrationModal = true;
   }
+
+  showDialog(): void {
+    //  this.Videovisible = true;
+    const videoUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+  const width = screen.width;
+  const height = screen.height;
+  const left = (screen.width - width) / 2;
+  const top = (screen.height - height) / 2;
+
+  const features = `width=${0.5 *width},height=${0.5 *height},left=${left},top=${top},resizable=yes`;
+  window.open(videoUrl, '_blank', features);
+
+
+}
 
   closeRegistrationModal(): void {
     this.showRegistrationModal = false;
