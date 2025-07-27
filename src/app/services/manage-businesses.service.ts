@@ -1,9 +1,39 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, forkJoin } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 import { SubscriptionStatus } from '../models/subscription-status';
 import { DataSvrService } from './data-svr.service';
+
+/**
+ * Interface for Stripe account API response
+ */
+export interface StripeAccountResponse {
+  email?: string;
+  message?: string;
+  hasStripeAccount: boolean;
+}
+
+/**
+ * Interface for creating Stripe account request
+ */
+export interface CreateStripeAccountRequest {
+  Email: string;
+  Country: string;
+  BusinessId: string;
+}
+
+/**
+ * Interface for Stripe billing setup request (legacy - keeping for compatibility)
+ */
+export interface StripeBillingSetupRequest {
+  businessId: string;
+  businessEmail: string;
+  businessWebsite?: string | null;
+  businessDescription: string;
+  businessName: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +43,11 @@ export class ManageBusinessesService {
   
   // Instance array to store business DTOs
   private businessesInstance: BusinessRegistrationDto[] = [];
+  
+  // Cache for Stripe account details
+  private stripeAccountCache: Map<string, StripeAccountResponse> = new Map();
+  private stripeAccountCacheTimestamp: Map<string, number> = new Map();
+  private readonly CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes cache duration
 
   constructor(
     private http: HttpClient,
@@ -73,7 +108,8 @@ export class ManageBusinessesService {
    */
   clearBusinessesInstance(): void {
     this.businessesInstance = [];
-    console.log('Businesses instance cleared');
+    this.clearStripeAccountCache();
+    console.log('Businesses instance and Stripe cache cleared');
   }
 
   /**
@@ -203,5 +239,181 @@ export class ManageBusinessesService {
         'Authorization': `Bearer ${jwtToken}`
       }
     });
+  }
+
+    /**
+   * Get Stripe account email for a business (with caching)
+   * @param businessId - The ID of the business to check Stripe account for
+   * @param forceRefresh - Whether to force a refresh from API
+   * @returns Observable of Stripe account response
+   */
+  getStripeAccountEmail(businessId: string, forceRefresh: boolean = false): Observable<StripeAccountResponse> {
+    // Check cache first if not forcing refresh
+    if (!forceRefresh && this.isStripeAccountCached(businessId)) {
+      const cachedResponse = this.stripeAccountCache.get(businessId)!;
+      console.log('Returning cached Stripe account data for business:', businessId);
+      return of(cachedResponse);
+    }
+
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const url = `${this.apiUrl}/api/Subscription/GetStripeAccountEmail/${businessId}`;
+
+    // Debug logging
+    console.log('Making Stripe account API call (cache miss or forced refresh):', {
+      url: url,
+      businessId: businessId,
+      forceRefresh: forceRefresh,
+      hasJwtToken: !!jwtToken
+    });
+
+    return this.http.get<StripeAccountResponse>(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`
+      }
+    }).pipe(
+      tap(response => {
+        // Cache the response
+        this.cacheStripeAccountResponse(businessId, response);
+      })
+    );
+  }
+
+  /**
+   * Get cached Stripe account data for a business
+   * @param businessId - The ID of the business
+   * @returns StripeAccountResponse or null if not cached or expired
+   */
+  getCachedStripeAccountData(businessId: string): StripeAccountResponse | null {
+    if (this.isStripeAccountCached(businessId)) {
+      return this.stripeAccountCache.get(businessId) || null;
+    }
+    return null;
+  }
+
+  /**
+   * Check if Stripe account data is cached and valid for a business
+   * @param businessId - The ID of the business
+   * @returns boolean indicating if valid cache exists
+   */
+  isStripeAccountCached(businessId: string): boolean {
+    const cachedData = this.stripeAccountCache.get(businessId);
+    const cacheTimestamp = this.stripeAccountCacheTimestamp.get(businessId);
+    
+    if (!cachedData || !cacheTimestamp) {
+      return false;
+    }
+
+    // Check if cache is still valid (not expired)
+    const now = Date.now();
+    const isExpired = (now - cacheTimestamp) > this.CACHE_DURATION_MS;
+    
+    if (isExpired) {
+      // Clean up expired cache
+      this.stripeAccountCache.delete(businessId);
+      this.stripeAccountCacheTimestamp.delete(businessId);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Cache Stripe account response for a business
+   * @param businessId - The ID of the business
+   * @param response - The Stripe account response to cache
+   */
+  private cacheStripeAccountResponse(businessId: string, response: StripeAccountResponse): void {
+    this.stripeAccountCache.set(businessId, response);
+    this.stripeAccountCacheTimestamp.set(businessId, Date.now());
+    console.log('Cached Stripe account data for business:', businessId, 'Has account:', response.hasStripeAccount);
+  }
+
+  /**
+   * Clear Stripe account cache
+   * @param businessId - Optional specific business ID to clear, if not provided clears all
+   */
+  clearStripeAccountCache(businessId?: string): void {
+    if (businessId) {
+      this.stripeAccountCache.delete(businessId);
+      this.stripeAccountCacheTimestamp.delete(businessId);
+      console.log('Cleared Stripe cache for business:', businessId);
+    } else {
+      this.stripeAccountCache.clear();
+      this.stripeAccountCacheTimestamp.clear();
+      console.log('Cleared entire Stripe account cache');
+    }
+  }
+
+  /**
+   * Get all cached Stripe account statuses
+   * @returns Map of business IDs to their Stripe account status
+   */
+  getAllCachedStripeStatuses(): Map<string, boolean> {
+    const statusMap = new Map<string, boolean>();
+    
+    this.stripeAccountCache.forEach((response, businessId) => {
+      if (this.isStripeAccountCached(businessId)) {
+        statusMap.set(businessId, response.hasStripeAccount);
+      }
+    });
+    
+    return statusMap;
+  }
+
+    /**
+   * Refresh Stripe account data for specific businesses
+   * @param businessIds - Array of business IDs to refresh
+   * @returns Observable that completes when all refreshes are done
+   */
+  refreshStripeAccountData(businessIds: string[]): Observable<StripeAccountResponse[]> {
+    const refreshRequests = businessIds.map(businessId => 
+      this.getStripeAccountEmail(businessId, true) // Force refresh
+    );
+
+    if (refreshRequests.length === 0) {
+      return of([]);
+    }
+
+    return forkJoin(refreshRequests);
+  }
+
+  /**
+   * Create Stripe account for a business
+   * @param stripeData - The Stripe account creation data
+   * @returns Observable of creation response
+   */
+  createStripeAccount(stripeData: CreateStripeAccountRequest): Observable<any> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const url = `${this.apiUrl}/api/Subscription/CreateStripeAccount`;
+
+    // Debug logging
+    console.log('Create Stripe account API call:', {
+      url: url,
+      businessId: stripeData.BusinessId,
+      email: stripeData.Email,
+      country: stripeData.Country,
+      hasJwtToken: !!jwtToken
+    });
+
+    return this.http.post(url, stripeData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`
+      }
+    }).pipe(
+      tap(() => {
+        // Clear cache for this business to force refresh
+        this.clearStripeAccountCache(stripeData.BusinessId);
+      })
+    );
   }
 } 

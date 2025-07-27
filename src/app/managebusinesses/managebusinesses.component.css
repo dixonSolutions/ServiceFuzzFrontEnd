@@ -145,6 +145,150 @@
   opacity: 0.6;
 }
 
+/* Setup Billing Button */
+.setup-billing-btn {
+  background-color: #4caf50 !important;
+  color: white !important;
+  margin-left: 8px !important;
+}
+
+.setup-billing-btn:hover {
+  background-color: #45a049 !important;
+}
+
+/* Billing Setup Dialog Styles */
+::ng-deep .p-dialog {
+  border-radius: 12px !important;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+}
+
+.billing-setup-content {
+  padding: 20px;
+}
+
+.billing-info {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 8px;
+}
+
+.billing-icon {
+  font-size: 48px !important;
+  height: 48px !important;
+  width: 48px !important;
+  color: #2196f3;
+  margin-bottom: 12px;
+}
+
+.billing-info h3 {
+  margin: 12px 0 8px 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.billing-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.billing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-group input.error,
+.form-group textarea.error,
+.form-group ::ng-deep .p-dropdown.error {
+  border-color: #f44336 !important;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.billing-features {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #4caf50;
+}
+
+.billing-features h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.billing-features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.billing-features li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
+}
+
+.billing-features li:last-child {
+  margin-bottom: 0;
+}
+
+.billing-features mat-icon {
+  color: #4caf50;
+  font-size: 18px !important;
+  height: 18px !important;
+  width: 18px !important;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .billing-setup-content {
+    padding: 16px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
+}
+
 /* Search Results Info */
 .search-results-info {
   text-align: center;
@@ -284,6 +428,227 @@ mat-card-actions button {
   height: 16px;
   margin-right: 8px;
   color: #666;
+}
+
+/* Stripe Status Styling */
+.stripe-status {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+  color: #666;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stripe-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin-right: 8px;
+}
+
+.stripe-icon.has-stripe {
+  color: #4caf50 !important; /* Green for enabled payment */
+}
+
+.stripe-icon.no-stripe {
+  color: #ff9800 !important; /* Orange for disabled payment */
+}
+
+.loading-icon {
+  color: #2196f3 !important; /* Blue for loading */
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.stripe-status span {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Color the text based on status */
+.stripe-status:has(.has-stripe) span {
+  color: #4caf50;
+}
+
+.stripe-status:has(.no-stripe) span {
+  color: #ff9800;
+}
+
+.stripe-status:has(.loading-icon) span {
+  color: #2196f3;
+}
+
+/* Setup Billing Button */
+.setup-billing-btn {
+  background-color: #e3f2fd !important;
+  color: #1976d2 !important;
+  border: 1px solid #bbdefb !important;
+  transition: all 0.3s ease;
+}
+
+.setup-billing-btn:hover {
+  background-color: #bbdefb !important;
+  border-color: #1976d2 !important;
+  transform: translateY(-1px);
+}
+
+.setup-billing-btn mat-icon {
+  color: #1976d2 !important;
+}
+
+/* Billing Setup Dialog Styles */
+::ng-deep .billing-setup-dialog {
+  max-width: 500px;
+  width: 90vw;
+}
+
+.billing-setup-content {
+  padding: 1rem;
+}
+
+.billing-info {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border-radius: 12px;
+}
+
+.billing-icon {
+  font-size: 3rem !important;
+  width: 3rem !important;
+  height: 3rem !important;
+  color: #1976d2;
+  margin-bottom: 1rem;
+}
+
+.billing-info h3 {
+  color: #1976d2;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.billing-info p {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.billing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.form-group input.error,
+.form-group textarea.error {
+  border-color: #f44336;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.billing-features {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #4caf50;
+}
+
+.billing-features h4 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.billing-features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.billing-features li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #2c3e50;
+}
+
+.billing-features mat-icon {
+  color: #4caf50 !important;
+  font-size: 1.2rem !important;
+  width: 1.2rem !important;
+  height: 1.2rem !important;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+/* Responsive adjustments for billing dialog */
+@media (max-width: 480px) {
+  ::ng-deep .billing-setup-dialog {
+    width: 95vw;
+  }
+  
+  .billing-setup-content {
+    padding: 0.5rem;
+  }
+  
+  .billing-info {
+    padding: 1rem;
+  }
+  
+  .billing-icon {
+    font-size: 2.5rem !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
 }
 
 /* Responsive Adjustments */

@@ -62,7 +62,7 @@
               (click)="refreshBusinesses()" 
               class="refresh-button"
               [disabled]="isLoading"
-              matTooltip="Refresh businesses">
+              matTooltip="Refresh businesses and payment status">
         <mat-icon>{{ isLoading ? 'hourglass_empty' : 'refresh' }}</mat-icon>
       </button>
     </div>
@@ -125,25 +125,145 @@
                 <mat-icon>people</mat-icon>
                 {{business.staff?.length || 0}} Staff
               </p>
+              <p class="stripe-status">
+                <mat-icon 
+                  *ngIf="isStripeAccountLoading(business.basicInfo.businessID)"
+                  class="loading-icon">
+                  hourglass_empty
+                </mat-icon>
+                <mat-icon 
+                  *ngIf="!isStripeAccountLoading(business.basicInfo.businessID) && hasStripeAccount(business.basicInfo.businessID)"
+                  class="stripe-icon has-stripe"
+                  matTooltip="Payment processing enabled">
+                  payment
+                </mat-icon>
+                <mat-icon 
+                  *ngIf="!isStripeAccountLoading(business.basicInfo.businessID) && !hasStripeAccount(business.basicInfo.businessID)"
+                  class="stripe-icon no-stripe"
+                  matTooltip="Payment processing not set up">
+                  payment_disabled
+                </mat-icon>
+                <span *ngIf="hasStripeAccount(business.basicInfo.businessID)">Payment Ready</span>
+                <span *ngIf="!hasStripeAccount(business.basicInfo.businessID) && !isStripeAccountLoading(business.basicInfo.businessID)">Payment Setup Needed</span>
+                <span *ngIf="isStripeAccountLoading(business.basicInfo.businessID)">Checking Payment Status...</span>
+              </p>
             </div>
           </div>
         </mat-card-content>
 
         <mat-card-actions>
-          <button mat-button color="primary" (click)="startEditing(business)">
-            <mat-icon>edit</mat-icon>
-            Edit
-          </button>
-          <button mat-button color="warn" (click)="deleteBusiness(business)">
-            <mat-icon>delete</mat-icon>
-            Delete
-          </button>
-          <button mat-button color="accent" (click)="viewBusinessDetails(business)">
-            <mat-icon>visibility</mat-icon>
-            View Details
-          </button>
+          <!-- Primary action buttons row -->
+          <div class="primary-actions">
+            <button mat-button color="primary" (click)="startEditing(business)">
+              <mat-icon>edit</mat-icon>
+              Edit
+            </button>
+            <button mat-button color="warn" (click)="deleteBusiness(business)">
+              <mat-icon>delete</mat-icon>
+              Delete
+            </button>
+            <button mat-button color="accent" (click)="viewBusinessDetails(business)">
+              <mat-icon>visibility</mat-icon>
+              View Details
+            </button>
+          </div>
         </mat-card-actions>
+        
+        <!-- Billing setup row - completely separate -->
+        <div class="billing-setup-row" 
+             *ngIf="!hasStripeAccount(business.basicInfo.businessID) && !isStripeAccountLoading(business.basicInfo.businessID)">
+          <button mat-raised-button 
+                  class="setup-billing-btn"
+                  (click)="openBillingSetupDialog(business)">
+            <mat-icon>payment</mat-icon>
+            Set Up Payment Processing
+          </button>
+        </div>
       </mat-card>
     </div>
   </div>
 </div>
+
+<!-- BILLING SETUP DIALOG -->
+<p-dialog 
+  header="Set Up Billing for {{selectedBusiness?.basicInfo?.businessName}}" 
+  [(visible)]="showBillingSetupDialog" 
+  [modal]="true" 
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '500px', maxWidth: '90vw' }"
+  (onHide)="closeBillingSetupDialog()">
+  
+  <div class="billing-setup-content" *ngIf="selectedBusiness">
+    <div class="billing-info">
+      <mat-icon class="billing-icon">account_balance</mat-icon>
+      <h3>Connect Stripe Account</h3>
+      <p>Set up payment processing for your business to accept online payments from customers.</p>
+    </div>
+    
+    <form class="billing-form" [formGroup]="billingSetupForm" (ngSubmit)="submitBillingSetup()">
+      <div class="form-group">
+        <label for="businessEmail">Business Email *</label>
+        <input 
+          id="businessEmail"
+          type="email" 
+          pInputText 
+          formControlName="businessEmail"
+          placeholder="Enter business email for Stripe account"
+          class="w-full"
+          [class.error]="billingSetupForm.get('businessEmail')?.invalid && billingSetupForm.get('businessEmail')?.touched">
+        <small class="error-message" 
+               *ngIf="billingSetupForm.get('businessEmail')?.invalid && billingSetupForm.get('businessEmail')?.touched">
+          Please enter a valid business email
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="country">Country *</label>
+        <p-dropdown
+          id="country"
+          [options]="countryOptions"
+          formControlName="country"
+          placeholder="Select country"
+          optionLabel="label"
+          optionValue="value"
+          class="w-full"
+          [class.error]="billingSetupForm.get('country')?.invalid && billingSetupForm.get('country')?.touched">
+        </p-dropdown>
+        <small class="error-message" 
+               *ngIf="billingSetupForm.get('country')?.invalid && billingSetupForm.get('country')?.touched">
+          Please select a country
+        </small>
+      </div>
+
+      <div class="billing-features">
+        <h4>What you'll get:</h4>
+        <ul>
+          <li><mat-icon>check_circle</mat-icon> Accept credit card payments</li>
+          <li><mat-icon>check_circle</mat-icon> Automatic invoice generation</li>
+          <li><mat-icon>check_circle</mat-icon> Real-time payment tracking</li>
+          <li><mat-icon>check_circle</mat-icon> Secure payment processing</li>
+        </ul>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" 
+                pButton 
+                label="Cancel" 
+                icon="pi pi-times"
+                class="p-button-outlined"
+                (click)="closeBillingSetupDialog()"
+                [disabled]="billingSetupLoading">
+        </button>
+        <button type="submit" 
+                pButton 
+                label="Set Up Billing" 
+                icon="pi pi-credit-card"
+                [loading]="billingSetupLoading"
+                [disabled]="billingSetupForm.invalid || billingSetupLoading">
+        </button>
+      </div>
+    </form>
+  </div>
+</p-dialog>

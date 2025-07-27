@@ -1,12 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataSvrService } from '../services/data-svr.service';
-import { ManageBusinessesService } from '../services/manage-businesses.service';
+import { ManageBusinessesService, StripeAccountResponse, CreateStripeAccountRequest } from '../services/manage-businesses.service';
 import { BusinessBasicInfo } from '../models/businessbasicinfo';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 import { Subscription } from 'rxjs';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-managebusinesses',
@@ -20,15 +22,36 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
   filteredBusinesses: BusinessRegistrationDto[] = [];
   isLoading: boolean = false;
   subscription = new Subscription();
+  
+  // Stripe account status tracking
+  stripeAccountStatus: Map<string, boolean> = new Map();
+  stripeAccountLoading: Map<string, boolean> = new Map();
+
+  // Billing setup dialog
+  showBillingSetupDialog = false;
+  selectedBusiness: BusinessRegistrationDto | null = null;
+  billingSetupForm!: FormGroup;
+  billingSetupLoading = false;
+  
+  // Country options for dropdown
+  countryOptions = [
+    { label: 'Australia', value: 'AU' },
+    { label: 'United States', value: 'US' },
+    { label: 'United Kingdom', value: 'GB' },
+    { label: 'Canada', value: 'CA' },
+    { label: 'New Zealand', value: 'NZ' }
+  ];
 
   constructor(
     public data: DataSvrService,
     private manageBusinessesService: ManageBusinessesService,
     private router: Router,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private formBuilder: FormBuilder
   ) {
     this.loadBusinesses();
+    this.initializeBillingForm();
   }
 
   ngOnInit(): void {
@@ -38,6 +61,16 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+  }
+
+  /**
+   * Initialize billing setup form
+   */
+  private initializeBillingForm(): void {
+    this.billingSetupForm = this.formBuilder.group({
+      businessEmail: ['', [Validators.required, Validators.email]],
+      country: ['AU', [Validators.required]] // Default to Australia
+    });
   }
 
   /**
@@ -54,6 +87,9 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
         this.allBusinesses = existingBusinesses;
         this.filteredBusinesses = existingBusinesses;
         this.isLoading = false;
+        
+        // Check Stripe account status for all businesses
+        this.checkStripeAccountsForAllBusinesses();
         return;
       }
       
@@ -68,6 +104,9 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
           this.allBusinesses = businesses;
           this.filteredBusinesses = businesses;
           this.isLoading = false;
+          
+          // Check Stripe account status for all businesses
+          this.checkStripeAccountsForAllBusinesses();
         },
         error: (error) => {
           console.error('Error fetching businesses:', error);
@@ -79,11 +118,12 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Refresh businesses (clear instance and reload)
+   * Refresh businesses and payment status (clear instance and reload)
    */
   refreshBusinesses(): void {
-    console.log('Refreshing businesses - clearing instance');
+    console.log('Refreshing businesses and payment status - clearing caches');
     this.manageBusinessesService.clearBusinessesInstance();
+    this.clearStripeAccountCache();
     this.loadBusinesses();
   }
 
@@ -94,6 +134,7 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
     this.manageBusinessesService.clearBusinessesInstance();
     this.allBusinesses = [];
     this.filteredBusinesses = [];
+    this.clearStripeAccountCache();
   }
 
   /**
@@ -178,6 +219,158 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Check Stripe account status for all businesses (using cache when possible)
+   */
+  private checkStripeAccountsForAllBusinesses(): void {
+    if (!this.allBusinesses || this.allBusinesses.length === 0) {
+      return;
+    }
+
+    // First, load all cached data
+    this.loadCachedStripeData();
+
+    // Identify businesses that need API calls (not cached or missing data)
+    const businessesNeedingApiCall: string[] = [];
+    
+    this.allBusinesses.forEach(business => {
+      const businessId = business.basicInfo.businessID;
+      if (!businessId) {
+        return;
+      }
+
+      const cachedData = this.manageBusinessesService.getCachedStripeAccountData(businessId);
+      if (!cachedData) {
+        businessesNeedingApiCall.push(businessId);
+        this.stripeAccountLoading.set(businessId, true);
+      }
+    });
+
+    // Only make API calls for businesses without cached data
+    if (businessesNeedingApiCall.length === 0) {
+      console.log('All Stripe account data loaded from cache');
+      return;
+    }
+
+    console.log(`Making API calls for ${businessesNeedingApiCall.length} businesses without cached data`);
+
+    // Create API requests only for businesses needing fresh data
+    const stripeChecks = businessesNeedingApiCall.map(businessId => 
+      this.manageBusinessesService.getStripeAccountEmail(businessId)
+    );
+
+    // Execute API requests for uncached businesses
+    forkJoin(stripeChecks).subscribe({
+      next: (responses: StripeAccountResponse[]) => {
+        responses.forEach((response, index) => {
+          const businessId = businessesNeedingApiCall[index];
+          this.stripeAccountStatus.set(businessId, response.hasStripeAccount);
+          this.stripeAccountLoading.set(businessId, false);
+        });
+        console.log(`Updated Stripe status for ${responses.length} businesses from API`);
+      },
+      error: (error) => {
+        console.error('Error checking Stripe accounts:', error);
+        // Clear loading states on error
+        businessesNeedingApiCall.forEach(businessId => {
+          this.stripeAccountLoading.set(businessId, false);
+        });
+      }
+    });
+  }
+
+  /**
+   * Load cached Stripe data into component state
+   */
+  private loadCachedStripeData(): void {
+    this.allBusinesses.forEach(business => {
+      const businessId = business.basicInfo.businessID;
+      if (!businessId) {
+        return;
+      }
+
+      const cachedData = this.manageBusinessesService.getCachedStripeAccountData(businessId);
+      if (cachedData) {
+        this.stripeAccountStatus.set(businessId, cachedData.hasStripeAccount);
+        this.stripeAccountLoading.set(businessId, false);
+      }
+    });
+  }
+
+  /**
+   * Get Stripe account status for a specific business
+   * @param businessId - The ID of the business
+   * @returns boolean indicating if business has Stripe account
+   */
+  hasStripeAccount(businessId: string | undefined): boolean {
+    if (!businessId) {
+      return false;
+    }
+    return this.stripeAccountStatus.get(businessId) || false;
+  }
+
+  /**
+   * Check if Stripe account status is loading for a specific business
+   * @param businessId - The ID of the business
+   * @returns boolean indicating if loading
+   */
+  isStripeAccountLoading(businessId: string | undefined): boolean {
+    if (!businessId) {
+      return false;
+    }
+    return this.stripeAccountLoading.get(businessId) || false;
+  }
+
+  /**
+   * Clear Stripe account cache (both service and component)
+   */
+  private clearStripeAccountCache(): void {
+    this.stripeAccountStatus.clear();
+    this.stripeAccountLoading.clear();
+    // Also clear the service cache
+    this.manageBusinessesService.clearStripeAccountCache();
+  }
+
+  /**
+   * Force refresh Stripe account data for all businesses (private helper)
+   */
+  private refreshStripeAccountData(): void {
+    if (!this.allBusinesses || this.allBusinesses.length === 0) {
+      return;
+    }
+
+    const businessIds = this.allBusinesses
+      .map(business => business.basicInfo.businessID)
+      .filter(id => id !== undefined) as string[];
+
+    if (businessIds.length === 0) {
+      return;
+    }
+
+    // Set loading states
+    businessIds.forEach(businessId => {
+      this.stripeAccountLoading.set(businessId, true);
+    });
+
+    // Force refresh from API
+    this.manageBusinessesService.refreshStripeAccountData(businessIds).subscribe({
+      next: (responses: StripeAccountResponse[]) => {
+        responses.forEach((response, index) => {
+          const businessId = businessIds[index];
+          this.stripeAccountStatus.set(businessId, response.hasStripeAccount);
+          this.stripeAccountLoading.set(businessId, false);
+        });
+        console.log('Payment status refreshed for all businesses');
+      },
+      error: (error) => {
+        console.error('Error refreshing Stripe accounts:', error);
+        businessIds.forEach(businessId => {
+          this.stripeAccountLoading.set(businessId, false);
+        });
+      }
+    });
+  }
+
+  /**
    * Perform the actual deletion
    * @param business - The business to delete
    */
@@ -211,6 +404,14 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
         // Update service instance
         this.manageBusinessesService.setBusinessesInstance(this.allBusinesses);
         
+        // Clean up Stripe status cache for deleted business
+        if (businessId) {
+          this.stripeAccountStatus.delete(businessId);
+          this.stripeAccountLoading.delete(businessId);
+          // Also clear from service cache
+          this.manageBusinessesService.clearStripeAccountCache(businessId);
+        }
+        
         // Show success message
         this.data.openSnackBar(`${businessName} has been deleted successfully`, 'Close', 3000);
       },
@@ -232,6 +433,94 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
         } else {
           this.data.openSnackBar(`Error deleting ${businessName}. Please try again.`, 'Close', 3000);
         }
+      }
+    });
+  }
+
+  /**
+   * Open billing setup dialog for a business
+   */
+  openBillingSetupDialog(business: BusinessRegistrationDto): void {
+    this.selectedBusiness = business;
+    this.showBillingSetupDialog = true;
+    
+    // Pre-fill form with business data
+    this.billingSetupForm.patchValue({
+      businessEmail: business.basicInfo.email || '',
+      country: 'AU' // Default to Australia
+    });
+  }
+
+  /**
+   * Close billing setup dialog
+   */
+  closeBillingSetupDialog(): void {
+    this.showBillingSetupDialog = false;
+    this.selectedBusiness = null;
+    this.billingSetupForm.reset();
+    this.billingSetupLoading = false;
+  }
+
+  /**
+   * Submit billing setup form
+   */
+  submitBillingSetup(): void {
+    if (this.billingSetupForm.invalid || !this.selectedBusiness) {
+      return;
+    }
+
+    this.billingSetupLoading = true;
+    const formData = this.billingSetupForm.value;
+    const businessId = this.selectedBusiness.basicInfo.businessID;
+
+    if (!businessId) {
+      this.data.openSnackBar('Error: Business ID not found', 'Close', 3000);
+      this.billingSetupLoading = false;
+      return;
+    }
+
+    // Prepare Stripe account creation data
+    const stripeAccountData: CreateStripeAccountRequest = {
+      Email: formData.businessEmail,
+      Country: formData.country,
+      BusinessId: businessId
+    };
+
+    console.log('Creating Stripe account for business:', stripeAccountData);
+
+    // Make API call to create Stripe account
+    this.manageBusinessesService.createStripeAccount(stripeAccountData).subscribe({
+      next: (response:any) => {
+        console.log('Stripe account creation successful:', response);
+        
+        // Update Stripe account status
+        this.stripeAccountStatus.set(businessId, true);
+        this.manageBusinessesService.clearStripeAccountCache(businessId);
+        
+        // Show success message
+        this.data.openSnackBar(
+          `Stripe account created successfully for ${this.selectedBusiness?.basicInfo.businessName}!`, 
+          'Close', 
+          5000
+        );
+        
+        // Close dialog
+        this.closeBillingSetupDialog();
+      },
+      error: (error:any) => {
+        console.error('Error creating Stripe account:', error);
+        
+        let errorMessage = 'Error creating Stripe account. Please try again.';
+        if (error.status === 400) {
+          errorMessage = 'Invalid account information. Please check your details.';
+        } else if (error.status === 409) {
+          errorMessage = 'Stripe account already exists for this business.';
+        } else if (error.status === 401) {
+          errorMessage = 'Authentication failed. Please sign in again.';
+        }
+        
+        this.data.openSnackBar(errorMessage, 'Close', 5000);
+        this.billingSetupLoading = false;
       }
     });
   }
