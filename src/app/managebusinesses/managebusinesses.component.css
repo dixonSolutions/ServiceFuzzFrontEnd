@@ -734,3 +734,338 @@ mat-card-actions button {
 }
 
 /* All custom button appearance styles removed to allow Angular Material defaults. */
+
+/* Stripe Account Management Styles */
+.stripe-management-content {
+  padding: 0;
+}
+
+/* Operation Selection */
+.operation-selection {
+  padding: 24px;
+}
+
+.current-account-info {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border-radius: 8px;
+  border: 1px solid #b8dacc;
+}
+
+.account-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-icon.connected {
+  color: #28a745;
+  font-size: 24px;
+}
+
+.status-text h4 {
+  margin: 0 0 4px 0;
+  color: #155724;
+  font-size: 16px;
+}
+
+.status-text p {
+  margin: 0;
+  color: #155724;
+  font-size: 14px;
+}
+
+.operation-options h4 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+:host ::ng-deep .option-btn {
+  height: auto !important;
+  padding: 16px !important;
+  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+}
+
+:host ::ng-deep .option-btn small {
+  font-size: 12px;
+  opacity: 0.8;
+  font-weight: normal;
+}
+
+:host ::ng-deep .option-btn.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Delete Confirmation */
+.delete-confirmation {
+  padding: 24px;
+  text-align: center;
+}
+
+.warning-content {
+  margin-bottom: 24px;
+}
+
+.warning-icon {
+  font-size: 48px;
+  color: #dc3545;
+  margin-bottom: 16px;
+}
+
+.warning-content h3 {
+  margin: 0 0 16px 0;
+  color: #dc3545;
+  font-size: 20px;
+}
+
+.warning-content p {
+  margin: 0 0 16px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.warning-points ul {
+  text-align: left;
+  margin: 0;
+  padding-left: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.warning-points li {
+  margin-bottom: 8px;
+}
+
+.danger-actions {
+  justify-content: center;
+}
+
+/* Account Form */
+.account-form {
+  padding: 24px;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.form-icon {
+  font-size: 32px;
+  color: #007bff;
+  margin-bottom: 12px;
+}
+
+.form-header h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 20px;
+}
+
+.form-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.field-hint {
+  color: #6c757d;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+.update-warning {
+  margin: 16px 0;
+}
+
+.warning-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 14px;
+}
+
+.warning-box mat-icon {
+  color: #f39c12;
+  font-size: 20px;
+}
+
+/* Onboarding Link Section */
+.onboarding-link-section {
+  padding: 24px;
+  text-align: center;
+}
+
+.success-content {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.success-icon {
+  margin-bottom: 16px;
+}
+
+.success-icon mat-icon {
+  font-size: 48px;
+  color: #28a745;
+}
+
+.success-content h3 {
+  margin: 0 0 12px 0;
+  color: #28a745;
+  font-size: 24px;
+}
+
+.success-content p {
+  margin: 0 0 24px 0;
+  color: #666;
+  font-size: 16px;
+}
+
+.onboarding-info {
+  text-align: left;
+  margin: 24px 0;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.onboarding-info ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #333;
+}
+
+.onboarding-info li {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.onboarding-note {
+  margin-top: 16px;
+  color: #6c757d;
+}
+
+.onboarding-note small {
+  font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .onboarding-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  :host ::ng-deep .onboarding-actions button {
+    width: 100%;
+  }
+}
+
+/* Payment Status Links */
+.payment-status-link {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.payment-status-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.payment-ready {
+  color: #28a745;
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.payment-ready:hover {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #1e7e34;
+}
+
+.payment-needed {
+  color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.payment-needed:hover {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #c82333;
+}
+
+/* Info Note */
+.info-note {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #e9ecef;
+  border-radius: 6px;
+  border-left: 4px solid #6c757d;
+}
+
+.info-note small {
+  color: #495057;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+
+/* Responsive Styles for Stripe Management */
+@media (max-width: 768px) {
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .iframe-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .iframe-actions {
+    flex-direction: column;
+  }
+  
+  :host ::ng-deep .iframe-actions button {
+    width: 100%;
+  }
+  
+  .stripe-onboarding-iframe {
+    min-height: 500px;
+  }
+  
+  .iframe-wrapper::before {
+    content: '🔒';
+    padding: 6px;
+  }
+}

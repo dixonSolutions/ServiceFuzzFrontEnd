@@ -143,8 +143,18 @@
                   matTooltip="Payment processing not set up">
                   payment_disabled
                 </mat-icon>
-                <span *ngIf="hasStripeAccount(business.basicInfo.businessID)">Payment Ready</span>
-                <span *ngIf="!hasStripeAccount(business.basicInfo.businessID) && !isStripeAccountLoading(business.basicInfo.businessID)">Payment Setup Needed</span>
+                <span *ngIf="hasStripeAccount(business.basicInfo.businessID)" 
+                      class="payment-status-link payment-ready"
+                      (click)="openBillingSetupDialog(business)"
+                      matTooltip="Click to manage Stripe account">
+                  Payment Ready
+                </span>
+                <span *ngIf="!hasStripeAccount(business.basicInfo.businessID) && !isStripeAccountLoading(business.basicInfo.businessID)"
+                      class="payment-status-link payment-needed"
+                      (click)="openBillingSetupDialog(business)"
+                      matTooltip="Click to set up payment processing">
+                  Payment Setup Needed
+                </span>
                 <span *ngIf="isStripeAccountLoading(business.basicInfo.businessID)">Checking Payment Status...</span>
               </p>
             </div>
@@ -184,86 +194,197 @@
   </div>
 </div>
 
-<!-- BILLING SETUP DIALOG -->
+<!-- STRIPE ACCOUNT MANAGEMENT DIALOG -->
 <p-dialog 
-  header="Set Up Billing for {{selectedBusiness?.basicInfo?.businessName}}" 
+  [header]="getDialogHeader()" 
   [(visible)]="showBillingSetupDialog" 
   [modal]="true" 
   [closable]="true"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '500px', maxWidth: '90vw' }"
+  [style]="{ width: showOnboardingIframe ? '90vw' : '600px', maxWidth: '95vw', height: showOnboardingIframe ? '90vh' : 'auto' }"
   (onHide)="closeBillingSetupDialog()">
   
-  <div class="billing-setup-content" *ngIf="selectedBusiness">
-    <div class="billing-info">
-      <mat-icon class="billing-icon">account_balance</mat-icon>
-      <h3>Connect Stripe Account</h3>
-      <p>Set up payment processing for your business to accept online payments from customers.</p>
-    </div>
+  <div class="stripe-management-content" *ngIf="selectedBusiness">
     
-    <form class="billing-form" [formGroup]="billingSetupForm" (ngSubmit)="submitBillingSetup()">
-      <div class="form-group">
-        <label for="businessEmail">Business Email *</label>
-        <input 
-          id="businessEmail"
-          type="email" 
-          pInputText 
-          formControlName="businessEmail"
-          placeholder="Enter business email for Stripe account"
-          class="w-full"
-          [class.error]="billingSetupForm.get('businessEmail')?.invalid && billingSetupForm.get('businessEmail')?.touched">
-        <small class="error-message" 
-               *ngIf="billingSetupForm.get('businessEmail')?.invalid && billingSetupForm.get('businessEmail')?.touched">
-          Please enter a valid business email
-        </small>
+    <!-- Operation Selection (for existing accounts) -->
+    <div class="operation-selection" *ngIf="showOperationSelection && !showOnboardingIframe">
+      <div class="current-account-info">
+        <div class="account-status">
+          <mat-icon class="status-icon connected">check_circle</mat-icon>
+          <div class="status-text">
+            <h4>Stripe Account Connected</h4>
+            <p>Current email: <strong>{{currentStripeEmail}}</strong></p>
+          </div>
+        </div>
       </div>
+      
+      <div class="operation-options">
+        <h4>What would you like to do?</h4>
+        <div class="options-grid">
+          <button type="button" 
+                  pButton 
+                  label="Update Account" 
+                  icon="pi pi-pencil"
+                  class="p-button-outlined option-btn"
+                  (click)="setStripeOperation('update')"
+                  [class.selected]="stripeOperation === 'update'">
+            <small>Change email or country</small>
+          </button>
+          
+          <button type="button" 
+                  pButton 
+                  label="Delete Account" 
+                  icon="pi pi-trash"
+                  class="p-button-outlined p-button-danger option-btn"
+                  (click)="setStripeOperation('delete')">
+            <small>Permanently remove Stripe integration</small>
+          </button>
+        </div>
+        
+        <div class="info-note">
+          <small><strong>Note:</strong> Updating will automatically replace your current account. Deleting will permanently remove your Stripe integration.</small>
+        </div>
+      </div>
+          </div>
 
-      <div class="form-group">
-        <label for="country">Country *</label>
-        <p-dropdown
-          id="country"
-          [options]="countryOptions"
-          formControlName="country"
-          placeholder="Select country"
-          optionLabel="label"
-          optionValue="value"
-          class="w-full"
-          [class.error]="billingSetupForm.get('country')?.invalid && billingSetupForm.get('country')?.touched">
-        </p-dropdown>
-        <small class="error-message" 
-               *ngIf="billingSetupForm.get('country')?.invalid && billingSetupForm.get('country')?.touched">
-          Please select a country
-        </small>
+    <!-- Create/Update Form -->
+    <div class="account-form" *ngIf="(stripeOperation === 'create' || (stripeOperation === 'update' && !showOperationSelection)) && !showOnboardingIframe">
+      <div class="form-header">
+        <mat-icon class="form-icon">{{stripeOperation === 'create' ? 'add_card' : 'edit'}}</mat-icon>
+        <h3>{{stripeOperation === 'create' ? 'Create Stripe Account' : 'Update Stripe Account'}}</h3>
+        <p *ngIf="stripeOperation === 'create'">Set up payment processing for your business to accept online payments from customers.</p>
+        <p *ngIf="stripeOperation === 'update'">Update your Stripe account details. This will create a new account with the updated information.</p>
       </div>
+      
+      <form class="billing-form" [formGroup]="billingSetupForm" (ngSubmit)="submitBillingSetup()">
+        <div class="form-group">
+          <label for="businessEmail">Business Email *</label>
+          <input 
+            id="businessEmail"
+            type="email" 
+            pInputText 
+            formControlName="businessEmail"
+            placeholder="Enter business email for Stripe account"
+            class="w-full"
+            [class.error]="billingSetupForm.get('businessEmail')?.invalid && billingSetupForm.get('businessEmail')?.touched">
+          <small class="field-hint">This email will be used for Stripe notifications and account management</small>
+          <small class="error-message" 
+                 *ngIf="billingSetupForm.get('businessEmail')?.invalid && billingSetupForm.get('businessEmail')?.touched">
+            Please enter a valid business email
+          </small>
+        </div>
 
-      <div class="billing-features">
-        <h4>What you'll get:</h4>
-        <ul>
-          <li><mat-icon>check_circle</mat-icon> Accept credit card payments</li>
-          <li><mat-icon>check_circle</mat-icon> Automatic invoice generation</li>
-          <li><mat-icon>check_circle</mat-icon> Real-time payment tracking</li>
-          <li><mat-icon>check_circle</mat-icon> Secure payment processing</li>
-        </ul>
-      </div>
+        <div class="form-group">
+          <label for="country">Country *</label>
+          <p-dropdown
+            id="country"
+            [options]="countryOptions"
+            formControlName="country"
+            placeholder="Select country"
+            optionLabel="label"
+            optionValue="value"
+            class="w-full"
+            [class.error]="billingSetupForm.get('country')?.invalid && billingSetupForm.get('country')?.touched">
+          </p-dropdown>
+          <small class="field-hint">Select the country where your business is legally registered</small>
+          <small class="error-message" 
+                 *ngIf="billingSetupForm.get('country')?.invalid && billingSetupForm.get('country')?.touched">
+            Please select a country
+          </small>
+        </div>
 
-      <div class="form-actions">
-        <button type="button" 
-                pButton 
-                label="Cancel" 
-                icon="pi pi-times"
-                class="p-button-outlined"
-                (click)="closeBillingSetupDialog()"
-                [disabled]="billingSetupLoading">
-        </button>
-        <button type="submit" 
-                pButton 
-                label="Set Up Billing" 
-                icon="pi pi-credit-card"
-                [loading]="billingSetupLoading"
-                [disabled]="billingSetupForm.invalid || billingSetupLoading">
-        </button>
+        <div class="billing-features" *ngIf="stripeOperation === 'create'">
+          <h4>What you'll get:</h4>
+          <ul>
+            <li><mat-icon>check_circle</mat-icon> Accept credit card payments</li>
+            <li><mat-icon>check_circle</mat-icon> Automatic invoice generation</li>
+            <li><mat-icon>check_circle</mat-icon> Real-time payment tracking</li>
+            <li><mat-icon>check_circle</mat-icon> Secure payment processing</li>
+          </ul>
+        </div>
+
+        <div class="update-warning" *ngIf="stripeOperation === 'update'">
+          <div class="warning-box">
+            <mat-icon>info</mat-icon>
+            <div>
+              <strong>Important:</strong> Updating will delete your current Stripe account and create a new one. 
+              You'll need to complete the onboarding process again.
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" 
+                  pButton 
+                  label="Cancel" 
+                  icon="pi pi-times"
+                  class="p-button-outlined"
+                  (click)="closeBillingSetupDialog()"
+                  [disabled]="billingSetupLoading">
+          </button>
+          
+          <button type="button" 
+                  pButton 
+                  label="Back" 
+                  icon="pi pi-arrow-left"
+                  class="p-button-outlined"
+                  (click)="goBackToOperationSelection()"
+                  [disabled]="billingSetupLoading"
+                  *ngIf="stripeOperation === 'update' && currentStripeEmail">
+          </button>
+          
+          <button type="submit" 
+                  pButton 
+                  [label]="stripeOperation === 'create' ? 'Create Account' : 'Update Account'" 
+                  icon="pi pi-credit-card"
+                  [loading]="billingSetupLoading"
+                  [disabled]="billingSetupForm.invalid || billingSetupLoading">
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Stripe Onboarding Link -->
+    <div class="onboarding-link-section" *ngIf="showOnboardingIframe">
+      <div class="success-content">
+        <div class="success-icon">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <h3>Stripe Account Created Successfully!</h3>
+        <p>Complete your Stripe onboarding to start accepting payments.</p>
+        
+        <div class="onboarding-info">
+          <ul>
+            <li>Verify your business information</li>
+            <li>Add your bank account details</li>
+            <li>Complete identity verification</li>
+          </ul>
+        </div>
+
+        <div class="onboarding-actions">
+          <button type="button" 
+                  pButton 
+                  label="Complete Stripe Setup"
+                  icon="pi pi-external-link"
+                  class="p-button-raised p-button-success"
+                  (click)="openStripeOnboarding()">
+          </button>
+          
+          <button type="button" 
+                  pButton 
+                  label="Do This Later"
+                  icon="pi pi-clock"
+                  class="p-button-outlined"
+                  (click)="closeOnboardingIframe()">
+          </button>
+        </div>
+
+        <div class="onboarding-note">
+          <small>You can also complete this setup later from your business settings.</small>
+        </div>
       </div>
-    </form>
+    </div>
+
   </div>
 </p-dialog>

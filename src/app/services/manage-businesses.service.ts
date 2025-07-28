@@ -327,7 +327,7 @@ export class ManageBusinessesService {
    * @param businessId - The ID of the business
    * @param response - The Stripe account response to cache
    */
-  private cacheStripeAccountResponse(businessId: string, response: StripeAccountResponse): void {
+  cacheStripeAccountResponse(businessId: string, response: StripeAccountResponse): void {
     this.stripeAccountCache.set(businessId, response);
     this.stripeAccountCacheTimestamp.set(businessId, Date.now());
     console.log('Cached Stripe account data for business:', businessId, 'Has account:', response.hasStripeAccount);
@@ -413,6 +413,80 @@ export class ManageBusinessesService {
       tap(() => {
         // Clear cache for this business to force refresh
         this.clearStripeAccountCache(stripeData.BusinessId);
+      })
+    );
+  }
+
+  /**
+   * Update Stripe account for a business (deletes old and creates new)
+   * @param updateData - The Stripe account update data
+   * @returns Observable of update response
+   */
+  updateStripeAccount(updateData: { newEmail: string; country: string; businessId: string }): Observable<any> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const url = `${this.apiUrl}/api/subscription/UpdateStripeAccount`;
+
+    // Convert to proper request format for update endpoint
+    const requestData = {
+      NewEmail: updateData.newEmail,
+      Country: updateData.country,
+      BusinessId: updateData.businessId
+    };
+
+    console.log('Update Stripe account API call:', {
+      url: url,
+      businessId: updateData.businessId,
+      newEmail: updateData.newEmail,
+      country: updateData.country,
+      hasJwtToken: !!jwtToken
+    });
+
+    return this.http.put(url, requestData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`
+      }
+    }).pipe(
+      tap(() => {
+        // Clear cache for this business to force refresh
+        this.clearStripeAccountCache(updateData.businessId);
+      })
+    );
+  }
+
+  /**
+   * Delete Stripe account for a business
+   * @param businessId - The business ID
+   * @returns Observable of deletion response
+   */
+  deleteStripeAccount(businessId: string): Observable<any> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const url = `${this.apiUrl}/api/subscription/DeleteStripeAccount?businessId=${businessId}`;
+
+    console.log('Delete Stripe account API call:', {
+      url: url,
+      businessId: businessId,
+      hasJwtToken: !!jwtToken
+    });
+
+    return this.http.delete(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`,
+        'Accept': 'application/json'
+      }
+    }).pipe(
+      tap(() => {
+        // Clear cache for this business to force refresh
+        this.clearStripeAccountCache(businessId);
       })
     );
   }

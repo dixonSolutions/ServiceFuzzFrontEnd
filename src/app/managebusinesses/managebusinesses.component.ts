@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DataSvrService } from '../services/data-svr.service';
 import { ManageBusinessesService, StripeAccountResponse, CreateStripeAccountRequest } from '../services/manage-businesses.service';
 import { BusinessBasicInfo } from '../models/businessbasicinfo';
@@ -32,6 +33,13 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
   selectedBusiness: BusinessRegistrationDto | null = null;
   billingSetupForm!: FormGroup;
   billingSetupLoading = false;
+  stripeOperation: 'create' | 'update' | 'delete' = 'create';
+  currentStripeEmail = '';
+  showOnboardingIframe = false;
+  stripeOnboardingUrl = '';
+  stripeAccountResponse: any = null;
+  justCreatedAccount = false;
+  showOperationSelection = false;
   
   // Country options for dropdown
   countryOptions = [
@@ -48,7 +56,8 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
     private router: Router,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private domSanitizer: DomSanitizer
   ) {
     this.loadBusinesses();
     this.initializeBillingForm();
@@ -443,12 +452,65 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
   openBillingSetupDialog(business: BusinessRegistrationDto): void {
     this.selectedBusiness = business;
     this.showBillingSetupDialog = true;
+    this.billingSetupLoading = false;
+    this.showOnboardingIframe = false;
+    this.stripeAccountResponse = null;
     
-    // Pre-fill form with business data
+    const businessId = business.basicInfo.businessID;
+    const hasStripeAccount = this.hasStripeAccount(businessId);
+    
+    if (hasStripeAccount) {
+      // If we just created the account, skip operation selection
+      if (this.justCreatedAccount && this.currentStripeEmail) {
+        this.stripeOperation = 'update';
+        this.showOperationSelection = false;
+        this.billingSetupForm.patchValue({
+          businessEmail: this.currentStripeEmail,
+          country: 'AU'
+        });
+      } else {
+        // Existing account - show operation selection
+        this.showOperationSelection = true;
+        this.stripeOperation = 'update'; // Default for existing accounts
+        
+        // Check if we have cached account data or need to fetch it
+        const cachedData = this.manageBusinessesService.getCachedStripeAccountData(businessId!);
+        if (cachedData && cachedData.email) {
+          this.currentStripeEmail = cachedData.email;
+          this.billingSetupForm.patchValue({
+            businessEmail: cachedData.email,
+            country: 'AU'
+          });
+        } else {
+          // Fetch current account details
+          this.manageBusinessesService.getStripeAccountEmail(businessId!, true).subscribe({
+            next: (response) => {
+              this.currentStripeEmail = response.email || '';
+              this.billingSetupForm.patchValue({
+                businessEmail: response.email || business.basicInfo.email || '',
+                country: 'AU'
+              });
+            },
+            error: (error) => {
+              console.error('Error fetching Stripe account details:', error);
+              this.stripeOperation = 'create';
+              this.showOperationSelection = false;
+              this.billingSetupForm.patchValue({
+                businessEmail: business.basicInfo.email || '',
+                country: 'AU'
+              });
+            }
+          });
+        }
+      }
+    } else {
+      this.stripeOperation = 'create';
+      this.currentStripeEmail = '';
     this.billingSetupForm.patchValue({
       businessEmail: business.basicInfo.email || '',
-      country: 'AU' // Default to Australia
+        country: 'AU'
     });
+    }
   }
 
   /**
@@ -459,12 +521,24 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
     this.selectedBusiness = null;
     this.billingSetupForm.reset();
     this.billingSetupLoading = false;
+    this.stripeOperation = 'create';
+    this.currentStripeEmail = '';
+    this.showOnboardingIframe = false;
+    this.stripeOnboardingUrl = '';
+    this.stripeAccountResponse = null;
+    this.justCreatedAccount = false;
+    this.showOperationSelection = false;
   }
 
   /**
    * Submit billing setup form
    */
   submitBillingSetup(): void {
+    if (this.stripeOperation === 'delete') {
+      this.deleteStripeAccount();
+      return;
+    }
+
     if (this.billingSetupForm.invalid || !this.selectedBusiness) {
       return;
     }
@@ -479,7 +553,17 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Prepare Stripe account creation data
+    if (this.stripeOperation === 'create') {
+      this.createStripeAccount(formData, businessId);
+    } else if (this.stripeOperation === 'update') {
+      this.updateStripeAccount(formData, businessId);
+    }
+  }
+
+  /**
+   * Create new Stripe account
+   */
+  private createStripeAccount(formData: any, businessId: string): void {
     const stripeAccountData: CreateStripeAccountRequest = {
       Email: formData.businessEmail,
       Country: formData.country,
@@ -488,40 +572,254 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
 
     console.log('Creating Stripe account for business:', stripeAccountData);
 
-    // Make API call to create Stripe account
     this.manageBusinessesService.createStripeAccount(stripeAccountData).subscribe({
-      next: (response:any) => {
+      next: (response: any) => {
         console.log('Stripe account creation successful:', response);
         
-        // Update Stripe account status
+        this.stripeAccountResponse = response;
         this.stripeAccountStatus.set(businessId, true);
-        this.manageBusinessesService.clearStripeAccountCache(businessId);
+        this.justCreatedAccount = true;
+        this.currentStripeEmail = formData.businessEmail;
         
-        // Show success message
+        // Cache the response data instead of clearing cache
+        this.manageBusinessesService.cacheStripeAccountResponse(businessId, {
+          hasStripeAccount: true,
+          email: formData.businessEmail,
+          message: 'Account created successfully'
+        });
+        
         this.data.openSnackBar(
           `Stripe account created successfully for ${this.selectedBusiness?.basicInfo.businessName}!`, 
           'Close', 
           5000
         );
         
-        // Close dialog
+        // Show onboarding iframe if onboardingUrl is available
+        if (response.onboardingUrl) {
+          this.stripeOnboardingUrl = response.onboardingUrl;
+          this.showOnboardingIframe = true;
+          this.billingSetupLoading = false;
+        } else {
         this.closeBillingSetupDialog();
+        }
       },
-      error: (error:any) => {
+      error: (error: any) => {
         console.error('Error creating Stripe account:', error);
+        this.handleStripeError(error, 'creating');
+      }
+    });
+  }
+
+  /**
+   * Update existing Stripe account
+   */
+  private updateStripeAccount(formData: any, businessId: string): void {
+    const updateData = {
+      newEmail: formData.businessEmail,
+      country: formData.country,
+      businessId: businessId
+    };
+
+    console.log('Updating Stripe account for business:', updateData);
+
+    this.manageBusinessesService.updateStripeAccount(updateData).subscribe({
+      next: (response: any) => {
+        console.log('Stripe account update successful:', response);
         
-        let errorMessage = 'Error creating Stripe account. Please try again.';
+        this.stripeAccountResponse = response;
+        this.justCreatedAccount = true; // Treat update like creation for caching purposes
+        this.currentStripeEmail = updateData.newEmail;
+        
+        // Cache the updated response data
+        this.manageBusinessesService.cacheStripeAccountResponse(businessId, {
+          hasStripeAccount: true,
+          email: updateData.newEmail,
+          message: 'Account updated successfully'
+        });
+        
+        this.data.openSnackBar(
+          `Stripe account updated successfully for ${this.selectedBusiness?.basicInfo.businessName}!`, 
+          'Close', 
+          5000
+        );
+
+        // Show onboarding iframe for the new account
+        if (response.onboardingUrl) {
+          this.stripeOnboardingUrl = response.onboardingUrl;
+          this.showOnboardingIframe = true;
+          this.billingSetupLoading = false;
+        } else {
+          this.closeBillingSetupDialog();
+        }
+      },
+      error: (error: any) => {
+        console.error('Error updating Stripe account:', error);
+        this.handleStripeError(error, 'updating');
+      }
+    });
+  }
+
+
+
+  /**
+   * Handle Stripe API errors
+   */
+  private handleStripeError(error: any, operation: string): void {
+    let errorMessage = `Error ${operation} Stripe account. Please try again.`;
+    
         if (error.status === 400) {
           errorMessage = 'Invalid account information. Please check your details.';
+    } else if (error.status === 401) {
+      errorMessage = 'Authentication failed. Please sign in again.';
+    } else if (error.status === 404) {
+      errorMessage = 'Stripe account not found.';
         } else if (error.status === 409) {
           errorMessage = 'Stripe account already exists for this business.';
-        } else if (error.status === 401) {
-          errorMessage = 'Authentication failed. Please sign in again.';
+    } else if (error.error && error.error.message) {
+      errorMessage = error.error.message;
         }
         
         this.data.openSnackBar(errorMessage, 'Close', 5000);
         this.billingSetupLoading = false;
       }
+
+  /**
+   * Set operation mode for Stripe account management
+   */
+  setStripeOperation(operation: 'create' | 'update' | 'delete'): void {
+    this.stripeOperation = operation;
+    this.showOperationSelection = false; // Hide operation selection after choosing
+    
+    if (operation === 'delete') {
+      this.deleteStripeAccount();
+    }
+  }
+
+  /**
+   * Go back to operation selection
+   */
+  goBackToOperationSelection(): void {
+    this.showOperationSelection = true;
+    this.stripeOperation = 'update';
+  }
+
+  /**
+   * Delete Stripe account
+   */
+  deleteStripeAccount(): void {
+    if (!this.selectedBusiness?.basicInfo.businessID) {
+      return;
+    }
+
+    this.billingSetupLoading = true;
+    const businessId = this.selectedBusiness.basicInfo.businessID;
+
+    this.manageBusinessesService.deleteStripeAccount(businessId).subscribe({
+      next: (response: any) => {
+        console.log('Stripe account deletion successful:', response);
+        
+        // Update application state
+        this.stripeAccountStatus.set(businessId, false);
+        this.justCreatedAccount = false;
+        this.currentStripeEmail = '';
+        
+        // Cache the deletion response
+        this.manageBusinessesService.cacheStripeAccountResponse(businessId, {
+          hasStripeAccount: false,
+          email: '',
+          message: 'Account deleted successfully'
+        });
+        
+        this.data.openSnackBar(
+          `Stripe account deleted successfully for ${this.selectedBusiness?.basicInfo.businessName}!`, 
+          'Close', 
+          5000
+        );
+        
+        this.closeBillingSetupDialog();
+      },
+      error: (error: any) => {
+        console.error('Error deleting Stripe account:', error);
+        this.handleStripeError(error, 'deleting');
+      }
     });
+  }
+
+  /**
+   * Get safe onboarding URL for iframe
+   */
+  getSafeOnboardingUrl(): SafeResourceUrl | null {
+    if (this.stripeOnboardingUrl) {
+      return this.domSanitizer.bypassSecurityTrustResourceUrl(this.stripeOnboardingUrl);
+    }
+    return null;
+  }
+
+  /**
+   * Open Stripe onboarding in new tab
+   */
+  openStripeOnboarding(): void {
+    if (this.stripeOnboardingUrl) {
+      window.open(this.stripeOnboardingUrl, '_blank');
+      this.data.openSnackBar(
+        'Complete your Stripe onboarding in the new tab, then return here.',
+        'Close',
+        5000
+      );
+    }
+  }
+
+  /**
+   * Close onboarding section
+   */
+  closeOnboardingIframe(): void {
+    this.showOnboardingIframe = false;
+    this.justCreatedAccount = false; // Reset flag after onboarding interaction
+    this.data.openSnackBar(
+      'Onboarding closed. You can complete it later if needed.',
+      'Close',
+      3000
+    );
+    this.closeBillingSetupDialog();
+  }
+
+  /**
+   * Handle onboarding completion
+   */
+  onOnboardingComplete(): void {
+    this.showOnboardingIframe = false;
+    this.justCreatedAccount = false; // Reset flag after onboarding completion
+    this.data.openSnackBar(
+      'Stripe onboarding completed successfully! You can now accept payments.',
+      'Close',
+      5000
+    );
+    this.closeBillingSetupDialog();
+  }
+
+  /**
+   * Handle iframe load event
+   */
+  onIframeLoad(): void {
+    console.log('Stripe onboarding iframe loaded successfully');
+  }
+
+  /**
+   * Get dynamic dialog header based on operation and state
+   */
+  getDialogHeader(): string {
+    if (this.showOnboardingIframe) {
+      return `Stripe Onboarding - ${this.selectedBusiness?.basicInfo?.businessName}`;
+    }
+    
+    if (this.stripeOperation === 'create') {
+      return `Set Up Billing - ${this.selectedBusiness?.basicInfo?.businessName}`;
+    } else if (this.stripeOperation === 'update') {
+      return `Manage Stripe Account - ${this.selectedBusiness?.basicInfo?.businessName}`;
+    } else if (this.stripeOperation === 'delete') {
+      return `Delete Stripe Account - ${this.selectedBusiness?.basicInfo?.businessName}`;
+    }
+    
+    return `Stripe Account - ${this.selectedBusiness?.basicInfo?.businessName}`;
   }
 }

@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { RegisterBusinessService } from '../services/register-business.service';
 import { DataSvrService } from '../services/data-svr.service';
@@ -38,13 +39,15 @@ export class StripeAccountSetupComponent implements OnInit, OnDestroy {
   // UI State
   showCountryDropdown = false;
   selectedCountry: CountryOption | null = null;
+  showOnboardingIframe = false;
 
   private subscription = new Subscription();
 
   constructor(
     private fb: FormBuilder,
     private registerService: RegisterBusinessService,
-    private dataService: DataSvrService
+    private dataService: DataSvrService,
+    private domSanitizer: DomSanitizer
   ) {
     this.stripeForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -113,8 +116,8 @@ export class StripeAccountSetupComponent implements OnInit, OnDestroy {
           5000
         );
 
-        // Emit success event
-        this.stripeAccountCreated.emit(response);
+        // Don't emit success event yet - wait for onboarding completion or dismissal
+        // this.stripeAccountCreated.emit(response);
       },
       error: (error: Error) => {
         console.error('Stripe account creation failed:', error);
@@ -136,19 +139,64 @@ export class StripeAccountSetupComponent implements OnInit, OnDestroy {
 
   completeOnboarding(): void {
     if (this.stripeState.response?.onboardingUrl) {
-      // Open onboarding URL in new tab
-      window.open(this.stripeState.response.onboardingUrl, '_blank');
+      // Show iframe instead of opening new tab
+      this.showOnboardingIframe = true;
       
       this.dataService.openSnackBar(
-        'Complete your Stripe onboarding in the new tab, then return to continue.',
+        'Complete your Stripe onboarding below. The process is secure and handled directly by Stripe.',
         'Close',
-        7000
+        5000
       );
     }
   }
 
+  closeOnboardingIframe(): void {
+    this.showOnboardingIframe = false;
+    this.dataService.openSnackBar(
+      'Onboarding closed. You can complete it later if needed.',
+      'Close',
+      3000
+    );
+    
+    // Emit success event even if onboarding is closed - account is created
+    if (this.stripeState.response) {
+      this.stripeAccountCreated.emit(this.stripeState.response);
+    }
+  }
+
+  onOnboardingComplete(): void {
+    this.showOnboardingIframe = false;
+    this.dataService.openSnackBar(
+      'Stripe onboarding completed successfully! You can now accept payments.',
+      'Close',
+      5000
+    );
+    
+    // Emit success event after onboarding is complete
+    if (this.stripeState.response) {
+      this.stripeAccountCreated.emit(this.stripeState.response);
+    }
+  }
+
+  onIframeLoad(): void {
+    console.log('Stripe onboarding iframe loaded successfully');
+  }
+
+  getSafeOnboardingUrl(): SafeResourceUrl | null {
+    if (this.stripeState.response?.onboardingUrl) {
+      return this.domSanitizer.bypassSecurityTrustResourceUrl(this.stripeState.response.onboardingUrl);
+    }
+    return null;
+  }
+
   skipSetup(): void {
-    this.skipStripeSetup.emit();
+    // If account is already created but onboarding is skipped, still emit success
+    if (this.stripeState.isCreated && this.stripeState.response) {
+      this.stripeAccountCreated.emit(this.stripeState.response);
+    } else {
+      // If no account created yet, emit skip event
+      this.skipStripeSetup.emit();
+    }
   }
 
   resetForm(): void {
