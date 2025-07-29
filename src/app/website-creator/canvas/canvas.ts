@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ComponentDefinition, ComponentParameter, ComponentInstance, WebsiteBuilderService } from '../../services/website-builder';
 import { ComponentType, ComponentRenderContext } from '../../models/workspace.models';
 import { ComponentRendererService } from '../../services/component-renderer.service';
@@ -67,7 +67,8 @@ export class Canvas implements OnInit, OnDestroy {
   constructor(
     private websiteBuilder: WebsiteBuilderService,
     private componentRenderer: ComponentRendererService,
-    private domSanitizer: DomSanitizer
+    private domSanitizer: DomSanitizer,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -162,6 +163,20 @@ export class Canvas implements OnInit, OnDestroy {
         // Convert from website builder ComponentInstance to models ComponentInstance
         const modelComponent = this.convertToModelComponent(component);
         const renderContext = this.componentRenderer.renderComponent(componentType, modelComponent);
+        
+        // Check if this is a dynamic component (like accordion)
+        const isDynamic = this.componentRenderer.isDynamicComponent(componentType);
+        const behaviorType = this.componentRenderer.getComponentBehaviorType(componentType);
+        
+        if (isDynamic) {
+          console.log('🎭 Dynamic component detected:', {
+            name: componentType.name,
+            id: componentType.id,
+            behaviorType: behaviorType,
+            hasAngularElements: renderContext.renderedHTML.includes('<p-accordion')
+          });
+        }
+        
         this.componentRenderContexts.push(renderContext);
         
         console.log('🎨 Rendered component:', component.type, 'with HTML length:', renderContext.renderedHTML.length);
@@ -207,7 +222,19 @@ export class Canvas implements OnInit, OnDestroy {
       'prime-accordion-001'
     ];
     
-    return angularComponentIds.includes(componentType);
+    const isAngular = angularComponentIds.includes(componentType);
+    
+    // Debug log for accordion detection
+    if (componentType === 'prime-accordion-001') {
+      console.log('🎯 ACCORDION DETECTION:', {
+        componentType,
+        isAngular,
+        angularComponentIds,
+        message: isAngular ? 'Using Angular rendering' : 'Using static rendering'
+      });
+    }
+    
+    return isAngular;
   }
 
   // Generic parameter value getter for any component
@@ -226,8 +253,73 @@ export class Canvas implements OnInit, OnDestroy {
 
   // Get accordion value for proper PrimeNG binding
   getAccordionValue(componentId: string): string[] {
-    const isExpanded = this.getComponentParameterValue(componentId, 'isExpanded');
-    return isExpanded ? ['0'] : [];
+    const component = this.currentPageComponents.find(c => c.id === componentId);
+    if (!component) {
+      console.warn('🎭 Component not found for accordion value:', componentId);
+      return [];
+    }
+
+    // Get from component parameters directly for most up-to-date value
+    const isExpanded = component.parameters?.['isExpanded'] ?? false;
+    const result = isExpanded ? ['0'] : [];
+    
+    // Debug log for accordion state
+    console.log('🎭 ACCORDION VALUE:', {
+      componentId,
+      isExpanded,
+      result,
+      componentParameters: component.parameters
+    });
+    
+    return result;
+  }
+
+  // Handle accordion toggle interactions
+  onAccordionToggle(componentId: string, event: any): void {
+    console.log('🎭 ACCORDION TOGGLE EVENT FIRED!:', { 
+      componentId, 
+      event, 
+      eventType: typeof event,
+      timestamp: new Date().toISOString()
+    });
+    
+    // PrimeNG accordion valueChange gives us the array of expanded panel values
+    // If panel "0" is in the array, it's expanded; if not, it's collapsed
+    const isExpanded = Array.isArray(event) && event.includes('0');
+    
+    console.log('🎭 ACCORDION NEW STATE:', { 
+      componentId, 
+      event,
+      isExpanded,
+      eventArray: event
+    });
+    
+    // Update the component parameter directly
+    const component = this.currentPageComponents.find(c => c.id === componentId);
+    if (component) {
+      if (!component.parameters) {
+        component.parameters = {};
+      }
+      
+      component.parameters['isExpanded'] = isExpanded;
+      
+      // Update the websiteBuilder service state
+      this.websiteBuilder.updateComponent(componentId, { 
+        parameters: { ...component.parameters } 
+      });
+      
+      // Manually trigger change detection to update the view
+      this.cdr.detectChanges();
+      
+      console.log('✅ ACCORDION SUCCESSFULLY UPDATED:', { 
+        componentId, 
+        isExpanded,
+        newParameters: component.parameters,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      console.error('❌ Component not found for accordion toggle:', componentId);
+    }
   }
 
   isNewComponentSystem(componentType: string): boolean {
@@ -420,19 +512,36 @@ export class Canvas implements OnInit, OnDestroy {
     this.componentInstanceSelectionChange.emit(builtInNavInstance);
   }
 
-  selectComponentInstanceHandler(instance: ComponentInstance, event?: Event): void {
-    if (event) {
+  // Select component instance
+  selectComponentInstanceHandler(instance: ComponentInstance, event: MouseEvent): void {
+    // Don't interfere with accordion header/content interactions
+    if (instance.type === 'prime-accordion-001') {
+      const target = event.target as HTMLElement;
+      
+      // Only select component if clicking outside accordion interactive elements
+      if (!target.closest('p-accordion-header') && !target.closest('p-accordion-content')) {
+        event.stopPropagation();
+        this.selectedComponentInstance = instance;
+        this.componentInstanceSelectionChange.emit(instance);
+        console.log('🎯 Accordion component selected via wrapper click');
+      } else {
+        console.log('🎭 Ignoring click on accordion interactive area');
+        // Let accordion handle its own clicks
+        return;
+      }
+    } else {
+      // Normal component selection
       event.stopPropagation();
+      this.selectedComponentInstance = instance;
+      this.componentInstanceSelectionChange.emit(instance);
     }
-    this.selectedComponentInstance = instance;
-    this.componentInstanceSelectionChange.emit(instance);
   }
 
   handleComponentClick(instance: ComponentInstance, event: Event): void {
     event.stopPropagation();
     console.log('🔍 Component clicked:', instance.type, instance.id);
     
-    this.selectComponentInstanceHandler(instance, event);
+    this.selectComponentInstanceHandler(instance, event as MouseEvent);
     
     // Handle any special component behaviors
     const properties = instance.parameters || {};
@@ -460,7 +569,7 @@ export class Canvas implements OnInit, OnDestroy {
     // Only select if clicking on the wrapper itself
     if (target.classList.contains('angular-component-wrapper')) {
       event.stopPropagation();
-      this.selectComponentInstanceHandler(instance, event);
+      this.selectComponentInstanceHandler(instance, event as MouseEvent);
     }
   }
 

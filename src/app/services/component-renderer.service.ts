@@ -31,6 +31,26 @@ export class ComponentRendererService {
 
     // Get effective parameters (defaults merged with instance parameters)
     const effectiveParameters = this.getEffectiveParameters(componentType, instance);
+    
+    // HARDCODED CHECK: Handle accordion component specifically to ensure it's not static
+    if (componentType.id === 'prime-accordion-001') {
+      console.log('🎯 Detected PrimeNG Accordion component - applying dynamic behavior');
+      
+      // Ensure accordion has proper dynamic behavior
+      if (!effectiveParameters.hasOwnProperty('isExpanded')) {
+        effectiveParameters['isExpanded'] = false; // Default to closed
+      }
+      
+      // Mark component as dynamic (non-static)
+      effectiveParameters['_isDynamic'] = true;
+      effectiveParameters['_componentType'] = 'angular';
+      
+      console.log('✅ Accordion component configured for dynamic behavior:', {
+        isExpanded: effectiveParameters['isExpanded'],
+        title: effectiveParameters['title'],
+        showImage: effectiveParameters['showImage']
+      });
+    }
       
     // Process the HTML template with parameter substitution
     const processedHTML = this.processTemplate(componentType.htmlTemplate, effectiveParameters);
@@ -541,5 +561,47 @@ export class ComponentRendererService {
     });
 
     return formFields;
+  }
+
+  /**
+   * Check if a component should be treated as dynamic (non-static)
+   */
+  isDynamicComponent(componentType: ComponentType): boolean {
+    // HARDCODED CHECK: PrimeNG Accordion is always dynamic
+    if (componentType.id === 'prime-accordion-001') {
+      console.log('🎯 Component identified as dynamic:', componentType.name);
+      return true;
+    }
+    
+    // Check if template contains Angular-specific elements
+    if (componentType.htmlTemplate) {
+      const angularElements = ['<p-accordion', '<mat-', '<ng-', '*ngFor', '*ngIf', '{{', '}}'];
+      const hasAngularElements = angularElements.some(element => 
+        componentType.htmlTemplate!.includes(element)
+      );
+      
+      if (hasAngularElements) {
+        console.log('🔍 Component detected as Angular component:', componentType.name);
+        return true;
+      }
+    }
+    
+    // Default to static for simple HTML components
+    return false;
+  }
+
+  /**
+   * Get component behavior type
+   */
+  getComponentBehaviorType(componentType: ComponentType): 'static' | 'angular' | 'dynamic' {
+    if (componentType.id === 'prime-accordion-001') {
+      return 'angular';
+    }
+    
+    if (this.isDynamicComponent(componentType)) {
+      return 'angular';
+    }
+    
+    return 'static';
   }
 } 

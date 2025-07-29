@@ -766,6 +766,9 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
         'Close',
         5000
       );
+      
+      // Close the dialog since user is proceeding with setup
+      this.closeBillingSetupDialog();
     }
   }
 

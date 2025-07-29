@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { tap, catchError, map, share } from 'rxjs/operators';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { DataSvrService } from './data-svr.service';
 import { 
   CreateWorkspaceDto, 
   UpdateWorkspaceDto, 
@@ -176,7 +177,7 @@ export class WebsiteBuilderService {
   get apiComponentTypes$(): Observable<ComponentType[]> { return this._apiComponentTypes.asObservable(); }
   get apiComponentTypes(): ComponentType[] { return this._apiComponentTypes.value; }
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private dataSvr: DataSvrService) {
     this.initializeComponents();
     
     // Initialize filtered components to show all components by default
@@ -717,6 +718,11 @@ export class WebsiteBuilderService {
 
   // Image upload method for business websites
   uploadBusinessImage(businessId: string, file: File, description: string = ''): Observable<ImageUploadResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
     // Create FormData object for multipart/form-data request
     const formData = new FormData();
     formData.append('file', file, file.name);
@@ -727,7 +733,8 @@ export class WebsiteBuilderService {
 
     // Set headers - Content-Type will be automatically set by the browser for FormData
     const headers = new HttpHeaders({
-      'accept': '*/*'
+      'accept': '*/*',
+      'Authorization': `Bearer ${jwtToken}`
     });
 
     // Make the POST request
@@ -787,9 +794,20 @@ export class WebsiteBuilderService {
    * Creates a new workspace
    */
   createWorkspace(workspace: CreateWorkspaceDto): Observable<{ workspaceId: string; message: string }> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
     return this.http.post<{ workspaceId: string; message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces`, 
-      workspace
+      workspace,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
     ).pipe(
       catchError(this.handleError)
     );
@@ -810,8 +828,19 @@ export class WebsiteBuilderService {
    * Gets all workspaces for a specific user
    */
   getWorkspacesByUser(userId: string): Observable<WorkspaceListResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
     return this.http.get<WorkspaceListResponse>(
-      `${this.apiBaseUrl}/api/businesswebsite/workspaces/user/${userId}`
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/user/${userId}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
     ).pipe(
       catchError(this.handleError)
     );
@@ -832,9 +861,20 @@ export class WebsiteBuilderService {
    * Updates an existing workspace
    */
   updateWorkspace(workspaceId: string, updates: UpdateWorkspaceDto): Observable<{ message: string }> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
     return this.http.put<{ message: string }>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`, 
-      updates
+      updates,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
     ).pipe(
       catchError(this.handleError)
     );
@@ -844,8 +884,19 @@ export class WebsiteBuilderService {
    * Deletes a workspace
    */
   deleteWorkspace(workspaceId: string): Observable<{ message: string }> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
     return this.http.delete<{ message: string }>(
-      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
     ).pipe(
       catchError(this.handleError)
     );
@@ -855,10 +906,21 @@ export class WebsiteBuilderService {
    * Deploys a workspace with enhanced response
    */
   deployWorkspace(workspaceId: string, deployedBy: string, websiteName: string): Observable<DeployWorkspaceResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
     const deployDto: DeployWorkspaceDto = { workspaceId, deployedBy, websiteName };
     return this.http.post<DeployWorkspaceResponse>(
       `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/deploy`, 
-      deployDto
+      deployDto,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
     ).pipe(
       catchError(this.handleError)
     );
