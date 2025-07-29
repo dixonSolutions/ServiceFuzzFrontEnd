@@ -59,14 +59,9 @@ export class SignInOrSignUpComponent implements OnInit {
   ngOnInit() {
     // Check for magic link parameters first and redirect to auth-callback if present
     this.route.queryParams.subscribe(params => {
-      const userId = params['userId'];
-      const error = params['error'];
-      const source = params['source'];
-      
-      // If this is a magic link callback, redirect to proper auth-callback route
-      if (userId || error || source) {
-        console.log('🔗 Magic link parameters detected, redirecting to auth-callback...', params);
-        // Preserve all query parameters when redirecting
+      if (params['userId'] || params['token'] || params['source']) {
+        // Redirect to auth-callback with all parameters
+        const queryString = new URLSearchParams(params).toString();
         this.router.navigate(['/auth/callback'], { 
           queryParams: params,
           replaceUrl: true 
@@ -74,75 +69,38 @@ export class SignInOrSignUpComponent implements OnInit {
         return;
       }
       
-      // Handle normal redirect parameters
-      this.redirectUrl = params['redirect'] || params['redirectTo'] || null;
-    });
-
-    // Then check if we already have a user in the service
-    const currentUser = this.data.currentUser;
-    if (currentUser) {
-      this.isAuthenticated = true;
-      this.serviceFuzzUser = currentUser;
-      this.cdr.detectChanges();
-      
-      // If user is already authenticated and there's a redirect URL, navigate to it
-      if (this.redirectUrl) {
-        this.navigateAfterAuth();
-      }
-      return;
-    }
-
-    // Check if user session exists in cookie but not in memory
-    if (!currentUser && this.data.hasUserSession()) {
-      console.log('Sign-in component: User session exists in cookie, waiting for restoration...');
-      // Subscribe to user changes to detect when session is restored
-      const userSubscription = this.data.businessRegistration$.subscribe(() => {
-        const restoredUser = this.data.currentUser;
-        if (restoredUser) {
-          this.isAuthenticated = true;
-          this.serviceFuzzUser = restoredUser;
-          this.cdr.detectChanges();
-          
-          // If there's a redirect URL, navigate to it
-          if (this.redirectUrl) {
-            this.navigateAfterAuth();
-          }
-          
-          // Unsubscribe after successful restoration
-          userSubscription.unsubscribe();
-        }
-      });
-    }
-
-    // Note: Redirect URL handling is now done above to avoid duplicate subscriptions
-
-    // Then subscribe to auth state changes
-    this.authService.authState.subscribe((user) => {
-      if (user) {
-        this.userInfo = {
-          email: user.email,
-          name: user.name,
-          picture: user.photoUrl,
-          given_name: user.firstName,
-          family_name: user.lastName,
-          sub: user.id
-        };
-        // Only update authentication state if we don't already have a user
-        if (!this.data.currentUser) {
-          this.isAuthenticated = true;
-          this.serviceFuzzUser = this.data.currentUser;
-          this.cdr.detectChanges();
-        }
+      // Store redirect URL if provided
+      if (params['redirect']) {
+        this.redirectUrl = params['redirect'];
       }
     });
 
-    // Initialize Google Sign-In button
+    // Check if already authenticated
+    this.isAuthenticated = !!this.data.currentUser;
+    if (this.isAuthenticated) {
+      this.serviceFuzzUser = this.data.currentUser;
+      this.userInfo = {
+        name: this.serviceFuzzUser?.name || '',
+        email: this.serviceFuzzUser?.email || '',
+        picture: '', // You might want to add profile picture support
+        sub: this.serviceFuzzUser?.email || '',
+        given_name: this.serviceFuzzUser?.name || '',
+        family_name: ''
+      };
+    }
+
+    // Initialize Google Sign-In
     setTimeout(() => this.initializeGoogleSignIn(), 100);
+
+    // Listen for custom reinitialize event from dialog
+    document.addEventListener('reinitializeGoogleSignIn', () => {
+      setTimeout(() => this.initializeGoogleSignIn(), 200);
+    });
   }
 
   private navigateAfterAuth() {
     // Navigate to redirect URL if provided, otherwise go to home
-    const targetUrl = this.redirectUrl || '/home';
+    const targetUrl = this.redirectUrl || '/business/settings';
     this.router.navigate([targetUrl], { replaceUrl: true });
   }
 

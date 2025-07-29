@@ -13,6 +13,8 @@ import { Settings } from './settings/settings';
 import { WebsiteCreatorComponent } from './website-creator/website-creator';
 import { AuthCallback } from './auth-callback/auth-callback';
 import { OrderForms } from './order-forms/order-forms';
+import { PrivacyPolicy } from './privacy-policy/privacy-policy';
+import { TermsOfUse } from './terms-of-use/terms-of-use';
 
 
 const routes: Routes = [
@@ -31,6 +33,8 @@ const routes: Routes = [
   {path:'order-forms', component: OrderForms},
   { path: 'settings', component: Settings },
   { path: 'website-creator', component: WebsiteCreatorComponent },
+  { path: 'privacy-policy', component: PrivacyPolicy },
+  { path: 'terms-of-use', component: TermsOfUse },
   { path: '**', redirectTo: '', pathMatch: 'full' } // Wildcard route for 404 cases
 ];
 

@@ -380,6 +380,24 @@ export class HomeComponent implements OnInit {
     }, 1500);
   }
 
+  // Event handlers for auth-business-dialog
+  onAuthSuccess(): void {
+    console.log('User authenticated successfully - will navigate to business settings');
+    // User has been authenticated, dialog will automatically navigate to business settings
+  }
+
+  onBusinessSetupComplete(): void {
+    console.log('Navigation to business settings completed');
+    // Navigation completed, close dialog
+    this.closeRegistrationModal();
+  }
+
+  onDialogClosed(): void {
+    console.log('Dialog closed');
+    // Reset any form data if needed
+    this.resetRegistrationForm();
+  }
+
   private resetRegistrationForm(): void {
     this.registrationForm = {
       businessName: '',

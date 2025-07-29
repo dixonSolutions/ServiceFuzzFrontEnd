@@ -212,3 +212,34 @@ mat-spinner {
 }
 
 /* All custom button appearance styles removed to allow Angular Material defaults. */
+
+/* Legal Links Styling */
+.legal-links {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.legal-links p {
+  font-size: 0.875rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.legal-link {
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.legal-link:hover {
+  color: #1565c0;
+  text-decoration: underline;
+}
+
+.legal-link:visited {
+  color: #1976d2;
+}

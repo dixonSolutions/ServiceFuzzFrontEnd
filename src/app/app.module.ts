@@ -101,6 +101,9 @@ import { GoogleMapsPickerComponent } from './components/google-maps-picker/googl
 import { StripeAccountSetupComponent } from './stripe-account-setup/stripe-account-setup.component';
 import { AuthCallback } from './auth-callback/auth-callback';
 import { OrderForms } from './order-forms/order-forms';
+import { AuthBusinessDialogComponent } from './auth-business-dialog/auth-business-dialog';
+import { PrivacyPolicy } from './privacy-policy/privacy-policy';
+import { TermsOfUse } from './terms-of-use/terms-of-use';
 
 
 const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.googleusercontent.com';
@@ -126,7 +129,10 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     AssetManagerComponent,
     StripeAccountSetupComponent,
     AuthCallback,
-    OrderForms
+    OrderForms,
+    AuthBusinessDialogComponent,
+    PrivacyPolicy,
+    TermsOfUse
   ],
   imports: [
     BrowserModule,

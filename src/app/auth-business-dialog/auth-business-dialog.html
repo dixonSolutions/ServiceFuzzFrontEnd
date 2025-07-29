@@ -1,0 +1,21 @@
+<!-- Simplified Auth Dialog -->
+<p-dialog 
+  header="Sign In or Create Account" 
+  [(visible)]="showDialog" 
+  [modal]="true" 
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="simple-auth-dialog"
+  [style]="{ width: '500px', maxWidth: '110vw' }"
+  (onHide)="onDialogHide()">
+  
+  <!-- Simple Auth Content -->
+  <div class="auth-content">
+    <div class="auth-wrapper">
+      <!-- Use the existing sign-in-or-sign-up component -->
+      <app-sign-in-or-sign-up></app-sign-in-or-sign-up>
+    </div>
+  </div>
+  
+</p-dialog>

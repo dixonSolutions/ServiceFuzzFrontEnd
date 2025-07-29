@@ -198,70 +198,13 @@
   </div>
 </div>
 
-<!-- SIMPLE REGISTRATION MODAL -->
-<p-dialog 
-  header="Start Your Free Trial" 
-  [(visible)]="showRegistrationModal" 
-  [modal]="true" 
-  [closable]="true"
-  [draggable]="false"
-  [resizable]="false"
-  styleClass="registration-modal"
-  (onHide)="closeRegistrationModal()">
-  
-  <div class="registration-content">
-    <h3>Get started in 30 seconds</h3>
-    
-    <div class="registration-form">
-      <div class="form-group">
-        <label for="businessName">Business Name</label>
-        <input 
-          id="businessName"
-          type="text" 
-          pInputText 
-          [(ngModel)]="registrationForm.businessName"
-          placeholder="e.g., Elite Fitness Studio"
-          class="w-full">
-      </div>
-
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input 
-          id="email"
-          type="email" 
-          pInputText 
-          [(ngModel)]="registrationForm.email"
-          placeholder="your@email.com"
-          class="w-full">
-      </div>
-
-      <div class="form-group">
-        <label for="serviceType">Service Type</label>
-        <p-dropdown 
-          [options]="serviceTypes" 
-          [(ngModel)]="registrationForm.serviceType"
-          optionLabel="label" 
-          optionValue="value"
-          placeholder="Select your service type"
-          class="w-full">
-        </p-dropdown>
-      </div>
-
-      <div class="form-actions">
-        <p-button 
-          label="Start Free Trial" 
-          icon="pi pi-rocket"
-          [loading]="registrationLoading"
-          [disabled]="!registrationForm.businessName || !registrationForm.email"
-          styleClass="w-full"
-          (onClick)="submitRegistration()">
-        </p-button>
-      </div>
-      
-      <p class="form-disclaimer">No credit card required. Cancel anytime.</p>
-    </div>
-  </div>
-</p-dialog>
+<!-- AUTH & BUSINESS DIALOG -->
+<app-auth-business-dialog 
+  [(showDialog)]="showRegistrationModal"
+  (authSuccess)="onAuthSuccess()"
+  (businessSetupComplete)="onBusinessSetupComplete()"
+  (dialogClosed)="onDialogClosed()">
+</app-auth-business-dialog>
 
 <!-- SIMPLIFIED FOOTER -->
 <footer class="main-footer">
@@ -290,7 +233,8 @@
           <ul>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
-            <li><a href="#privacy">Privacy</a></li>
+            <li><a routerLink="/privacy-policy">Privacy Policy</a></li>
+            <li><a routerLink="/terms-of-use">Terms of Use</a></li>
           </ul>
         </div>
       </div>
