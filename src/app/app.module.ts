@@ -100,6 +100,7 @@ import { AssetManagerComponent } from './website-creator/asset-manager/asset-man
 import { GoogleMapsPickerComponent } from './components/google-maps-picker/google-maps-picker.component';
 import { StripeAccountSetupComponent } from './stripe-account-setup/stripe-account-setup.component';
 import { AuthCallback } from './auth-callback/auth-callback';
+import { OrderForms } from './order-forms/order-forms';
 
 
 const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.googleusercontent.com';
@@ -124,7 +125,8 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     Canvas,
     AssetManagerComponent,
     StripeAccountSetupComponent,
-    AuthCallback
+    AuthCallback,
+    OrderForms
   ],
   imports: [
     BrowserModule,

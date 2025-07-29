@@ -399,7 +399,7 @@ button:hover {
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.1);
   backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.95);
+  background: #ffffff;
 }
 
 ::ng-deep .hamburger-menu-dropdown .mat-mdc-menu-panel {
@@ -408,7 +408,7 @@ button:hover {
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.1);
   backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.95);
+  background: #ffffff;
 }
 
 ::ng-deep .hamburger-menu-dropdown .mat-menu-content {
@@ -486,10 +486,24 @@ button:hover {
 
 ::ng-deep .business-menu {
   margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #ffffff;
+}
+
+::ng-deep .business-menu .mat-mdc-menu-panel {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #ffffff;
 }
 
 ::ng-deep .business-menu .mat-menu-content {
   padding: 8px 0;
+  background: #ffffff;
 }
 
 ::ng-deep .business-menu .mat-menu-item {

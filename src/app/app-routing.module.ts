@@ -12,6 +12,7 @@ import { AnalyticsComponent } from './analytics/analytics.component';
 import { Settings } from './settings/settings';
 import { WebsiteCreatorComponent } from './website-creator/website-creator';
 import { AuthCallback } from './auth-callback/auth-callback';
+import { OrderForms } from './order-forms/order-forms';
 
 
 const routes: Routes = [
@@ -27,6 +28,7 @@ const routes: Routes = [
   { path: 'business/settings', component: BusinessSettingsComponent },
   { path: 'chat', component: ChatWithAiAboutServiceFuzzComponent },
   {path:'analytics', component: AnalyticsComponent},
+  {path:'order-forms', component: OrderForms},
   { path: 'settings', component: Settings },
   { path: 'website-creator', component: WebsiteCreatorComponent },
   { path: '**', redirectTo: '', pathMatch: 'full' } // Wildcard route for 404 cases

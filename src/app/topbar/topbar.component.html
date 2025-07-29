@@ -43,6 +43,10 @@
         <mat-icon matListIcon>analytics</mat-icon>
         <span matLine>Analytics</span>
       </a>
+      <a mat-list-item routerLink="/order-forms" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/order-forms')">
+        <mat-icon matListIcon>receipt</mat-icon>
+        <span matLine>Order Forms</span>
+      </a>
       
     <a mat-list-item routerLink="/chat" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/chat')">
         <mat-icon matListIcon>chat</mat-icon>
@@ -136,6 +140,10 @@
       <button mat-menu-item routerLink="/business/add">
         <mat-icon>add_business</mat-icon>
         <span>Add Business</span>
+      </button>
+      <button mat-button routerLink="/order-forms" [class.active]="isRouteActive('/order-forms')">
+        <mat-icon>receipt</mat-icon>
+        <span [class.hide-text]="isSmallScreen$ | async">Order Forms</span>
       </button>
       <button mat-menu-item routerLink="/business/manage">
         <mat-icon>manage_accounts</mat-icon>
