@@ -30,7 +30,10 @@ const routes: Routes = [
   { path: 'business/settings', component: BusinessSettingsComponent },
   { path: 'chat', component: ChatWithAiAboutServiceFuzzComponent },
   {path:'analytics', component: AnalyticsComponent},
-  {path:'order-forms', component: OrderForms},
+  {path:'business/forms', component: OrderForms},
+  {path:'business/forms/all', component: OrderForms},
+  {path:'business/forms/:id', component: OrderForms},
+  {path:'order-forms', redirectTo: 'business/forms', pathMatch: 'full'}, // Legacy redirect
   { path: 'settings', component: Settings },
   { path: 'website-creator', component: WebsiteCreatorComponent },
   { path: 'privacy-policy', component: PrivacyPolicy },

@@ -1,1 +1,666 @@
-<p>order-forms works!</p>
+<div class="order-forms-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="8" fill="var(--surface-ground)" animationDuration=".5s"></p-progressSpinner>
+    <p class="loading-text">Loading your forms...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!loading" class="content-wrapper">
+    
+    <!-- Header with Navigation Breadcrumb -->
+    <div class="header-section">
+      <p-card class="header-card">
+        <div class="header-content">
+          <div class="breadcrumb-section">
+            <p-button 
+              icon="pi pi-home" 
+              severity="secondary" 
+              [text]="true" 
+              (onClick)="navigateToFormsList()"
+              class="breadcrumb-btn">
+            </p-button>
+            <i class="pi pi-angle-right breadcrumb-separator"></i>
+            <span class="breadcrumb-text">Business</span>
+            <i class="pi pi-angle-right breadcrumb-separator"></i>
+            <span class="breadcrumb-text">Order Forms</span>
+            <i *ngIf="currentView === 'single' && selectedForm" class="pi pi-angle-right breadcrumb-separator"></i>
+            <span *ngIf="currentView === 'single' && selectedForm" class="breadcrumb-text">{{ selectedForm.name }}</span>
+            <i *ngIf="currentView === 'all'" class="pi pi-angle-right breadcrumb-separator"></i>
+            <span *ngIf="currentView === 'all'" class="breadcrumb-text">All Forms</span>
+          </div>
+          
+          <div class="header-title">
+            <div class="title-section">
+              <h1 *ngIf="currentView === 'list'">
+                <i class="pi pi-file-edit"></i>
+                Order Forms Management
+              </h1>
+              <h1 *ngIf="currentView === 'all'">
+                <i class="pi pi-table"></i>
+                All Order Forms
+              </h1>
+              <h1 *ngIf="currentView === 'single' && selectedForm">
+                <i class="pi pi-eye"></i>
+                {{ selectedForm.name }}
+              </h1>
+            </div>
+            <p class="header-subtitle" *ngIf="currentView === 'list'">Create and manage professional order forms for your business</p>
+            <p class="header-subtitle" *ngIf="currentView === 'all'">Complete overview with analytics and management tools</p>
+            <p class="header-subtitle" *ngIf="currentView === 'single' && selectedForm">{{ selectedForm.description }}</p>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- List View - Default forms overview -->
+    <div *ngIf="currentView === 'list'" class="list-view">
+      
+      <!-- Enhanced Action Bar -->
+      <div class="action-bar">
+        <div class="primary-actions">
+          <p-button 
+            label="Create New Form" 
+            icon="pi pi-plus" 
+            severity="success"
+            class="action-btn primary-btn"
+            (onClick)="createNewForm()">
+          </p-button>
+          <p-button 
+            label="Browse Templates" 
+            icon="pi pi-clone" 
+            severity="info"
+            [outlined]="true"
+            class="action-btn"
+            (onClick)="createNewForm()">
+          </p-button>
+        </div>
+        <div class="secondary-actions">
+          <p-button 
+            label="View All Forms" 
+            icon="pi pi-list" 
+            severity="secondary"
+            [outlined]="true"
+            class="action-btn"
+            (onClick)="navigateToAllForms()">
+          </p-button>
+          <p-button 
+            icon="pi pi-download" 
+            severity="secondary"
+            [outlined]="true"
+            pTooltip="Export Forms"
+            class="action-btn icon-only">
+          </p-button>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-icon success">
+            <i class="pi pi-check-circle"></i>
+          </div>
+          <div class="stat-content">
+                         <span class="stat-number">{{ activeFormsCount }}</span>
+            <span class="stat-label">Active Forms</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon info">
+            <i class="pi pi-chart-bar"></i>
+          </div>
+          <div class="stat-content">
+                         <span class="stat-number">{{ totalOrdersCount }}</span>
+            <span class="stat-label">Total Orders</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon warn">
+            <i class="pi pi-clock"></i>
+          </div>
+          <div class="stat-content">
+                         <span class="stat-number">{{ draftFormsCount }}</span>
+            <span class="stat-label">Draft Forms</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Forms Grid -->
+      <div class="forms-grid">
+        <div *ngFor="let form of forms" class="form-card-wrapper">
+          <p-card class="form-card" [ngClass]="'status-' + form.status">
+            
+            <!-- Card Header with Status and Quick Actions -->
+            <ng-template pTemplate="header">
+              <div class="card-header">
+                <div class="status-section">
+                  <p-tag 
+                    [value]="form.status | titlecase" 
+                    [severity]="getStatusSeverity(form.status)"
+                    [icon]="getStatusIcon(form.status)"
+                    class="status-tag">
+                  </p-tag>
+                  <div class="publication-status">
+                    <i class="pi" [ngClass]="form.isPublished ? 'pi-globe' : 'pi-lock'" 
+                       [pTooltip]="form.isPublished ? 'Published Online' : 'Private Draft'"></i>
+                  </div>
+                </div>
+                <div class="quick-actions">
+                  <p-button 
+                    icon="pi pi-eye" 
+                    severity="info" 
+                    [text]="true"
+                    [rounded]="true"
+                    pTooltip="View Details"
+                    class="quick-action-btn"
+                    (onClick)="navigateToForm(form.id)">
+                  </p-button>
+                  <p-button 
+                    icon="pi pi-pencil" 
+                    severity="warn" 
+                    [text]="true"
+                    [rounded]="true"
+                    pTooltip="Edit Form"
+                    class="quick-action-btn"
+                    (onClick)="editForm(form.id)">
+                  </p-button>
+                  <p-button 
+                    [icon]="form.status === FormStatus.ACTIVE ? 'pi pi-pause' : 'pi pi-play'" 
+                    [severity]="form.status === FormStatus.ACTIVE ? 'warn' : 'success'" 
+                    [text]="true"
+                    [rounded]="true"
+                    [pTooltip]="form.status === FormStatus.ACTIVE ? 'Pause Form' : 'Activate Form'"
+                    class="quick-action-btn"
+                    (onClick)="toggleFormStatus(form.id)">
+                  </p-button>
+                </div>
+              </div>
+            </ng-template>
+
+            <!-- Enhanced Card Content -->
+            <div class="card-content">
+              <div class="form-header">
+                <h3 class="form-title">
+                  <i class="pi pi-file-edit form-icon"></i>
+                  {{ form.name }}
+                </h3>
+                <div class="form-url" *ngIf="form.formUrl">
+                  <p-button 
+                    icon="pi pi-copy" 
+                    severity="secondary" 
+                    [text]="true"
+                    [rounded]="true"
+                    size="small"
+                    pTooltip="Copy Form URL"
+                    (onClick)="copyFormUrl(form.formUrl!)">
+                  </p-button>
+                </div>
+              </div>
+              
+              <p class="form-description">{{ form.description }}</p>
+              
+              <!-- Analytics Preview -->
+              <div class="analytics-preview">
+                <div class="analytics-item">
+                  <i class="pi pi-eye"></i>
+                  <span class="analytics-value">{{ form.analytics.totalViews }}</span>
+                  <span class="analytics-label">Views</span>
+                </div>
+                <div class="analytics-item">
+                  <i class="pi pi-percentage"></i>
+                  <span class="analytics-value">{{ form.analytics.conversionRate }}%</span>
+                  <span class="analytics-label">Conversion</span>
+                </div>
+                <div class="analytics-item">
+                  <i class="pi pi-clock"></i>
+                  <span class="analytics-value">{{ form.analytics.averageCompletionTime }}m</span>
+                  <span class="analytics-label">Avg Time</span>
+                </div>
+              </div>
+
+              <!-- Form Stats -->
+              <div class="form-stats">
+                <div class="stat-item">
+                  <i class="pi pi-calendar"></i>
+                  <span>{{ form.createdDate | date:'mediumDate' }}</span>
+                </div>
+                <div class="stat-item highlight">
+                  <i class="pi pi-shopping-cart"></i>
+                  <strong>{{ form.totalOrders }} orders</strong>
+                </div>
+                <div class="stat-item">
+                  <i class="pi pi-list"></i>
+                  <span>{{ form.fields.length }} fields</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Enhanced Card Footer -->
+            <ng-template pTemplate="footer">
+              <div class="card-footer">
+                <div class="action-buttons">
+                  <p-button 
+                    label="View & Edit" 
+                    icon="pi pi-arrow-right" 
+                    class="primary-action-btn"
+                    (onClick)="navigateToForm(form.id)">
+                  </p-button>
+                  <p-button 
+                    icon="pi pi-chart-line" 
+                    severity="secondary"
+                    [outlined]="true"
+                    pTooltip="View Analytics"
+                    class="secondary-action-btn"
+                    (onClick)="viewAnalytics(form.id)">
+                  </p-button>
+                  <p-button 
+                    icon="pi pi-copy" 
+                    severity="secondary"
+                    [outlined]="true"
+                    pTooltip="Duplicate Form"
+                    class="secondary-action-btn"
+                    (onClick)="duplicateForm(form.id)">
+                  </p-button>
+                </div>
+              </div>
+            </ng-template>
+
+          </p-card>
+        </div>
+
+        <!-- Add New Form Card -->
+        <div class="form-card-wrapper">
+          <p-card class="form-card add-new-card" (click)="createNewForm()">
+            <div class="add-new-content">
+              <div class="add-new-icon">
+                <i class="pi pi-plus"></i>
+              </div>
+              <h3>Create New Form</h3>
+              <p>Start building a custom order form for your business</p>
+              <p-button 
+                label="Get Started" 
+                icon="pi pi-arrow-right" 
+                severity="success"
+                [outlined]="true"
+                class="add-new-btn">
+              </p-button>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Forms View - Enhanced Table layout -->
+    <div *ngIf="currentView === 'all'" class="all-forms-view">
+      
+      <!-- Navigation Actions -->
+      <div class="action-bar">
+        <div class="primary-actions">
+          <p-button 
+            label="Back to Overview" 
+            icon="pi pi-arrow-left" 
+            severity="secondary"
+            [outlined]="true"
+            class="action-btn"
+            (onClick)="navigateToFormsList()">
+          </p-button>
+        </div>
+        <div class="secondary-actions">
+          <p-button 
+            label="Create New Form" 
+            icon="pi pi-plus" 
+            severity="success"
+            class="action-btn"
+            (onClick)="createNewForm()">
+          </p-button>
+        </div>
+      </div>
+
+      <!-- Enhanced Forms Table -->
+      <p-card class="table-card">
+        <p-table 
+          [value]="forms" 
+          [paginator]="true" 
+          [rows]="10" 
+          [showCurrentPageReport]="true" 
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} forms"
+          [rowsPerPageOptions]="[10, 25, 50]" 
+          styleClass="p-datatable-gridlines enhanced-table"
+          [sortField]="'createdDate'"
+          [sortOrder]="-1">
+          
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="name" style="width: 25%">
+                Form Name <p-sortIcon field="name"></p-sortIcon>
+              </th>
+              <th pSortableColumn="status" style="width: 15%">
+                Status <p-sortIcon field="status"></p-sortIcon>
+              </th>
+              <th pSortableColumn="totalOrders" style="width: 15%">
+                Orders <p-sortIcon field="totalOrders"></p-sortIcon>
+              </th>
+              <th style="width: 15%">Analytics</th>
+              <th pSortableColumn="createdDate" style="width: 15%">
+                Created <p-sortIcon field="createdDate"></p-sortIcon>
+              </th>
+              <th style="width: 15%">Actions</th>
+            </tr>
+          </ng-template>
+          
+          <ng-template pTemplate="body" let-form>
+            <tr class="table-row" [ngClass]="'status-' + form.status">
+              <td>
+                <div class="form-name-cell">
+                  <div class="form-title-row">
+                    <i class="pi pi-file-edit"></i>
+                    <strong>{{ form.name }}</strong>
+                  </div>
+                  <div class="form-description-small">{{ form.description }}</div>
+                  <div class="form-meta">
+                    <span class="field-count">{{ form.fields.length }} fields</span>
+                    <span class="publication-indicator" *ngIf="form.isPublished">
+                      <i class="pi pi-globe"></i> Published
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <p-tag 
+                  [value]="form.status | titlecase" 
+                  [severity]="getStatusSeverity(form.status)"
+                  [icon]="getStatusIcon(form.status)">
+                </p-tag>
+              </td>
+              <td>
+                <div class="orders-cell">
+                  <p-badge [value]="form.totalOrders.toString()" severity="info" size="large"></p-badge>
+                  <small class="orders-label">total orders</small>
+                </div>
+              </td>
+              <td>
+                <div class="analytics-cell">
+                  <div class="analytics-mini">
+                    <span class="analytics-mini-item">
+                      <i class="pi pi-eye"></i> {{ form.analytics.totalViews }}
+                    </span>
+                    <span class="analytics-mini-item">
+                      <i class="pi pi-percentage"></i> {{ form.analytics.conversionRate }}%
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="date-cell">
+                  <span class="date-primary">{{ form.createdDate | date:'mediumDate' }}</span>
+                  <small class="date-updated">Updated {{ form.updatedDate | date:'shortDate' }}</small>
+                </div>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <p-button 
+                    icon="pi pi-eye" 
+                    severity="info" 
+                    [text]="true"
+                    [rounded]="true"
+                    pTooltip="View Details"
+                    (onClick)="navigateToForm(form.id)">
+                  </p-button>
+                  <p-button 
+                    icon="pi pi-pencil" 
+                    severity="warn" 
+                    [text]="true"
+                    [rounded]="true"
+                    pTooltip="Edit Form"
+                    (onClick)="editForm(form.id)">
+                  </p-button>
+                  <p-button 
+                    icon="pi pi-chart-line" 
+                    severity="secondary" 
+                    [text]="true"
+                    [rounded]="true"
+                    pTooltip="View Analytics"
+                    (onClick)="viewAnalytics(form.id)">
+                  </p-button>
+                  <p-button 
+                    icon="pi pi-copy" 
+                    severity="help" 
+                    [text]="true"
+                    [rounded]="true"
+                    pTooltip="Duplicate Form"
+                    (onClick)="duplicateForm(form.id)">
+                  </p-button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+    </div>
+
+    <!-- Single Form View remains the same but with enhanced styling -->
+    <div *ngIf="currentView === 'single'" class="single-form-view">
+      
+      <div *ngIf="!selectedForm" class="no-form-message">
+        <p-card>
+          <div class="text-center">
+            <i class="pi pi-exclamation-triangle" style="font-size: 3rem; color: #ffa726;"></i>
+            <h3>Form Not Found</h3>
+            <p>The requested form could not be found.</p>
+            <p-button 
+              label="Back to Forms" 
+              icon="pi pi-arrow-left" 
+              (onClick)="navigateToFormsList()">
+            </p-button>
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Rest of single form view remains the same -->
+      <div *ngIf="selectedForm" class="form-details">
+        
+        <!-- Navigation Actions -->
+        <div class="action-bar">
+          <div class="primary-actions">
+            <p-button 
+              label="Back to Forms" 
+              icon="pi pi-arrow-left" 
+              severity="secondary"
+              [outlined]="true"
+              class="action-btn"
+              (onClick)="navigateToFormsList()">
+            </p-button>
+          </div>
+          <div class="secondary-actions">
+            <p-button 
+              label="Edit Form" 
+              icon="pi pi-pencil" 
+              severity="warn"
+              class="action-btn"
+              (onClick)="editForm(selectedForm.id)">
+            </p-button>
+            <p-button 
+              label="View Analytics" 
+              icon="pi pi-chart-line" 
+              severity="info"
+              [outlined]="true"
+              class="action-btn"
+              (onClick)="viewAnalytics(selectedForm.id)">
+            </p-button>
+            <p-button 
+              label="Duplicate" 
+              icon="pi pi-copy" 
+              severity="help"
+              [outlined]="true"
+              class="action-btn"
+              (onClick)="duplicateForm(selectedForm.id)">
+            </p-button>
+          </div>
+        </div>
+
+        <!-- Form Details Grid -->
+        <div class="form-details-grid">
+          
+          <!-- Form Information -->
+          <p-card header="Form Information" class="info-card">
+            <div class="info-content">
+              <div class="info-row">
+                <label>Status:</label>
+                <p-tag [value]="selectedForm.status | titlecase" [severity]="getStatusSeverity(selectedForm.status)" [icon]="getStatusIcon(selectedForm.status)"></p-tag>
+              </div>
+              <div class="info-row">
+                <label>Created:</label>
+                <span>{{ selectedForm.createdDate | date:'fullDate' }}</span>
+              </div>
+              <div class="info-row">
+                <label>Updated:</label>
+                <span>{{ selectedForm.updatedDate | date:'fullDate' }}</span>
+              </div>
+              <div class="info-row">
+                <label>Total Orders:</label>
+                <p-badge [value]="selectedForm.totalOrders.toString()" severity="success"></p-badge>
+              </div>
+              <div class="info-row">
+                <label>Form Fields:</label>
+                <span>{{ selectedForm.fields.length }} fields configured</span>
+              </div>
+              <div class="info-row">
+                <label>Published:</label>
+                <p-tag [value]="selectedForm.isPublished ? 'Yes' : 'No'" [severity]="selectedForm.isPublished ? 'success' : 'warn'"></p-tag>
+              </div>
+            </div>
+          </p-card>
+
+          <!-- Form Analytics -->
+          <p-card header="Form Analytics" class="analytics-card">
+            <div class="analytics-content">
+              <div class="analytics-grid">
+                <div class="analytics-stat">
+                  <div class="stat-icon-large">
+                    <i class="pi pi-eye"></i>
+                  </div>
+                  <div class="stat-data">
+                    <span class="stat-number-large">{{ selectedForm.analytics.totalViews }}</span>
+                    <span class="stat-label-large">Total Views</span>
+                  </div>
+                </div>
+                <div class="analytics-stat">
+                  <div class="stat-icon-large">
+                    <i class="pi pi-percentage"></i>
+                  </div>
+                  <div class="stat-data">
+                    <span class="stat-number-large">{{ selectedForm.analytics.conversionRate }}%</span>
+                    <span class="stat-label-large">Conversion Rate</span>
+                  </div>
+                </div>
+                <div class="analytics-stat">
+                  <div class="stat-icon-large">
+                    <i class="pi pi-clock"></i>
+                  </div>
+                  <div class="stat-data">
+                    <span class="stat-number-large">{{ selectedForm.analytics.averageCompletionTime }}m</span>
+                    <span class="stat-label-large">Avg Completion</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </p-card>
+
+        </div>
+
+        <!-- Form Fields -->
+        <p-card header="Form Fields Configuration" class="fields-card">
+          <div class="fields-content">
+            <div *ngFor="let field of selectedForm.fields; let i = index" class="field-item">
+              <div class="field-header">
+                <div class="field-info">
+                  <span class="field-label">{{ field.label }}</span>
+                  <p-tag [value]="field.type" severity="info" [style]="{'margin-left': '0.5rem'}"></p-tag>
+                  <p-tag *ngIf="field.required" value="Required" severity="danger" [style]="{'margin-left': '0.5rem'}"></p-tag>
+                </div>
+              </div>
+              <div *ngIf="field.placeholder" class="field-placeholder">
+                <small><em>Placeholder: "{{ field.placeholder }}"</em></small>
+              </div>
+              <div *ngIf="field.options && field.options.length > 0" class="field-options">
+                <small>Options: {{ field.options.join(', ') }}</small>
+              </div>
+              <p-divider *ngIf="i < selectedForm.fields.length - 1"></p-divider>
+            </div>
+          </div>
+        </p-card>
+
+        <!-- Form Preview Section -->
+        <p-card header="Live Form Preview" class="preview-card">
+          <div class="form-preview">
+            <div class="preview-note">
+              <p-message 
+                severity="info" 
+                text="This is how your form appears to customers. All fields are disabled for preview."
+                [style]="{'margin-bottom': '1.5rem'}">
+              </p-message>
+            </div>
+            
+            <div class="preview-form">
+              <div *ngFor="let field of selectedForm.fields" class="preview-field">
+                <label class="field-label">
+                  {{ field.label }}
+                  <span *ngIf="field.required" class="required-asterisk">*</span>
+                </label>
+                
+                <input 
+                  *ngIf="field.type === FormFieldType.TEXT || field.type === FormFieldType.EMAIL || field.type === FormFieldType.PHONE" 
+                  pInputText 
+                  [placeholder]="field.placeholder || 'Enter ' + field.label.toLowerCase()"
+                  [disabled]="true"
+                  class="preview-input">
+                
+                <input 
+                  *ngIf="field.type === FormFieldType.NUMBER" 
+                  pInputNumber 
+                  [placeholder]="field.placeholder || 'Enter ' + field.label.toLowerCase()"
+                  [disabled]="true"
+                  class="preview-input">
+                
+                <p-dropdown 
+                  *ngIf="field.type === FormFieldType.SELECT" 
+                  [options]="field.options || []"
+                  [placeholder]="field.placeholder || 'Select ' + field.label.toLowerCase()"
+                  [disabled]="true"
+                  class="preview-input">
+                </p-dropdown>
+                
+                <textarea 
+                  *ngIf="field.type === FormFieldType.TEXTAREA" 
+                  pTextarea 
+                  [placeholder]="field.placeholder || 'Enter ' + field.label.toLowerCase()"
+                  [disabled]="true"
+                  class="preview-input"
+                  rows="3">
+                </textarea>
+
+                <p-calendar 
+                  *ngIf="field.type === FormFieldType.DATE" 
+                  [placeholder]="field.placeholder || 'Select date'"
+                  [disabled]="true"
+                  class="preview-input">
+                </p-calendar>
+              </div>
+              
+              <div class="preview-submit">
+                <p-button 
+                  label="Submit Order" 
+                  icon="pi pi-check" 
+                  [disabled]="true"
+                  [style]="{'width': '100%', 'margin-top': '1rem'}">
+                </p-button>
+              </div>
+            </div>
+          </div>
+        </p-card>
+
+      </div>
+    </div>
+
+  </div>
+</div>
