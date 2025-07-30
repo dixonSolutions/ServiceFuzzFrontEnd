@@ -1047,4 +1047,30 @@
   .quote p {
     font-size: 1.1rem;
   }
+}
+
+/* Legal Links Styling for Google Verification */
+.legal-links {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.legal-link {
+  color: #666 !important;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.legal-link:hover {
+  color: #1976d2 !important;
+  background-color: rgba(25, 118, 210, 0.1);
+  text-decoration: underline;
+}
+
+.legal-separator {
+  color: #ccc;
+  margin: 0 0.5rem;
 } 
