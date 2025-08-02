@@ -1,0 +1,871 @@
+<!-- Professional Form Builder with Drag & Drop -->
+<div class="form-builder-container">
+
+  <!-- Form Creation Dialog -->
+  <p-dialog 
+    header="Create New Form" 
+    [(visible)]="showFormCreationDialog" 
+    [modal]="true" 
+    [closable]="false"
+    [draggable]="false"
+    [resizable]="false"
+    [dismissableMask]="false"
+    [closeOnEscape]="false"
+    styleClass="form-creation-dialog"
+    [style]="{width: '450px'}">
+    
+    <div class="dialog-content">
+      <p class="dialog-instructions">
+        Please provide basic information about your new form to get started.
+      </p>
+      
+      <div class="form-field-group">
+        <label for="formName">Form Name *</label>
+        <input 
+          id="formName"
+          pInputText 
+          [(ngModel)]="newFormName" 
+          placeholder="e.g., Contact Form, Registration Form..."
+          class="w-full"
+          autofocus>
+      </div>
+      
+      <div class="form-field-group">
+        <label for="formDescription">Description (Optional)</label>
+        <textarea 
+          id="formDescription"
+          pTextarea 
+          [(ngModel)]="newFormDescription" 
+          placeholder="Brief description of what this form is for..."
+          rows="3"
+          class="w-full">
+        </textarea>
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <p-button 
+        label="Cancel" 
+        severity="secondary" 
+        [outlined]="true"
+        (onClick)="onCreateFormCancel()">
+      </p-button>
+      <p-button 
+        label="Create Form" 
+        severity="success"
+        [disabled]="!newFormName.trim()"
+        (onClick)="onCreateFormConfirm()">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Edit Form Dialog -->
+  <p-dialog 
+    header="Edit Form Details" 
+    [(visible)]="showEditFormDialog" 
+    [modal]="true" 
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="edit-form-dialog"
+    [style]="{width: '450px'}">
+    
+    <div class="dialog-content">
+      <div class="form-field-group">
+        <label for="editFormName">Form Name *</label>
+        <input 
+          id="editFormName"
+          pInputText 
+          [(ngModel)]="editFormName" 
+          placeholder="Enter form name..."
+          class="w-full">
+      </div>
+      
+      <div class="form-field-group">
+        <label for="editFormDescription">Description (Optional)</label>
+        <textarea 
+          id="editFormDescription"
+          pTextarea 
+          [(ngModel)]="editFormDescription" 
+          placeholder="Brief description of what this form is for..."
+          rows="3"
+          class="w-full">
+        </textarea>
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <p-button 
+        label="Cancel" 
+        severity="secondary" 
+        [outlined]="true"
+        (onClick)="onEditFormCancel()">
+      </p-button>
+      <p-button 
+        label="Save Changes" 
+        severity="success"
+        [disabled]="!editFormName.trim()"
+        (onClick)="onEditFormConfirm()">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+  
+  <!-- Loading State -->
+  <div *ngIf="!builderState?.currentForm && !showFormCreationDialog" class="loading-state">
+    <div class="loading-content">
+      <p-progressSpinner></p-progressSpinner>
+      <p>Initializing form builder...</p>
+    </div>
+  </div>
+  
+  <!-- Header Toolbar -->
+  <div *ngIf="builderState?.currentForm" class="builder-header">
+    <div class="header-left">
+      <p-button 
+        icon="pi pi-arrow-left" 
+        label="Back to Forms"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="cancelEditing()">
+      </p-button>
+    </div>
+    
+    <div class="header-center">
+      <div class="form-title-section">
+        <div class="form-info-row" *ngIf="builderState?.currentForm">
+          <div class="form-info-display">
+            <h2 class="form-title">{{ builderState?.currentForm?.formName }}</h2>
+            <p *ngIf="builderState?.currentForm?.description" class="form-description-text">{{ builderState?.currentForm?.description }}</p>
+            <p *ngIf="!builderState?.currentForm?.description" class="form-no-description">No description</p>
+          </div>
+          <div class="header-center-actions" *ngIf="!isPreviewMode">
+            <p-button 
+              icon="pi pi-pencil" 
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              size="small"
+              pTooltip="Edit Form Details"
+              (onClick)="openEditFormDialog()">
+            </p-button>
+          </div>
+        </div>
+        <p-tag *ngIf="isDirty" value="Unsaved" severity="warn" size="small"></p-tag>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <p-button 
+        [icon]="isPreviewMode ? 'pi pi-pencil' : 'pi pi-eye'"
+        [label]="isPreviewMode ? 'Edit Mode' : 'Preview'"
+        severity="info"
+        [outlined]="true"
+        (onClick)="togglePreviewMode()">
+      </p-button>
+      <p-button 
+        icon="pi pi-save"
+        label="Save Form"
+        severity="success"
+        [disabled]="hasValidationErrors() || !isDirty"
+        (onClick)="saveForm()">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Main Builder Content -->
+  <div *ngIf="builderState?.currentForm" class="builder-content">
+    
+    <!-- Component Palette Sidebar -->
+    <div class="component-palette" *ngIf="!isPreviewMode">
+      <div class="palette-header">
+        <h3><i class="pi pi-th-large"></i> Components</h3>
+        <small>Drag components to your form</small>
+      </div>
+      
+      <div class="palette-content">
+        <div *ngFor="let category of getCategories()" class="component-category">
+          <h4 class="category-title">{{ category }}</h4>
+          
+          <div 
+            class="component-group"
+            cdkDropList
+            [id]="'palette-' + category"
+            [cdkDropListData]="getComponentsByCategory(category)"
+            cdkDropListSortingDisabled
+            [cdkDropListConnectedTo]="['form-canvas']">
+            
+            <div 
+              *ngFor="let component of getComponentsByCategory(category)"
+              class="component-item"
+              cdkDrag
+              [cdkDragData]="component"
+              (click)="onPaletteComponentClicked(component.type)">
+              
+              <div class="component-preview">
+                <i class="pi" [ngClass]="component.icon"></i>
+                <span class="component-name">{{ component.name }}</span>
+              </div>
+              <small class="component-description">{{ component.description }}</small>
+              
+              <!-- Drag preview -->
+              <div *cdkDragPreview class="component-drag-preview">
+                <i class="pi" [ngClass]="component.icon"></i>
+                {{ component.name }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Canvas -->
+    <div class="form-canvas" [class.preview-mode]="isPreviewMode" [class.full-width]="isPreviewMode">
+      
+      <!-- Form Description Preview Only -->
+      <div class="form-description preview" *ngIf="isPreviewMode && builderState?.currentForm?.description">
+        <p>{{ builderState?.currentForm?.description }}</p>
+      </div>
+
+      <!-- Validation Errors -->
+      <div *ngIf="validationErrors.length > 0" class="validation-messages">
+        <p-message 
+          *ngFor="let error of validationErrors"
+          [severity]="error.severity"
+          [text]="error.message"
+          [closable]="false">
+        </p-message>
+      </div>
+
+      <!-- Form Components Drop Zone -->
+      <div 
+        class="form-drop-zone"
+        cdkDropList
+        id="form-canvas"
+        [cdkDropListData]="formComponents"
+        [cdkDropListConnectedTo]="getPaletteDropListIds()"
+        (cdkDropListDropped)="onComponentDrop($event)"
+        (click)="onCanvasClick($event)"
+>
+        
+        <!-- Empty State -->
+        <div *ngIf="formComponents.length === 0" class="empty-form-state">
+          <div class="empty-icon">
+            <i class="pi pi-plus-circle"></i>
+          </div>
+          <h3>Start Building Your Custom Order Form</h3>
+          <p>Drag components from the left sidebar or click to add them</p>
+        </div>
+
+        <!-- Form Components -->
+        <div 
+          *ngFor="let component of formComponents; let i = index"
+          class="form-component-wrapper"
+          cdkDrag
+          [cdkDragData]="component"
+          [class.selected]="selectedComponent?.id === component.id"
+          (click)="selectComponent(component)">
+          
+          <!-- Component Header (Edit Mode Only) -->
+          <div *ngIf="!isPreviewMode" class="component-header">
+            <div class="component-info">
+              <i class="pi drag-handle" [ngClass]="getComponentIcon(component.type)"></i>
+              <span class="component-label">{{ component.label }}</span>
+              <p-tag *ngIf="component.required" value="Required" severity="danger" size="small"></p-tag>
+            </div>
+            <div class="component-actions">
+              <p-button 
+                icon="pi pi-copy"
+                severity="secondary"
+                [text]="true"
+                [rounded]="true"
+                size="small"
+                pTooltip="Duplicate"
+                (onClick)="duplicateComponent(component); $event.stopPropagation()">
+              </p-button>
+              <p-button 
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                [rounded]="true"
+                size="small"
+                pTooltip="Delete"
+                (onClick)="removeComponent(component.id); $event.stopPropagation()">
+              </p-button>
+            </div>
+          </div>
+
+          <!-- Component Content -->
+          <div class="component-content" [class.preview]="isPreviewMode">
+            
+            <!-- Text Input -->
+            <div *ngIf="component.type === 'text'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <input 
+                pInputText
+                type="text"
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [ngModel]="getPreviewFieldValue(component.id)"
+                (ngModelChange)="updatePreviewFieldValue(component.id, $event)"
+                [class.p-invalid]="isPreviewMode && hasPreviewValidationError(component.id)"
+                class="form-field">
+              <small *ngIf="isPreviewMode && hasPreviewValidationError(component.id)" class="p-error">
+                {{ getPreviewValidationMessage(component.id) }}
+              </small>
+            </div>
+
+            <!-- Email Input -->
+            <div *ngIf="component.type === 'email'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <input 
+                pInputText
+                type="email"
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [ngModel]="getPreviewFieldValue(component.id)"
+                (ngModelChange)="updatePreviewFieldValue(component.id, $event)"
+                [class.p-invalid]="isPreviewMode && hasPreviewValidationError(component.id)"
+                class="form-field">
+              <small *ngIf="isPreviewMode && hasPreviewValidationError(component.id)" class="p-error">
+                {{ getPreviewValidationMessage(component.id) }}
+              </small>
+            </div>
+
+            <!-- Phone Input -->
+            <div *ngIf="component.type === 'phone'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <input 
+                pInputText
+                type="tel"
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [ngModel]="getPreviewFieldValue(component.id)"
+                (ngModelChange)="updatePreviewFieldValue(component.id, $event)"
+                [class.p-invalid]="isPreviewMode && hasPreviewValidationError(component.id)"
+                class="form-field">
+              <small *ngIf="isPreviewMode && hasPreviewValidationError(component.id)" class="p-error">
+                {{ getPreviewValidationMessage(component.id) }}
+              </small>
+            </div>
+
+            <!-- Number Input -->
+            <div *ngIf="component.type === 'number'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <p-inputNumber
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [min]="component.validation?.min"
+                [max]="component.validation?.max"
+                [ngModel]="getPreviewFieldValue(component.id)"
+                (ngModelChange)="updatePreviewFieldValue(component.id, $event)"
+                [class.p-invalid]="isPreviewMode && hasPreviewValidationError(component.id)"
+                styleClass="form-field">
+              </p-inputNumber>
+              <small *ngIf="isPreviewMode && hasPreviewValidationError(component.id)" class="p-error">
+                {{ getPreviewValidationMessage(component.id) }}
+              </small>
+            </div>
+
+            <!-- Password Input -->
+            <div *ngIf="component.type === 'password'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <input 
+                pInputText
+                type="password"
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [ngModel]="getPreviewFieldValue(component.id)"
+                (ngModelChange)="updatePreviewFieldValue(component.id, $event)"
+                [class.p-invalid]="isPreviewMode && hasPreviewValidationError(component.id)"
+                class="form-field">
+              <small *ngIf="isPreviewMode && hasPreviewValidationError(component.id)" class="p-error">
+                {{ getPreviewValidationMessage(component.id) }}
+              </small>
+            </div>
+
+            <!-- Textarea -->
+            <div *ngIf="component.type === 'textarea'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <textarea 
+                pTextarea
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [rows]="4"
+                [ngModel]="getPreviewFieldValue(component.id)"
+                (ngModelChange)="updatePreviewFieldValue(component.id, $event)"
+                [class.p-invalid]="isPreviewMode && hasPreviewValidationError(component.id)"
+                class="form-field">
+              </textarea>
+              <small *ngIf="isPreviewMode && hasPreviewValidationError(component.id)" class="p-error">
+                {{ getPreviewValidationMessage(component.id) }}
+              </small>
+            </div>
+
+            <!-- Dropdown -->
+            <div *ngIf="component.type === 'dropdown'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <p-dropdown
+                [options]="component.options || []"
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [ngModel]="getPreviewFieldValue(component.id)"
+                (ngModelChange)="updatePreviewFieldValue(component.id, $event)"
+                [class.p-invalid]="isPreviewMode && hasPreviewValidationError(component.id)"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="form-field">
+              </p-dropdown>
+              <small *ngIf="isPreviewMode && hasPreviewValidationError(component.id)" class="p-error">
+                {{ getPreviewValidationMessage(component.id) }}
+              </small>
+            </div>
+
+            <!-- Multi Select -->
+            <div *ngIf="component.type === 'multiselect'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <p-multiSelect
+                [options]="component.options || []"
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [ngModel]="getPreviewFieldValue(component.id)"
+                (ngModelChange)="updatePreviewFieldValue(component.id, $event)"
+                [class.p-invalid]="isPreviewMode && hasPreviewValidationError(component.id)"
+                optionLabel="label"
+                optionValue="value"
+                styleClass="form-field">
+              </p-multiSelect>
+              <small *ngIf="isPreviewMode && hasPreviewValidationError(component.id)" class="p-error">
+                {{ getPreviewValidationMessage(component.id) }}
+              </small>
+            </div>
+
+            <!-- Radio Buttons -->
+            <div *ngIf="component.type === 'radio'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <div class="radio-group">
+                <div *ngFor="let option of component.options || []" class="radio-option">
+                  <p-radioButton
+                    [inputId]="component.id + '_' + option.value"
+                    [name]="component.id"
+                    [value]="option.value"
+                    [ngModel]="getPreviewFieldValue(component.id)"
+                    (ngModelChange)="updatePreviewFieldValue(component.id, $event)"
+                    [disabled]="!isPreviewMode">
+                  </p-radioButton>
+                  <label [for]="component.id + '_' + option.value">{{ option.label }}</label>
+                </div>
+              </div>
+              <small *ngIf="isPreviewMode && hasPreviewValidationError(component.id)" class="p-error">
+                {{ getPreviewValidationMessage(component.id) }}
+              </small>
+            </div>
+
+            <!-- Single Checkbox -->
+            <div *ngIf="component.type === 'checkbox'">
+              <div class="checkbox-field">
+                <p-checkbox
+                  [inputId]="component.id"
+                  [disabled]="!isPreviewMode">
+                </p-checkbox>
+                <label [for]="component.id">
+                  {{ component.label }}
+                  <span *ngIf="component.required" class="required-asterisk">*</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Checkbox Group -->
+            <div *ngIf="component.type === 'checkbox_group'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <div class="checkbox-group">
+                <div *ngFor="let option of component.options || []" class="checkbox-option">
+                  <p-checkbox
+                    [inputId]="component.id + '_' + option.value"
+                    [value]="option.value"
+                    [disabled]="!isPreviewMode">
+                  </p-checkbox>
+                  <label [for]="component.id + '_' + option.value">{{ option.label }}</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Calendar (Date Picker) -->
+            <div *ngIf="component.type === 'calendar'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <p-datePicker
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [minDate]="component.minDate"
+                [maxDate]="component.maxDate"
+                styleClass="form-field">
+              </p-datePicker>
+            </div>
+
+            <!-- Calendar Range -->
+            <div *ngIf="component.type === 'calendar_range'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <p-datePicker
+                [placeholder]="component.placeholder"
+                [disabled]="!isPreviewMode"
+                [minDate]="component.minDate"
+                [maxDate]="component.maxDate"
+                [selectionMode]="'range'"
+                styleClass="form-field">
+              </p-datePicker>
+            </div>
+
+            <!-- File Upload -->
+            <div *ngIf="component.type === 'file'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <input 
+                type="file"
+                [disabled]="!isPreviewMode"
+                [multiple]="(component.maxFiles || 1) > 1"
+                [accept]="component.allowedFileTypes?.join(',') || '*'"
+                class="form-field">
+            </div>
+
+            <!-- Rating -->
+            <div *ngIf="component.type === 'rating'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <p-rating
+                [disabled]="!isPreviewMode"
+                [stars]="5"
+                [cancel]="true">
+              </p-rating>
+            </div>
+
+            <!-- Slider -->
+            <div *ngIf="component.type === 'slider'">
+              <label class="field-label">
+                {{ component.label }}
+                <span *ngIf="component.required" class="required-asterisk">*</span>
+              </label>
+              <p-slider
+                [disabled]="!isPreviewMode"
+                [min]="component.validation?.min || 0"
+                [max]="component.validation?.max || 100"
+                styleClass="form-field">
+              </p-slider>
+            </div>
+
+            <!-- Heading -->
+            <div *ngIf="component.type === 'heading'">
+              <h3 class="form-heading">{{ component.label }}</h3>
+            </div>
+
+            <!-- Paragraph -->
+            <div *ngIf="component.type === 'paragraph'">
+              <p class="form-paragraph">{{ component.description || component.label }}</p>
+            </div>
+
+            <!-- Divider -->
+            <div *ngIf="component.type === 'divider'">
+              <p-divider></p-divider>
+          </div>
+
+          </div>
+
+        </div>
+
+        <!-- Submit Button (Preview Mode Only) -->
+        <div *ngIf="isPreviewMode && formComponents.length > 0" class="form-submit-section">
+          <p-button 
+            [label]="builderState?.currentForm?.settings?.submitButtonText || 'Submit Form'"
+            severity="success"
+            size="large"
+            (onClick)="onPreviewFormSubmit()">
+          </p-button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Properties Panel -->
+    <div class="properties-panel" *ngIf="selectedComponent && !isPreviewMode">
+      <div class="panel-header">
+        <h3><i class="pi pi-cog"></i> Properties</h3>
+        <small>{{ selectedComponent.label }}</small>
+      </div>
+      
+      <div class="panel-content">
+        
+        <!-- Basic Properties -->
+        <div class="property-section">
+          <h4>Basic Settings</h4>
+          
+          <div class="property-field">
+            <label>Label</label>
+            <input 
+              pInputText
+              [ngModel]="selectedComponent.label"
+              (ngModelChange)="updateComponentProperty('label', $event)"
+              placeholder="Enter field label">
+          </div>
+
+          <div class="property-field" *ngIf="selectedComponent.type !== 'heading' && selectedComponent.type !== 'paragraph' && selectedComponent.type !== 'divider'">
+            <label>Placeholder</label>
+            <input 
+              pInputText
+              [ngModel]="selectedComponent.placeholder"
+              (ngModelChange)="updateComponentProperty('placeholder', $event)"
+              placeholder="Enter placeholder text">
+          </div>
+
+          <div class="property-field" *ngIf="selectedComponent.type === 'paragraph' || selectedComponent.type === 'heading'">
+            <label>Description</label>
+            <textarea 
+              pTextarea
+              [ngModel]="selectedComponent.description"
+              (ngModelChange)="updateComponentProperty('description', $event)"
+              placeholder="Enter description text"
+              rows="3">
+            </textarea>
+          </div>
+
+          <div class="property-field" *ngIf="selectedComponent.type !== 'heading' && selectedComponent.type !== 'paragraph' && selectedComponent.type !== 'divider'">
+            <p-checkbox 
+              [ngModel]="selectedComponent.required"
+              (ngModelChange)="updateComponentProperty('required', $event)"
+              label="Required field">
+            </p-checkbox>
+          </div>
+        </div>
+
+        <!-- Options Editor for Selection Components -->
+        <div class="property-section" *ngIf="hasOptionsProperty(selectedComponent.type)">
+          <h4>Options</h4>
+          
+          <div class="options-editor">
+            <div *ngFor="let option of getComponentOptions(); let i = index" class="option-row">
+              <input 
+                pInputText
+                [ngModel]="option.label"
+                (ngModelChange)="updateOptionLabel(i, $event)"
+                placeholder="Option label"
+                class="option-input">
+              <p-button 
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                size="small"
+                (onClick)="removeOption(i)">
+              </p-button>
+            </div>
+            
+            <p-button 
+              icon="pi pi-plus"
+              label="Add Option"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              class="add-option-btn"
+              (onClick)="addOption()">
+            </p-button>
+          </div>
+        </div>
+
+        <!-- Validation Settings -->
+        <div class="property-section" *ngIf="selectedComponent.type === 'text' || selectedComponent.type === 'email' || selectedComponent.type === 'phone' || selectedComponent.type === 'textarea'">
+          <h4>Validation</h4>
+          
+          <div class="property-field">
+            <label>Minimum Length</label>
+            <p-inputNumber
+              [ngModel]="selectedComponent.validation?.minLength"
+              (ngModelChange)="updateValidationProperty('minLength', $event)"
+              [min]="0"
+              placeholder="0">
+            </p-inputNumber>
+          </div>
+
+          <div class="property-field">
+            <label>Maximum Length</label>
+            <p-inputNumber
+              [ngModel]="selectedComponent.validation?.maxLength"
+              (ngModelChange)="updateValidationProperty('maxLength', $event)"
+              [min]="1"
+              placeholder="255">
+            </p-inputNumber>
+          </div>
+        </div>
+
+        <!-- Number Validation -->
+        <div class="property-section" *ngIf="selectedComponent.type === 'number' || selectedComponent.type === 'slider'">
+          <h4>Number Settings</h4>
+          
+          <div class="property-field">
+            <label>Minimum Value</label>
+            <p-inputNumber
+              [ngModel]="selectedComponent.validation?.min"
+              (ngModelChange)="updateValidationProperty('min', $event)"
+              placeholder="0">
+            </p-inputNumber>
+          </div>
+
+          <div class="property-field">
+            <label>Maximum Value</label>
+            <p-inputNumber
+              [ngModel]="selectedComponent.validation?.max"
+              (ngModelChange)="updateValidationProperty('max', $event)"
+              placeholder="100">
+            </p-inputNumber>
+          </div>
+        </div>
+
+        <!-- File Upload Settings -->
+        <div class="property-section" *ngIf="selectedComponent.type === 'file' || selectedComponent.type === 'image'">
+          <h4>File Settings</h4>
+          
+          <div class="property-field">
+            <label>Maximum File Size (MB)</label>
+            <p-inputNumber
+              [ngModel]="(selectedComponent.maxFileSize || 5242880) / 1048576"
+              (ngModelChange)="updateComponentProperty('maxFileSize', $event * 1048576)"
+              [min]="1"
+              [max]="100"
+              placeholder="5">
+            </p-inputNumber>
+          </div>
+
+          <div class="property-field">
+            <label>Maximum Files</label>
+            <p-inputNumber
+              [ngModel]="selectedComponent.maxFiles || 1"
+              (ngModelChange)="updateComponentProperty('maxFiles', $event)"
+              [min]="1"
+              [max]="10"
+              placeholder="1">
+            </p-inputNumber>
+          </div>
+
+          <div class="property-field">
+            <label>Allowed File Types</label>
+            <input 
+              pInputText
+              [ngModel]="(selectedComponent.allowedFileTypes || []).join(', ')"
+              (ngModelChange)="updateFileTypes($event)"
+              placeholder=".pdf, .doc, .jpg, .png">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Form Settings Panel -->
+    <div class="properties-panel" *ngIf="!selectedComponent && !isPreviewMode">
+      <div class="panel-header">
+        <h3><i class="pi pi-cog"></i> Form Settings</h3>
+        <small>{{ builderState?.currentForm?.formName }}</small>
+      </div>
+      
+      <div class="panel-content">
+        
+        <!-- Submit Button Settings -->
+        <div class="property-section">
+          <h4>Submit Button</h4>
+          
+          <div class="property-field">
+            <label>Button Text</label>
+            <input 
+              pInputText
+              [ngModel]="builderState?.currentForm?.settings?.submitButtonText || 'Submit Form'"
+              (ngModelChange)="updateFormSettings('submitButtonText', $event)"
+              placeholder="Submit Form">
+          </div>
+        </div>
+
+        <!-- Form Behavior Settings -->
+        <div class="property-section">
+          <h4>Form Behavior</h4>
+          
+          <div class="property-field">
+            <p-checkbox 
+              [ngModel]="builderState?.currentForm?.settings?.allowMultipleSubmissions"
+              (ngModelChange)="updateFormSettings('allowMultipleSubmissions', $event)"
+              label="Allow Multiple Submissions">
+            </p-checkbox>
+          </div>
+
+          <div class="property-field">
+            <p-checkbox 
+              [ngModel]="builderState?.currentForm?.settings?.requireAuthentication"
+              (ngModelChange)="updateFormSettings('requireAuthentication', $event)"
+              label="Require User Authentication">
+            </p-checkbox>
+          </div>
+
+          <div class="property-field">
+            <p-checkbox 
+              [ngModel]="builderState?.currentForm?.settings?.sendEmailNotifications"
+              (ngModelChange)="updateFormSettings('sendEmailNotifications', $event)"
+              label="Send Email Notifications">
+            </p-checkbox>
+          </div>
+        </div>
+
+        <!-- Success Message Settings -->
+        <div class="property-section">
+          <h4>Success Message</h4>
+          
+          <div class="property-field">
+            <label>Custom Success Message</label>
+            <textarea 
+              pTextarea
+              [ngModel]="builderState?.currentForm?.settings?.customSuccessMessage"
+              (ngModelChange)="updateFormSettings('customSuccessMessage', $event)"
+              placeholder="Thank you for your submission!"
+              rows="3">
+            </textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+  
+</div>

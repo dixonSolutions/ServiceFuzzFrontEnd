@@ -676,7 +676,6 @@ export class BusinessComponent implements OnInit, OnDestroy {
             'Close', 
             5000
           );
-          this.data.triggerSuccessConfetti();
           
           // Reset form after successful registration
           setTimeout(() => {

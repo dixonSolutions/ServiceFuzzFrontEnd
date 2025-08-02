@@ -13,6 +13,7 @@ import { Settings } from './settings/settings';
 import { WebsiteCreatorComponent } from './website-creator/website-creator';
 import { AuthCallback } from './auth-callback/auth-callback';
 import { OrderForms } from './order-forms/order-forms';
+import { FormBuilderComponent } from './form-builder/form-builder';
 import { PrivacyPolicy } from './privacy-policy/privacy-policy';
 import { TermsOfUse } from './terms-of-use/terms-of-use';
 
@@ -31,6 +32,7 @@ const routes: Routes = [
   { path: 'chat', component: ChatWithAiAboutServiceFuzzComponent },
   {path:'analytics', component: AnalyticsComponent},
   {path:'business/forms', component: OrderForms},
+  {path:'business/forms/create', component: FormBuilderComponent},
   {path:'business/forms/all', component: OrderForms},
   {path:'business/forms/:id', component: OrderForms},
   {path:'order-forms', redirectTo: 'business/forms', pathMatch: 'full'}, // Legacy redirect

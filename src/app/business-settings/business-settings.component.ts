@@ -116,15 +116,8 @@ export class BusinessSettingsComponent implements OnInit {
           this.data.freeTrialDetails = trialDetails;
           this.showFreeTrialForm = false; // Hide form if trial exists
           
-          if(!trialDetails.isActive){
-            this.data.jsConfetti.addConfetti({
-              emojis: ['💀', '❌', '😔', '😭', '😢'],
-              confettiRadius: 6,
-              confettiNumber: 50,
-            });
-          }
+          
           if (trialDetails.isActive) {
-            this.data.triggerSuccessConfetti();
           }
         },
         error: (error: any) => {
@@ -160,7 +153,6 @@ export class BusinessSettingsComponent implements OnInit {
         
         // Show appropriate confetti based on subscription status
         if (status.isSubscribed && status.status === 'active') {
-          this.data.triggerSuccessConfetti();
         }
       },
       error: (error: any) => {
@@ -262,7 +254,6 @@ export class BusinessSettingsComponent implements OnInit {
       next: (response: any) => {
         console.log('Free trial started successfully:', response);
         this.data.openSnackBar('Free trial started successfully!', 'Close', 5000);
-        this.data.triggerSuccessConfetti();
         this.showFreeTrialForm = false;
         this.isSubmittingTrial = false;
         

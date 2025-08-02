@@ -74,6 +74,9 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { MegaMenuModule } from 'primeng/megamenu';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { RatingModule } from 'primeng/rating';
+
 
 
 
@@ -104,6 +107,7 @@ import { OrderForms } from './order-forms/order-forms';
 import { AuthBusinessDialogComponent } from './auth-business-dialog/auth-business-dialog';
 import { PrivacyPolicy } from './privacy-policy/privacy-policy';
 import { TermsOfUse } from './terms-of-use/terms-of-use';
+import { FormBuilderComponent } from './form-builder/form-builder';
 
 
 const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.googleusercontent.com';
@@ -132,7 +136,8 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     OrderForms,
     AuthBusinessDialogComponent,
     PrivacyPolicy,
-    TermsOfUse
+    TermsOfUse,
+    FormBuilderComponent
   ],
   imports: [
     BrowserModule,
@@ -208,6 +213,8 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     ToastModule,
     MultiSelectModule,
     MegaMenuModule,
+    RadioButtonModule,
+    RatingModule,
     BusinessEditComponent,
     GoogleMapsPickerComponent
   ],
