@@ -57,26 +57,23 @@
   margin: 0;
 }
 
-/* ===== SPINNER ===== */
-.spinner {
+/* ===== PRIMENG SPINNER STYLING ===== */
+::ng-deep .custom-blue-spinner {
   margin: 0 auto 2rem auto;
-  width: 80px;
-  height: 80px;
-  position: relative;
+  width: 80px !important;
+  height: 80px !important;
 }
 
-.spinner-ring {
-  width: 80px;
-  height: 80px;
-  border: 4px solid rgba(102, 126, 234, 0.2);
-  border-left: 4px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+::ng-deep .custom-blue-spinner .p-progress-spinner-circle {
+  stroke: #3b82f6 !important; /* Blue color */
+  stroke-width: 3 !important;
+  fill: transparent !important; /* No area color in middle */
+  animation: p-progress-spinner-dash 1.5s ease-in-out infinite !important;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+::ng-deep .custom-blue-spinner .p-progress-spinner-svg {
+  width: 80px !important;
+  height: 80px !important;
 }
 
 /* ===== SUCCESS SECTION ===== */
@@ -251,14 +248,14 @@
     font-size: 3rem;
   }
   
-  .spinner {
-    width: 60px;
-    height: 60px;
+  ::ng-deep .custom-blue-spinner {
+    width: 60px !important;
+    height: 60px !important;
   }
   
-  .spinner-ring {
-    width: 60px;
-    height: 60px;
+  ::ng-deep .custom-blue-spinner .p-progress-spinner-svg {
+    width: 60px !important;
+    height: 60px !important;
   }
 }
 

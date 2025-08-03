@@ -23,7 +23,6 @@ const routes: Routes = [
   { path: 'home', component: HomeComponent },
   { path: 'sign', component: SignInOrSignUpComponent },
   { path: 'auth/callback', component: AuthCallback },
-  { path: 'auth/signup-callback', component: AuthCallback },
   { path: 'business/add', component: BusinessComponent },
   { path: 'business/manage', component: ManagebusinessesComponent },
   { path: 'business/edit/:id', component: BusinessEditComponent },

@@ -35,7 +35,7 @@ export class MagicLinkAuthService {
    */
   private getSignInLinkFormat(): string {
     const baseUrl = this.getBaseUrl();
-    return `${baseUrl}/auth/callback?userId={userId}&error={error}&source=magic-link&token={token}`;
+    return `${baseUrl}/auth/callback?signin_token={signInToken}`;
   }
 
   /**
@@ -43,7 +43,7 @@ export class MagicLinkAuthService {
    */
   private getSignUpLinkFormat(): string {
     const baseUrl = this.getBaseUrl();
-    return `${baseUrl}/auth/signup-callback?userId={userId}&error={error}&source=signup&token={token}`;
+    return `${baseUrl}/auth/callback?signin_token={signInToken}&source=signup`;
   }
 
   /**
@@ -102,7 +102,7 @@ export class MagicLinkAuthService {
     additionalParams: Record<string, string> = {}
   ): string {
     const baseUrl = this.getBaseUrl();
-    const baseFormat = `${baseUrl}${callbackRoute}?userId={userId}&error={error}&token={token}`;
+    const baseFormat = `${baseUrl}${callbackRoute}?signin_token={signInToken}`;
     
     // Add additional parameters
     const extraParams = Object.entries(additionalParams)

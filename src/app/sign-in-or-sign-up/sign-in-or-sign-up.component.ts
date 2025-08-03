@@ -57,18 +57,8 @@ export class SignInOrSignUpComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Check for magic link parameters first and redirect to auth-callback if present
+    // Check for redirect URL parameter
     this.route.queryParams.subscribe(params => {
-      if (params['userId'] || params['token'] || params['source']) {
-        // Redirect to auth-callback with all parameters
-        const queryString = new URLSearchParams(params).toString();
-        this.router.navigate(['/auth/callback'], { 
-          queryParams: params,
-          replaceUrl: true 
-        });
-        return;
-      }
-      
       // Store redirect URL if provided
       if (params['redirect']) {
         this.redirectUrl = params['redirect'];
@@ -161,10 +151,11 @@ export class SignInOrSignUpComponent implements OnInit {
             this.data.CreateUserWithGoogleToken(response.credential);
 
           authMethod.subscribe({
-            next: (response: { user: ServiceFuzzAccount; token: string }) => {
+            next: (response: { user: ServiceFuzzAccount; token: string; signInToken: string }) => {
               this.isAuthenticated = true;
               this.serviceFuzzUser = response.user;
               this.data.currentUser = response.user;
+              console.log('Authentication successful with dual tokens');
               this.cdr.detectChanges();
               // Navigate to redirect URL or home after successful authentication
               this.navigateAfterAuth();
@@ -292,11 +283,23 @@ export class SignInOrSignUpComponent implements OnInit {
   }
 
   signOut() {
+    // Call backend logout API first
+    this.data.logout().subscribe({
+      next: (response) => {
+        console.log('Logout successful:', response.message);
+      },
+      error: (error) => {
+        console.error('Logout error:', error);
+        // Even if logout API fails, still clear local state
+        this.data.clearState();
+      }
+    });
+
+    // Clear Google auth and local state
     this.authService.signOut();
     this.userInfo = null;
     this.isAuthenticated = false;
     this.serviceFuzzUser = undefined;
-    this.data.clearState(); // This will also clear the cookie via the currentUser setter
     
     // Navigate back to sign-in page
     this.router.navigate(['/sign']);

@@ -6,11 +6,13 @@
     
     <!-- Loading State -->
     <div *ngIf="isProcessing" class="processing-section">
-      <div class="spinner">
-        <div class="spinner-ring"></div>
-      </div>
-      <h2>Verifying Your Magic Link...</h2>
-      <p>Please wait while we authenticate your account.</p>
+      <p-progressSpinner 
+        strokeWidth="3" 
+        fill="transparent"
+        animationDuration="1s"
+        styleClass="custom-blue-spinner">
+      </p-progressSpinner>
+      <p>Verifying your magic link...</p>
     </div>
 
     <!-- Success State -->
@@ -39,13 +41,6 @@
           <i class="pi pi-refresh"></i>
           Try Again
         </button>
-      </div>
-    </div>
-
-    <!-- Progress Bar -->
-    <div class="progress-container" *ngIf="isProcessing">
-      <div class="progress-bar">
-        <div class="progress-fill"></div>
       </div>
     </div>
 

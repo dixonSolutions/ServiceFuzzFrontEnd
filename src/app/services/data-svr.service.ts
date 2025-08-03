@@ -24,6 +24,10 @@ export class DataSvrService {
   private apiUrl = 'https://servicefuzzapi-atf8b4dqawc8dsa9.australiaeast-01.azurewebsites.net';
   private _currentUser = new BehaviorSubject<ServiceFuzzAccount | undefined>(undefined);
   private _jwtToken = new BehaviorSubject<string | undefined>(undefined);
+  private _signInToken = new BehaviorSubject<string | undefined>(undefined);
+  private tokenRefreshTimer: any;
+  private readonly REGULAR_TOKEN_KEY = 'sf_auth_token';
+  private readonly SIGNIN_TOKEN_COOKIE = 'sf_signin_token';
   public businesses: BusinessBasicInfo[] = [];
   public freeTrialDetails: ServiceFuzzFreeTrialSubscriptions | undefined;
   public jsConfetti: JSConfetti = new JSConfetti();
@@ -55,8 +59,8 @@ export class DataSvrService {
     }
     DataSvrService.instance = this;
     
-    // Try to restore user session from cookie on service initialization
-    this.restoreUserFromCookie();
+    // Try to restore user session from stored tokens
+    this.initializeAuthenticationState();
   }
 
   // Business Registration Methods
@@ -284,11 +288,9 @@ export class DataSvrService {
   set currentUser(user: ServiceFuzzAccount | undefined) {
     this._currentUser.next(user);
     
-    // Save user ID to cookie when user is set
-    if (user && user.userID) {
-      this.saveUserIdToCookie(user.userID);
-    } else {
-      this.clearUserCookie();
+    // Clear stored tokens if user is being cleared
+    if (!user) {
+      this.clearStoredTokens();
     }
   }
 
@@ -298,6 +300,37 @@ export class DataSvrService {
 
   set jwtToken(token: string | undefined) {
     this._jwtToken.next(token);
+    // Store regular token in session storage
+    if (token) {
+      sessionStorage.setItem(this.REGULAR_TOKEN_KEY, token);
+      this.scheduleTokenRefresh(token);
+    } else {
+      sessionStorage.removeItem(this.REGULAR_TOKEN_KEY);
+      this.cancelTokenRefresh();
+    }
+  }
+
+  get signInToken(): string | undefined {
+    // Always get the latest value from cookie to ensure consistency
+    const cookieToken = this.cookieService.get(this.SIGNIN_TOKEN_COOKIE);
+    if (cookieToken && cookieToken !== this._signInToken.value) {
+      this._signInToken.next(cookieToken);
+    }
+    return this._signInToken.value;
+  }
+
+  set signInToken(token: string | undefined) {
+    this._signInToken.next(token);
+    // Store sign-in token in cookie with 2-day expiration
+    if (token) {
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + 2); // 2 days expiration
+      this.cookieService.set(this.SIGNIN_TOKEN_COOKIE, token, expirationDate, '/', undefined, true, 'Strict');
+      console.log('Sign-in token stored in cookie with 2-day expiration');
+    } else {
+      this.cookieService.delete(this.SIGNIN_TOKEN_COOKIE, '/');
+      console.log('Sign-in token cookie cleared');
+    }
   }
 
   // Method to verify instance
@@ -358,21 +391,21 @@ export class DataSvrService {
     );
   }
   GenerateAndSendMagicLinkForLogIn(email: string, customLinkFormat?: string): Observable<{ message: string }> {
-    // Get current URL and construct custom link format
+    // Get current URL and construct custom link format for new auth system
     const currentUrl = window.location.href;
     const baseUrl = window.location.origin;
-    const defaultCustomLinkFormat = `${baseUrl}/auth/callback?userId={userId}&error={error}&source=magic-link`;
+    const defaultCustomLinkFormat = `${baseUrl}/auth/callback?signin_token={signInToken}`;
     
     const requestBody = {
-      email: email,
-      customLinkFormat: customLinkFormat || defaultCustomLinkFormat
+      Email: email,  // Note: Backend expects PascalCase
+      CustomLinkFormat: customLinkFormat || defaultCustomLinkFormat
     };
 
     console.log('Magic Link Request Body:', requestBody);
     console.log('Current URL:', currentUrl);
 
     return this.http.post<{ message: string }>(
-        `${this.apiUrl}/api/UserVerification/generate-magic-link`,
+        `${this.apiUrl}/api/auth/send-magic-link`,
         requestBody,
         {
         headers: {
@@ -387,21 +420,21 @@ export class DataSvrService {
   }
   
   GenerateAndSendMagicLinkForSignUp(email: string, customLinkFormat?: string): Observable<{ message: string }> {
-    // Get current URL and construct custom link format  
+    // Get current URL and construct custom link format for new auth system
     const currentUrl = window.location.href;
     const baseUrl = window.location.origin;
-    const defaultCustomLinkFormat = `${baseUrl}/auth/signup-callback?userId={userId}&error={error}&source=signup`;
+    const defaultCustomLinkFormat = `${baseUrl}/auth/callback?signin_token={signInToken}&source=signup`;
     
     const requestBody = {
-      email: email,
-      customLinkFormat: customLinkFormat || defaultCustomLinkFormat
+      Email: email,  // Note: Backend expects PascalCase
+      CustomLinkFormat: customLinkFormat || defaultCustomLinkFormat
     };
 
     console.log('Signup Magic Link Request Body:', requestBody);
     console.log('Current URL:', currentUrl);
 
     return this.http.post<{ message: string }>(
-        `${this.apiUrl}/api/UserVerification/generate-signup-magic-link`,
+        `${this.apiUrl}/api/auth/send-magic-link`,
         requestBody,
         {
           headers: {
@@ -415,8 +448,8 @@ export class DataSvrService {
       );
   }
   
-  verifyGoogleUser(googleToken: string): Observable<{ user: ServiceFuzzAccount; token: string }> {
-    return this.http.post<{ user: ServiceFuzzAccount; token: string }>(
+  verifyGoogleUser(googleToken: string): Observable<{ user: ServiceFuzzAccount; token: string; signInToken: string }> {
+    return this.http.post<{ user: ServiceFuzzAccount; token: string; signInToken: string }>(
       `${this.apiUrl}/api/User/VerifyUserViaGoogle/verify-google`,
       JSON.stringify(googleToken), 
       {
@@ -426,15 +459,23 @@ export class DataSvrService {
       }
     ).pipe(
       map(response => {
+        // Store both tokens
+        console.log('Google auth response received:', { 
+          hasToken: !!response.token, 
+          hasSignInToken: !!response.signInToken,
+          user: response.user 
+        });
         this.jwtToken = response.token;
+        this.signInToken = response.signInToken;
         this.currentUser = response.user;
+        console.log('Google auth successful - stored both tokens (regular token in session, sign-in token in cookie)');
         return response;
       })
     );
   }
 
-  CreateUserWithGoogleToken(googleToken: string): Observable<{ user: ServiceFuzzAccount; token: string }> {
-    return this.http.post<{ user: ServiceFuzzAccount; token: string }>(
+  CreateUserWithGoogleToken(googleToken: string): Observable<{ user: ServiceFuzzAccount; token: string; signInToken: string }> {
+    return this.http.post<{ user: ServiceFuzzAccount; token: string; signInToken: string }>(
       `${this.apiUrl}/api/User/CreateUserViaGoogle/create-google`,
       JSON.stringify(googleToken), 
       {
@@ -444,8 +485,67 @@ export class DataSvrService {
       }
     ).pipe(
       map(response => {
+        // Store both tokens
+        console.log('Google user creation response received:', { 
+          hasToken: !!response.token, 
+          hasSignInToken: !!response.signInToken,
+          user: response.user 
+        });
+        this.jwtToken = response.token;
+        this.signInToken = response.signInToken;
+        this.currentUser = response.user;
+        console.log('Google user creation successful - stored both tokens (regular token in session, sign-in token in cookie)');
+        return response;
+      })
+    );
+  }
+
+  /**
+   * Authenticate using a sign-in token to get a fresh regular token
+   */
+  authenticateWithSignInToken(signInToken: string): Observable<{ user: ServiceFuzzAccount; token: string; message: string; tokenExpires: string }> {
+    return this.http.post<{ user: ServiceFuzzAccount; token: string; message: string; tokenExpires: string }>(
+      `${this.apiUrl}/api/auth/authenticate-signin-token`,
+      { SignInToken: signInToken },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    ).pipe(
+      map(response => {
+        // Store the new regular token and update user
         this.jwtToken = response.token;
         this.currentUser = response.user;
+        console.log('Sign-in token authentication successful - refreshed regular token');
+        return response;
+      })
+    );
+  }
+
+  /**
+   * Logout user and clear all authentication data
+   */
+  logout(): Observable<{ message: string }> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+
+    // If we have a regular token, include it for logout
+    const currentToken = this.jwtToken;
+    if (currentToken) {
+      headers.set('Authorization', `Bearer ${currentToken}`);
+    }
+
+    return this.http.post<{ message: string }>(
+      `${this.apiUrl}/api/auth/logout`,
+      {},
+      { headers }
+    ).pipe(
+      map(response => {
+        // Clear all authentication state
+        this.clearState();
+        console.log('Logout successful');
         return response;
       })
     );
@@ -1155,49 +1255,117 @@ Make sure to:
   clearState(): void {
     this.currentUser = undefined;
     this.jwtToken = undefined;
+    this.signInToken = undefined;
     this.freeTrialDetails = undefined;
+    this.cancelTokenRefresh();
   }
 
-  // Cookie Management Methods
-  private saveUserIdToCookie(userId: string): void {
-    // Save user ID to cookie with 30 days expiration
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + 30);
+  // Token Management Methods
+  
+  /**
+   * Initialize authentication state from stored tokens
+   */
+  private initializeAuthenticationState(): void {
+    const storedSignInToken = this.cookieService.get(this.SIGNIN_TOKEN_COOKIE);
+    const storedRegularToken = sessionStorage.getItem(this.REGULAR_TOKEN_KEY);
     
-    this.cookieService.set('servicefuzz_user_id', userId, expirationDate, '/', undefined, true, 'Strict');
-    console.log('User ID saved to cookie:', userId);
-  }
-
-  private clearUserCookie(): void {
-    this.cookieService.delete('servicefuzz_user_id', '/');
-    console.log('User cookie cleared');
-  }
-
-  private restoreUserFromCookie(): void {
-    const userId = this.cookieService.get('servicefuzz_user_id');
-    
-    if (userId) {
-      console.log('Found user ID in cookie, attempting to restore session:', userId);
+    if (storedSignInToken) {
+      console.log('Found stored sign-in token in cookie, attempting to restore session');
+      this._signInToken.next(storedSignInToken);
       
-      // Fetch user data from server using the stored user ID
-      this.getUserByID(userId).subscribe({
-        next: (user: ServiceFuzzAccount) => {
-          console.log('Successfully restored user session from cookie:', user);
-          this._currentUser.next(user); // Use _currentUser.next to avoid triggering cookie save again
+      // Try to authenticate with the sign-in token to get a fresh regular token
+      this.authenticateWithSignInToken(storedSignInToken).subscribe({
+        next: (response) => {
+          console.log('Successfully restored user session from sign-in token cookie');
           this.openSnackBar('Welcome back! Session restored.', 'Close', 3000);
         },
         error: (error: any) => {
-          console.error('Failed to restore user session from cookie:', error);
-          // Clear invalid cookie
-          this.clearUserCookie();
+          console.error('Failed to restore user session from sign-in token:', error);
+          // Clear invalid tokens
+          this.clearStoredTokens();
         }
       });
+    } else if (storedRegularToken) {
+      // Regular token exists without sign-in token (shouldn't happen in normal flow)
+      console.log('Found orphaned regular token, clearing it');
+      sessionStorage.removeItem(this.REGULAR_TOKEN_KEY);
     }
   }
 
-  // Public method to check if user session exists in cookie
+  /**
+   * Clear all stored authentication tokens
+   */
+  private clearStoredTokens(): void {
+    this.cookieService.delete(this.SIGNIN_TOKEN_COOKIE, '/');
+    sessionStorage.removeItem(this.REGULAR_TOKEN_KEY);
+    console.log('All stored tokens cleared (cookie and session storage)');
+  }
+
+  /**
+   * Check if user has a valid session
+   */
   public hasUserSession(): boolean {
-    return this.cookieService.check('servicefuzz_user_id');
+    return this.cookieService.check(this.SIGNIN_TOKEN_COOKIE);
+  }
+
+  /**
+   * Schedule automatic token refresh before expiration
+   */
+  private scheduleTokenRefresh(token: string): void {
+    try {
+      // Decode JWT to get expiration time
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000; // Convert to milliseconds
+      const now = Date.now();
+      const timeUntilExpiry = exp - now;
+      
+      // Schedule refresh 5 minutes before expiration, minimum 1 minute
+      const refreshTime = Math.max(timeUntilExpiry - (5 * 60 * 1000), 60 * 1000);
+      
+      if (refreshTime > 0) {
+        console.log(`Scheduling token refresh in ${Math.round(refreshTime / 1000 / 60)} minutes`);
+        this.cancelTokenRefresh(); // Cancel any existing timer
+        this.tokenRefreshTimer = setTimeout(() => {
+          this.refreshTokenAutomatically();
+        }, refreshTime);
+      }
+    } catch (error) {
+      console.error('Error scheduling token refresh:', error);
+    }
+  }
+
+  /**
+   * Cancel scheduled token refresh
+   */
+  private cancelTokenRefresh(): void {
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
+  }
+
+  /**
+   * Automatically refresh the regular token using the sign-in token
+   */
+  private refreshTokenAutomatically(): void {
+    const currentSignInToken = this.signInToken;
+    
+    if (!currentSignInToken) {
+      console.warn('No sign-in token available for automatic refresh');
+      return;
+    }
+    
+    console.log('Automatically refreshing token');
+    this.authenticateWithSignInToken(currentSignInToken).subscribe({
+      next: (response) => {
+        console.log('Token refreshed automatically');
+      },
+      error: (error: any) => {
+        console.error('Automatic token refresh failed:', error);
+        // Clear authentication state on refresh failure
+        this.clearState();
+      }
+    });
   }
 
   // Confetti Methods

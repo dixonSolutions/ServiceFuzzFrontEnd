@@ -14,7 +14,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatListModule } from '@angular/material/list';
 import { SocialLoginModule, SocialAuthServiceConfig, GoogleLoginProvider } from '@abacritt/angularx-social-login';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -108,6 +108,7 @@ import { AuthBusinessDialogComponent } from './auth-business-dialog/auth-busines
 import { PrivacyPolicy } from './privacy-policy/privacy-policy';
 import { TermsOfUse } from './terms-of-use/terms-of-use';
 import { FormBuilderComponent } from './form-builder/form-builder';
+import { AuthInterceptorService } from './services/auth-interceptor.service';
 
 
 const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.googleusercontent.com';
@@ -241,6 +242,11 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
           console.error(err);
         }
       } as SocialAuthServiceConfig
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptorService,
+      multi: true
     }
   ],
   bootstrap: [AppComponent],
