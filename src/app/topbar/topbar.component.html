@@ -29,11 +29,26 @@
         <mat-icon matListIcon>add_business</mat-icon>
         <span matLine>Add Business</span>
       </a>
-      <a mat-list-item routerLink="/business/manage" (click)="closeMobileSidebar()">
+      <a mat-list-item (click)="toggleManageBusinessesSidebar()" class="manage-businesses-nav-item">
         <mat-icon matListIcon>manage_accounts</mat-icon>
         <span matLine>Manage Businesses</span>
+        <mat-icon class="expand-icon">{{ manageBusinessesSidebarExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
       </a>
-      <a mat-list-item routerLink="/settings" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/settings')">
+      <div *ngIf="manageBusinessesSidebarExpanded" class="sidebar-manage-submenu">
+        <a mat-list-item routerLink="/business/manage" (click)="closeMobileSidebar()">
+          <mat-icon matListIcon>view_list</mat-icon>
+          <span matLine>View Businesses</span>
+        </a>
+        <a mat-list-item routerLink="/order-forms" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/order-forms')">
+          <mat-icon matListIcon>receipt</mat-icon>
+          <span matLine>Order Forms</span>
+        </a>
+        <a mat-list-item (click)="navigateToWebsiteCreator(); closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/website-creator')">
+          <mat-icon matListIcon>web</mat-icon>
+          <span matLine>Website Creator</span>
+        </a>
+      </div>
+      <a mat-list-item routerLink="/business/settings" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/business/settings')">
         <mat-icon matListIcon>settings</mat-icon>
         <span matLine>Business Settings</span>
       </a>
@@ -43,20 +58,7 @@
         <mat-icon matListIcon>analytics</mat-icon>
         <span matLine>Analytics</span>
       </a>
-      <a mat-list-item routerLink="/order-forms" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/order-forms')">
-        <mat-icon matListIcon>receipt</mat-icon>
-        <span matLine>Order Forms</span>
-      </a>
-      
-    <a mat-list-item routerLink="/chat" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/chat')">
-        <mat-icon matListIcon>chat</mat-icon>
-        <span matLine>Chat</span>
-      </a>
-      
-    <a mat-list-item (click)="navigateToWebsiteCreator(); closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/website-creator')">
-      <mat-icon matListIcon>web</mat-icon>
-      <span matLine>Website Creator</span>
-    </a>
+
       
       <mat-divider></mat-divider>
       
@@ -141,11 +143,7 @@
         <mat-icon>add_business</mat-icon>
         <span>Add Business</span>
       </button>
-      <button mat-button routerLink="/order-forms" [class.active]="isRouteActive('/order-forms')">
-        <mat-icon>receipt</mat-icon>
-        <span [class.hide-text]="isSmallScreen$ | async">Order Forms</span>
-      </button>
-      <button mat-menu-item routerLink="/business/manage">
+      <button mat-menu-item [matMenuTriggerFor]="manageMenu">
         <mat-icon>manage_accounts</mat-icon>
         <span>Manage Businesses</span>
       </button>
@@ -155,17 +153,24 @@
         <span>Business Settings</span>
       </button>
     </mat-menu>
+    
+    <mat-menu #manageMenu="matMenu" class="business-submenu">
+      <button mat-menu-item routerLink="/business/manage">
+        <mat-icon>view_list</mat-icon>
+        <span>View Businesses</span>
+      </button>
+      <button mat-menu-item routerLink="/order-forms">
+        <mat-icon>receipt</mat-icon>
+        <span>Order Forms</span>
+      </button>
+      <button mat-menu-item (click)="navigateToWebsiteCreator()">
+        <mat-icon>web</mat-icon>
+        <span>Website Creator</span>
+      </button>
+    </mat-menu>
     <button mat-button routerLink="/analytics" [class.active]="isRouteActive('/analytics')">
       <mat-icon>analytics</mat-icon>
       <span [class.hide-text]="isSmallScreen$ | async">Analytics</span>
-    </button>
-    <button mat-button routerLink="/chat" [class.active]="isRouteActive('/chat')">
-      <mat-icon>chat</mat-icon>
-      <span [class.hide-text]="isSmallScreen$ | async">Chat</span>
-    </button>
-    <button mat-button (click)="navigateToWebsiteCreator()" [class.active]="isRouteActive('/website-creator')">
-      <mat-icon>web</mat-icon>
-      <span [class.hide-text]="isSmallScreen$ | async">Website Creator</span>
     </button>
   </div>
  

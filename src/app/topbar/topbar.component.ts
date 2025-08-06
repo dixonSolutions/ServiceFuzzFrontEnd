@@ -26,6 +26,7 @@ export class TopbarComponent implements OnInit {
   // Mobile sidebar state
   mobileDrawerOpened = false;
   businessSidebarExpanded = false;
+  manageBusinessesSidebarExpanded = false;
 
   // Sidebar appears at 700px maximum (700px and below)
   isSidebarVisible$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 700px)')
@@ -96,10 +97,15 @@ export class TopbarComponent implements OnInit {
   closeMobileSidebar(): void {
     this.mobileDrawerOpened = false;
     this.businessSidebarExpanded = false;
+    this.manageBusinessesSidebarExpanded = false;
   }
 
   toggleBusinessSidebar(): void {
     this.businessSidebarExpanded = !this.businessSidebarExpanded;
+  }
+
+  toggleManageBusinessesSidebar(): void {
+    this.manageBusinessesSidebarExpanded = !this.manageBusinessesSidebarExpanded;
   }
 
   // Test method for website-creator navigation

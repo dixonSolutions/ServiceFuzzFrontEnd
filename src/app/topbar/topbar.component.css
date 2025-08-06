@@ -22,7 +22,7 @@
   left: 0;
   width: 280px;
   height: 100vh;
-  background: #ffffff;
+  background: #ffffff !important;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   z-index: 1002;
   overflow-y: auto;
@@ -59,14 +59,14 @@
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid #e0e0e0;
-  background: #fafafa;
+  background: #fafafa !important;
 }
 
 .mobile-nav-header h2 {
   margin: 0;
   font-size: 20px;
   font-weight: 500;
-  color: #333;
+  color: #333 !important;
 }
 
 .close-button {
@@ -81,6 +81,7 @@
 
 .mobile-nav-list {
   padding: 8px 0;
+  background: #ffffff !important;
 }
 
 .mobile-nav-list a[mat-list-item] {
@@ -88,36 +89,37 @@
   padding: 0 20px;
   display: flex;
   align-items: center;
-  color: #333;
+  color: #333 !important;
   text-decoration: none;
   transition: all 0.3s ease;
   border-radius: 0;
   margin: 0;
+  background: #ffffff !important;
 }
 
 .mobile-nav-list a[mat-list-item]:hover {
-  background-color: #f5f5f5;
+  background-color: #f5f5f5 !important;
 }
 
 .mobile-nav-list a[mat-list-item].active-nav-item {
-  background-color: #e3f2fd;
+  background-color: #e3f2fd !important;
 }
 
 .mobile-nav-list a[mat-list-item] mat-icon[matListIcon] {
-  color: #666;
+  color: #666 !important;
   margin-right: 16px;
   font-size: 24px;
   width: 24px;
   height: 24px;
 }
 
-.mobile-nav-list a[mat-list-item].active-nav-item mat-icon[matListIcon] {
-}
+
 
 .mobile-nav-list a[mat-list-item] span[matLine] {
   font-size: 16px;
   font-weight: 400;
   line-height: 1.5;
+  color: #333 !important;
 }
 
 .business-nav-item {
@@ -490,7 +492,7 @@ button:hover {
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   border: 1px solid rgba(0,0,0,0.1);
-  background: #ffffff;
+  background: #ffffff !important;
 }
 
 ::ng-deep .business-menu .mat-mdc-menu-panel {
@@ -498,12 +500,12 @@ button:hover {
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   border: 1px solid rgba(0,0,0,0.1);
-  background: #ffffff;
+  background: #ffffff !important;
 }
 
 ::ng-deep .business-menu .mat-menu-content {
   padding: 8px 0;
-  background: #ffffff;
+  background: #ffffff !important;
 }
 
 ::ng-deep .business-menu .mat-menu-item {
@@ -512,13 +514,14 @@ button:hover {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #333;
+  color: #333 !important;
   font-weight: 500;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   border-radius: 0;
   margin: 0;
+  background: #ffffff !important;
 }
 
 ::ng-deep .business-menu .mat-menu-item mat-icon {
@@ -704,6 +707,111 @@ button:hover {
   padding-left: 32px;
   border-left: 2px solid #eee;
   margin-bottom: 8px;
-  }
+  background: #ffffff !important;
+}
+
+.sidebar-manage-submenu {
+  padding-left: 64px;
+  border-left: 2px solid #ddd;
+  margin-bottom: 8px;
+  background: #ffffff !important;
+}
+
+.manage-businesses-nav-item {
+  position: relative;
+}
+
+.manage-businesses-nav-item .expand-icon {
+  position: absolute;
+  right: 20px;
+  color: #666;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+/* Submenu arrow styling for desktop dropdown */
+.submenu-arrow {
+  margin-left: auto;
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Business submenu styling */
+::ng-deep .business-submenu {
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #ffffff !important;
+}
+
+::ng-deep .business-submenu .mat-mdc-menu-panel {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #ffffff !important;
+}
+
+::ng-deep .business-submenu .mat-menu-content {
+  padding: 8px 0;
+  background: #ffffff !important;
+}
+
+::ng-deep .business-submenu .mat-menu-item {
+  height: 48px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #333 !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  margin: 0;
+  background: #ffffff !important;
+}
+
+::ng-deep .business-submenu .mat-menu-item mat-icon {
+  color: #666;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  transition: all 0.3s ease;
+  margin-right: 8px;
+}
+
+::ng-deep .business-submenu .mat-menu-item:hover {
+  background-color: #f5f5f5 !important;
+  transform: translateX(4px);
+}
   
+/* Comprehensive mobile sidebar style overrides */
+.simple-mobile-sidebar,
+.simple-mobile-sidebar *,
+.mobile-nav-header,
+.mobile-nav-header *,
+.mobile-nav-list,
+.mobile-nav-list *,
+.sidebar-business-submenu,
+.sidebar-business-submenu *,
+.sidebar-manage-submenu,
+.sidebar-manage-submenu * {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+}
+
+.simple-mobile-sidebar .expand-icon {
+  color: #666 !important;
+}
+
+.simple-mobile-sidebar .close-button {
+  color: #666 !important;
+}
+
 /* All custom button appearance styles removed to allow Angular Material defaults. */
