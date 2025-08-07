@@ -1,0 +1,80 @@
+<div class="staff-management-container">
+  <div class="header-section">
+    <h2>Staff Management</h2>
+    <div *ngIf="selectedBusiness" class="business-info">
+      <h3>{{ selectedBusiness.basicInfo.businessName }}</h3>
+      <p>{{ selectedBusiness.basicInfo.businessDescription }}</p>
+    </div>
+    <div *ngIf="!selectedBusiness && !loading" class="no-business">
+      <p-message severity="warn" text="No business selected or business not found."></p-message>
+    </div>
+    <div *ngIf="loading" class="loading">
+      <p-progressSpinner strokeWidth="4" ariaLabel="Loading"></p-progressSpinner>
+      <p>Loading business details...</p>
+    </div>
+  </div>
+
+  <div *ngIf="selectedBusiness" class="staff-content">
+    <div class="staff-header">
+      <h4>Staff Members</h4>
+      <div class="staff-actions">
+        <p-button label="Visit Staff App" icon="pi pi-external-link" (onClick)="visitStaffApp()" severity="secondary" class="p-button-outlined"></p-button>
+        <p-button label="Add Staff Member" icon="pi pi-plus" severity="primary"></p-button>
+      </div>
+    </div>
+    
+    <div *ngIf="selectedBusiness.staff && selectedBusiness.staff.length > 0; else noStaff" class="staff-list">
+      <p-card *ngFor="let staff of selectedBusiness.staff" class="staff-card">
+        <ng-template pTemplate="header">
+          <div class="staff-card-header">
+            <div class="staff-avatar">
+              <i class="pi pi-user"></i>
+            </div>
+            <div class="staff-info">
+              <h5>{{ staff.firstName }} {{ staff.lastName }}</h5>
+              <span class="staff-role">{{ staff.role }}</span>
+            </div>
+            <p-tag 
+              [value]="staff.isActive ? 'Active' : 'Inactive'" 
+              [severity]="staff.isActive ? 'success' : 'danger'">
+            </p-tag>
+          </div>
+        </ng-template>
+        
+        <ng-template pTemplate="content">
+          <div class="staff-details">
+            <div class="detail-item">
+              <i class="pi pi-envelope"></i>
+              <span><strong>Email:</strong> {{ staff.email }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="pi pi-key"></i>
+              <span><strong>Access Level:</strong> {{ staff.accessAll ? 'Full Access' : 'Limited Access' }}</span>
+            </div>
+          </div>
+        </ng-template>
+        
+        <ng-template pTemplate="footer">
+          <div class="staff-actions-footer">
+            <p-button label="Edit" icon="pi pi-pencil" severity="info" size="small"></p-button>
+            <p-button label="Remove" icon="pi pi-trash" severity="danger" size="small" class="p-button-outlined"></p-button>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+
+    <ng-template #noStaff>
+      <div class="no-staff">
+        <div class="no-staff-content">
+          <i class="pi pi-users no-staff-icon"></i>
+          <h4>No Staff Members</h4>
+          <p>This business doesn't have any staff members yet.</p>
+          <div class="no-staff-actions">
+            <p-button label="Visit Staff App" icon="pi pi-external-link" (onClick)="visitStaffApp()" severity="secondary" class="p-button-outlined"></p-button>
+            <p-button label="Add First Staff Member" icon="pi pi-plus" severity="primary"></p-button>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

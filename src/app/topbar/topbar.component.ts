@@ -10,6 +10,8 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { MatSidenav } from '@angular/material/sidenav';
+import { ManageBusinessesService } from '../services/manage-businesses.service';
+import { BusinessRegistrationDto } from '../models/business-registration-dto';
 
 @Component({
   selector: 'app-topbar',
@@ -27,6 +29,11 @@ export class TopbarComponent implements OnInit {
   mobileDrawerOpened = false;
   businessSidebarExpanded = false;
   manageBusinessesSidebarExpanded = false;
+  staffSidebarExpanded = false;
+
+  // Business and staff management state
+  userBusinesses: BusinessRegistrationDto[] = [];
+  selectedBusinessForStaff: BusinessRegistrationDto | null = null;
 
   // Sidebar appears at 700px maximum (700px and below)
   isSidebarVisible$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 700px)')
@@ -45,7 +52,8 @@ export class TopbarComponent implements OnInit {
   constructor(
     public data: DataSvrService,
     private router: Router,
-    private breakpointObserver: BreakpointObserver
+    private breakpointObserver: BreakpointObserver,
+    private manageBusinessesService: ManageBusinessesService
   ) {}
 
   ngOnInit(): void {
@@ -54,6 +62,22 @@ export class TopbarComponent implements OnInit {
       console.log('Topbar: User not in memory but session exists in storage, attempting to restore...');
       // The restoration is handled automatically by the DataSvrService constructor
     }
+    
+    // Load user businesses if user is authenticated
+    if (this.data.currentUser) {
+      this.loadUserBusinesses();
+    }
+
+    // Watch for user login/logout changes by checking currentUser periodically
+    // This is a simple approach since we don't have a direct observable for user changes
+    setInterval(() => {
+      if (this.data.currentUser && this.userBusinesses.length === 0) {
+        this.loadUserBusinesses();
+      } else if (!this.data.currentUser && this.userBusinesses.length > 0) {
+        this.userBusinesses = [];
+        this.selectedBusinessForStaff = null;
+      }
+    }, 1000);
   }
 
   isRouteActive(route: string): boolean {
@@ -98,6 +122,7 @@ export class TopbarComponent implements OnInit {
     this.mobileDrawerOpened = false;
     this.businessSidebarExpanded = false;
     this.manageBusinessesSidebarExpanded = false;
+    this.staffSidebarExpanded = false;
   }
 
   toggleBusinessSidebar(): void {
@@ -108,6 +133,10 @@ export class TopbarComponent implements OnInit {
     this.manageBusinessesSidebarExpanded = !this.manageBusinessesSidebarExpanded;
   }
 
+  toggleStaffSidebar(): void {
+    this.staffSidebarExpanded = !this.staffSidebarExpanded;
+  }
+
   // Test method for website-creator navigation
   navigateToWebsiteCreator(): void {
     console.log('Attempting to navigate to website-creator...');
@@ -115,5 +144,36 @@ export class TopbarComponent implements OnInit {
       (success) => console.log('Navigation success:', success),
       (error) => console.error('Navigation error:', error)
     );
+  }
+
+  // Load user businesses for staff management
+  loadUserBusinesses(): void {
+    this.manageBusinessesService.getAllBusinessesForUser().subscribe({
+      next: (businesses) => {
+        this.userBusinesses = businesses;
+        console.log('Loaded user businesses for staff management:', businesses.length);
+      },
+      error: (error) => {
+        console.error('Error loading user businesses:', error);
+      }
+    });
+  }
+
+  // Navigate to staff management for selected business
+  navigateToStaffManagement(business: BusinessRegistrationDto): void {
+    this.selectedBusinessForStaff = business;
+    this.router.navigate(['/staff/business', business.basicInfo.businessID]);
+    this.closeMobileSidebar();
+  }
+
+  // Check if user has businesses for staff management
+  hasBusinessesForStaff(): boolean {
+    return this.userBusinesses.length > 0;
+  }
+
+  // Visit staff app in new tab
+  visitStaffApp(): void {
+    window.open('https://fuzzstaff.vercel.app', '_blank');
+    this.closeMobileSidebar();
   }
 }

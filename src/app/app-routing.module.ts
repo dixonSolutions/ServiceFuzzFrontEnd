@@ -16,6 +16,7 @@ import { OrderForms } from './order-forms/order-forms';
 import { FormBuilderComponent } from './form-builder/form-builder';
 import { PrivacyPolicy } from './privacy-policy/privacy-policy';
 import { TermsOfUse } from './terms-of-use/terms-of-use';
+import { Staffmanage } from './staffmanage/staffmanage';
 
 
 const routes: Routes = [
@@ -37,6 +38,7 @@ const routes: Routes = [
   {path:'order-forms', redirectTo: 'business/forms', pathMatch: 'full'}, // Legacy redirect
   { path: 'settings', component: Settings },
   { path: 'website-creator', component: WebsiteCreatorComponent },
+  { path: 'staff/business/:businessId', component: Staffmanage },
   { path: 'privacy-policy', component: PrivacyPolicy },
   { path: 'terms-of-use', component: TermsOfUse },
   { path: '**', redirectTo: '', pathMatch: 'full' } // Wildcard route for 404 cases

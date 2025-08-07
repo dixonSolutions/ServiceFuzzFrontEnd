@@ -1,0 +1,239 @@
+.staff-management-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-section {
+  margin-bottom: 30px;
+}
+
+.business-info h3 {
+  color: #1976d2;
+  margin-bottom: 8px;
+}
+
+.business-info p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px;
+}
+
+.loading p-progressSpinner {
+  width: 50px;
+  height: 50px;
+}
+
+.no-business {
+  margin: 20px 0;
+}
+
+.staff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.staff-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.staff-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.staff-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.staff-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  color: white;
+}
+
+.staff-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.staff-info {
+  flex: 1;
+}
+
+.staff-info h5 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.staff-role {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.staff-details {
+  padding: 20px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
+.detail-item i {
+  width: 20px;
+  color: #666;
+}
+
+.staff-actions-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  background-color: #f8f9fa;
+}
+
+.no-staff {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  color: #666;
+}
+
+.no-staff-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.no-staff-icon {
+  font-size: 48px;
+  color: #ccc;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.no-staff h4 {
+  margin: 16px 0 8px 0;
+  color: #333;
+}
+
+.no-staff p {
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.no-staff-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* PrimeNG Tag customizations */
+::ng-deep .p-tag {
+  font-weight: 500;
+}
+
+/* PrimeNG Button customizations */
+::ng-deep .staff-actions .p-button {
+  border-radius: 6px;
+}
+
+::ng-deep .staff-actions-footer .p-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* PrimeNG Card customizations */
+::ng-deep .staff-card .p-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+::ng-deep .staff-card .p-card-header {
+  padding: 0;
+}
+
+::ng-deep .staff-card .p-card-content {
+  padding: 0;
+}
+
+::ng-deep .staff-card .p-card-footer {
+  padding: 0;
+}
+
+/* Add styles for visit staff app button */
+.visit-staff-app {
+  border-color: #17a2b8 !important;
+  color: #17a2b8 !important;
+}
+
+.visit-staff-app:hover {
+  background-color: #17a2b8 !important;
+  color: white !important;
+}
+
+@media (max-width: 768px) {
+  .staff-management-container {
+    padding: 16px;
+  }
+  
+  .staff-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .staff-actions {
+    justify-content: stretch;
+    flex-direction: column;
+  }
+  
+  .staff-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .no-staff-actions {
+    flex-direction: column;
+  }
+  
+  .staff-card-header {
+    padding: 16px;
+  }
+  
+  .staff-details {
+    padding: 16px;
+  }
+  
+  .staff-actions-footer {
+    padding: 12px 16px;
+  }
+}

@@ -62,11 +62,32 @@
       
       <mat-divider></mat-divider>
       
-    <!-- Staff Portal -->
-    <a mat-list-item routerLink="/staff" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/staff')">
+    <!-- Staff Management -->
+    <a mat-list-item (click)="toggleStaffSidebar()" class="staff-nav-item">
         <mat-icon matListIcon>people</mat-icon>
-        <span matLine>Staff Portal</span>
+        <span matLine>Staff Management</span>
+        <mat-icon class="expand-icon">{{ staffSidebarExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
       </a>
+      <div *ngIf="staffSidebarExpanded" class="sidebar-staff-submenu">
+        <a mat-list-item 
+           (click)="visitStaffApp()" 
+           class="business-staff-item visit-staff-app">
+          <mat-icon matListIcon>launch</mat-icon>
+          <span matLine>Visit Staff App</span>
+        </a>
+        <mat-divider></mat-divider>
+        <div *ngIf="!hasBusinessesForStaff()" class="no-businesses-message">
+          <mat-icon matListIcon>info</mat-icon>
+          <span matLine>No businesses available</span>
+        </div>
+        <a mat-list-item 
+           *ngFor="let business of userBusinesses" 
+           (click)="navigateToStaffManagement(business)" 
+           class="business-staff-item">
+          <mat-icon matListIcon>business</mat-icon>
+          <span matLine>{{ business.basicInfo.businessName }}</span>
+        </a>
+      </div>
     
     <mat-divider></mat-divider>
     
@@ -118,10 +139,29 @@
       <mat-icon>menu</mat-icon>
     </button>
     <mat-menu #menu="matMenu" class="hamburger-menu-dropdown">
-      <button mat-menu-item>
+      <button mat-menu-item [matMenuTriggerFor]="staffMenuHamburger">
         <mat-icon>people</mat-icon>
-        <span href="http://localhost:54142">Staff portal</span>
+        <span>Staff Management</span>
       </button>
+      <mat-menu #staffMenuHamburger="matMenu" class="staff-submenu">
+        <button mat-menu-item (click)="visitStaffApp()">
+          <mat-icon>launch</mat-icon>
+          <span>Visit Staff App</span>
+        </button>
+        <mat-divider></mat-divider>
+        <div *ngIf="!hasBusinessesForStaff()">
+          <button mat-menu-item disabled>
+            <mat-icon>info</mat-icon>
+            <span>No businesses available</span>
+          </button>
+        </div>
+        <button mat-menu-item 
+                *ngFor="let business of userBusinesses" 
+                (click)="navigateToStaffManagement(business)">
+          <mat-icon>business</mat-icon>
+          <span>{{ business.basicInfo.businessName }}</span>
+        </button>
+      </mat-menu>
     </mat-menu>
 
     <a class="app-title">✨ServiceFuzz✨</a>
@@ -172,6 +212,29 @@
       <mat-icon>analytics</mat-icon>
       <span [class.hide-text]="isSmallScreen$ | async">Analytics</span>
     </button>
+    <button mat-button [matMenuTriggerFor]="staffMenu" class="staff-button" [class.active]="isRouteActive('/staff')">
+      <mat-icon>people</mat-icon>
+      <span [class.hide-text]="isSmallScreen$ | async">Staff</span>
+    </button>
+    <mat-menu #staffMenu="matMenu" class="staff-menu">
+      <button mat-menu-item (click)="visitStaffApp()">
+        <mat-icon>launch</mat-icon>
+        <span>Visit Staff App</span>
+      </button>
+      <mat-divider></mat-divider>
+      <div *ngIf="!hasBusinessesForStaff()" class="no-businesses-menu-item">
+        <button mat-menu-item disabled>
+          <mat-icon>info</mat-icon>
+          <span>No businesses available</span>
+        </button>
+      </div>
+      <button mat-menu-item 
+              *ngFor="let business of userBusinesses" 
+              (click)="navigateToStaffManagement(business)">
+        <mat-icon>business</mat-icon>
+        <span>{{ business.basicInfo.businessName }}</span>
+      </button>
+    </mat-menu>
   </div>
  
   <div class="toolbar-right">

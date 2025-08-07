@@ -815,3 +815,136 @@ button:hover {
 }
 
 /* All custom button appearance styles removed to allow Angular Material defaults. */
+
+/* Staff Management Styles */
+.staff-nav-item {
+  cursor: pointer;
+}
+
+.sidebar-staff-submenu {
+  padding-left: 64px;
+  border-left: 2px solid #ddd;
+  margin-bottom: 8px;
+  background: #ffffff !important;
+}
+
+.business-staff-item {
+  padding-left: 32px !important;
+  border-left: 2px solid #e0e0e0;
+  margin-left: 16px;
+  background-color: white !important;
+}
+
+.business-staff-item:hover {
+  background-color: #e3f2fd !important;
+  border-left-color: #2196f3;
+}
+
+.no-businesses-message {
+  padding: 8px 16px;
+  color: #666;
+  font-style: italic;
+  background: #ffffff !important;
+}
+
+/* Desktop Staff Menu Styles using ::ng-deep like business menu */
+::ng-deep .staff-menu {
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #ffffff !important;
+}
+
+::ng-deep .staff-menu .mat-mdc-menu-panel {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #ffffff !important;
+}
+
+::ng-deep .staff-menu .mat-menu-content {
+  padding: 8px 0;
+  background: #ffffff !important;
+}
+
+::ng-deep .staff-menu .mat-menu-item {
+  height: 48px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #333 !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  margin: 0;
+  background: #ffffff !important;
+}
+
+::ng-deep .staff-menu .mat-menu-item mat-icon {
+  color: #666;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  transition: all 0.3s ease;
+  margin-right: 8px;
+}
+
+::ng-deep .staff-menu .mat-menu-item:hover {
+  background-color: #f5f5f5 !important;
+  transform: translateX(4px);
+}
+
+/* Hamburger submenu staff styles */
+::ng-deep .staff-submenu {
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #ffffff !important;
+}
+
+::ng-deep .staff-submenu .mat-mdc-menu-panel {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff !important;
+}
+
+::ng-deep .staff-submenu .mat-menu-content {
+  padding: 8px 0;
+  background: #ffffff !important;
+}
+
+::ng-deep .staff-submenu .mat-menu-item {
+  height: 48px;
+  padding: 0 20px;
+  background: #ffffff !important;
+  color: #333 !important;
+}
+
+::ng-deep .staff-submenu .mat-menu-item:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.no-businesses-menu-item .mat-menu-item {
+  color: #666 !important;
+  font-style: italic;
+}
+
+.visit-staff-app {
+  border-color: #17a2b8 !important;
+}
+
+.visit-staff-app .mat-icon {
+  color: #17a2b8 !important;
+}
+
+.visit-staff-app:hover {
+  background-color: rgba(23, 162, 184, 0.1) !important;
+}

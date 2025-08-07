@@ -109,6 +109,7 @@ import { PrivacyPolicy } from './privacy-policy/privacy-policy';
 import { TermsOfUse } from './terms-of-use/terms-of-use';
 import { FormBuilderComponent } from './form-builder/form-builder';
 import { AuthInterceptorService } from './services/auth-interceptor.service';
+import { Staffmanage } from './staffmanage/staffmanage';
 
 
 const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.googleusercontent.com';
@@ -138,7 +139,8 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     AuthBusinessDialogComponent,
     PrivacyPolicy,
     TermsOfUse,
-    FormBuilderComponent
+    FormBuilderComponent,
+    Staffmanage
   ],
   imports: [
     BrowserModule,
