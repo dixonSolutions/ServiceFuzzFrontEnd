@@ -37,6 +37,14 @@ const routes: Routes = [
   {path:'business/forms/:id', component: OrderForms},
   {path:'order-forms', redirectTo: 'business/forms', pathMatch: 'full'}, // Legacy redirect
   { path: 'settings', component: Settings },
+  // Smart Website Creator routes (specific before generic)
+  // Select workspaces for business
+  { path: 'website-creator/select/:businessId', component: WebsiteCreatorComponent },
+  // New workspace (businessId via query param)
+  { path: 'website-creator/new/name/:name', component: WebsiteCreatorComponent },
+  { path: 'website-creator/new/name/:name/description/:description', component: WebsiteCreatorComponent },
+  // Edit workspace: /website-creator/{businessId}/{workspaceId}
+  { path: 'website-creator/:businessId/:workspaceId', component: WebsiteCreatorComponent },
   { path: 'website-creator', component: WebsiteCreatorComponent },
   { path: 'staff/business/:businessId', component: Staffmanage },
   { path: 'privacy-policy', component: PrivacyPolicy },

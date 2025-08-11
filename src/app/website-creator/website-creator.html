@@ -1,5 +1,6 @@
 <!-- Workspace Selection -->
 <app-workspace-selection 
+  #workspaceSelection
   *ngIf="showWorkspaceSelection"
   (projectSelected)="onWorkspaceProjectSelected($event)"
   (newProjectCreated)="onWorkspaceProjectCreated($event)">

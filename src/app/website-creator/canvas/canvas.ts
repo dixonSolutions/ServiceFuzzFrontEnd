@@ -63,6 +63,7 @@ export class Canvas implements OnInit, OnDestroy {
   // Component rendering
   componentRenderContexts: ComponentRenderContext[] = [];
   private subscriptions: Subscription[] = [];
+  private apiComponentTypesLoaded = false;
 
   constructor(
     private websiteBuilder: WebsiteBuilderService,
@@ -92,7 +93,9 @@ export class Canvas implements OnInit, OnDestroy {
       this.websiteBuilder.loadAndCacheApiComponentTypes().subscribe({
         next: (componentTypes) => {
           console.log('✅ API component types loaded:', componentTypes.length);
-          this.updateComponentRenderContexts();
+          this.apiComponentTypesLoaded = true;
+          // Defer render contexts to next tick to ensure page data is ready
+          setTimeout(() => this.updateComponentRenderContexts(), 0);
         },
         error: (error) => {
           console.error('❌ Error loading API component types:', error);
@@ -100,6 +103,7 @@ export class Canvas implements OnInit, OnDestroy {
       });
     } else {
       console.log('✅ API component types already loaded');
+      this.apiComponentTypesLoaded = true;
       this.updateComponentRenderContexts();
     }
   }
@@ -123,11 +127,14 @@ export class Canvas implements OnInit, OnDestroy {
   private subscribeToPageChanges(): void {
     // Subscribe to website builder page changes
     this.websiteBuilder.pages$.subscribe((pages: any[]) => {
-      this.pages = pages.map(page => ({
+      const safePages = Array.isArray(pages) ? pages : [];
+      this.pages = safePages.map(page => ({
         ...page,
         isActive: page.id === this.currentPageId
       }));
       this.updateCurrentPageComponents();
+      // Defer context update slightly to allow types/load to settle
+      setTimeout(() => this.updateComponentRenderContexts(), 0);
     });
 
     this.websiteBuilder.currentPageId$.subscribe((pageId: string) => {
@@ -137,7 +144,7 @@ export class Canvas implements OnInit, OnDestroy {
     });
 
     this.websiteBuilder.components$.subscribe((components: ComponentInstance[]) => {
-      this.currentPageComponents = components;
+      this.currentPageComponents = Array.isArray(components) ? components : [];
     });
   }
 
@@ -151,40 +158,49 @@ export class Canvas implements OnInit, OnDestroy {
 
   // Component Rendering Methods
   private updateComponentRenderContexts(): void {
+    // Defer rendering until API component types are ready
+    if (!this.apiComponentTypesLoaded) {
+      console.log('⏳ API component types not ready yet; deferring render contexts');
+      return;
+    }
+
     this.componentRenderContexts = [];
     
     console.log('🔄 Updating component render contexts for', this.currentPageComponents.length, 'components');
     
-    this.currentPageComponents.forEach(component => {
-      const componentType = this.getApiComponentType(component.type);
-      if (componentType) {
-        console.log('✅ Found component type for', component.type, ':', componentType.name);
-        
-        // Convert from website builder ComponentInstance to models ComponentInstance
-        const modelComponent = this.convertToModelComponent(component);
-        const renderContext = this.componentRenderer.renderComponent(componentType, modelComponent);
-        
-        // Check if this is a dynamic component (like accordion)
-        const isDynamic = this.componentRenderer.isDynamicComponent(componentType);
-        const behaviorType = this.componentRenderer.getComponentBehaviorType(componentType);
-        
-        if (isDynamic) {
-          console.log('🎭 Dynamic component detected:', {
-            name: componentType.name,
-            id: componentType.id,
-            behaviorType: behaviorType,
-            hasAngularElements: renderContext.renderedHTML.includes('<p-accordion')
-          });
+    try {
+      this.currentPageComponents.forEach(component => {
+        const componentType = this.getApiComponentType(component.type);
+        if (componentType) {
+          console.log('✅ Found component type for', component.type, ':', componentType.name);
+          
+          // Convert instance and render
+          const modelComponent = this.convertToModelComponent(component);
+          const renderContext = this.componentRenderer.renderComponent(componentType, modelComponent);
+          
+          // Check if this is a dynamic component (like accordion)
+          const isDynamic = this.componentRenderer.isDynamicComponent(componentType);
+          const behaviorType = this.componentRenderer.getComponentBehaviorType(componentType);
+          
+          if (isDynamic) {
+            console.log('🎭 Dynamic component detected:', {
+              name: componentType.name,
+              id: componentType.id,
+              behaviorType: behaviorType,
+              hasAngularElements: renderContext.renderedHTML.includes('<p-accordion')
+            });
+          }
+          
+          this.componentRenderContexts.push(renderContext);
+          
+          console.log('🎨 Rendered component:', component.type, 'with HTML length:', renderContext.renderedHTML.length);
+        } else {
+          console.warn('❌ Component type not found for:', component.type);
         }
-        
-        this.componentRenderContexts.push(renderContext);
-        
-        console.log('🎨 Rendered component:', component.type, 'with HTML length:', renderContext.renderedHTML.length);
-      } else {
-        console.warn('❌ Component type not found for:', component.type);
-        console.log('Available component types:', this.websiteBuilder.getCachedApiComponentTypes().map(ct => ct.id));
-      }
-    });
+      });
+    } catch (e) {
+      console.error('❌ Error while building render contexts:', e);
+    }
     
     console.log('📊 Total render contexts created:', this.componentRenderContexts.length);
   }
@@ -193,7 +209,7 @@ export class Canvas implements OnInit, OnDestroy {
     return {
       id: component.id,
       componentTypeId: component.type,
-      parameters: component.properties || component.parameters || {},
+      parameters: { ...(component.properties || component.parameters || {}) },
       customStyles: component.customStyles || {},
       xPosition: component.x || 0,
       yPosition: component.y || 0,

@@ -96,6 +96,14 @@ export class ManageBusinessesService {
   }
 
   /**
+   * Append a single business into the in-memory instance list (used post-registration)
+   */
+  appendBusinessToInstance(business: BusinessRegistrationDto): void {
+    this.businessesInstance = [business, ...this.businessesInstance];
+    console.log('Appended new business to instance. Total now:', this.businessesInstance.length);
+  }
+
+  /**
    * Get the current businesses instance
    * @returns Array of business DTOs
    */

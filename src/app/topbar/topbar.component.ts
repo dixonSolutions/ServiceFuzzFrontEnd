@@ -137,7 +137,7 @@ export class TopbarComponent implements OnInit {
     this.staffSidebarExpanded = !this.staffSidebarExpanded;
   }
 
-  // Test method for website-creator navigation
+  // Navigate to Website Creator default page (no select segment)
   navigateToWebsiteCreator(): void {
     console.log('Attempting to navigate to website-creator...');
     this.router.navigate(['/website-creator']).then(

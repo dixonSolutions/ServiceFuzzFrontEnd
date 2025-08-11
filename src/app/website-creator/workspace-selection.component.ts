@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Output, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ManageBusinessesService } from '../services/manage-businesses.service';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 import { WebsiteBuilderService } from '../services/website-builder';
@@ -51,6 +52,7 @@ export class WorkspaceSelectionComponent implements OnInit {
   newProjectDescription = '';
   isLoading = false;
   errorMessage = '';
+  private pendingSelectBusinessId: string | null = null;
 
   // Real business data from service
   businesses: BusinessInfo[] = [];
@@ -61,7 +63,8 @@ export class WorkspaceSelectionComponent implements OnInit {
   constructor(
     private manageBusinessesService: ManageBusinessesService,
     private websiteBuilderService: WebsiteBuilderService,
-    private dataSvrService: DataSvrService
+    private dataSvrService: DataSvrService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -79,6 +82,11 @@ export class WorkspaceSelectionComponent implements OnInit {
         this.businesses = this.convertBusinessDtosToBusinessInfo(businessDtos);
         this.isLoading = false;
         console.log('Loaded businesses from instance:', this.businesses.length);
+        // Apply pending selection if any
+        if (this.pendingSelectBusinessId) {
+          this.selectBusinessById(this.pendingSelectBusinessId);
+          this.pendingSelectBusinessId = null;
+        }
         return;
       }
 
@@ -89,6 +97,11 @@ export class WorkspaceSelectionComponent implements OnInit {
           this.manageBusinessesService.setBusinessesInstance(businessDtos);
           this.isLoading = false;
           console.log('Loaded businesses from API:', this.businesses.length);
+          // Apply pending selection if any
+          if (this.pendingSelectBusinessId) {
+            this.selectBusinessById(this.pendingSelectBusinessId);
+            this.pendingSelectBusinessId = null;
+          }
         },
         error: (error) => {
           console.error('Error loading businesses:', error);
@@ -166,6 +179,8 @@ export class WorkspaceSelectionComponent implements OnInit {
   onBusinessSelect(business: BusinessInfo): void {
     this.selectedBusiness = business;
     this.loadWorkspacesForBusiness(business.id);
+    // Reflect route for selection
+    this.router.navigate(['/website-creator/select', business.id]);
   }
 
   onAddNewBusiness(): void {
@@ -187,34 +202,39 @@ export class WorkspaceSelectionComponent implements OnInit {
     if (!this.selectedBusiness || !this.newProjectName.trim()) {
       return;
     }
-
-    // Get user ID from DataSvrService
-    const currentUserId = this.dataSvrService.currentUser?.userID;
-    if (!currentUserId) {
-      this.errorMessage = 'User not authenticated. Please log in again.';
-      return;
+    // Navigate to smart new route; parent will handle auto-create & save
+    const nameSeg = this.newProjectName.trim();
+    const descSeg = this.newProjectDescription.trim();
+    const segments = ['/website-creator', 'new', 'name', nameSeg];
+    if (descSeg) {
+      segments.push('description', descSeg);
     }
-
-    const newProject: WorkspaceProject = {
-      id: this.generateId(),
-      name: this.newProjectName.trim(),
-      businessName: this.selectedBusiness.name,
-      businessId: this.selectedBusiness.id,
-      userId: currentUserId,
-      description: this.newProjectDescription.trim(),
-      createdAt: new Date(),
-      lastModified: new Date(),
-      isNew: true, // Mark as new workspace not yet saved to API
-      deploymentStatus: 'Not Deployed'
-    };
-
-    this.existingProjects.unshift(newProject);
-    this.newProjectCreated.emit(newProject);
     this.closeNewProjectDialog();
+    this.router.navigate(segments, { queryParams: { businessId: this.selectedBusiness.id } });
+  }
+
+  // Allow external code to append a business to list after registration
+  public appendBusiness(dto: BusinessRegistrationDto): void {
+    const info = this.convertBusinessDtosToBusinessInfo([dto])[0];
+    if (!info) return;
+    if (!this.businesses.find(b => b.id === info.id)) {
+      this.businesses.unshift(info);
+    }
   }
 
   onSelectExistingProject(project: WorkspaceProject): void {
     this.projectSelected.emit(project);
+  }
+
+  // Programmatically select a business by id and load its workspaces
+  public selectBusinessById(businessId: string): void {
+    const found = this.businesses.find(b => b.id === businessId);
+    if (found) {
+      this.onBusinessSelect(found);
+      return;
+    }
+    // Defer selection until businesses are available
+    this.pendingSelectBusinessId = businessId;
   }
 
   closeNewProjectDialog(): void {

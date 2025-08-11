@@ -752,12 +752,17 @@ mat-divider {
   font-weight: 500;
 }
 
-/* Make the stepper more compact */
-::ng-deep .mat-stepper-horizontal {
-  margin: 16px 0;
+/* Make the stepper horizontally scrollable with fixed-width headers */
+::ng-deep .mat-horizontal-stepper-header-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding-bottom: 8px;
 }
 
 ::ng-deep .mat-step-header {
+  min-width: 220px;
+  flex: 0 0 auto;
   padding: 8px 16px;
   margin: 0 4px;
 }

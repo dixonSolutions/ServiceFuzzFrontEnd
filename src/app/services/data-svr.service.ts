@@ -63,6 +63,8 @@ export class DataSvrService {
     this.initializeAuthenticationState();
   }
 
+  
+
   // Business Registration Methods
   get currentBusinessRegistration(): BusinessRegistration {
     return this._businessRegistration.value;

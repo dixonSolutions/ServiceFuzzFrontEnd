@@ -1,7 +1,9 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { Subscription } from 'rxjs';
+import { Subscription, of } from 'rxjs';
+import { switchMap, catchError } from 'rxjs/operators';
 import { RegisterBusinessService } from '../services/register-business.service';
 import { DataSvrService } from '../services/data-svr.service';
 import { 
@@ -47,7 +49,8 @@ export class StripeAccountSetupComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private registerService: RegisterBusinessService,
     private dataService: DataSvrService,
-    private domSanitizer: DomSanitizer
+    private domSanitizer: DomSanitizer,
+    private router: Router
   ) {
     this.stripeForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -66,6 +69,17 @@ export class StripeAccountSetupComponent implements OnInit, OnDestroy {
     // Default to US
     this.selectedCountry = this.countries.find(c => c.code === 'US') || this.countries[0];
     this.stripeForm.patchValue({ country: this.selectedCountry.code });
+
+    // Proactively refresh permissions using sign-in token so new business is authorized
+    try {
+      const token = this.dataService.signInToken;
+      if (token) {
+        const sub = this.dataService.authenticateWithSignInToken(token).pipe(
+          catchError(() => of(null))
+        ).subscribe();
+        this.subscription.add(sub);
+      }
+    } catch {}
   }
 
   ngOnDestroy(): void {
@@ -98,9 +112,16 @@ export class StripeAccountSetupComponent implements OnInit, OnDestroy {
 
     const formValue = this.stripeForm.value;
     
-    const createSub = this.registerService.createStripeAccountForCurrentBusiness(
-      formValue.email,
-      formValue.country
+    const signInToken = this.dataService.signInToken;
+    const refresh$ = signInToken
+      ? this.dataService.authenticateWithSignInToken(signInToken).pipe(catchError(() => of(null)))
+      : of(null);
+
+    const createSub = refresh$.pipe(
+      switchMap(() => this.registerService.createStripeAccountForCurrentBusiness(
+        formValue.email,
+        formValue.country
+      ))
     ).subscribe({
       next: (response: StripeAccountResponse) => {
         console.log('Stripe account created successfully:', response);
@@ -116,8 +137,13 @@ export class StripeAccountSetupComponent implements OnInit, OnDestroy {
           5000
         );
 
-        // Don't emit success event yet - wait for onboarding completion or dismissal
-        // this.stripeAccountCreated.emit(response);
+        // Move to website creation select route for this business after Stripe creation
+        try {
+          const businessId = this.dataService.currentBusinessRegistration.basicInfo.businessID || '';
+          if (businessId) {
+            this.router.navigate(['/website-creator/select', businessId]);
+          }
+        } catch {}
       },
       error: (error: Error) => {
         console.error('Stripe account creation failed:', error);

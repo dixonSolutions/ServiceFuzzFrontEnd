@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WebsiteBuilderService, ComponentDefinition, ComponentParameter, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/website-builder';
@@ -7,6 +7,7 @@ import { DataSvrService } from '../services/data-svr.service';
 import { WorkspaceProject } from './workspace-selection.component';
 import { CreateWorkspaceDto, UpdateWorkspaceDto, ComponentType, DeploymentListResponse, WorkspaceDeployment, WebsiteNameValidation } from '../models/workspace.models';
 import { LeftSidebar } from './left-sidebar/left-sidebar';
+import { WorkspaceSelectionComponent } from './workspace-selection.component';
 import { Canvas, Page } from './canvas/canvas';
 
 interface DeploymentLimitCheck {
@@ -32,6 +33,7 @@ interface DeployWorkspaceDto {
 export class WebsiteCreatorComponent implements OnInit {
   @ViewChild('leftSidebar') leftSidebar!: LeftSidebar;
   @ViewChild('canvas') canvas!: Canvas;
+  @ViewChild('workspaceSelection') workspaceSelection!: WorkspaceSelectionComponent;
 
   // Workspace state
   showWorkspaceSelection = true;
@@ -97,14 +99,17 @@ export class WebsiteCreatorComponent implements OnInit {
   constructor(
     private websiteBuilder: WebsiteBuilderService,
     private router: Router,
+    private route: ActivatedRoute,
     private dataSvrService: DataSvrService
   ) {}
 
   ngOnInit(): void {
     console.log('🚀 WEBSITE CREATOR: Starting initialization');
     
-    // Initialize pages first
-    this.websiteBuilder.initializePages();
+    // Initialize pages only when no data exists
+    if (!this.pages || this.pages.length === 0) {
+      this.websiteBuilder.initializePages();
+    }
     
     // Components will be loaded by the left sidebar - no need to load them here
     console.log('🔄 WEBSITE CREATOR: Components will be loaded by left sidebar');
@@ -122,6 +127,87 @@ export class WebsiteCreatorComponent implements OnInit {
     });
     
     console.log('✅ WEBSITE CREATOR: Initialization complete');
+
+    // Smart routing handling
+    this.handleSmartRouting();
+  }
+
+  private handleSmartRouting(): void {
+    // Decide behavior based on route config and params
+    const applyRouting = () => {
+      const routePath = this.route.snapshot.routeConfig?.path || '';
+      const params = this.route.snapshot.paramMap;
+
+      // Edit workspace: website-creator/:businessId/:workspaceId
+      const businessIdParam = params.get('businessId') || '';
+      const workspaceIdParam = params.get('workspaceId') || '';
+      if (businessIdParam && workspaceIdParam && routePath.includes(':workspaceId')) {
+        this.showWorkspaceSelection = false;
+        this.websiteBuilder.getWorkspace(workspaceIdParam).subscribe(ws => {
+          const project: WorkspaceProject = {
+            id: ws.id,
+            name: ws.name,
+            businessName: '',
+            businessId: ws.businessId,
+            userId: ws.userId,
+            description: ws.description || '',
+            createdAt: new Date(ws.createdAt),
+            lastModified: new Date(ws.lastModified),
+            websiteJson: ws.websiteJson,
+            isNew: false,
+            deploymentStatus: ws.deploymentStatus,
+            deploymentUrl: ws.deploymentUrl,
+            deployedAt: ws.deployedAt ? new Date(ws.deployedAt) : undefined
+          };
+          this.onWorkspaceProjectSelected(project);
+        });
+        return;
+      }
+
+      // Select workspaces for business: website-creator/select/:businessId
+      if (routePath.includes('select')) {
+        const businessId = businessIdParam;
+        this.showWorkspaceSelection = true;
+        setTimeout(() => {
+          if (this.workspaceSelection && businessId) {
+            this.workspaceSelection.selectBusinessById(decodeURIComponent(businessId));
+          }
+        });
+        return;
+      }
+
+      // New workspace: website-creator/new/name/:name[/description/:description]?businessId=...
+      if (routePath.includes('new')) {
+        const nameSegment = params.get('name') || 'New Website';
+        const descriptionSegment = params.get('description') || '';
+        const businessId = this.route.snapshot.queryParamMap.get('businessId') || '';
+        const userId = this.dataSvrService.currentUser?.userID || '';
+
+        this.showWorkspaceSelection = false;
+        const newProject: WorkspaceProject = {
+          id: this.generateUniqueId(),
+          name: decodeURIComponent(nameSegment),
+          businessName: '',
+          businessId: businessId,
+          userId: userId,
+          description: decodeURIComponent(descriptionSegment),
+          createdAt: new Date(),
+          lastModified: new Date(),
+          isNew: true,
+        } as WorkspaceProject;
+
+        this.onWorkspaceProjectCreated(newProject);
+        setTimeout(() => this.onSave(), 0);
+        return;
+      }
+
+      // Base route: show selection UI
+      this.showWorkspaceSelection = true;
+    };
+
+    // Apply immediately and on future changes
+    applyRouting();
+    this.route.paramMap.subscribe(() => applyRouting());
   }
 
   // Workspace Management
@@ -129,6 +215,10 @@ export class WebsiteCreatorComponent implements OnInit {
     console.log('🎯 Project selected:', project);
     this.currentProject = project;
     this.showWorkspaceSelection = false;
+    // Reflect edit route with business and workspace ids when possible
+    if (project.businessId && project.id) {
+      this.router.navigate(['/website-creator', project.businessId, project.id]);
+    }
     
     // Initialize the website builder with this project
     this.websiteBuilder.createNewProject(project.name, project.description);
@@ -153,6 +243,10 @@ export class WebsiteCreatorComponent implements OnInit {
     console.log('New project created:', project);
     this.currentProject = project;
     this.showWorkspaceSelection = false;
+    // Reflect edit route with business and (temporary) workspace id
+    if (project.businessId) {
+      this.router.navigate(['/website-creator', project.businessId, project.id]);
+    }
     
     // Initialize the website builder with this project
     this.websiteBuilder.createNewProject(project.name, project.description);
@@ -188,10 +282,37 @@ export class WebsiteCreatorComponent implements OnInit {
     // Subscribe to page changes
     this.websiteBuilder.pages$.subscribe((pages: any[]) => {
       console.log('📄 Website builder pages updated:', pages);
-      this.pages = pages;
-      if (this.canvas) {
-        this.canvas.loadPageData(pages);
+      const cloned = (pages || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        route: p.route,
+        isDeletable: p.isDeletable,
+        isActive: p.isActive,
+        components: (p.components || []).map((c: any) => ({
+          id: c.id,
+          type: c.type,
+          x: c.x,
+          y: c.y,
+          width: c.width,
+          height: c.height,
+          zIndex: c.zIndex,
+          parameters: { ...(c.parameters || {}) }
+        }))
+      }));
+      this.pages = cloned;
+      // Ensure currentPageId valid at first load
+      const hasCurrent = this.pages.some(p => p.id === this.currentPageId);
+      if (!hasCurrent && this.pages.length > 0) {
+        const firstId = this.pages[0].id;
+        this.currentPageId = firstId;
+        try { this.websiteBuilder.setCurrentPage(firstId); } catch {}
       }
+      // Defer load into canvas to ensure child is ready
+      setTimeout(() => {
+        if (this.canvas && Array.isArray(cloned)) {
+          this.canvas.loadPageData(cloned);
+        }
+      }, 0);
     });
 
     this.websiteBuilder.currentPageId$.subscribe((pageId: string) => {
@@ -260,10 +381,23 @@ export class WebsiteCreatorComponent implements OnInit {
   onPageDataChange(pages: Page[]): void {
     console.log('📄 Page data changed, updating main component...', pages);
     
-    // Deep copy to ensure we have our own reference
+    // Deep copy to ensure we have our own reference (isolate per project)
     this.pages = pages.map(page => ({
-      ...page,
-      components: page.components.map(comp => ({ ...comp }))
+      id: page.id,
+      name: page.name,
+      route: page.route,
+      isDeletable: page.isDeletable,
+      isActive: page.isActive,
+      components: page.components.map(comp => ({
+        id: comp.id,
+        type: comp.type,
+        x: comp.x,
+        y: comp.y,
+        width: comp.width,
+        height: comp.height,
+        zIndex: comp.zIndex,
+        parameters: { ...(comp.parameters || {}) }
+      }))
     }));
     
     // Update website builder with new page data
@@ -890,6 +1024,10 @@ Would you like to visit your website now?
           console.log('New workspace saved with ID:', response.workspaceId);
           alert('Website project saved successfully!');
           this.isSaving = false;
+          // Update route to reflect real workspace id from API
+          if (this.currentProject?.businessId && this.currentProject?.id) {
+            this.router.navigate(['/website-creator', this.currentProject.businessId, this.currentProject.id]);
+          }
         },
         error: (error) => {
           console.error('Error saving workspace:', error);

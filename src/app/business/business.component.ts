@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataSvrService } from '../services/data-svr.service';
 import { RegisterBusinessService, RegisterBusinessResponse } from '../services/register-business.service';
@@ -43,7 +44,7 @@ export class BusinessComponent implements OnInit, OnDestroy {
 
   // Registration state
   currentStep = 0;
-  maxSteps = 6; // Added Stripe setup step
+  maxSteps = 6; // 0: Basic, 1: Services, 2: Places, 3: Schedules, 4: Assignment, 5: Stripe
   registration: BusinessRegistration;
   
   // UI State
@@ -138,7 +139,8 @@ export class BusinessComponent implements OnInit, OnDestroy {
     private fb: FormBuilder, 
     public data: DataSvrService,
     private registerService: RegisterBusinessService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {
     this.initializeForms();
     this.registration = this.data.currentBusinessRegistration;
@@ -299,7 +301,8 @@ export class BusinessComponent implements OnInit, OnDestroy {
       case 1: return this.registration.services.length > 0;
       case 2: return this.specificPlaces.length > 0 || this.areaPlaces.length > 0;
       case 3: return this.businessSchedules.length > 0; // Schedule step
-      case 4: return true; // Final summary step
+      case 4: return true; // Service assignment UI step is interactive; always allow next
+      case 5: return this.isStripeStepComplete();
       default: return false;
     }
   }
@@ -676,15 +679,29 @@ export class BusinessComponent implements OnInit, OnDestroy {
             'Close', 
             5000
           );
-          
-          // Reset form after successful registration
-          setTimeout(() => {
-            this.data.resetBusinessRegistration();
-            this.currentStep = 0;
-            this.locationType = 'specific';
-            this.specificPlaces = [];
-            this.areaPlaces = [];
-          }, 2000);
+
+          const newBusinessId = response.businessId || this.registration.basicInfo.businessID || this.data.generateId();
+          // Append to global businesses list so website/stripe can pick it up
+          try {
+            const dtoLike: any = {
+              basicInfo: {
+                businessID: newBusinessId,
+                businessName: this.registration.basicInfo.bussinessName,
+                businessDescription: this.registration.basicInfo.bussinessDescription,
+                phone: this.registration.basicInfo.bussinessPhone,
+                email: this.registration.basicInfo.bussinessEmail
+              },
+              services: this.registration.services
+            };
+            // Best-effort append: expose helper on window and navigate to website creator select
+            (window as any).appendBusinessToGlobalList?.(dtoLike);
+          } catch {}
+
+          // Advance to Stripe step for account setup
+          this.currentStep = 5; // Stripe
+          this.data.setCurrentStep(this.currentStep);
+
+          // After Stripe step completes, we'll route to website creator select for this business
         } else {
           this.handleRegistrationError(response.message || 'Registration failed');
         }
@@ -1546,6 +1563,7 @@ export class BusinessComponent implements OnInit, OnDestroy {
       'Close',
       4000
     );
+    this.router.navigate(['/business/manage']);
 
     // Move to next step
     this.nextStep();

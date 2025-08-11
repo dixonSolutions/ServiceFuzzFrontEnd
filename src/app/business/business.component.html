@@ -47,8 +47,9 @@
         <mat-divider *ngIf="showAISection"></mat-divider>
       </div>
 
-      <mat-card-content>
-        <mat-stepper #stepper [selectedIndex]="currentStep" orientation="horizontal" linear="false">
+        <mat-card-content>
+        <!-- Lock timeline interaction to Next/Previous only by disabling header clicks -->
+        <mat-stepper #stepper [selectedIndex]="currentStep" orientation="horizontal" linear="true">
           
           <!-- Step 1: Basic Information -->
           <mat-step [completed]="basicInfoForm.valid" label="Basic Information" [class.current-step]="currentStep === 0">
@@ -805,19 +806,7 @@
             </div>
           </mat-step>
 
-          <!-- Step 5: Payment Setup (Stripe) -->
-          <mat-step [completed]="isStripeStepComplete()" label="Payment Setup">
-            <div class="stripe-section">
-              <app-stripe-account-setup
-                [businessEmail]="getBusinessEmail()"
-                [businessName]="getBusinessName()"
-                (stripeAccountCreated)="onStripeAccountCreated($event)"
-                (skipStripeSetup)="onSkipStripeSetup()">
-              </app-stripe-account-setup>
-            </div>
-          </mat-step>
-
-          <!-- Step 6: Service Assignment -->
+          <!-- Step 5: Service Assignment -->
           <mat-step label="Service Assignment">
             <div class="assignment-section">
               <h3>Assign Services to Places</h3>
@@ -929,6 +918,18 @@
               </div>
             </div>
           </mat-step>
+
+          <!-- Step 6: Payment Setup (Stripe) - moved to the end -->
+          <mat-step [completed]="isStripeStepComplete()" label="Payment Setup">
+            <div class="stripe-section">
+              <app-stripe-account-setup
+                [businessEmail]="getBusinessEmail()"
+                [businessName]="getBusinessName()"
+                (stripeAccountCreated)="onStripeAccountCreated($event)"
+                (skipStripeSetup)="onSkipStripeSetup()">
+              </app-stripe-account-setup>
+            </div>
+          </mat-step>
         </mat-stepper>
 
         <!-- Registration Status -->
@@ -951,17 +952,17 @@
           </button>
           
           <button mat-raised-button color="primary" (click)="nextStep()" 
-                  *ngIf="currentStep < maxSteps - 1"
+                  *ngIf="currentStep < maxSteps - 1 && currentStep !== 4"
                   [disabled]="isRegistering">
             Next
           </button>
           
           <button mat-raised-button color="accent" (click)="onSubmit()" 
-                  *ngIf="currentStep === maxSteps - 1"
+                  *ngIf="currentStep === 4"
                   
                   >
             <mat-spinner diameter="20" *ngIf="isSubmitting || isRegistering"></mat-spinner>
-            <span *ngIf="!isSubmitting && !isRegistering">Complete Registration</span>
+            <span *ngIf="!isSubmitting && !isRegistering">Register Business</span>
             <span *ngIf="isRegistering">Registering...</span>
           </button>
         </div>
