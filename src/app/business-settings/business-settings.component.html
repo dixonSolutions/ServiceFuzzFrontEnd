@@ -1,3 +1,4 @@
+<p-toast></p-toast>
 <div class="settings-container">
   <!-- Not Signed In Message -->
   <mat-card class="message-card" *ngIf="!data.currentUser">
@@ -66,15 +67,17 @@
             </div>
           </div>
           
-          <!-- Upgrade Prompt for Non-Subscribers -->
+          <!-- Options when not subscribed -->
           <div class="upgrade-prompt" *ngIf="!subscriptionStatus.isSubscribed">
             <mat-divider></mat-divider>
-            <h4>Upgrade to Premium</h4>
+            <h4>Subscribe to ServiceFuzz</h4>
             <p>Get access to all features and priority support</p>
-            <button mat-raised-button color="primary" (click)="upgradeToPremium()">
-              <mat-icon>upgrade</mat-icon>
-              Subscribe Now
-            </button>
+            <div class="subscribe-options">
+              <button mat-raised-button color="accent" (click)="upgradeToPremium()" [disabled]="isSubscribing">
+                <mat-icon>star</mat-icon>
+                {{ isSubscribing ? 'Redirecting...' : 'Subscribe Now' }}
+              </button>
+            </div>
           </div>
         </div>
         
@@ -122,20 +125,16 @@
           </div>
         </div>
 
-        <div class="no-trial-message" *ngIf="!data.freeTrialDetails && !showFreeTrialForm">
-          <h1>Start your free trial</h1>
-          <button mat-raised-button color="primary" (click)="startFreeTrial()">
-            <mat-icon>add</mat-icon>
-            Start Free Trial
-          </button>
-          <h1>or</h1>
+        <div class="no-trial-message">
+          <h2>Subscription</h2>
           <div class="payment-options">
-            <h1>Subscribe to ServiceFuzz</h1>
             <mat-divider></mat-divider>
-            <button mat-raised-button color="accent" class="fancy-subscribe-button" (click)="redirectToStripeCheckout()">
-              <mat-icon>shopping_cart</mat-icon>
-              Subscribe Now
-            </button>
+            <div class="subscribe-options">
+              <button mat-raised-button color="accent" class="fancy-subscribe-button" (click)="redirectToStripeCheckout(false)" [disabled]="isSubscribing">
+                <mat-icon>shopping_cart</mat-icon>
+                {{ isSubscribing ? 'Redirecting...' : 'Subscribe Now' }}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -143,7 +142,7 @@
         <div class="trial-actions" *ngIf="data.freeTrialDetails">
           <mat-divider></mat-divider>
           <div class="action-buttons">
-            <button mat-raised-button color="accent" class="upgrade-button" (click)="upgradeToPremium()">
+            <button mat-raised-button color="accent" class="upgrade-button" (click)="upgradeToPremium()" [disabled]="isSubscribing">
               <mat-icon>star</mat-icon>
               {{ data.freeTrialDetails.isActive ? 'Upgrade to Premium' : 'Subscribe Now' }}
             </button>
@@ -158,123 +157,7 @@
           </p>
         </div>
 
-        <!-- Free Trial Form -->
-        <div class="free-trial-form-container" *ngIf="showFreeTrialForm">
-          <p-card styleClass="free-trial-form-card">
-            <ng-template pTemplate="header">
-              <div class="form-header">
-                <i class="pi pi-calendar" style="font-size: 2rem; color: var(--primary-color);"></i>
-                <h2>Start Your Free Trial</h2>
-                <p>Choose your trial period and start exploring ServiceFuzz</p>
-              </div>
-            </ng-template>
-            
-            <ng-template pTemplate="content">
-              <div class="form-content">
-                <div class="form-row" *ngIf="isBrowser">
-                  <div class="form-field">
-                    <label for="startDate">Start Date</label>
-                    <p-datepicker 
-                      inputId="startDate"
-                      [(ngModel)]="freeTrialStartDate"
-                      [minDate]="minDate"
-                      [showIcon]="true"
-                      [iconDisplay]="'input'"
-                      [fluid]="true"
-                      (onSelect)="onStartDateChange()"
-                      dateFormat="dd/mm/yy"
-                      placeholder="Select start date"
-                      [showOnFocus]="true"
-                      [appendTo]="'body'">
-                    </p-datepicker>
-                  </div>
-                  
-                  <div class="form-field">
-                    <label for="endDate">End Date</label>
-                    <p-datepicker 
-                      inputId="endDate"
-                      [(ngModel)]="freeTrialEndDate"
-                      [minDate]="freeTrialStartDate"
-                      [showIcon]="true"
-                      [iconDisplay]="'input'"
-                      [fluid]="true"
-                      (onSelect)="onEndDateChange()"
-                      dateFormat="dd/mm/yy"
-                      placeholder="Select end date"
-                      [showOnFocus]="true"
-                      [appendTo]="'body'">
-                    </p-datepicker>
-                  </div>
-                </div>
-                
-                <!-- Fallback form for non-browser environments -->
-                <div class="form-row" *ngIf="!isBrowser">
-                  <div class="form-field">
-                    <label for="startDateFallback">Start Date</label>
-                    <input 
-                      type="date" 
-                      id="startDateFallback"
-                      [value]="formatDateForInput(freeTrialStartDate)"
-                      (change)="onStartDateInputChange($event)"
-                      class="fallback-date-input">
-                  </div>
-                  
-                  <div class="form-field">
-                    <label for="endDateFallback">End Date</label>
-                    <input 
-                      type="date" 
-                      id="endDateFallback"
-                      [value]="formatDateForInput(freeTrialEndDate)"
-                      (change)="onEndDateInputChange($event)"
-                      class="fallback-date-input">
-                  </div>
-                </div>
-                
-                <div class="trial-info-summary" *ngIf="freeTrialFormValid">
-                  <p-divider></p-divider>
-                  <div class="info-item">
-                    <i class="pi pi-clock"></i>
-                    <span>Trial Duration: {{ (freeTrialEndDate.getTime() - freeTrialStartDate.getTime()) / (1000 * 60 * 60 * 24) | number:'1.0-0' }} days</span>
-                  </div>
-                  <div class="info-item">
-                    <i class="pi pi-check-circle"></i>
-                    <span>Full access to all ServiceFuzz features</span>
-                  </div>
-                  <div class="info-item">
-                    <i class="pi pi-shield"></i>
-                    <span>No credit card required</span>
-                  </div>
-                </div>
-                
-                <div class="form-validation" *ngIf="!freeTrialFormValid && (freeTrialStartDate || freeTrialEndDate)">
-                  <p-message severity="warn" text="Please ensure start date is today or later, and end date is after start date"></p-message>
-                </div>
-              </div>
-            </ng-template>
-            
-            <ng-template pTemplate="footer">
-              <div class="form-actions">
-                <p-button 
-                  label="Cancel" 
-                  icon="pi pi-times" 
-                  [text]="true" 
-                  styleClass="p-button-secondary"
-                  (onClick)="hideFreeTrialForm()">
-                </p-button>
-                
-                <p-button 
-                  label="Start Free Trial" 
-                  icon="pi pi-check" 
-                  [disabled]="!freeTrialFormValid || isSubmittingTrial"
-                  [loading]="isSubmittingTrial"
-                  loadingIcon="pi pi-spinner"
-                  styleClass="p-button-primary"
-                  (onClick)="submitFreeTrial()">
-                </p-button>
-              </div>
-            </ng-template>
-          </p-card>
-        </div>
+        <!-- Free Trial Form removed -->
       </mat-card-content>
     </mat-card>
 

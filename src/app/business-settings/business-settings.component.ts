@@ -4,6 +4,9 @@ import { DataSvrService } from '../services/data-svr.service';
 import { ServiceFuzzFreeTrialSubscriptions } from '../models/FreeTrialDetails';
 import { ManageBusinessesService } from '../services/manage-businesses.service';
 import { SubscriptionStatus } from '../models/subscription-status';
+import { CheckoutService } from '../services/checkout';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-business-settings',
@@ -12,14 +15,10 @@ import { SubscriptionStatus } from '../models/subscription-status';
   styleUrl: './business-settings.component.css'
 })
 export class BusinessSettingsComponent implements OnInit {
-  private readonly STRIPE_CHECKOUT_URL = 'https://buy.stripe.com/test_3cI4gs6XybHR9oU2uy1gs01';
+  // Loading state for subscription redirect
+  isSubscribing: boolean = false;
   
-  // Free trial form properties
-  showFreeTrialForm: boolean = false;
-  freeTrialStartDate: Date = new Date();
-  freeTrialEndDate: Date = new Date();
-  isSubmittingTrial: boolean = false;
-  freeTrialFormValid: boolean = false;
+  // Simplified subscription UI: free trial flows removed from UI
   isBrowser: boolean = false;
   minDate: Date = new Date();
 
@@ -30,24 +29,17 @@ export class BusinessSettingsComponent implements OnInit {
   constructor(
     public data: DataSvrService,
     private manageBusinessesService: ManageBusinessesService,
+    private checkoutService: CheckoutService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private messageService: MessageService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
     
-    // Set minimum date to today
+    // Set minimum date to today (kept for potential future date pickers)
     this.minDate = new Date();
     this.minDate.setHours(0, 0, 0, 0);
-    
-    // Set default dates - start today, end 30 days from now
-    this.freeTrialStartDate = new Date();
-    this.freeTrialStartDate.setHours(0, 0, 0, 0);
-    
-    this.freeTrialEndDate = new Date();
-    this.freeTrialEndDate.setDate(this.freeTrialEndDate.getDate() + 30);
-    this.freeTrialEndDate.setHours(0, 0, 0, 0);
-    
-    // Initial validation
-    this.validateFreeTrialForm();
   }
 
   private parseDateString(dateStr: string): Date {
@@ -89,50 +81,41 @@ export class BusinessSettingsComponent implements OnInit {
     return today <= end;
   }
 
-  redirectToStripeCheckout(): void {
-    // Open in a new tab to avoid iframe restrictions
-    window.open(this.STRIPE_CHECKOUT_URL, '_blank');
+  async redirectToStripeCheckout(freeTrial: boolean = false): Promise<void> {
+    if (this.isSubscribing) return;
+    this.isSubscribing = true;
+    try {
+      const checkoutUrl = await this.checkoutService.getSubscriptionCheckoutUrl(freeTrial);
+      // Redirect the current window to preserve auth context
+      window.location.assign(checkoutUrl);
+    } catch (error: any) {
+      console.error('Failed to create Stripe Checkout session:', error);
+      const message = error?.status === 401 || error?.status === 403
+        ? 'You must be signed in to subscribe. Please sign in and try again.'
+        : 'Could not start checkout. Please try again later.';
+      this.data.openSnackBar(message, 'Close', 5000);
+    } finally {
+      // Note: after successful assign this code may not run, but safe for error case
+      this.isSubscribing = false;
+    }
   }
 
   ngOnInit(): void {
+    // Handle billing result messages via route param
+    this.route.paramMap.subscribe(params => {
+      const result = params.get('result');
+      if (result === 'success') {
+        this.messageService.add({ severity: 'success', summary: 'Subscription active', detail: 'Payment successful. Thank you!' });
+        // Optionally refresh subscription status
+        this.checkSubscriptionStatus();
+      } else if (result === 'cancel') {
+        this.messageService.add({ severity: 'info', summary: 'Checkout canceled', detail: 'No charges were made.' });
+      }
+    });
+
     if (this.data.currentUser?.email) {
       // Check subscription status first
       this.checkSubscriptionStatus();
-      
-      this.data.getFreeTrialDetailsForUserByEmail().subscribe({
-        next: (freeTrialDetails: ServiceFuzzFreeTrialSubscriptions) => {
-          // Convert string dates to Date objects using our parser
-          const startDate = this.parseDateString(freeTrialDetails.startDate as unknown as string);
-          const endDate = this.parseDateString(freeTrialDetails.endDate as unknown as string);
-          
-          const trialDetails = {
-            ...freeTrialDetails,
-            startDate,
-            endDate,
-            daysRemaining: this.calculateDaysRemaining(endDate),
-            isActive: this.isTrialActive(endDate)
-          };
-          
-          this.data.freeTrialDetails = trialDetails;
-          this.showFreeTrialForm = false; // Hide form if trial exists
-          
-          
-          if (trialDetails.isActive) {
-          }
-        },
-        error: (error: any) => {
-          console.error('Error fetching free trial details:', error);
-          
-          // Check if it's a 404 error (trial doesn't exist)
-          if (error.status === 404) {
-            console.log('Free trial not found - showing form to start trial');
-            this.showFreeTrialForm = true;
-            this.data.freeTrialDetails = undefined;
-          } else {
-            this.data.openSnackBar('Failed to fetch trial details', 'Close', 3000);
-          }
-        }
-      });
     }
   }
 
@@ -186,96 +169,14 @@ export class BusinessSettingsComponent implements OnInit {
     return new Date(dateString);
   }
 
-  // Form validation
-  validateFreeTrialForm(): void {
-    if (!this.freeTrialStartDate || !this.freeTrialEndDate) {
-      this.freeTrialFormValid = false;
-      return;
-    }
-    
-    const startDate = new Date(this.freeTrialStartDate);
-    const endDate = new Date(this.freeTrialEndDate);
-    const today = new Date();
-    
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    
-    this.freeTrialFormValid = 
-      startDate >= today &&
-      endDate > startDate;
-  }
-
-  // Handle date changes
-  onStartDateChange(): void {
-    this.validateFreeTrialForm();
-  }
-
-  onEndDateChange(): void {
-    this.validateFreeTrialForm();
-  }
-
-  // Handle date input changes for fallback inputs
-  onStartDateInputChange(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target && target.value) {
-      this.freeTrialStartDate = this.parseDateFromInput(target.value);
-      this.onStartDateChange();
-    }
-  }
-
-  onEndDateInputChange(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target && target.value) {
-      this.freeTrialEndDate = this.parseDateFromInput(target.value);
-      this.onEndDateChange();
-    }
-  }
-
-  // Show/hide form
-  showFreeTrialFormDialog(): void {
-    this.showFreeTrialForm = true;
-    this.validateFreeTrialForm();
-  }
-
-  hideFreeTrialForm(): void {
-    this.showFreeTrialForm = false;
-  }
-
-  // Submit free trial
-  submitFreeTrial(): void {
-    if (!this.freeTrialFormValid || this.isSubmittingTrial) {
-      return;
-    }
-
-    this.isSubmittingTrial = true;
-    
-    this.manageBusinessesService.startFreeTrial(this.freeTrialStartDate, this.freeTrialEndDate).subscribe({
-      next: (response: any) => {
-        console.log('Free trial started successfully:', response);
-        this.data.openSnackBar('Free trial started successfully!', 'Close', 5000);
-        this.showFreeTrialForm = false;
-        this.isSubmittingTrial = false;
-        
-        // Refresh the trial details
-        this.ngOnInit();
-      },
-      error: (error: any) => {
-        console.error('Error starting free trial:', error);
-        this.data.openSnackBar('Failed to start free trial. Please try again.', 'Close', 5000);
-        this.isSubmittingTrial = false;
-      }
-    });
-  }
-
-  startFreeTrial(): void {
-    this.showFreeTrialFormDialog();
-  }
+  // Removed free trial form logic
 
   upgradeToPremium(): void {
     // Redirect to Stripe checkout for premium subscription
-    this.redirectToStripeCheckout();
+    this.redirectToStripeCheckout(false);
   }
+
+  // Removed trial via checkout entry point
 
   showTrialFAQ(): void {
     // TODO: Implement FAQ display

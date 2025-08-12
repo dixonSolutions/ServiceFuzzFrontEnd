@@ -49,6 +49,8 @@ const routes: Routes = [
   { path: 'staff/business/:businessId', component: Staffmanage },
   { path: 'privacy-policy', component: PrivacyPolicy },
   { path: 'terms-of-use', component: TermsOfUse },
+  // After Stripe redirect, route back to settings with a result param
+  { path: 'billing/:result', component: BusinessSettingsComponent },
   { path: '**', redirectTo: '', pathMatch: 'full' } // Wildcard route for 404 cases
 ];
 

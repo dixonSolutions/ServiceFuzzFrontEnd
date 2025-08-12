@@ -34,6 +34,8 @@ export class TopbarComponent implements OnInit {
   // Business and staff management state
   userBusinesses: BusinessRegistrationDto[] = [];
   selectedBusinessForStaff: BusinessRegistrationDto | null = null;
+  private hasAttemptedLoadBusinesses = false;
+  private authWatchIntervalId: any;
 
   // Sidebar appears at 700px maximum (700px and below)
   isSidebarVisible$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 700px)')
@@ -63,19 +65,23 @@ export class TopbarComponent implements OnInit {
       // The restoration is handled automatically by the DataSvrService constructor
     }
     
-    // Load user businesses if user is authenticated
-    if (this.data.currentUser) {
+    // Load user businesses once when authenticated
+    if (this.data.currentUser && !this.hasAttemptedLoadBusinesses) {
+      this.hasAttemptedLoadBusinesses = true;
       this.loadUserBusinesses();
     }
 
-    // Watch for user login/logout changes by checking currentUser periodically
-    // This is a simple approach since we don't have a direct observable for user changes
-    setInterval(() => {
-      if (this.data.currentUser && this.userBusinesses.length === 0) {
+    // Lightweight watcher: attempt a single load when user logs in, then stop
+    this.authWatchIntervalId = setInterval(() => {
+      if (this.data.currentUser && !this.hasAttemptedLoadBusinesses) {
+        this.hasAttemptedLoadBusinesses = true;
         this.loadUserBusinesses();
-      } else if (!this.data.currentUser && this.userBusinesses.length > 0) {
+        clearInterval(this.authWatchIntervalId);
+      } else if (!this.data.currentUser && (this.userBusinesses.length > 0 || this.hasAttemptedLoadBusinesses)) {
+        // Reset state on logout
         this.userBusinesses = [];
         this.selectedBusinessForStaff = null;
+        this.hasAttemptedLoadBusinesses = false;
       }
     }, 1000);
   }

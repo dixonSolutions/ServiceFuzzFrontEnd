@@ -205,8 +205,8 @@ export class WebsiteCreatorComponent implements OnInit {
       this.showWorkspaceSelection = true;
     };
 
-    // Apply immediately and on future changes
-    applyRouting();
+    // Subscribe to route changes; subscription emits current value immediately,
+    // so we don't need to call applyRouting() separately (prevents double execution)
     this.route.paramMap.subscribe(() => applyRouting());
   }
 
@@ -543,6 +543,8 @@ export class WebsiteCreatorComponent implements OnInit {
 
   // Project Management
   async onSave(): Promise<void> {
+    // Guard against concurrent/duplicate saves
+    if (this.isSaving) return;
     if (!this.currentProject) return;
     
     this.isSaving = true;
