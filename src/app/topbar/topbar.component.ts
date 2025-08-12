@@ -11,6 +11,7 @@ import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { MatSidenav } from '@angular/material/sidenav';
 import { ManageBusinessesService } from '../services/manage-businesses.service';
+import { SubscriptionStatus } from '../models/subscription-status';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 
 @Component({
@@ -36,6 +37,11 @@ export class TopbarComponent implements OnInit {
   selectedBusinessForStaff: BusinessRegistrationDto | null = null;
   private hasAttemptedLoadBusinesses = false;
   private authWatchIntervalId: any;
+  private hasAttemptedLoadSubscription = false;
+
+  // Subscription status indicator state
+  subscriptionStatus: SubscriptionStatus | null = null;
+  isLoadingSubscription: boolean = false;
 
   // Sidebar appears at 700px maximum (700px and below)
   isSidebarVisible$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 700px)')
@@ -65,23 +71,22 @@ export class TopbarComponent implements OnInit {
       // The restoration is handled automatically by the DataSvrService constructor
     }
     
-    // Load user businesses once when authenticated
-    if (this.data.currentUser && !this.hasAttemptedLoadBusinesses) {
-      this.hasAttemptedLoadBusinesses = true;
-      this.loadUserBusinesses();
+    // Load subscription status once when authenticated
+    if (this.data.currentUser && !this.hasAttemptedLoadSubscription) {
+      this.hasAttemptedLoadSubscription = true;
+      this.loadSubscriptionStatus();
     }
 
     // Lightweight watcher: attempt a single load when user logs in, then stop
     this.authWatchIntervalId = setInterval(() => {
-      if (this.data.currentUser && !this.hasAttemptedLoadBusinesses) {
-        this.hasAttemptedLoadBusinesses = true;
-        this.loadUserBusinesses();
+      if (this.data.currentUser && !this.hasAttemptedLoadSubscription) {
+        this.hasAttemptedLoadSubscription = true;
+        this.loadSubscriptionStatus();
         clearInterval(this.authWatchIntervalId);
-      } else if (!this.data.currentUser && (this.userBusinesses.length > 0 || this.hasAttemptedLoadBusinesses)) {
+      } else if (!this.data.currentUser && (this.subscriptionStatus || this.hasAttemptedLoadSubscription)) {
         // Reset state on logout
-        this.userBusinesses = [];
-        this.selectedBusinessForStaff = null;
-        this.hasAttemptedLoadBusinesses = false;
+        this.subscriptionStatus = null;
+        this.hasAttemptedLoadSubscription = false;
       }
     }, 1000);
   }
@@ -141,6 +146,9 @@ export class TopbarComponent implements OnInit {
 
   toggleStaffSidebar(): void {
     this.staffSidebarExpanded = !this.staffSidebarExpanded;
+    if (this.staffSidebarExpanded && this.userBusinesses.length === 0) {
+      this.loadUserBusinesses();
+    }
   }
 
   // Navigate to Website Creator default page (no select segment)
@@ -156,8 +164,8 @@ export class TopbarComponent implements OnInit {
   loadUserBusinesses(): void {
     this.manageBusinessesService.getAllBusinessesForUser().subscribe({
       next: (businesses) => {
-        this.userBusinesses = businesses;
-        console.log('Loaded user businesses for staff management:', businesses.length);
+        this.userBusinesses = businesses || [];
+        console.log('Loaded user businesses for staff management:', this.userBusinesses.length);
       },
       error: (error) => {
         console.error('Error loading user businesses:', error);
@@ -180,6 +188,40 @@ export class TopbarComponent implements OnInit {
   // Visit staff app in new tab
   visitStaffApp(): void {
     window.open('https://fuzzstaff.vercel.app', '_blank');
+    this.closeMobileSidebar();
+  }
+
+  private loadSubscriptionStatus(): void {
+    if (!this.data.currentUser?.email) return;
+    this.isLoadingSubscription = true;
+    this.manageBusinessesService.checkSubscriptionStatus(this.data.currentUser.email).subscribe({
+      next: (status) => {
+        this.subscriptionStatus = status;
+        this.isLoadingSubscription = false;
+      },
+      error: () => {
+        this.subscriptionStatus = { isSubscribed: false, status: 'No active subscription found', subscriptionId: null, currentPeriodEnd: null };
+        this.isLoadingSubscription = false;
+      }
+    });
+  }
+
+  // Subscription indicator helpers
+  get isTrialing(): boolean {
+    const s = this.subscriptionStatus?.status?.toLowerCase() || '';
+    return this.subscriptionStatus?.isSubscribed === true && s.includes('trial');
+  }
+  get isActiveSubscribedNoTrial(): boolean {
+    const s = this.subscriptionStatus?.status?.toLowerCase() || '';
+    return this.subscriptionStatus?.isSubscribed === true && s === 'active';
+  }
+  get hasNoSubscription(): boolean {
+    const s = (this.subscriptionStatus?.status || '').toLowerCase();
+    return !this.subscriptionStatus?.isSubscribed || s.includes('no active subscription');
+  }
+
+  navigateToBusinessSettings(): void {
+    this.router.navigate(['/business/settings']);
     this.closeMobileSidebar();
   }
 }

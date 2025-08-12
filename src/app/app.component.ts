@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { DataSvrService } from './services/data-svr.service';
 
 @Component({
   selector: 'app-root',
@@ -8,4 +9,5 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'servicefuzz';
+  constructor(public data: DataSvrService) {}
 }

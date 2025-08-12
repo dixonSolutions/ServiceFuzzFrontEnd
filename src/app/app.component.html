@@ -1,7 +1,15 @@
-<div class="app-container">
+<div class="app-container" *ngIf="!(data.isRestoringSession$ | async); else restoring">
   <app-topbar></app-topbar>
   <main class="main-content">
-   
     <router-outlet></router-outlet>
   </main>
 </div>
+
+<ng-template #restoring>
+  <div class="app-loading-overlay">
+    <div class="spinner-with-logo">
+      <p-progressSpinner styleClass="w-6rem h-6rem" strokeWidth="6"></p-progressSpinner>
+      <img src="/servicefuzz-logo.png" alt="ServiceFuzz" class="spinner-logo" />
+    </div>
+  </div>
+</ng-template>

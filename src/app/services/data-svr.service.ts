@@ -25,6 +25,8 @@ export class DataSvrService {
   private _currentUser = new BehaviorSubject<ServiceFuzzAccount | undefined>(undefined);
   private _jwtToken = new BehaviorSubject<string | undefined>(undefined);
   private _signInToken = new BehaviorSubject<string | undefined>(undefined);
+  private _isRestoringSession = new BehaviorSubject<boolean>(false);
+  public isRestoringSession$ = this._isRestoringSession.asObservable();
   private tokenRefreshTimer: any;
   private readonly REGULAR_TOKEN_KEY = 'sf_auth_token';
   private readonly SIGNIN_TOKEN_COOKIE = 'sf_signin_token';
@@ -1274,23 +1276,31 @@ Make sure to:
     if (storedSignInToken) {
       console.log('Found stored sign-in token in cookie, attempting to restore session');
       this._signInToken.next(storedSignInToken);
+      // Enter app-wide restoring session state until request finishes
+      this._isRestoringSession.next(true);
       
       // Try to authenticate with the sign-in token to get a fresh regular token
       this.authenticateWithSignInToken(storedSignInToken).subscribe({
         next: (response) => {
           console.log('Successfully restored user session from sign-in token cookie');
           this.openSnackBar('Welcome back! Session restored.', 'Close', 3000);
+          this._isRestoringSession.next(false);
         },
         error: (error: any) => {
           console.error('Failed to restore user session from sign-in token:', error);
           // Clear invalid tokens
           this.clearStoredTokens();
+          this._isRestoringSession.next(false);
         }
       });
     } else if (storedRegularToken) {
       // Regular token exists without sign-in token (shouldn't happen in normal flow)
       console.log('Found orphaned regular token, clearing it');
       sessionStorage.removeItem(this.REGULAR_TOKEN_KEY);
+      this._isRestoringSession.next(false);
+    } else {
+      // No tokens present, nothing to restore
+      this._isRestoringSession.next(false);
     }
   }
 

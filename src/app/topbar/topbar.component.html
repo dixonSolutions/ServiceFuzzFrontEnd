@@ -238,6 +238,15 @@
   </div>
  
   <div class="toolbar-right">
+    <!-- Subscription indicator -->
+    <button mat-button *ngIf="data.currentUser && subscriptionStatus" (click)="navigateToBusinessSettings()" matTooltip="Manage subscription">
+      <mat-icon *ngIf="isTrialing" color="accent">hourglass_empty</mat-icon>
+      <mat-icon *ngIf="isActiveSubscribedNoTrial" color="primary">verified</mat-icon>
+      <mat-icon *ngIf="hasNoSubscription" color="warn">warning</mat-icon>
+      <span [class.hide-text]="isSmallScreen$ | async">
+        {{ isTrialing ? 'Trialing' : (isActiveSubscribedNoTrial ? 'Subscribed' : 'Subscribe') }}
+      </span>
+    </button>
     <button mat-icon-button *ngIf="!(isSmallScreen$ | async)" matTooltip="Notifications">
       <mat-icon>notifications</mat-icon>
     </button>

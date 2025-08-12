@@ -197,7 +197,7 @@ export class BusinessSettingsComponent implements OnInit {
   cancelTrialLocally(): void {
     // No backend endpoint; record intent locally and inform user
     this.checkoutService.setLastAction('endTrial');
-    this.messageService.add({ severity: 'info', summary: 'Trial will continue until end date', detail: 'Auto-charge will occur if you do not cancel from your Stripe customer portal.' });
+    this.messageService.add({ severity: 'success', summary: 'Trial will continue until end date', detail: 'Auto-charge will occur if you do not cancel from your Stripe customer portal.' });
   }
 
   unsubscribeLocally(): void {
