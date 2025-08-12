@@ -1,7 +1,6 @@
 import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { DataSvrService } from '../services/data-svr.service';
-import { ServiceFuzzFreeTrialSubscriptions } from '../models/FreeTrialDetails';
 import { ManageBusinessesService } from '../services/manage-businesses.service';
 import { SubscriptionStatus } from '../models/subscription-status';
 import { CheckoutService } from '../services/checkout';
@@ -25,6 +24,20 @@ export class BusinessSettingsComponent implements OnInit {
   // Subscription status properties
   subscriptionStatus: SubscriptionStatus | null = null;
   isLoadingSubscription: boolean = false;
+  // Derived flags for UI states
+  get isTrialing(): boolean {
+    const status = this.subscriptionStatus?.status?.toLowerCase() || '';
+    return this.subscriptionStatus?.isSubscribed === true && status.includes('trial');
+  }
+  get isActiveSubscribedNoTrial(): boolean {
+    const status = this.subscriptionStatus?.status?.toLowerCase() || '';
+    return this.subscriptionStatus?.isSubscribed === true && status === 'active';
+  }
+  get hasNoSubscription(): boolean {
+    if (!this.subscriptionStatus) return false;
+    const status = (this.subscriptionStatus.status || '').toLowerCase();
+    return this.subscriptionStatus.isSubscribed === false || status.includes('no active subscription');
+  }
 
   constructor(
     public data: DataSvrService,
@@ -134,9 +147,7 @@ export class BusinessSettingsComponent implements OnInit {
         this.isLoadingSubscription = false;
         console.log('Subscription status loaded:', status);
         
-        // Show appropriate confetti based on subscription status
-        if (status.isSubscribed && status.status === 'active') {
-        }
+        // No-op visual effects for now
       },
       error: (error: any) => {
         console.error('Error checking subscription status:', error);
@@ -145,7 +156,9 @@ export class BusinessSettingsComponent implements OnInit {
         // Set default status on error
         this.subscriptionStatus = {
           isSubscribed: false,
-          status: 'No active subscription found'
+          status: 'No active subscription found',
+          subscriptionId: null,
+          currentPeriodEnd: null
         };
         
         this.data.openSnackBar('Failed to check subscription status', 'Close', 3000);
@@ -176,7 +189,22 @@ export class BusinessSettingsComponent implements OnInit {
     this.redirectToStripeCheckout(false);
   }
 
-  // Removed trial via checkout entry point
+  startStripeTrial(): void {
+    // New flow: Stripe-managed free trial via checkout
+    this.redirectToStripeCheckout(true);
+  }
+
+  cancelTrialLocally(): void {
+    // No backend endpoint; record intent locally and inform user
+    this.checkoutService.setLastAction('endTrial');
+    this.messageService.add({ severity: 'info', summary: 'Trial will continue until end date', detail: 'Auto-charge will occur if you do not cancel from your Stripe customer portal.' });
+  }
+
+  unsubscribeLocally(): void {
+    // Placeholder until API exists
+    this.checkoutService.setLastAction('cancel');
+    this.messageService.add({ severity: 'warn', summary: 'Unsubscribe not yet available', detail: 'Please use the Stripe customer portal to manage your subscription.' });
+  }
 
   showTrialFAQ(): void {
     // TODO: Implement FAQ display

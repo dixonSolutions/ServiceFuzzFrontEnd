@@ -43,6 +43,13 @@ export class ManageBusinessesService {
   
   // Instance array to store business DTOs
   private businessesInstance: BusinessRegistrationDto[] = [];
+  // Prevent fetching businesses in business-settings view per new requirement
+  public suppressBusinessFetches = false;
+
+  // Cache for subscription status per user email
+  private subscriptionStatusCache: Map<string, SubscriptionStatus> = new Map();
+  private subscriptionStatusCacheTimestamp: Map<string, number> = new Map();
+  private readonly SUBSCRIPTION_CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
   
   // Cache for Stripe account details
   private stripeAccountCache: Map<string, StripeAccountResponse> = new Map();
@@ -59,6 +66,11 @@ export class ManageBusinessesService {
    * @returns Observable of BusinessRegistrationDto array
    */
   getAllBusinessesForUser(): Observable<BusinessRegistrationDto[]> {
+    if (this.suppressBusinessFetches) {
+      // Return empty list without calling API to avoid excessive requests in settings
+      return of([]);
+    }
+
     const userId = this.dataSvr.currentUser?.userID;
     
     if (!userId) {
@@ -226,7 +238,12 @@ export class ManageBusinessesService {
    * @param userEmail - The email of the user to check subscription for
    * @returns Observable of SubscriptionStatus
    */
-  checkSubscriptionStatus(userEmail: string): Observable<SubscriptionStatus> {
+  checkSubscriptionStatus(userEmail: string, forceRefresh: boolean = false): Observable<SubscriptionStatus> {
+    // Serve from cache when available and not forced
+    if (!forceRefresh && this.isSubscriptionStatusCached(userEmail)) {
+      const cached = this.subscriptionStatusCache.get(userEmail)!;
+      return of(cached);
+    }
     const jwtToken = this.dataSvr.jwtToken;
     if (!jwtToken) {
       throw new Error('No JWT token available. User may not be authenticated.');
@@ -246,7 +263,25 @@ export class ManageBusinessesService {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwtToken}`
       }
-    });
+    }).pipe(
+      tap((status) => {
+        this.subscriptionStatusCache.set(userEmail, status);
+        this.subscriptionStatusCacheTimestamp.set(userEmail, Date.now());
+      })
+    );
+  }
+
+  private isSubscriptionStatusCached(userEmail: string): boolean {
+    const cached = this.subscriptionStatusCache.get(userEmail);
+    const ts = this.subscriptionStatusCacheTimestamp.get(userEmail);
+    if (!cached || !ts) return false;
+    const expired = Date.now() - ts > this.SUBSCRIPTION_CACHE_TTL_MS;
+    if (expired) {
+      this.subscriptionStatusCache.delete(userEmail);
+      this.subscriptionStatusCacheTimestamp.delete(userEmail);
+      return false;
+    }
+    return true;
   }
 
     /**

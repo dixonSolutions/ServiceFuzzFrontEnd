@@ -15,244 +15,52 @@
 
   <!-- Subscription Status -->
   <div class="subscription-section" *ngIf="data.currentUser">
-    <mat-card class="subscription-card">
-      <mat-card-header>
-        <div mat-card-avatar>
-          <mat-icon [class.active-subscription]="subscriptionStatus?.isSubscribed">
-            {{ subscriptionStatus?.isSubscribed ? 'star' : 'star_border' }}
-          </mat-icon>
-        </div>
-        <mat-card-title>Subscription Status</mat-card-title>
-        <mat-card-subtitle>
-          {{ subscriptionStatus?.isSubscribed ? 'Premium Member' : 'Free Account' }}
-        </mat-card-subtitle>
-      </mat-card-header>
-
-      <mat-card-content>
+    <p-card class="subscription-card" [header]="'Subscription'" [subheader]="isTrialing ? 'Trialing' : (isActiveSubscribedNoTrial ? 'Active' : (hasNoSubscription ? 'Not Subscribed' : ''))">
         <div class="subscription-info" *ngIf="subscriptionStatus && !isLoadingSubscription">
-          <div class="info-row">
-            <mat-icon>{{ subscriptionStatus.isSubscribed ? 'check_circle' : 'cancel' }}</mat-icon>
-            <span>Status: {{ subscriptionStatus.status }}</span>
-          </div>
-          <div class="info-row" *ngIf="subscriptionStatus.subscriptionId">
-            <mat-icon>receipt</mat-icon>
-            <span>Subscription ID: {{ subscriptionStatus.subscriptionId }}</span>
-          </div>
-          <div class="info-row" *ngIf="subscriptionStatus.currentPeriodEnd">
-            <mat-icon>schedule</mat-icon>
-            <span>Current Period Ends: {{ subscriptionStatus.currentPeriodEnd | date:'mediumDate' }}</span>
-          </div>
-          
-          <!-- Premium Benefits -->
-          <div class="premium-benefits" *ngIf="subscriptionStatus.isSubscribed">
-            <mat-divider></mat-divider>
-            <h4>Premium Benefits Active:</h4>
-            <div class="benefits-list">
-              <div class="benefit-item">
-                <mat-icon>check</mat-icon>
-                <span>Unlimited businesses</span>
-              </div>
-              <div class="benefit-item">
-                <mat-icon>check</mat-icon>
-                <span>Advanced analytics</span>
-              </div>
-              <div class="benefit-item">
-                <mat-icon>check</mat-icon>
-                <span>Priority support</span>
-              </div>
-              <div class="benefit-item">
-                <mat-icon>check</mat-icon>
-                <span>Custom integrations</span>
-              </div>
+          <!-- State 1: Subscribed + trialing -->
+          <ng-container *ngIf="isTrialing">
+            <div class="info-row">
+              <span>You are on a free trial. If you don't cancel, you will be charged automatically at the end of the trial.</span>
             </div>
-          </div>
-          
-          <!-- Options when not subscribed -->
-          <div class="upgrade-prompt" *ngIf="!subscriptionStatus.isSubscribed">
-            <mat-divider></mat-divider>
-            <h4>Subscribe to ServiceFuzz</h4>
-            <p>Get access to all features and priority support</p>
+            <div class="info-row" *ngIf="subscriptionStatus.currentPeriodEnd">
+              <span>Trial ends: {{ subscriptionStatus.currentPeriodEnd | date:'mediumDate' }}</span>
+            </div>
             <div class="subscribe-options">
-              <button mat-raised-button color="accent" (click)="upgradeToPremium()" [disabled]="isSubscribing">
-                <mat-icon>star</mat-icon>
-                {{ isSubscribing ? 'Redirecting...' : 'Subscribe Now' }}
-              </button>
+              <button pButton type="button" class="p-button-outlined p-button-danger" label="Cancel Trial" (click)="cancelTrialLocally()"></button>
             </div>
-          </div>
+          </ng-container>
+
+          <!-- State 2: Subscribed, no trial -->
+          <ng-container *ngIf="isActiveSubscribedNoTrial">
+            <div class="info-row">
+              <span>You are subscribed.</span>
+            </div>
+            <div class="info-row" *ngIf="subscriptionStatus.currentPeriodEnd">
+              <span>Renews on: {{ subscriptionStatus.currentPeriodEnd | date:'mediumDate' }}</span>
+            </div>
+            <div class="subscribe-options">
+              <button pButton type="button" class="p-button-outlined p-button-danger" label="Unsubscribe" (click)="unsubscribeLocally()"></button>
+            </div>
+          </ng-container>
+
+          <!-- State 3: No subscription or trial -->
+          <ng-container *ngIf="hasNoSubscription">
+            <div class="upgrade-prompt">
+              <h4>Choose how to subscribe</h4>
+              <div class="subscribe-options">
+                <button pButton type="button" [label]="isSubscribing ? 'Redirecting...' : 'Start 30-day free trial'" (click)="startStripeTrial()" [disabled]="isSubscribing"></button>
+                <button pButton type="button" class="p-button-warning" [label]="isSubscribing ? 'Redirecting...' : 'Subscribe Now'" (click)="upgradeToPremium()" [disabled]="isSubscribing"></button>
+              </div>
+            </div>
+          </ng-container>
         </div>
-        
+
         <!-- Loading State -->
         <div class="loading-subscription" *ngIf="isLoadingSubscription">
-          <mat-spinner diameter="40"></mat-spinner>
+          <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="6"></p-progressSpinner>
           <p>Checking subscription status...</p>
         </div>
-      </mat-card-content>
-    </mat-card>
+    </p-card>
   </div>
 
-  <!-- Free Trial Information -->
-  <div class="trial-section" *ngIf="data.currentUser">
-    <mat-card class="trial-card">
-      <mat-card-header>
-        <div mat-card-avatar>
-          <mat-icon [class.active-trial]="data.freeTrialDetails?.isActive">
-            {{ data.freeTrialDetails?.isActive ? 'verified' : 'hourglass_empty' }}
-          </mat-icon>
-        </div>
-        <mat-card-title>Free Trial Status</mat-card-title>
-        <mat-card-subtitle>
-          {{ data.freeTrialDetails?.isActive ? 'Active Trial' : 'Trial Status' }}
-        </mat-card-subtitle>
-      </mat-card-header>
-
-      <mat-card-content>
-        <div class="trial-info" *ngIf="data.freeTrialDetails">
-          <div class="info-row">
-            <mat-icon>event_available</mat-icon>
-            <span>Start Date: {{ data.freeTrialDetails.startDate | date:'mediumDate' }}</span>
-          </div>
-          <div class="info-row">
-            <mat-icon>event</mat-icon>
-            <span>End Date: {{ data.freeTrialDetails.endDate | date:'mediumDate' }}</span>
-          </div>
-          <div class="info-row">
-            <mat-icon>timer</mat-icon>
-            <span>Days Remaining: {{ data.freeTrialDetails.daysRemaining }}</span>
-          </div>
-          <div class="info-row">
-            <mat-icon>check_circle</mat-icon>
-            <span>Trial Status: {{ data.freeTrialDetails.isActive ? 'Active' : 'Expired' }}</span>
-          </div>
-        </div>
-
-        <div class="no-trial-message">
-          <h2>Subscription</h2>
-          <div class="payment-options">
-            <mat-divider></mat-divider>
-            <div class="subscribe-options">
-              <button mat-raised-button color="accent" class="fancy-subscribe-button" (click)="redirectToStripeCheckout(false)" [disabled]="isSubscribing">
-                <mat-icon>shopping_cart</mat-icon>
-                {{ isSubscribing ? 'Redirecting...' : 'Subscribe Now' }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Active Trial Actions -->
-        <div class="trial-actions" *ngIf="data.freeTrialDetails">
-          <mat-divider></mat-divider>
-          <div class="action-buttons">
-            <button mat-raised-button color="accent" class="upgrade-button" (click)="upgradeToPremium()" [disabled]="isSubscribing">
-              <mat-icon>star</mat-icon>
-              {{ data.freeTrialDetails.isActive ? 'Upgrade to Premium' : 'Subscribe Now' }}
-            </button>
-            <button mat-stroked-button (click)="showTrialFAQ()">
-              <mat-icon>help</mat-icon>
-              Trial FAQ
-            </button>
-          </div>
-          <p class="upgrade-note" *ngIf="data.freeTrialDetails.isActive">
-            <mat-icon>info</mat-icon>
-            Upgrade anytime to continue seamlessly when your trial ends
-          </p>
-        </div>
-
-        <!-- Free Trial Form removed -->
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Business Package Card -->
-          <mat-card class="business-package-card">
-            <mat-card-header class="package-header">
-              <div mat-card-avatar class="package-avatar">
-                <mat-icon>business</mat-icon>
-              </div>
-              <mat-card-title class="package-title">ServiceFuzz Complete</mat-card-title>
-              <mat-card-subtitle class="package-subtitle">All-in-One Service Business Platform</mat-card-subtitle>
-            </mat-card-header>
-          
-            <mat-card-content class="package-content">
-              <div class="pricing-section">
-                <div class="price-display">
-                  <span class="currency">$</span>
-                  <span class="price">49.99</span>
-                  <span class="period">/month</span>
-                </div>
-                <div class="price-note">Complete platform • 99.9% uptime guarantee</div>
-              </div>
-          
-              <mat-divider class="benefits-divider"></mat-divider>
-          
-              <div class="benefits-section">
-                <h3 class="benefits-title">Complete Business Solution:</h3>
-                <div class="benefits-grid">
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">dashboard</mat-icon>
-                    <span class="benefit-text">Business Management Portal</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">web</mat-icon>
-                    <span class="benefit-text">Professional Website Builder</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">event</mat-icon>
-                    <span class="benefit-text">Smart Booking & Scheduling System</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">people</mat-icon>
-                    <span class="benefit-text">Staff Management Suite</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">payment</mat-icon>
-                    <span class="benefit-text">Integrated Payment Processing</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">analytics</mat-icon>
-                    <span class="benefit-text">Comprehensive Analytics & Reports</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">sms</mat-icon>
-                    <span class="benefit-text">Customer Engagement Tools</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">mobile_friendly</mat-icon>
-                    <span class="benefit-text">Mobile-First Design</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">location_city</mat-icon>
-                    <span class="benefit-text">Multiple Location Management</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">inventory</mat-icon>
-                    <span class="benefit-text">Inventory & Cost Tracking</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">integration_instructions</mat-icon>
-                    <span class="benefit-text">CRM & Accounting Integration</span>
-                  </div>
-                  <div class="benefit-item">
-                    <mat-icon class="benefit-icon">security</mat-icon>
-                    <span class="benefit-text">Enterprise-Grade Security</span>
-                  </div>
-                </div>
-              </div>
-          
-              <div class="additional-features">
-                <h4>Customer Features:</h4>
-                <div class="feature-chips">
-                  <mat-chip-list>
-                    <mat-chip>24/7 Online Booking</mat-chip>
-                    <mat-chip>Mobile App Access</mat-chip>
-                    <mat-chip>Automated Reminders</mat-chip>
-                    <mat-chip>Loyalty Programs</mat-chip>
-                  </mat-chip-list>
-                </div>
-              </div>
-          
-              <div class="guarantee-section">
-                <mat-icon class="guarantee-icon">verified_user</mat-icon>
-                <span class="guarantee-text">GDPR Compliant • Regular Security Audits</span>
-              </div>
-            </mat-card-content>
-          </mat-card>
-  </div>
+  <!-- Legacy free trial and marketing content removed per new subscription UX -->
