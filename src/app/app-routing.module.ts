@@ -17,6 +17,7 @@ import { FormBuilderComponent } from './form-builder/form-builder';
 import { PrivacyPolicy } from './privacy-policy/privacy-policy';
 import { TermsOfUse } from './terms-of-use/terms-of-use';
 import { Staffmanage } from './staffmanage/staffmanage';
+import { About } from './about/about';
 
 
 const routes: Routes = [
@@ -49,6 +50,7 @@ const routes: Routes = [
   { path: 'staff/business/:businessId', component: Staffmanage },
   { path: 'privacy-policy', component: PrivacyPolicy },
   { path: 'terms-of-use', component: TermsOfUse },
+  { path: 'about', component: About },
   // After Stripe redirect, route back to settings with a result param
   { path: 'billing/:result', component: BusinessSettingsComponent },
   { path: '**', redirectTo: '', pathMatch: 'full' } // Wildcard route for 404 cases

@@ -3,50 +3,47 @@
   <section class="hero-section">
     <div class="container">
               <div class="hero-content">
+          
           <h1 class="hero-headline">
-            <p class="organgeColour"><span class="erp-highlight">Revolutionize Your Service Business's ERP system</span></p>
+            <span class="organgeColour erp-highlight">ServiceFuzz — All‑in‑One ERP system for Service Businesses</span>
           </h1>
+          <p class="hero-intro">
+            Run your entire service business in one place: online bookings, website builder, invoicing, payments, inventory, and staff scheduling. Built for growing service companies that need reliable operations, better customer experiences, and SEO‑friendly websites.
+          </p>
           
           <!-- Featured Services - Eye-catching -->
           <div class="hero-features">
             <div class="feature-highlight" 
-                 (mouseenter)="showFeatureDetails('website')"
-                 (mouseleave)="hideFeatureDetails()"
                  (click)="toggleFeatureDetails('website')">
               <i class="pi pi-globe"></i>
               <span>✨Website Builder</span>
             </div>
             <div class="feature-highlight"
-                 (mouseenter)="showFeatureDetails('booking')"
-                 (mouseleave)="hideFeatureDetails()"
+                
                  (click)="toggleFeatureDetails('booking')">
               <i class="pi pi-calendar"></i>
               <span>✨Booking System</span>
             </div>
             <div class="feature-highlight"
-                 (mouseenter)="showFeatureDetails('inventory')"
-                 (mouseleave)="hideFeatureDetails()"
+                 
                  (click)="toggleFeatureDetails('inventory')">
               <i class="pi pi-box"></i>
               <span>✨Inventory Management</span>
             </div>
             <div class="feature-highlight"
-                 (mouseenter)="showFeatureDetails('staff')"
-                 (mouseleave)="hideFeatureDetails()"
+                
                  (click)="toggleFeatureDetails('staff')">
               <i class="pi pi-users"></i>
               <span>✨Staff Management</span>
             </div>
             <div class="feature-highlight"
-                 (mouseenter)="showFeatureDetails('payment')"
-                 (mouseleave)="hideFeatureDetails()"
+                 
                  (click)="toggleFeatureDetails('payment')">
               <i class="pi pi-credit-card"></i>
               <span>✨Payment Processing</span>
             </div>
             <div class="feature-highlight"
-                 (mouseenter)="showFeatureDetails('mobile')"
-                 (mouseleave)="hideFeatureDetails()"
+                 
                  (click)="toggleFeatureDetails('mobile')">
               <i class="pi pi-mobile"></i>
               <span>✨Mobile App</span>
@@ -57,7 +54,7 @@
     <iframe width="560" height="315" src="https://www.youtube.com/watch?v=dQw4w9WgXcQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 </p-dialog>
           <p class="hero-subtitle">
-            ServiceFuzz automates your service business so you can focus on what matters most: serving customers.
+            ServiceFuzz automates scheduling, payments, and website updates so you can focus on delivering exceptional service.
           </p>
         
         <!-- Single Clear CTA -->
@@ -76,6 +73,19 @@
           <span class="trust-text">Trusted by 10,000+ service businesses</span>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- WHAT IS SERVICEFUZZ -->
+  <section class="about-section" id="about-servicefuzz">
+    <div class="container">
+      <h2>What is ServiceFuzz?</h2>
+      <p>
+        ServiceFuzz is modern <strong>service business software</strong> that combines an <strong>ERP</strong> with an easy website builder and an integrated <strong>online booking system</strong>. From first click on your SEO‑optimized site to completed job and payment, ServiceFuzz keeps everything organized and connected.
+      </p>
+      <p>
+        Whether you run a local cleaning company, a home repairs team, a fitness studio, or any appointment‑based business, ServiceFuzz helps you win more customers, reduce no‑shows, and get paid faster.
+      </p>
     </div>
   </section>
 
@@ -106,6 +116,73 @@
     </div>
   </section>
 
+  <!-- DETAILED FEATURES (SEO‑friendly) -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <h2>Key Features That Grow Revenue and Save Time</h2>
+      <div class="features-grid">
+        <div class="feature-item">
+          <i class="pi pi-globe"></i>
+          <h3>Website Builder & SEO</h3>
+          <p>Create a fast, mobile‑friendly website with clean URLs and structured content that helps you rank for local service keywords.</p>
+        </div>
+        <div class="feature-item">
+          <i class="pi pi-calendar"></i>
+          <h3>Online Booking System</h3>
+          <p>Real‑time availability, confirmation emails, and self‑serve rescheduling reduce back‑and‑forth and no‑shows.</p>
+        </div>
+        <div class="feature-item">
+          <i class="pi pi-credit-card"></i>
+          <h3>Payments & Checkout</h3>
+          <p>Accept secure online payments and deposits at booking to improve cash flow and reduce cancellations.</p>
+        </div>
+        <div class="feature-item">
+          <i class="pi pi-box"></i>
+          <h3>Inventory & Services</h3>
+          <p>Track services and items so your team always knows what’s included and what’s in stock.</p>
+        </div>
+        <div class="feature-item">
+          <i class="pi pi-users"></i>
+          <h3>Staff Management</h3>
+          <p>Assign work, manage roles, and keep schedules aligned across the team.</p>
+        </div>
+        <div class="feature-item">
+          <i class="pi pi-chart-line"></i>
+          <h3>Business Analytics</h3>
+          <p>Understand bookings, revenue, and utilization to make data‑driven decisions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INDUSTRIES -->
+  <section class="industries-section" id="industries">
+    <div class="container">
+      <h2>Built for Service Businesses</h2>
+      <p>
+        ServiceFuzz supports a wide range of service categories, including home services, health and wellness, and professional services. Popular uses:
+      </p>
+      <ul class="industries-list">
+        <li>Cleaning companies, home repair, landscaping, pest control</li>
+        <li>Gyms, fitness studios, personal trainers, wellness providers</li>
+        <li>Consultants, tutors, creative studios, event services</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-it-works-section" id="how-it-works">
+    <div class="container">
+      <h2>How ServiceFuzz Works</h2>
+      <ol class="how-it-works-steps">
+        <li>Launch a beautiful website with your services and pricing.</li>
+        <li>Let customers book and pay online 24/7.</li>
+        <li>Manage schedules, staff, and inventory from one dashboard.</li>
+        <li>Track performance with analytics and grow with confidence.</li>
+      </ol>
+    </div>
+  </section>
+
   <!-- BUSINESSES WE SUPPORT SECTION -->
   
 
@@ -120,6 +197,29 @@
           <strong>Sarah Johnson</strong>
           <span>Elite Fitness Studio</span>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ (SEO) -->
+  <section class="faq-section" id="faq">
+    <div class="container">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <h3>What is ServiceFuzz used for?</h3>
+        <p>ServiceFuzz is an all‑in‑one platform for running a service business—website, bookings, payments, inventory, staff, and analytics.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Does ServiceFuzz include a website builder?</h3>
+        <p>Yes. You can create a modern, SEO‑ready website and connect online booking and checkout in minutes.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Can customers book and pay online?</h3>
+        <p>Yes. Customers can see availability, book services, and pay securely online to reserve their spot.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Is there a free trial?</h3>
+        <p>Yes. Get started with a free trial—no credit card required.</p>
       </div>
     </div>
   </section>
@@ -238,7 +338,7 @@
         <div class="footer-column">
           <h4>Company</h4>
           <ul>
-            <li><a href="#about">About</a></li>
+            <li><a routerLink="/about">About</a></li>
             <li><a href="#contact">Contact</a></li>
             <li><a routerLink="/privacy-policy">Privacy Policy</a></li>
             <li><a routerLink="/terms-of-use">Terms of Use</a></li>
@@ -252,4 +352,30 @@
        </div>
     </div>
   </div>
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "ServiceFuzz",
+    "url": "https://servicefuzz.com",
+    "logo": "/servicefuzz-logo.png"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ServiceFuzz",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "description": "All-in-one ERP and field service management software with website builder, online booking, payments, inventory, staff management, and analytics.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "category": "FreeTrial"
+    }
+  }
+  </script>
 </footer>

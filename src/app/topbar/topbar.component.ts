@@ -45,7 +45,7 @@ export class TopbarComponent implements OnInit {
   // Responsive nav collapse settings
   private readonly baseCollapseWidth = 1200;
   private readonly collapseStepPx = 100;
-  private readonly collapsibleOrder: string[] = ['staff', 'analytics', 'business', 'home'];
+  private readonly collapsibleOrder: string[] = ['staff', 'analytics', 'business', 'home', 'about'];
   private itemsToHide = new Set<string>();
 
   // Sidebar appears at 700px maximum (700px and below)
@@ -240,13 +240,13 @@ export class TopbarComponent implements OnInit {
     this.itemsToHide = new Set(this.collapsibleOrder.slice(0, hiddenCount));
   }
 
-  isItemHidden(key: 'home' | 'business' | 'analytics' | 'staff'): boolean {
+  isItemHidden(key: 'home' | 'business' | 'analytics' | 'staff' | 'about'): boolean {
     return this.itemsToHide.has(key);
   }
 
-  get overflowItems(): Array<'home' | 'business' | 'analytics' | 'staff'> {
+  get overflowItems(): Array<'home' | 'business' | 'analytics' | 'staff' | 'about'> {
     // Preserve order based on collapsibleOrder
     return this.collapsibleOrder
-      .filter(key => this.itemsToHide.has(key)) as Array<'home' | 'business' | 'analytics' | 'staff'>;
+      .filter(key => this.itemsToHide.has(key)) as Array<'home' | 'business' | 'analytics' | 'staff' | 'about'>;
   }
 }

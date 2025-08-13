@@ -18,6 +18,10 @@
         <mat-icon matListIcon>home</mat-icon>
         <span matLine>Home</span>
       </a>
+      <a mat-list-item routerLink="/about" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/about')">
+        <mat-icon matListIcon>info</mat-icon>
+        <span matLine>About</span>
+      </a>
       
     <a mat-list-item (click)="toggleBusinessSidebar()" class="business-nav-item">
         <mat-icon matListIcon>business</mat-icon>
@@ -86,8 +90,8 @@
       <mat-icon>menu</mat-icon>
     </button>
     <a class="app-title mobile-title">✨ServiceFuzz✨</a>
-    <img src="https://servicefuzz.vercel.app/servicefuzz-logo.png" 
-         alt="servicefuzzlogo" 
+    <img src="/servicefuzz-logo.png" 
+         alt="ServiceFuzz logo" 
          class="mobile-logo">
   </div>
   
@@ -110,8 +114,8 @@
     </button>
 
     <a class="app-title">✨ServiceFuzz✨</a>
-    <img src="https://lh3.googleusercontent.com/a/ACg8ocLaJxexuHa88Q1viRsHMpdLIEIUjbiNlBs-asm8Pk02NoVN0Sk=s96-c-rg-br100" 
-         alt="servicefuzzlogo">
+    <img src="/servicefuzz-logo.png" 
+         alt="ServiceFuzz logo">
   </div>
 
   <div class="toolbar-center">
@@ -177,6 +181,10 @@
       <mat-icon>analytics</mat-icon>
       <span [class.hide-text]="isSmallScreen$ | async">Analytics</span>
     </button>
+    <button mat-button routerLink="/about" [class.active]="isRouteActive('/about')" *ngIf="!isItemHidden('about')">
+      <mat-icon>info</mat-icon>
+      <span [class.hide-text]="isSmallScreen$ | async">About</span>
+    </button>
     <!-- Overflow menu trigger moved to left toolbar -->
     <mat-menu #moreMenu="matMenu" class="more-menu">
       <button mat-menu-item [matMenuTriggerFor]="overflowStaffMenu" *ngIf="overflowItems.includes('staff')">
@@ -194,6 +202,10 @@
       <button mat-menu-item routerLink="/analytics" *ngIf="overflowItems.includes('analytics')">
         <mat-icon>analytics</mat-icon>
         <span>Analytics</span>
+      </button>
+      <button mat-menu-item routerLink="/about" *ngIf="overflowItems.includes('about')">
+        <mat-icon>info</mat-icon>
+        <span>About</span>
       </button>
     </mat-menu>
     <mat-menu #overflowStaffMenu="matMenu" class="staff-overflow-menu">

@@ -1,0 +1,159 @@
+<div class="about-container">
+  <section class="about-hero">
+    <div class="container">
+      <div class="brand">
+        <img src="/servicefuzz-logo.png" alt="ServiceFuzz logo" class="brand-logo" width="120" height="120" />
+        <h1>About ServiceFuzz</h1>
+        <p class="subtitle">Legitimate, reliable, and purpose‑built software for modern service businesses.</p>
+        <div class="about-tags">
+          <p-tag severity="info" value="ERP for Services"></p-tag>
+          <p-tag severity="info" value="Online Booking"></p-tag>
+          <p-tag severity="info" value="Payments"></p-tag>
+          <p-tag severity="info" value="Website Builder"></p-tag>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mission-section">
+    <div class="container">
+      <div class="text-card">
+        <div class="card-header">
+          <i class="pi pi-bullseye"></i>
+          <h2>Our Mission</h2>
+        </div>
+        <p>
+          We help service businesses thrive by unifying operations into one platform—website, bookings, payments, inventory, staff, and analytics. ServiceFuzz is crafted to be secure, scalable, and simple so you can focus on serving customers and growing your brand.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="values-section">
+    <div class="container">
+      <div class="text-card">
+        <div class="card-header">
+          <i class="pi pi-star"></i>
+          <h2>Our Values</h2>
+        </div>
+        <div class="values-grid">
+          <div class="value-card subtle">
+            <div class="value-icon"><i class="pi pi-shield"></i></div>
+            <h3>Trust & Reliability</h3>
+            <p>We build dependable software so your business can run smoothly, every day.</p>
+          </div>
+          <div class="value-card subtle">
+            <div class="value-icon"><i class="pi pi-cog"></i></div>
+            <h3>Operational Excellence</h3>
+            <p>Automations and smart defaults reduce busywork and prevent errors.</p>
+          </div>
+          <div class="value-card subtle">
+            <div class="value-icon"><i class="pi pi-heart"></i></div>
+            <h3>Customer Obsession</h3>
+            <p>Features are guided by real service business needs and feedback.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="logo-story-section">
+    <div class="container">
+      <div class="text-card">
+        <div class="card-header">
+          <i class="pi pi-image"></i>
+          <h2>What Our Logo Means</h2>
+        </div>
+        <div class="logo-grid">
+          <div class="logo-visual">
+            <img src="/servicefuzz-logo.png" alt="ServiceFuzz logo mark" class="logo-large" width="200" height="200" />
+          </div>
+          <div class="logo-meaning">
+            <p>
+              The ServiceFuzz mark blends a spark and a network node. The spark symbolizes momentum and growth—how automation accelerates your operations. The node pattern represents connected workflows—website, bookings, staff, inventory, and payments working together. Together they reflect clarity, speed, and connection.
+            </p>
+            <p-divider></p-divider>
+            <div class="logo-bullets">
+              <p-chip label="Momentum & Growth" icon="pi pi-bolt"></p-chip>
+              <p-chip label="Connected Workflows" icon="pi pi-sitemap"></p-chip>
+              <p-chip label="Modern & Trustworthy" icon="pi pi-check-circle"></p-chip>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="team-section">
+    <div class="container">
+      <div class="text-card">
+        <div class="card-header">
+          <i class="pi pi-briefcase"></i>
+          <h2>Built for Service Businesses</h2>
+        </div>
+        <p>From local home services to fitness studios and professional consultants, ServiceFuzz is designed to power real‑world operations.</p>
+        <div class="highlights">
+          <div class="highlight"><i class="pi pi-calendar"></i><span>24/7 Online Booking</span></div>
+          <div class="highlight"><i class="pi pi-credit-card"></i><span>Secure Payments</span></div>
+          <div class="highlight"><i class="pi pi-globe"></i><span>SEO‑Ready Website</span></div>
+          <div class="highlight"><i class="pi pi-users"></i><span>Staff Scheduling</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="container">
+      <div class="text-card cta-card">
+        <h2>Ready to get started?</h2>
+        <p>Launch your website, take bookings, and get paid—today.</p>
+        <a routerLink="/" class="cta-button p-button p-button-rounded p-button-info">
+          <span class="pi pi-rocket"></span>&nbsp;Start Free Trial
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="story-section">
+    <div class="container">
+      <div class="story-grid">
+        <div class="story-left">
+          <h2>Our Story</h2>
+          <p>
+            ServiceFuzz began with a simple observation: service teams spend too much time on the admin work that customers never see. We wanted to give those hours back. The first prototype was built for a neighborhood fitness studio—and the impact was immediate.
+          </p>
+          <p>
+            Today, were focused on delivering quiet reliability: the website that loads fast, the booking that just works, the payment that clears instantly, and the schedule that stays in sync. The work is invisible so your brand can shine.
+          </p>
+          <div class="founder">
+            <div class="avatar p-avatar p-component p-avatar-circle">
+              <span class="p-avatar-text">{{ founderInitials }}</span>
+            </div>
+            <div>
+              <div class="founder-name">{{ founder.name }}</div>
+              <div class="founder-title">{{ founder.title }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="story-right">
+          <p-timeline [value]="journeyEvents" align="alternate" styleClass="customized-timeline">
+            <ng-template pTemplate="marker" let-event>
+              <span class="custom-marker">
+                <i [class]="event.icon"></i>
+              </span>
+            </ng-template>
+            <ng-template pTemplate="content" let-event>
+              <div class="timeline-card">
+                <div class="event-top">
+                  <span class="event-status">{{ event.status }}</span>
+                  <p-tag value="{{ event.date }}" severity="info"></p-tag>
+                </div>
+                <p>{{ event.detail }}</p>
+              </div>
+            </ng-template>
+          </p-timeline>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
