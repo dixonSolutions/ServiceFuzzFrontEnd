@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, HostListener } from '@angular/core';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {MatToolbarModule} from '@angular/material/toolbar';
@@ -30,7 +30,6 @@ export class TopbarComponent implements OnInit {
   mobileDrawerOpened = false;
   businessSidebarExpanded = false;
   manageBusinessesSidebarExpanded = false;
-  staffSidebarExpanded = false;
 
   // Business and staff management state
   userBusinesses: BusinessRegistrationDto[] = [];
@@ -42,6 +41,12 @@ export class TopbarComponent implements OnInit {
   // Subscription status indicator state
   subscriptionStatus: SubscriptionStatus | null = null;
   isLoadingSubscription: boolean = false;
+
+  // Responsive nav collapse settings
+  private readonly baseCollapseWidth = 1200;
+  private readonly collapseStepPx = 100;
+  private readonly collapsibleOrder: string[] = ['staff', 'analytics', 'business', 'home'];
+  private itemsToHide = new Set<string>();
 
   // Sidebar appears at 700px maximum (700px and below)
   isSidebarVisible$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 700px)')
@@ -89,6 +94,9 @@ export class TopbarComponent implements OnInit {
         this.hasAttemptedLoadSubscription = false;
       }
     }, 1000);
+
+    // Initialize responsive nav state
+    this.updateResponsiveNav(window.innerWidth || 0);
   }
 
   isRouteActive(route: string): boolean {
@@ -133,7 +141,6 @@ export class TopbarComponent implements OnInit {
     this.mobileDrawerOpened = false;
     this.businessSidebarExpanded = false;
     this.manageBusinessesSidebarExpanded = false;
-    this.staffSidebarExpanded = false;
   }
 
   toggleBusinessSidebar(): void {
@@ -144,12 +151,7 @@ export class TopbarComponent implements OnInit {
     this.manageBusinessesSidebarExpanded = !this.manageBusinessesSidebarExpanded;
   }
 
-  toggleStaffSidebar(): void {
-    this.staffSidebarExpanded = !this.staffSidebarExpanded;
-    if (this.staffSidebarExpanded && this.userBusinesses.length === 0) {
-      this.loadUserBusinesses();
-    }
-  }
+  // removed staff sidebar
 
   // Navigate to Website Creator default page (no select segment)
   navigateToWebsiteCreator(): void {
@@ -223,5 +225,28 @@ export class TopbarComponent implements OnInit {
   navigateToBusinessSettings(): void {
     this.router.navigate(['/business/settings']);
     this.closeMobileSidebar();
+  }
+
+  // Responsive nav: compute which toolbar items should be hidden (moved to sidebar) based on width
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any): void {
+    const width = event?.target?.innerWidth || window.innerWidth || 0;
+    this.updateResponsiveNav(width);
+  }
+
+  private updateResponsiveNav(width: number): void {
+    const decrease = Math.max(0, this.baseCollapseWidth - width);
+    const hiddenCount = Math.min(this.collapsibleOrder.length, Math.floor(decrease / this.collapseStepPx));
+    this.itemsToHide = new Set(this.collapsibleOrder.slice(0, hiddenCount));
+  }
+
+  isItemHidden(key: 'home' | 'business' | 'analytics' | 'staff'): boolean {
+    return this.itemsToHide.has(key);
+  }
+
+  get overflowItems(): Array<'home' | 'business' | 'analytics' | 'staff'> {
+    // Preserve order based on collapsibleOrder
+    return this.collapsibleOrder
+      .filter(key => this.itemsToHide.has(key)) as Array<'home' | 'business' | 'analytics' | 'staff'>;
   }
 }

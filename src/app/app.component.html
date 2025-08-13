@@ -1,4 +1,5 @@
 <div class="app-container" *ngIf="!(data.isRestoringSession$ | async); else restoring">
+  <p-toast></p-toast>
   <app-topbar></app-topbar>
   <main class="main-content">
     <router-outlet></router-outlet>
@@ -13,3 +14,21 @@
     </div>
   </div>
 </ng-template>
+
+<!-- Lightweight, non-duplicative subscription prompt dialog -->
+<p-dialog
+  [(visible)]="showSubscriptionDialog"
+  [modal]="true"
+  [closable]="true"
+  [dismissableMask]="true"
+  header="Unlock ServiceFuzz"
+>
+  <div class="subscription-dialog">
+    <p>Subscribe to access all features. You can start with a 30-day free trial.</p>
+    <div class="dialog-actions">
+      <button pButton type="button" label="Start 30-day trial" (click)="redirectToStripeCheckout(true)" [disabled]="isSubscribing"></button>
+      <button pButton type="button" class="p-button-warning" label="Subscribe Now" (click)="redirectToStripeCheckout(false)" [disabled]="isSubscribing"></button>
+      <button pButton type="button" class="p-button-text" label="More options" (click)="goToBusinessSettings()"></button>
+    </div>
+  </div>
+</p-dialog>

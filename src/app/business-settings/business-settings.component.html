@@ -19,42 +19,42 @@
         <div class="subscription-info" *ngIf="subscriptionStatus && !isLoadingSubscription">
           <!-- State 1: Subscribed + trialing -->
           <ng-container *ngIf="isTrialing">
-            <div class="info-row">
+          <div class="info-row">
               <span>You are on a free trial. If you don't cancel, you will be charged automatically at the end of the trial.</span>
-            </div>
-            <div class="info-row" *ngIf="subscriptionStatus.currentPeriodEnd">
+          </div>
+          <div class="info-row" *ngIf="subscriptionStatus.currentPeriodEnd">
               <span>Trial ends: {{ subscriptionStatus.currentPeriodEnd | date:'mediumDate' }}</span>
             </div>
             <div class="subscribe-options">
               <button pButton type="button" class="p-button-outlined p-button-danger" label="Cancel Trial" (click)="cancelTrialLocally()"></button>
-            </div>
+          </div>
           </ng-container>
 
           <!-- State 2: Subscribed, no trial -->
           <ng-container *ngIf="isActiveSubscribedNoTrial">
             <div class="info-row">
               <span>You are subscribed.</span>
-            </div>
+              </div>
             <div class="info-row" *ngIf="subscriptionStatus.currentPeriodEnd">
               <span>Renews on: {{ subscriptionStatus.currentPeriodEnd | date:'mediumDate' }}</span>
-            </div>
+              </div>
             <div class="subscribe-options">
               <button pButton type="button" class="p-button-outlined p-button-danger" label="Unsubscribe" (click)="unsubscribeLocally()"></button>
-            </div>
+              </div>
           </ng-container>
 
           <!-- State 3: No subscription or trial -->
           <ng-container *ngIf="hasNoSubscription">
             <div class="upgrade-prompt">
               <h4>Choose how to subscribe</h4>
-              <div class="subscribe-options">
+            <div class="subscribe-options">
                 <button pButton type="button" [label]="isSubscribing ? 'Redirecting...' : 'Start 30-day free trial'" (click)="startStripeTrial()" [disabled]="isSubscribing"></button>
                 <button pButton type="button" class="p-button-warning" [label]="isSubscribing ? 'Redirecting...' : 'Subscribe Now'" (click)="upgradeToPremium()" [disabled]="isSubscribing"></button>
-              </div>
             </div>
+          </div>
           </ng-container>
         </div>
-
+        
         <!-- Loading State -->
         <div class="loading-subscription" *ngIf="isLoadingSubscription">
           <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="6"></p-progressSpinner>

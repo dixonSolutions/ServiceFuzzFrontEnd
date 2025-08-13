@@ -1,3 +1,25 @@
+/* Ensure the inline 'More' dropdown uses solid white background */
+::ng-deep .more-menu {
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #ffffff !important;
+}
+
+::ng-deep .more-menu .mat-mdc-menu-panel {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #ffffff !important;
+}
+
+::ng-deep .more-menu .mat-menu-content {
+  padding: 8px 0;
+  background: #ffffff !important;
+}
 /* Container Styles */
 .topbar-container {
   position: relative;
@@ -398,18 +420,16 @@ button:hover {
   margin-top: 8px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
   background: #ffffff;
 }
 
 ::ng-deep .hamburger-menu-dropdown .mat-mdc-menu-panel {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
   background: #ffffff;
 }
 
@@ -738,21 +758,21 @@ button:hover {
   height: 18px !important;
 }
 
-/* Business submenu styling */
+/* Business submenu styling - solid white */
 ::ng-deep .business-submenu {
   margin-top: 8px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
   background: #ffffff !important;
 }
 
 ::ng-deep .business-submenu .mat-mdc-menu-panel {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
   background: #ffffff !important;
 }
 
@@ -789,6 +809,27 @@ button:hover {
 ::ng-deep .business-submenu .mat-menu-item:hover {
   background-color: #f5f5f5 !important;
   transform: translateX(4px);
+}
+
+/* Overflow 'More' Business submenu - solid white */
+::ng-deep .business-overflow-menu {
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #ffffff !important;
+}
+
+::ng-deep .business-overflow-menu .mat-mdc-menu-panel {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff !important;
+}
+
+::ng-deep .business-overflow-menu .mat-menu-content {
+  padding: 8px 0;
+  background: #ffffff !important;
 }
   
 /* Comprehensive mobile sidebar style overrides */
@@ -847,21 +888,21 @@ button:hover {
   background: #ffffff !important;
 }
 
-/* Desktop Staff Menu Styles using ::ng-deep like business menu */
+/* Desktop Staff Menu Styles - solid white */
 ::ng-deep .staff-menu {
   margin-top: 8px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
   background: #ffffff !important;
 }
 
 ::ng-deep .staff-menu .mat-mdc-menu-panel {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
   background: #ffffff !important;
 }
 
@@ -900,23 +941,23 @@ button:hover {
   transform: translateX(4px);
 }
 
-/* Hamburger submenu staff styles */
-::ng-deep .staff-submenu {
+/* Overflow 'More' Staff submenu - solid white */
+::ng-deep .staff-overflow-menu {
   margin-top: 8px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.08);
   background: #ffffff !important;
 }
 
-::ng-deep .staff-submenu .mat-mdc-menu-panel {
+::ng-deep .staff-overflow-menu .mat-mdc-menu-panel {
   border-radius: 12px;
   overflow: hidden;
   background: #ffffff !important;
 }
 
-::ng-deep .staff-submenu .mat-menu-content {
+::ng-deep .staff-overflow-menu .mat-menu-content {
   padding: 8px 0;
   background: #ffffff !important;
 }

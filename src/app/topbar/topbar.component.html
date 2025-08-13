@@ -59,37 +59,7 @@
         <span matLine>Analytics</span>
       </a>
 
-      
-      <mat-divider></mat-divider>
-      
-    <!-- Staff Management -->
-    <a mat-list-item (click)="toggleStaffSidebar()" class="staff-nav-item">
-        <mat-icon matListIcon>people</mat-icon>
-        <span matLine>Staff Management</span>
-        <mat-icon class="expand-icon">{{ staffSidebarExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
-      </a>
-      <div *ngIf="staffSidebarExpanded" class="sidebar-staff-submenu">
-        <a mat-list-item 
-           (click)="visitStaffApp()" 
-           class="business-staff-item visit-staff-app">
-          <mat-icon matListIcon>launch</mat-icon>
-          <span matLine>Visit Staff App</span>
-        </a>
-        <mat-divider></mat-divider>
-        <div *ngIf="!hasBusinessesForStaff()" class="no-businesses-message">
-          <mat-icon matListIcon>info</mat-icon>
-          <span matLine>No businesses available</span>
-        </div>
-        <a mat-list-item 
-           *ngFor="let business of userBusinesses" 
-           (click)="navigateToStaffManagement(business)" 
-           class="business-staff-item">
-          <mat-icon matListIcon>business</mat-icon>
-          <span matLine>{{ business.basicInfo.businessName }}</span>
-        </a>
-      </div>
     
-    <mat-divider></mat-divider>
     
     <!-- User Actions -->
     <a mat-list-item routerLink="/sign" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/sign')">
@@ -135,34 +105,9 @@
 <!-- Desktop Toolbar -->
 <mat-toolbar class="fancy-toolbar desktop-toolbar" *ngIf="!(isSidebarVisible$ | async)">
   <div class="toolbar-left">
-    <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-menu">
-      <mat-icon>menu</mat-icon>
+    <button mat-icon-button [matMenuTriggerFor]="moreMenu" *ngIf="overflowItems.length > 0">
+      <mat-icon>more_horiz</mat-icon>
     </button>
-    <mat-menu #menu="matMenu" class="hamburger-menu-dropdown">
-      <button mat-menu-item [matMenuTriggerFor]="staffMenuHamburger">
-        <mat-icon>people</mat-icon>
-        <span>Staff Management</span>
-      </button>
-      <mat-menu #staffMenuHamburger="matMenu" class="staff-submenu">
-        <button mat-menu-item (click)="visitStaffApp()">
-          <mat-icon>launch</mat-icon>
-          <span>Visit Staff App</span>
-        </button>
-        <mat-divider></mat-divider>
-        <div *ngIf="!hasBusinessesForStaff()">
-          <button mat-menu-item disabled>
-            <mat-icon>info</mat-icon>
-            <span>No businesses available</span>
-          </button>
-        </div>
-        <button mat-menu-item 
-                *ngFor="let business of userBusinesses" 
-                (click)="navigateToStaffManagement(business)">
-          <mat-icon>business</mat-icon>
-          <span>{{ business.basicInfo.businessName }}</span>
-        </button>
-      </mat-menu>
-    </mat-menu>
 
     <a class="app-title">✨ServiceFuzz✨</a>
     <img src="https://lh3.googleusercontent.com/a/ACg8ocLaJxexuHa88Q1viRsHMpdLIEIUjbiNlBs-asm8Pk02NoVN0Sk=s96-c-rg-br100" 
@@ -170,11 +115,31 @@
   </div>
 
   <div class="toolbar-center">
-    <button mat-button routerLink="/" [class.active]="isRouteActive('/')">
+    <!-- Staff main dropdown (visible until it collapses into hamburger menu) -->
+    <button mat-button [matMenuTriggerFor]="staffMenu" class="staff-button" [class.active]="isRouteActive('/staff')" *ngIf="!isItemHidden('staff')">
+      <mat-icon>people</mat-icon>
+      <span [class.hide-text]="isSmallScreen$ | async">Staff</span>
+    </button>
+    <mat-menu #staffMenu="matMenu" class="staff-menu">
+      <button mat-menu-item (click)="visitStaffApp()">
+        <mat-icon>launch</mat-icon>
+        <span>Visit Staff App</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item disabled *ngIf="!hasBusinessesForStaff()">
+        <mat-icon>info</mat-icon>
+        <span>No businesses available</span>
+      </button>
+      <button mat-menu-item *ngFor="let business of userBusinesses" (click)="navigateToStaffManagement(business)">
+        <mat-icon>business</mat-icon>
+        <span>{{ business.basicInfo.businessName }}</span>
+      </button>
+    </mat-menu>
+    <button mat-button routerLink="/" [class.active]="isRouteActive('/')" *ngIf="!isItemHidden('home')">
       <mat-icon>home</mat-icon>
       <span [class.hide-text]="isSmallScreen$ | async">Home</span>
     </button>
-    <button mat-button [matMenuTriggerFor]="businessMenu" class="business-button" [class.active]="isRouteActive('/business')">
+    <button mat-button [matMenuTriggerFor]="businessMenu" class="business-button" [class.active]="isRouteActive('/business')" *ngIf="!isItemHidden('business')">
       <mat-icon>business</mat-icon>
       <span [class.hide-text]="isSmallScreen$ | async">Business</span>
     </button>
@@ -208,31 +173,71 @@
         <span>Website Creator</span>
       </button>
     </mat-menu>
-    <button mat-button routerLink="/analytics" [class.active]="isRouteActive('/analytics')">
+    <button mat-button routerLink="/analytics" [class.active]="isRouteActive('/analytics')" *ngIf="!isItemHidden('analytics')">
       <mat-icon>analytics</mat-icon>
       <span [class.hide-text]="isSmallScreen$ | async">Analytics</span>
     </button>
-    <button mat-button [matMenuTriggerFor]="staffMenu" class="staff-button" [class.active]="isRouteActive('/staff')">
-      <mat-icon>people</mat-icon>
-      <span [class.hide-text]="isSmallScreen$ | async">Staff</span>
-    </button>
-    <mat-menu #staffMenu="matMenu" class="staff-menu">
+    <!-- Overflow menu trigger moved to left toolbar -->
+    <mat-menu #moreMenu="matMenu" class="more-menu">
+      <button mat-menu-item [matMenuTriggerFor]="overflowStaffMenu" *ngIf="overflowItems.includes('staff')">
+        <mat-icon>people</mat-icon>
+        <span>Staff</span>
+      </button>
+      <button mat-menu-item routerLink="/" *ngIf="overflowItems.includes('home')">
+        <mat-icon>home</mat-icon>
+        <span>Home</span>
+      </button>
+      <button mat-menu-item [matMenuTriggerFor]="overflowBusinessMenu" *ngIf="overflowItems.includes('business')">
+        <mat-icon>business</mat-icon>
+        <span>Business</span>
+      </button>
+      <button mat-menu-item routerLink="/analytics" *ngIf="overflowItems.includes('analytics')">
+        <mat-icon>analytics</mat-icon>
+        <span>Analytics</span>
+      </button>
+    </mat-menu>
+    <mat-menu #overflowStaffMenu="matMenu" class="staff-overflow-menu">
       <button mat-menu-item (click)="visitStaffApp()">
         <mat-icon>launch</mat-icon>
         <span>Visit Staff App</span>
       </button>
       <mat-divider></mat-divider>
-      <div *ngIf="!hasBusinessesForStaff()" class="no-businesses-menu-item">
-        <button mat-menu-item disabled>
-          <mat-icon>info</mat-icon>
-          <span>No businesses available</span>
-        </button>
-      </div>
-      <button mat-menu-item 
-              *ngFor="let business of userBusinesses" 
-              (click)="navigateToStaffManagement(business)">
+      <button mat-menu-item disabled *ngIf="!hasBusinessesForStaff()">
+        <mat-icon>info</mat-icon>
+        <span>No businesses available</span>
+      </button>
+      <button mat-menu-item *ngFor="let business of userBusinesses" (click)="navigateToStaffManagement(business)">
         <mat-icon>business</mat-icon>
         <span>{{ business.basicInfo.businessName }}</span>
+      </button>
+    </mat-menu>
+    <mat-menu #overflowBusinessMenu="matMenu" class="business-overflow-menu">
+      <button mat-menu-item routerLink="/business/add">
+        <mat-icon>add_business</mat-icon>
+        <span>Add Business</span>
+      </button>
+      <button mat-menu-item [matMenuTriggerFor]="overflowManageMenu">
+        <mat-icon>manage_accounts</mat-icon>
+        <span>Manage Businesses</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/business/settings">
+        <mat-icon>settings</mat-icon>
+        <span>Business Settings</span>
+      </button>
+    </mat-menu>
+    <mat-menu #overflowManageMenu="matMenu" class="business-submenu">
+      <button mat-menu-item routerLink="/business/manage">
+        <mat-icon>view_list</mat-icon>
+        <span>View Businesses</span>
+      </button>
+      <button mat-menu-item routerLink="/order-forms">
+        <mat-icon>receipt</mat-icon>
+        <span>Order Forms</span>
+      </button>
+      <button mat-menu-item (click)="navigateToWebsiteCreator()">
+        <mat-icon>web</mat-icon>
+        <span>Website Creator</span>
       </button>
     </mat-menu>
   </div>
