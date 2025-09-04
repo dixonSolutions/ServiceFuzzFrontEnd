@@ -2,6 +2,7 @@ import { Component, OnInit, OnChanges, SimpleChanges, Input, Output, EventEmitte
 import { ComponentDefinition, ComponentParameter, BusinessImage, BusinessImagesResponse, WebsiteBuilderService } from '../../services/website-builder';
 import { ComponentType } from '../../models/workspace.models';
 import { ComponentRendererService } from '../../services/component-renderer.service';
+import { AIWebsiteChatComponent } from '../../ai-website-chat/ai-website-chat';
 
 @Component({
   selector: 'app-left-sidebar',
@@ -13,7 +14,7 @@ export class LeftSidebar implements OnInit, OnChanges {
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
 
   // Inputs from parent component
-  @Input() activeTab: 'components' | 'properties' | 'assets' = 'components';
+  @Input() activeTab: 'components' | 'properties' | 'assets' | 'ai' = 'components';
   @Input() searchTerm: string = '';
   @Input() selectedCategory: string = 'All';
   @Input() selectedComponentInstance: any = null;
@@ -21,7 +22,7 @@ export class LeftSidebar implements OnInit, OnChanges {
   @Input() builtInNavProperties: any = {};
 
   // Outputs to parent component
-  @Output() tabChange = new EventEmitter<'components' | 'properties' | 'assets'>();
+  @Output() tabChange = new EventEmitter<'components' | 'properties' | 'assets' | 'ai'>();
   @Output() searchChange = new EventEmitter<Event>();
   @Output() categoryChange = new EventEmitter<string>();
   @Output() dragStart = new EventEmitter<{ event: DragEvent, component: ComponentDefinition }>();
@@ -250,7 +251,7 @@ export class LeftSidebar implements OnInit, OnChanges {
   }
 
   // Event handlers
-  onTabChange(tab: 'components' | 'properties' | 'assets'): void {
+  onTabChange(tab: 'components' | 'properties' | 'assets' | 'ai'): void {
     this.activeTab = tab;
     this.tabChange.emit(tab);
     if (tab === 'assets' && this.businessImages.length === 0) {
@@ -286,6 +287,15 @@ export class LeftSidebar implements OnInit, OnChanges {
     
     // Also emit to parent for coordination
     this.dragStart.emit({ event, component });
+  }
+
+  onWebsiteUpdated(websiteJson: string): void {
+    // Emit the website update to the parent component
+    if (this.currentProject) {
+      this.currentProject.websiteJson = websiteJson;
+      // You can add additional logic here if needed
+      console.log('Website updated via AI:', websiteJson);
+    }
   }
 
   // Component Selection

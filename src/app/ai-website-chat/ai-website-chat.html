@@ -1,0 +1,92 @@
+<div class="ai-chat-simple">
+  <!-- Chat Messages -->
+  <div class="chat-messages" #chatMessages>
+    <div class="message" 
+         *ngFor="let message of messages; trackBy: trackByMessageId"
+         [class.user-message]="message.isUser"
+         [class.ai-message]="!message.isUser"
+         [class.loading-message]="message.isLoading">
+      
+      <!-- User Message -->
+      <div class="user-msg" *ngIf="message.isUser">
+        <div class="msg-text">{{ message.content }}</div>
+      </div>
+
+      <!-- AI Message -->
+      <div class="ai-msg" *ngIf="!message.isUser && !message.isLoading">
+        <div class="msg-text">{{ message.content }}</div>
+        <div class="msg-status" *ngIf="message.changesApplied && message.changesApplied.length > 0">
+          ✅ Applied {{ message.changesApplied.length }} changes
+        </div>
+      </div>
+
+      <!-- Loading Message -->
+      <div class="loading-msg" *ngIf="message.isLoading">
+        <div class="loading-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <span>Generating...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="chat-input">
+    <div class="input-row">
+              <textarea 
+          pTextarea
+          [(ngModel)]="userInput"
+          placeholder="Tell AI what to change..."
+          rows="2"
+          class="prompt-input"
+          [disabled]="isGenerating"
+          [autoResize]="true"
+          (keypress)="onKeyPress($event)">
+        </textarea>
+      <div class="send-icon"
+           [class.disabled]="!userInput.trim() || isGenerating"
+           (click)="sendMessage()">
+        <i class="pi" 
+           [class.pi-send]="!isGenerating"
+           [class.pi-spin]="isGenerating"
+           [class.pi-spinner]="isGenerating">
+        </i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JSON Preview Dialog -->
+<div class="json-dialog-overlay" *ngIf="showJsonDialog" (click)="showJsonDialog = false">
+  <div class="json-dialog-content" (click)="$event.stopPropagation()">
+    <div class="json-dialog-header">
+      <h3>Website JSON Preview</h3>
+      <button type="button" class="close-btn" (click)="showJsonDialog = false">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="json-preview-content">
+      <div class="json-actions">
+        <button pButton 
+                type="button" 
+                icon="pi pi-copy" 
+                class="p-button-outlined p-button-sm"
+                (click)="copyJsonToClipboard()"
+                pTooltip="Copy to Clipboard">
+          Copy JSON
+        </button>
+        <button pButton 
+                type="button" 
+                icon="pi pi-check" 
+                class="p-button-success p-button-sm"
+                (click)="applyJsonChanges()"
+                pTooltip="Apply Changes">
+          Apply Changes
+        </button>
+      </div>
+      <pre class="json-content">{{ previewJson }}</pre>
+    </div>
+  </div>
+</div>

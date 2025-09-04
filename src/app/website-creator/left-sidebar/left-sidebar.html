@@ -34,19 +34,20 @@
       <i class="pi pi-plus"></i>
       <span>Components</span>
       </button>
-      <button 
-        class="tab-btn"
-        [class.active]="activeTab === 'properties'"
-        (click)="onTabChange('properties')">
-        <i class="pi pi-cog"></i>
-        <span>Properties</span>
-      </button>
+      
       <button 
         class="tab-btn"
         [class.active]="activeTab === 'assets'"
         (click)="onTabChange('assets')">
         <i class="pi pi-image"></i>
         <span>Assets</span>
+      </button>
+      <button 
+        class="tab-btn"
+        [class.active]="activeTab === 'ai'"
+        (click)="onTabChange('ai')">
+        <i class="pi pi-robot"></i>
+        <span>AI Build</span>
       </button>
     </div>
     
@@ -336,6 +337,18 @@
         <div class="tip-content">
           <strong>Tip:</strong> Click on any image above to use it in your selected Image component.
         </div>
+      </div>
+    </div>
+
+    <!-- AI Tab Content -->
+    <div class="tab-content ai-tab-content" *ngIf="activeTab === 'ai'" data-tab="ai">
+      <div class="ai-content-wrapper">
+        <app-ai-website-chat
+          [businessId]="currentProject?.businessId || ''"
+          [workspaceId]="currentProject?.workspaceId || ''"
+          [currentWebsiteJson]="currentProject?.websiteJson || ''"
+          (websiteUpdated)="onWebsiteUpdated($event)">
+        </app-ai-website-chat>
       </div>
     </div>
   </div>

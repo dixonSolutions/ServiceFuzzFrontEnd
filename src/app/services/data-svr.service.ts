@@ -659,7 +659,7 @@ Current User Question: ${request}`;
       this.openSnackBar('You have ran out of messages for this conversation, please start a new conversation.', 'Close', 3000);
       throw new Error('I am sorry, I can only answer questions about ServiceFuzz.');
     }
-    return this.http.post<any>(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDLtw7CI2uBYCgJqgiBdnFYV4FJ8uQQemo`, {
+    return this.http.post<any>(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDyOyMhmSc12FwXrFPG1cBkl9XOvF1PDL0`, {
       "contents": [
         {
           "parts": [
@@ -771,7 +771,7 @@ Examples by business type:
 
 Make the recommendations specific to the business type and services offered.`;
 
-    return this.http.post<any>(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDLtw7CI2uBYCgJqgiBdnFYV4FJ8uQQemo`, {
+    return this.http.post<any>(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDyOyMhmSc12FwXrFPG1cBkl9XOvF1PDL0`, {
       "contents": [
         {
           "parts": [
@@ -1038,7 +1038,7 @@ Make sure to:
 7. DO NOT modify any contact information
 8. If improving existing data, maintain the same style and format while enhancing the content`;
 
-    return this.http.post<any>(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDLtw7CI2uBYCgJqgiBdnFYV4FJ8uQQemo`, {
+    return this.http.post<any>(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDyOyMhmSc12FwXrFPG1cBkl9XOvF1PDL0`, {
       "contents": [
         {
           "parts": [

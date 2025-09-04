@@ -54,7 +54,7 @@ export class WebsiteCreatorComponent implements OnInit {
   importData = '';
 
   // Assets Management
-  activeTab: 'components' | 'properties' | 'assets' = 'components';
+  activeTab: 'components' | 'properties' | 'assets' | 'ai' = 'components';
   isSaving = false;
   isDeploying = false;
   
@@ -802,7 +802,7 @@ Would you like to visit your website now?
   }
 
   // Tab Management
-  onTabChange(tab: 'components' | 'properties' | 'assets'): void {
+  onTabChange(tab: 'components' | 'properties' | 'assets' | 'ai'): void {
     this.activeTab = tab;
     
     // Switch to properties tab when component is selected
