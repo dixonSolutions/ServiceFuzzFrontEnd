@@ -66,6 +66,37 @@
       (drop)="onDrop($event)"
       (dragover)="onDragOver($event)">
       
+      <!-- AI Generation Loading Overlay -->
+      <div class="ai-loading-overlay" *ngIf="isAiGenerating">
+        <div class="ai-loading-content">
+          <div class="ai-loading-spinner">
+            <p-progressSpinner 
+              strokeWidth="3" 
+              fill="transparent"
+              animationDuration="1.5s"
+              styleClass="custom-ai-spinner">
+            </p-progressSpinner>
+          </div>
+          <div class="ai-loading-text">
+            <h3>🤖 AI is building your website...</h3>
+            <p>Please wait while we generate your custom website based on your request.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Generation Error Overlay -->
+      <div class="ai-error-overlay" *ngIf="aiGenerationError && !isAiGenerating">
+        <div class="ai-error-content">
+          <div class="ai-error-icon">
+            <i class="pi pi-exclamation-triangle"></i>
+          </div>
+          <div class="ai-error-text">
+            <h3>❌ AI Generation Failed</h3>
+            <p>{{ aiGenerationError }}</p>
+          </div>
+        </div>
+      </div>
+      
       <!-- Built-in Navigation Bar (always visible and editable) -->
       <nav class="site-nav"
            [class.selected]="selectedComponentInstance?.id === 'built-in-nav'"

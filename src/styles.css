@@ -3,6 +3,48 @@
 /* Import Leaflet CSS for OpenStreetMap functionality */
 @import '~leaflet/dist/leaflet.css';
 
+/* Import PrimeNG Icons */
+@import 'primeicons/primeicons.css';
+
+/* Scope PrimeNG styles to prevent global interference */
+.primeng-scope {
+  /* PrimeNG will only affect elements inside .primeng-scope */
+}
+
+/* Override PrimeNG Theme Colors */
+:root {
+  /* Primary colors - Blue instead of green */
+  --p-primary-50: #eff6ff;
+  --p-primary-100: #dbeafe;
+  --p-primary-200: #bfdbfe;
+  --p-primary-300: #93c5fd;
+  --p-primary-400: #60a5fa;
+  --p-primary-500: #3b82f6;
+  --p-primary-600: #2563eb;
+  --p-primary-700: #1d4ed8;
+  --p-primary-800: #1e40af;
+  --p-primary-900: #1e3a8a;
+  --p-primary-950: #172554;
+  
+  /* Surface colors - Light instead of dark */
+  --p-surface-0: #ffffff;
+  --p-surface-50: #f8fafc;
+  --p-surface-100: #f1f5f9;
+  --p-surface-200: #e2e8f0;
+  --p-surface-300: #cbd5e1;
+  --p-surface-400: #94a3b8;
+  --p-surface-500: #64748b;
+  --p-surface-600: #475569;
+  --p-surface-700: #334155;
+  --p-surface-800: #1e293b;
+  --p-surface-900: #0f172a;
+  --p-surface-950: #020617;
+  
+  /* Content colors */
+  --p-content-color: #1e293b;
+  --p-content-hover-color: #334155;
+}
+
 /* Explicit Material Design button styles to ensure modern appearance */
 .mat-mdc-raised-button.mat-primary {
   background-color: #1976d2 !important;
@@ -296,13 +338,19 @@ body {
   color: #333333 !important;
 }
 
-/* Fix all heading elements */
-h1, h2, h3, h4, h5, h6 {
+/* Fix heading elements in main content areas only */
+.main-content h1, .main-content h2, .main-content h3, 
+.main-content h4, .main-content h5, .main-content h6,
+.app-container h1, .app-container h2, .app-container h3,
+.app-container h4, .app-container h5, .app-container h6 {
   color: #333333 !important;
 }
 
-/* Fix all paragraph and text elements */
-p, span, div, label, a {
+/* Fix paragraph and text elements in main content areas only */
+.main-content p, .main-content span, .main-content div, 
+.main-content label, .main-content a,
+.app-container p, .app-container span, .app-container div,
+.app-container label, .app-container a {
   color: #333333 !important;
 }
 
@@ -329,8 +377,8 @@ p, span, div, label, a {
   color: #333333 !important;
 }
 
-/* Fix PrimeNG components globally */
-.p-component {
+/* Fix specific PrimeNG components that need white backgrounds */
+.p-card.p-component {
   background-color: #ffffff !important;
   color: #333333 !important;
 }
@@ -347,8 +395,16 @@ p, span, div, label, a {
   border: 1px solid #cccccc !important;
 }
 
-/* Fix any remaining white text */
-* {
+/* Remove overly aggressive global color override - this was breaking toasts and other components */
+/* Instead, target specific elements that need color fixes */
+
+/* Fix main content areas */
+.main-content, .app-container {
+  color: #333333;
+}
+
+/* Fix specific components that need dark text */
+.p-card, .mat-mdc-card {
   color: #333333 !important;
 }
 
@@ -359,6 +415,36 @@ p, span, div, label, a {
 
 .p-button.p-button-text, .p-button.p-button-outlined {
   color: #1976d2 !important;
+}
+
+/* Clean Toast Styling - Let PrimeNG theme handle colors naturally */
+.p-toast {
+  /* Remove any global overrides for toasts */
+}
+
+.p-toast .p-toast-message {
+  /* Let theme colors work naturally */
+  color: inherit;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.p-toast .p-toast-message-content {
+  color: inherit;
+  padding: 16px;
+}
+
+.p-toast .p-toast-message-text {
+  color: inherit;
+}
+
+.p-toast .p-toast-summary {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.p-toast .p-toast-detail {
+  opacity: 0.9;
 }
 
 .mat-mdc-button.mat-primary {
@@ -373,9 +459,9 @@ p, span, div, label, a {
   color: #f44336 !important;
 }
 
-/* Fix navigation and toolbar text */
+/* OLD MATERIAL TOOLBAR STYLES - DISABLED */
 .mat-toolbar, .mat-toolbar * {
-  color: #333333 !important;
+  display: none !important; /* Hide Material toolbars */
 }
 
 .mat-nav-list, .mat-nav-list * {
@@ -391,10 +477,9 @@ router-outlet + * * {
   color: #333333 !important;
 }
 
-/* Dark Background Areas - Override to White Text */
-/* Topbar and navigation with dark backgrounds */
+/* OLD MATERIAL TOOLBAR STYLES - DISABLED */
 .mat-toolbar {
-  background-color: #1976d2 !important;
+  display: none !important; /* Hide Material toolbars */
 }
 
 .mat-toolbar, 
@@ -405,7 +490,7 @@ router-outlet + * * {
 .mat-toolbar span,
 .mat-toolbar a,
 .mat-toolbar .app-title {
-  color: white !important;
+  display: none !important; /* Hide Material toolbar elements */
 }
 
 /* Remove the overly broad sidenav rules that were causing issues */

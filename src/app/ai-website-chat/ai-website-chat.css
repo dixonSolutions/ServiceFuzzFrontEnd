@@ -7,6 +7,77 @@
   border-radius: 8px;
 }
 
+/* Chat Header */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e1e8ed;
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
+
+.chat-header h4 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.chat-menu {
+  position: relative;
+}
+
+::ng-deep .menu-button {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+}
+
+::ng-deep .menu-button .p-button-icon {
+  font-size: 1rem !important;
+}
+
+/* Custom Dropdown Menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 150px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  color: #2c3e50;
+  font-size: 0.9rem;
+}
+
+.menu-item:hover {
+  background-color: #f8f9fa;
+}
+
+.menu-item i {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.menu-item:hover i {
+  color: #dc3545;
+}
+
 /* Chat Messages */
 .chat-messages {
   flex: 1;
@@ -322,15 +393,21 @@
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f1f3f4;
   border-radius: 3px;
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: #c1c8cd;
   border-radius: 3px;
+  transition: background 0.2s ease;
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: #a8b2ba;
+}
+
+/* Smooth scrolling */
+.chat-messages {
+  scroll-behavior: smooth;
 }

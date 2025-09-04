@@ -4,7 +4,6 @@ import {MatButtonModule} from '@angular/material/button';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import { DataSvrService } from '../services/data-svr.service';
-import {MatMenuModule} from '@angular/material/menu'; 
 import { Router } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
@@ -13,6 +12,7 @@ import { MatSidenav } from '@angular/material/sidenav';
 import { ManageBusinessesService } from '../services/manage-businesses.service';
 import { SubscriptionStatus } from '../models/subscription-status';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
+import { MenuItem, MegaMenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-topbar',
@@ -42,11 +42,22 @@ export class TopbarComponent implements OnInit {
   subscriptionStatus: SubscriptionStatus | null = null;
   isLoadingSubscription: boolean = false;
 
-  // Responsive nav collapse settings
+  // Responsive nav collapse settings - every 100px
   private readonly baseCollapseWidth = 1200;
   private readonly collapseStepPx = 100;
-  private readonly collapsibleOrder: string[] = ['staff', 'analytics', 'business', 'home', 'about'];
+  private readonly collapsibleOrder: Array<'home' | 'business' | 'analytics' | 'staff' | 'about'> = ['staff', 'business', 'about', 'analytics'];
   private itemsToHide = new Set<string>();
+
+  // PrimeNG Menu Items
+  businessMenuItems: MenuItem[] = [];
+  staffMenuItems: MenuItem[] = [];
+  megaMenuItems: MegaMenuItem[] = [];
+  mobileMenuItems: MenuItem[] = [];
+  overflowMenuItems: MenuItem[] = [];
+  
+  // Responsive navigation state
+  visibleMenuItems: string[] = ['home', 'analytics', 'about', 'business', 'staff'];
+  hiddenMenuItems: string[] = [];
 
   // Sidebar appears at 700px maximum (700px and below)
   isSidebarVisible$: Observable<boolean> = this.breakpointObserver.observe('(max-width: 700px)')
@@ -81,6 +92,12 @@ export class TopbarComponent implements OnInit {
       this.hasAttemptedLoadSubscription = true;
       this.loadSubscriptionStatus();
     }
+
+    // Initialize PrimeNG menus
+    this.initializeMenus();
+    
+    // Initialize responsive behavior
+    this.updateResponsiveNav(window.innerWidth);
 
     // Lightweight watcher: attempt a single load when user logs in, then stop
     this.authWatchIntervalId = setInterval(() => {
@@ -238,6 +255,9 @@ export class TopbarComponent implements OnInit {
     const decrease = Math.max(0, this.baseCollapseWidth - width);
     const hiddenCount = Math.min(this.collapsibleOrder.length, Math.floor(decrease / this.collapseStepPx));
     this.itemsToHide = new Set(this.collapsibleOrder.slice(0, hiddenCount));
+    
+    // Update overflow menu when responsive state changes
+    this.updateOverflowMenu();
   }
 
   isItemHidden(key: 'home' | 'business' | 'analytics' | 'staff' | 'about'): boolean {
@@ -248,5 +268,237 @@ export class TopbarComponent implements OnInit {
     // Preserve order based on collapsibleOrder
     return this.collapsibleOrder
       .filter(key => this.itemsToHide.has(key)) as Array<'home' | 'business' | 'analytics' | 'staff' | 'about'>;
+  }
+
+  // Update overflow menu with hidden items
+  private updateOverflowMenu(): void {
+    this.overflowMenuItems = [];
+    
+    this.overflowItems.forEach(item => {
+      switch(item) {
+        case 'home':
+          this.overflowMenuItems.push({ label: 'Home', icon: 'pi pi-home', routerLink: '/' });
+          break;
+        case 'analytics':
+          this.overflowMenuItems.push({ label: 'Analytics', icon: 'pi pi-chart-line', routerLink: '/analytics' });
+          break;
+        case 'about':
+          this.overflowMenuItems.push({ label: 'About', icon: 'pi pi-info-circle', routerLink: '/about' });
+          break;
+        case 'business':
+          this.overflowMenuItems.push({ 
+            label: 'Business', 
+            icon: 'pi pi-building', 
+            items: this.businessMenuItems 
+          });
+          break;
+        case 'staff':
+          this.overflowMenuItems.push({ 
+            label: 'Staff', 
+            icon: 'pi pi-users', 
+            items: this.staffMenuItems 
+          });
+          break;
+      }
+    });
+  }
+
+  // Initialize PrimeNG menu items with proper hierarchy
+  private initializeMenus(): void {
+    // Main navigation items (these appear in topbar)
+    this.megaMenuItems = [
+      {
+        label: 'Home',
+        icon: 'pi pi-home',
+        routerLink: '/',
+        styleClass: this.isRouteActive('/') ? 'active-menu-item' : ''
+      },
+      {
+        label: 'Analytics',
+        icon: 'pi pi-chart-line',
+        routerLink: '/analytics',
+        styleClass: this.isRouteActive('/analytics') ? 'active-menu-item' : ''
+      },
+      {
+        label: 'About',
+        icon: 'pi pi-info-circle',
+        routerLink: '/about',
+        styleClass: this.isRouteActive('/about') ? 'active-menu-item' : ''
+      },
+      {
+        label: 'Business',
+        icon: 'pi pi-building',
+        styleClass: this.isRouteActive('/business') ? 'active-menu-item' : '',
+        items: [
+          [
+            {
+              label: 'Business Setup',
+              items: [
+                { label: 'Add Business', icon: 'pi pi-plus', routerLink: '/business/add' }
+              ]
+            },
+            {
+              label: 'Manage Businesses',
+              items: [
+                { label: 'Website Creator', icon: 'pi pi-globe', command: () => this.navigateToWebsiteCreator() },
+                { label: 'View Businesses', icon: 'pi pi-list', routerLink: '/business/manage' },
+                { label: 'Order Forms', icon: 'pi pi-file-edit', routerLink: '/order-forms' }
+              ]
+            },
+            {
+              label: 'Business Settings',
+              items: [
+                { label: 'Business Settings', icon: 'pi pi-cog', routerLink: '/business/settings' },
+                { label: 'Business Profile', icon: 'pi pi-user', routerLink: '/business/profile' }
+              ]
+            }
+          ]
+        ]
+      },
+      {
+        label: 'Staff',
+        icon: 'pi pi-users',
+        styleClass: this.isRouteActive('/staff') ? 'active-menu-item' : '',
+        items: [
+          [
+            {
+              label: 'Staff Management',
+              items: [
+                { label: 'Visit Staff App', icon: 'pi pi-external-link', command: () => this.visitStaffApp() }
+              ]
+            },
+            {
+              label: 'Your Businesses',
+              items: this.userBusinesses.length > 0 ? this.userBusinesses.map(business => ({
+                label: business.basicInfo.businessName,
+                icon: 'pi pi-building',
+                command: () => this.navigateToStaffManagement(business)
+              })) : [
+                { label: 'No businesses yet', icon: 'pi pi-info-circle', disabled: true }
+              ]
+            }
+          ]
+        ]
+      }
+    ];
+
+
+    // Business dropdown menu with proper hierarchy
+    this.businessMenuItems = [
+      {
+        label: 'Add Business',
+        icon: 'pi pi-plus',
+        routerLink: '/business/add',
+        command: () => {
+          console.log('Add Business clicked');
+          this.router.navigate(['/business/add']);
+        }
+      },
+      { separator: true },
+      {
+        label: 'Website Creator',
+        icon: 'pi pi-globe',
+        command: () => {
+          console.log('Website Creator clicked');
+          this.navigateToWebsiteCreator();
+        }
+      },
+      {
+        label: 'View Businesses',
+        icon: 'pi pi-list',
+        routerLink: '/business/manage',
+        command: () => {
+          console.log('View Businesses clicked');
+          this.router.navigate(['/business/manage']);
+        }
+      },
+      {
+        label: 'Order Forms',
+        icon: 'pi pi-file-edit',
+        routerLink: '/order-forms',
+        command: () => {
+          console.log('Order Forms clicked');
+          this.router.navigate(['/order-forms']);
+        }
+      },
+      { separator: true },
+      {
+        label: 'Business Settings',
+        icon: 'pi pi-cog',
+        routerLink: '/business/settings',
+        command: () => {
+          console.log('Business Settings clicked');
+          this.router.navigate(['/business/settings']);
+        }
+      }
+    ];
+
+    // Staff dropdown menu
+    this.staffMenuItems = [
+      {
+        label: 'Visit Staff App',
+        icon: 'pi pi-external-link',
+        command: () => this.visitStaffApp()
+      }
+    ];
+
+    // Add user businesses to staff menu
+    if (this.userBusinesses.length > 0) {
+      this.staffMenuItems.push({ separator: true });
+      this.staffMenuItems.push({
+        label: 'Your Businesses',
+        icon: 'pi pi-building',
+        items: this.userBusinesses.map(business => ({
+          label: business.basicInfo.businessName,
+          icon: 'pi pi-building',
+          command: () => this.navigateToStaffManagement(business)
+        }))
+      });
+    }
+
+    // Update overflow menu items based on hidden items
+    this.updateOverflowMenu();
+
+    // Mobile menu (flat structure for mobile)
+    this.mobileMenuItems = [
+      {
+        label: 'Home',
+        icon: 'pi pi-home',
+        routerLink: '/'
+      },
+      {
+        label: 'Business',
+        icon: 'pi pi-building',
+        items: [
+          { label: 'Add Business', icon: 'pi pi-plus', routerLink: '/business/add' },
+          { label: 'View Businesses', icon: 'pi pi-list', routerLink: '/business/manage' },
+          { label: 'Order Forms', icon: 'pi pi-file-edit', routerLink: '/order-forms' },
+          { label: 'Website Creator', icon: 'pi pi-globe', command: () => this.navigateToWebsiteCreator() },
+          { label: 'Business Settings', icon: 'pi pi-cog', routerLink: '/business/settings' }
+        ]
+      },
+      {
+        label: 'Staff',
+        icon: 'pi pi-users',
+        items: [
+          { label: 'Visit Staff App', icon: 'pi pi-external-link', command: () => this.visitStaffApp() },
+          ...this.userBusinesses.map(business => ({
+            label: business.basicInfo.businessName,
+            icon: 'pi pi-building',
+            command: () => this.navigateToStaffManagement(business)
+          }))
+        ]
+      },
+      {
+        label: 'Analytics',
+        icon: 'pi pi-chart-line',
+        routerLink: '/analytics'
+      },
+      {
+        label: 'About',
+        icon: 'pi pi-info-circle',
+        routerLink: '/about'
+      }
+    ];
   }
 }

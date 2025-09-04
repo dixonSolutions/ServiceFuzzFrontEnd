@@ -640,3 +640,111 @@
 .angular-component-wrapper p-accordion .p-accordion-header:hover {
   background: #e9ecef !important;
 }
+
+/* AI Generation Loading Overlay */
+.ai-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-loading-content {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 400px;
+}
+
+.ai-loading-spinner {
+  margin-bottom: 24px;
+}
+
+.ai-loading-text h3 {
+  color: #2c3e50;
+  margin-bottom: 12px;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.ai-loading-text p {
+  color: #6c757d;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Custom AI Spinner Styles */
+::ng-deep .custom-ai-spinner .p-progress-spinner-circle {
+  stroke: #007bff !important;
+  animation: ai-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes ai-pulse {
+  0% {
+    stroke-opacity: 1;
+    stroke-width: 3;
+  }
+  100% {
+    stroke-opacity: 0.6;
+    stroke-width: 2;
+  }
+}
+
+/* AI Generation Error Overlay */
+.ai-error-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(248, 249, 250, 0.95);
+  backdrop-filter: blur(3px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-error-content {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  max-width: 400px;
+}
+
+.ai-error-icon {
+  margin-bottom: 24px;
+}
+
+.ai-error-icon i {
+  font-size: 48px;
+  color: #dc3545;
+}
+
+.ai-error-text h3 {
+  color: #dc3545;
+  margin-bottom: 12px;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.ai-error-text p {
+  color: #6c757d;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
+}

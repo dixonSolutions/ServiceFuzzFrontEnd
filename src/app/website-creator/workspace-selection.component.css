@@ -763,4 +763,133 @@
   .template-options {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+/* ===================== DELETE WORKSPACE STYLES ===================== */
+
+/* Delete Button */
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #c82333;
+  border-color: #bd2130;
+  transform: translateY(-1px);
+}
+
+.btn-danger:disabled {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Delete Dialog */
+.delete-dialog {
+  max-width: 500px;
+}
+
+.warning-icon {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.warning-icon i {
+  font-size: 48px;
+  color: #dc3545;
+}
+
+.delete-warning {
+  margin-bottom: 24px;
+}
+
+.delete-warning h4 {
+  color: #dc3545;
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.delete-warning p {
+  color: #333;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.delete-consequences {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.delete-consequences li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  color: #dc3545;
+  font-size: 14px;
+}
+
+.delete-consequences li i {
+  font-size: 14px;
+  color: #dc3545;
+}
+
+.confirmation-input {
+  margin-bottom: 20px;
+}
+
+.confirmation-input label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.confirmation-input label strong {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+.confirmation-input .form-control {
+  border: 2px solid #dc3545;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.confirmation-input .form-control:focus {
+  outline: none;
+  border-color: #c82333;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+/* Project Actions Spacing */
+.project-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.project-actions .btn {
+  font-size: 12px;
+  padding: 6px 12px;
+  min-width: 70px;
+}
+
+/* Loading State for Delete Button */
+.btn-danger .pi-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 } 

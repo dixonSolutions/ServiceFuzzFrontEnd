@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewChecked, HostListener } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -9,6 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { AIWebsiteService } from '../services/ai-website.service';
 import { AIWebsiteUtils } from '../utils/ai-website.utils';
+
 import { 
   AIWebsiteGenerationRequest, 
   AIWebsiteGenerationResponse, 
@@ -26,15 +27,18 @@ import {
     DialogModule,
     TooltipModule,
     TextareaModule
-  ],
+    ],
   templateUrl: './ai-website-chat.html',
   styleUrls: ['./ai-website-chat.css']
 })
-export class AIWebsiteChatComponent implements OnInit, OnDestroy {
+export class AIWebsiteChatComponent implements OnInit, OnDestroy, AfterViewChecked {
+  @ViewChild('chatMessages') chatMessagesRef!: ElementRef;
+  
   @Input() businessId: string = '';
   @Input() workspaceId: string = '';
   @Input() currentWebsiteJson: string = '';
   @Output() websiteUpdated = new EventEmitter<string>();
+  @Output() generationStateChange = new EventEmitter<{isGenerating: boolean, error?: string}>();
 
   private destroy$ = new Subject<void>();
 
@@ -45,15 +49,25 @@ export class AIWebsiteChatComponent implements OnInit, OnDestroy {
   isLoadingComponents: boolean = false;
 
   // UI state
+  showMenu: boolean = false;
 
   // JSON preview dialog
   showJsonDialog: boolean = false;
   previewJson: string = '';
+  
+  private shouldScrollToBottom = false;
 
   constructor(private aiWebsiteService: AIWebsiteService) {}
 
   ngOnInit(): void {
-    // No welcome message for simple UI
+    // Component initialization
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.shouldScrollToBottom) {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }
   }
 
   ngOnDestroy(): void {
@@ -73,6 +87,7 @@ export class AIWebsiteChatComponent implements OnInit, OnDestroy {
       isUser: false
     };
     this.messages.push(message);
+    this.shouldScrollToBottom = true;
   }
 
   /**
@@ -102,6 +117,9 @@ export class AIWebsiteChatComponent implements OnInit, OnDestroy {
     };
     this.messages.push(loadingMessage);
 
+    // Trigger scroll to bottom
+    this.shouldScrollToBottom = true;
+
     // Generate website
     this.generateWebsite();
 
@@ -114,6 +132,9 @@ export class AIWebsiteChatComponent implements OnInit, OnDestroy {
    */
   private generateWebsite(): void {
     this.isGenerating = true;
+    
+    // Emit loading state to parent components
+    this.generationStateChange.emit({ isGenerating: true });
 
     // Create enhanced prompt with business context
     const userPrompt = this.messages[this.messages.length - 2].content;
@@ -171,12 +192,23 @@ Please generate or modify the website based on the user's request above.`;
       };
       this.messages.push(aiMessage);
 
+      // Trigger scroll to bottom
+      this.shouldScrollToBottom = true;
+
       // Emit website update
       this.websiteUpdated.emit(response.revisedWebsiteJson);
+      
+      // Emit generation completion
+      this.generationStateChange.emit({ isGenerating: false });
 
       // Success is shown in the message status
     } else {
       this.addSystemMessage(`❌ ${response.message || 'Failed to generate website'}`);
+      // Emit generation completion with error
+      this.generationStateChange.emit({ 
+        isGenerating: false, 
+        error: response.message || 'Failed to generate website' 
+      });
     }
   }
 
@@ -191,6 +223,15 @@ Please generate or modify the website based on the user's request above.`;
 
     // Add error message
     this.addSystemMessage(`❌ Error: ${errorMessage}`);
+    
+    // Trigger scroll to bottom
+    this.shouldScrollToBottom = true;
+    
+    // Emit generation completion with error
+    this.generationStateChange.emit({ 
+      isGenerating: false, 
+      error: errorMessage 
+    });
   }
 
   /**
@@ -255,10 +296,34 @@ Please generate or modify the website based on the user's request above.`;
   }
 
   /**
+   * Toggle menu dropdown
+   */
+  toggleMenu(): void {
+    this.showMenu = !this.showMenu;
+  }
+
+  /**
+   * Handle click outside to close menu
+   */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    const menuButton = document.querySelector('.menu-button');
+    const dropdownMenu = document.querySelector('.dropdown-menu');
+    
+    if (menuButton && dropdownMenu && 
+        !menuButton.contains(target) && 
+        !dropdownMenu.contains(target)) {
+      this.showMenu = false;
+    }
+  }
+
+  /**
    * Clear chat history
    */
   clearChat(): void {
     this.messages = [];
+    this.showMenu = false; // Close menu after clearing
   }
 
   /**
@@ -287,12 +352,12 @@ Please generate or modify the website based on the user's request above.`;
    * Scroll to bottom of chat
    */
   scrollToBottom(): void {
-    setTimeout(() => {
-      const chatContainer = document.querySelector('.chat-messages');
-      if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }
-    }, 100);
+    if (this.chatMessagesRef && this.chatMessagesRef.nativeElement) {
+      setTimeout(() => {
+        const element = this.chatMessagesRef.nativeElement;
+        element.scrollTop = element.scrollHeight;
+      }, 50);
+    }
   }
 
   /**

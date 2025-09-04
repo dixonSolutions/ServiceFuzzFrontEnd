@@ -345,9 +345,10 @@
       <div class="ai-content-wrapper">
         <app-ai-website-chat
           [businessId]="currentProject?.businessId || ''"
-          [workspaceId]="currentProject?.workspaceId || ''"
+          [workspaceId]="currentProject?.id || ''"
           [currentWebsiteJson]="currentProject?.websiteJson || ''"
-          (websiteUpdated)="onWebsiteUpdated($event)">
+          (websiteUpdated)="onWebsiteUpdated($event)"
+          (generationStateChange)="onAiGenerationStateChange($event)">
         </app-ai-website-chat>
       </div>
     </div>

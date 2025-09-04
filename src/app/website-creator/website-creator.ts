@@ -58,6 +58,10 @@ export class WebsiteCreatorComponent implements OnInit {
   isSaving = false;
   isDeploying = false;
   
+  // AI Generation State
+  isAiGenerating = false;
+  aiGenerationError: string | null = null;
+  
   // Deployment History
   showDeploymentHistory = false;
   deploymentHistory: WorkspaceDeployment[] = [];
@@ -1330,5 +1334,41 @@ Would you like to visit your website now?
     if (!this.deploymentLimitCheck.canDeploy) return 'limit-exceeded';
     if (this.deploymentLimitCheck.isAtWarningThreshold) return 'limit-warning';
     return 'limit-ok';
+  }
+
+  // AI Generation Event Handlers
+  onAiGenerationStateChange(state: {isGenerating: boolean, error?: string}): void {
+    console.log('🤖 AI Generation state changed:', state);
+    this.isAiGenerating = state.isGenerating;
+    this.aiGenerationError = state.error || null;
+    
+    if (state.error) {
+      console.error('❌ AI Generation error:', state.error);
+    }
+  }
+
+  onWebsiteUpdatedFromAi(websiteJson: string): void {
+    console.log('🎨 Website updated from AI, applying changes to canvas...');
+    
+    try {
+      // Use the existing loadWebsiteDataFromJson method to update the canvas
+      this.loadWebsiteDataFromJson(websiteJson);
+      
+      // Update the current project with the new JSON
+      if (this.currentProject) {
+        this.currentProject.websiteJson = websiteJson;
+      }
+      
+      // Trigger canvas refresh
+      if (this.canvas) {
+        this.canvas.refreshCanvas();
+      }
+      
+      console.log('✅ Canvas updated successfully with AI-generated website');
+      
+    } catch (error) {
+      console.error('❌ Error applying AI-generated website to canvas:', error);
+      this.aiGenerationError = 'Failed to apply AI changes to canvas';
+    }
   }
 } 

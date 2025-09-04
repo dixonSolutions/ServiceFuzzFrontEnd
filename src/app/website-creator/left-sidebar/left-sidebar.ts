@@ -29,6 +29,8 @@ export class LeftSidebar implements OnInit, OnChanges {
   @Output() builtInNavPropertiesChange = new EventEmitter<{[key: string]: any}>();
   @Output() componentInstanceUpdated = new EventEmitter<any>();
   @Output() componentSelectionChange = new EventEmitter<any>();
+  @Output() aiGenerationStateChange = new EventEmitter<{isGenerating: boolean, error?: string}>();
+  @Output() websiteUpdated = new EventEmitter<string>();
 
   // Component Management State (unified - only use website builder service)
   availableComponents: ComponentDefinition[] = [];
@@ -296,6 +298,13 @@ export class LeftSidebar implements OnInit, OnChanges {
       // You can add additional logic here if needed
       console.log('Website updated via AI:', websiteJson);
     }
+    // Emit to parent component for canvas update
+    this.websiteUpdated.emit(websiteJson);
+  }
+
+  onAiGenerationStateChange(state: {isGenerating: boolean, error?: string}): void {
+    // Pass the AI generation state to the parent component
+    this.aiGenerationStateChange.emit(state);
   }
 
   // Component Selection

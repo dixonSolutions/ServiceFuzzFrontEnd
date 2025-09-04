@@ -119,6 +119,14 @@
               <i class="pi pi-pencil"></i>
               Edit
             </button>
+            <button 
+              class="btn btn-danger" 
+              (click)="onDeleteWorkspace(project); $event.stopPropagation()"
+              [disabled]="isDeletingWorkspace === project.id"
+              *ngIf="!project.isNew">
+              <i class="pi" [class.pi-trash]="isDeletingWorkspace !== project.id" [class.pi-spin]="isDeletingWorkspace === project.id" [class.pi-spinner]="isDeletingWorkspace === project.id"></i>
+              {{ isDeletingWorkspace === project.id ? 'Deleting...' : 'Delete' }}
+            </button>
           </div>
         </div>
       </div>
@@ -253,4 +261,53 @@
       </button>
     </div>
   </div>
-</div> 
+</div>
+
+<!-- Delete Confirmation Dialog -->
+<div class="dialog-overlay" *ngIf="showDeleteConfirmation" (click)="cancelDelete()">
+  <div class="dialog delete-dialog" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Delete Website Project</h3>
+      <button class="close-btn" (click)="cancelDelete()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    <div class="dialog-content">
+      <div class="warning-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      
+      <div class="delete-warning">
+        <h4>Are you sure you want to delete "{{ workspaceToDelete?.name }}"?</h4>
+        <p>This action cannot be undone and will permanently delete:</p>
+        <ul class="delete-consequences">
+          <li><i class="pi pi-times-circle"></i> All website components and content</li>
+          <li><i class="pi pi-times-circle"></i> All deployments and published versions</li>
+          <li><i class="pi pi-times-circle"></i> All workspace data and settings</li>
+        </ul>
+      </div>
+      
+      <div class="confirmation-input">
+        <label for="deleteConfirmation">Type <strong>DELETE</strong> to confirm:</label>
+        <input 
+          id="deleteConfirmation"
+          type="text" 
+          [(ngModel)]="deleteConfirmationText" 
+          placeholder="Type DELETE here"
+          name="deleteConfirmationText"
+          class="form-control"
+          (keyup.enter)="confirmDelete()">
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" (click)="cancelDelete()">Cancel</button>
+      <button 
+        class="btn btn-danger" 
+        (click)="confirmDelete()"
+        [disabled]="deleteConfirmationText !== 'DELETE' || isDeletingWorkspace">
+        <i class="pi" [class.pi-trash]="!isDeletingWorkspace" [class.pi-spin]="isDeletingWorkspace" [class.pi-spinner]="isDeletingWorkspace"></i>
+        {{ isDeletingWorkspace ? 'Deleting...' : 'Delete Permanently' }}
+      </button>
+    </div>
+  </div>
+</div>

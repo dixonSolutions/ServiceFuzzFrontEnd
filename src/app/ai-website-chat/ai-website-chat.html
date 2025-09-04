@@ -1,4 +1,27 @@
 <div class="ai-chat-simple">
+  <!-- Chat Header with Menu -->
+  <div class="chat-header">
+    <h4>AI Website Builder</h4>
+    <div class="chat-menu">
+      <p-button 
+        icon="pi pi-ellipsis-v" 
+        [text]="true"
+        [rounded]="true"
+        size="small"
+        (onClick)="toggleMenu()"
+        styleClass="menu-button">
+      </p-button>
+      
+      <!-- Simple Dropdown Menu -->
+      <div class="dropdown-menu" *ngIf="showMenu" (clickOutside)="showMenu = false">
+        <div class="menu-item" (click)="clearChat()">
+          <i class="pi pi-trash"></i>
+          <span>Clear Chat</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Chat Messages -->
   <div class="chat-messages" #chatMessages>
     <div class="message" 

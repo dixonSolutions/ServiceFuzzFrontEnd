@@ -32,6 +32,8 @@ export class Canvas implements OnInit, OnDestroy {
   // Inputs from parent component
   @Input() selectedDevice: string = 'desktop';
   @Input() builtInNavProperties: BuiltInNavProperties = {};
+  @Input() isAiGenerating: boolean = false;
+  @Input() aiGenerationError: string | null = null;
   
   // Outputs to parent component
   @Output() componentInstanceSelectionChange = new EventEmitter<ComponentInstance | null>();
@@ -1051,5 +1053,12 @@ export class Canvas implements OnInit, OnDestroy {
         this.pageDataChange.emit(this.pages);
       }
     }
+  }
+
+  // Method to refresh canvas after AI updates
+  refreshCanvas(): void {
+    console.log('🔄 Refreshing canvas after AI update');
+    this.updateCurrentPageComponents();
+    this.cdr.detectChanges();
   }
 }

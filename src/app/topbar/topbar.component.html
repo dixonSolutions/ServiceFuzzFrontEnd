@@ -3,279 +3,207 @@
 <!-- Mobile Sidebar Backdrop -->
 <div class="mobile-sidebar-backdrop" *ngIf="(isSidebarVisible$ | async) && mobileDrawerOpened" (click)="closeMobileSidebar()"></div>
 
-<!-- Simple Mobile Sidebar -->
-<div class="simple-mobile-sidebar" *ngIf="(isSidebarVisible$ | async) && mobileDrawerOpened">
+<!-- Beautiful PrimeNG Mobile Sidebar -->
+<div class="primeng-mobile-sidebar" *ngIf="(isSidebarVisible$ | async) && mobileDrawerOpened">
     <div class="mobile-nav-header">
     <h2>✨ServiceFuzz✨</h2>
-    <button mat-icon-button (click)="closeMobileSidebar()" class="close-button">
-        <mat-icon>close</mat-icon>
-      </button>
+      <p-button 
+        icon="pi pi-times" 
+        [text]="true" 
+        [rounded]="true" 
+        size="small"
+        (onClick)="closeMobileSidebar()" 
+        styleClass="close-button">
+      </p-button>
     </div>
     
-    <mat-nav-list class="mobile-nav-list">
-    <!-- Main Navigation -->
-    <a mat-list-item routerLink="/" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/')">
-        <mat-icon matListIcon>home</mat-icon>
-        <span matLine>Home</span>
-      </a>
-      <a mat-list-item routerLink="/about" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/about')">
-        <mat-icon matListIcon>info</mat-icon>
-        <span matLine>About</span>
-      </a>
+    <div class="mobile-nav-content">
+      <!-- Main Navigation with PrimeNG Menu -->
+      <p-menu [model]="mobileMenuItems" styleClass="mobile-menu"></p-menu>
       
-    <a mat-list-item (click)="toggleBusinessSidebar()" class="business-nav-item">
-        <mat-icon matListIcon>business</mat-icon>
-        <span matLine>Business</span>
-      <mat-icon class="expand-icon">{{ businessSidebarExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
-      </a>
-    <div *ngIf="businessSidebarExpanded" class="sidebar-business-submenu">
-      <a mat-list-item routerLink="/business/add" (click)="closeMobileSidebar()">
-        <mat-icon matListIcon>add_business</mat-icon>
-        <span matLine>Add Business</span>
-      </a>
-      <a mat-list-item (click)="toggleManageBusinessesSidebar()" class="manage-businesses-nav-item">
-        <mat-icon matListIcon>manage_accounts</mat-icon>
-        <span matLine>Manage Businesses</span>
-        <mat-icon class="expand-icon">{{ manageBusinessesSidebarExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
-      </a>
-      <div *ngIf="manageBusinessesSidebarExpanded" class="sidebar-manage-submenu">
-        <a mat-list-item routerLink="/business/manage" (click)="closeMobileSidebar()">
-          <mat-icon matListIcon>view_list</mat-icon>
-          <span matLine>View Businesses</span>
-        </a>
-        <a mat-list-item routerLink="/order-forms" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/order-forms')">
-          <mat-icon matListIcon>receipt</mat-icon>
-          <span matLine>Order Forms</span>
-        </a>
-        <a mat-list-item (click)="navigateToWebsiteCreator(); closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/website-creator')">
-          <mat-icon matListIcon>web</mat-icon>
-          <span matLine>Website Creator</span>
-        </a>
+      <!-- User Actions -->
+      <div class="mobile-user-actions">
+        <p-button 
+          [label]="data.currentUser ? data.currentUser.name : 'Sign In'"
+          icon="pi pi-user"
+          [text]="true"
+          routerLink="/sign"
+          (onClick)="closeMobileSidebar()"
+          styleClass="mobile-user-button">
+        </p-button>
+        
+        <p-button 
+          label="Notifications"
+          icon="pi pi-bell"
+          [text]="true"
+          (onClick)="closeMobileSidebar()"
+          styleClass="mobile-action-button">
+        </p-button>
+        
+        <p-button 
+          label="Settings"
+          icon="pi pi-cog"
+          [text]="true"
+          routerLink="/settings"
+          (onClick)="closeMobileSidebar()"
+          styleClass="mobile-action-button">
+        </p-button>
       </div>
-      <a mat-list-item routerLink="/business/settings" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/business/settings')">
-        <mat-icon matListIcon>settings</mat-icon>
-        <span matLine>Business Settings</span>
-      </a>
     </div>
-    
-    <a mat-list-item routerLink="/analytics" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/analytics')">
-        <mat-icon matListIcon>analytics</mat-icon>
-        <span matLine>Analytics</span>
-      </a>
-
-    
-    
-    <!-- User Actions -->
-    <a mat-list-item routerLink="/sign" (click)="closeMobileSidebar()" [class.active-nav-item]="isRouteActive('/sign')">
-      <mat-icon matListIcon>account_circle</mat-icon>
-      <span matLine>{{ data.currentUser ? data.currentUser.name : 'Sign In' }}</span>
-      </a>
-    
-    <a mat-list-item (click)="closeMobileSidebar()">
-      <mat-icon matListIcon>notifications</mat-icon>
-      <span matLine>Notifications</span>
-      </a>
-    
-    <a mat-list-item (click)="closeMobileSidebar()" routerLink="/settings">
-      <mat-icon matListIcon>settings</mat-icon>
-      <span matLine>Settings</span>
-      </a>
-  </mat-nav-list>
 </div>
 
-<!-- Mobile Toolbar -->
-<mat-toolbar class="fancy-toolbar mobile-toolbar" *ngIf="isSidebarVisible$ | async">
+<!-- Beautiful PrimeNG Mobile Toolbar -->
+<div class="primeng-mobile-toolbar" *ngIf="isSidebarVisible$ | async">
   <div class="toolbar-left">
-    <button mat-icon-button (click)="toggleMobileSidebar()" class="hamburger-menu">
-      <mat-icon>menu</mat-icon>
-    </button>
+    <p-button 
+      icon="pi pi-bars" 
+      [text]="true" 
+      [rounded]="true" 
+      size="small"
+      (onClick)="toggleMobileSidebar()" 
+      styleClass="hamburger-button">
+    </p-button>
     <a class="app-title mobile-title">✨ServiceFuzz✨</a>
-    <img src="/servicefuzz-logo.png" 
-         alt="ServiceFuzz logo" 
-         class="mobile-logo">
+    <img src="/servicefuzz-logo.png" alt="ServiceFuzz logo" class="mobile-logo">
   </div>
   
   <div class="toolbar-right">
-    <button mat-icon-button routerLink="/sign" [class.active]="isRouteActive('/sign')" class="profile-button" 
-            [matTooltip]="data.currentUser ? data.currentUser.name : 'Sign In'">
-      <div *ngIf="data.currentUser" class="user-avatar">
-        {{ getUserInitials() }}
-      </div>
-      <mat-icon *ngIf="!data.currentUser">account_circle</mat-icon>
-    </button>
+    <p-button 
+      [icon]="data.currentUser ? '' : 'pi pi-user'"
+      [text]="true" 
+      [rounded]="true" 
+      size="small"
+      routerLink="/sign"
+      [pTooltip]="data.currentUser ? data.currentUser.name : 'Sign In'">
+      <p-avatar 
+        *ngIf="data.currentUser" 
+        [label]="getUserInitials()" 
+        styleClass="user-avatar-mobile"
+        shape="circle"
+        size="normal">
+      </p-avatar>
+    </p-button>
   </div>
-</mat-toolbar>
+</div>
 
-<!-- Desktop Toolbar -->
-<mat-toolbar class="fancy-toolbar desktop-toolbar" *ngIf="!(isSidebarVisible$ | async)">
+<!-- Desktop Toolbar with PrimeNG MegaMenu -->
+<div class="primeng-desktop-toolbar" *ngIf="!(isSidebarVisible$ | async)">
   <div class="toolbar-left">
-    <button mat-icon-button [matMenuTriggerFor]="moreMenu" *ngIf="overflowItems.length > 0">
-      <mat-icon>more_horiz</mat-icon>
-    </button>
-
     <a class="app-title">✨ServiceFuzz✨</a>
-    <img src="/servicefuzz-logo.png" 
-         alt="ServiceFuzz logo">
+    <img src="/servicefuzz-logo.png" alt="ServiceFuzz logo" class="logo">
   </div>
 
+  <!-- Beautiful Responsive Navigation -->
   <div class="toolbar-center">
-    <!-- Staff main dropdown (visible until it collapses into hamburger menu) -->
-    <button mat-button [matMenuTriggerFor]="staffMenu" class="staff-button" [class.active]="isRouteActive('/staff')" *ngIf="!isItemHidden('staff')">
-      <mat-icon>people</mat-icon>
-      <span [class.hide-text]="isSmallScreen$ | async">Staff</span>
-    </button>
-    <mat-menu #staffMenu="matMenu" class="staff-menu">
-      <button mat-menu-item (click)="visitStaffApp()">
-        <mat-icon>launch</mat-icon>
-        <span>Visit Staff App</span>
-      </button>
-      <mat-divider></mat-divider>
-      <button mat-menu-item disabled *ngIf="!hasBusinessesForStaff()">
-        <mat-icon>info</mat-icon>
-        <span>No businesses available</span>
-      </button>
-      <button mat-menu-item *ngFor="let business of userBusinesses" (click)="navigateToStaffManagement(business)">
-        <mat-icon>business</mat-icon>
-        <span>{{ business.basicInfo.businessName }}</span>
-      </button>
-    </mat-menu>
-    <button mat-button routerLink="/" [class.active]="isRouteActive('/')" *ngIf="!isItemHidden('home')">
-      <mat-icon>home</mat-icon>
-      <span [class.hide-text]="isSmallScreen$ | async">Home</span>
-    </button>
-    <button mat-button [matMenuTriggerFor]="businessMenu" class="business-button" [class.active]="isRouteActive('/business')" *ngIf="!isItemHidden('business')">
-      <mat-icon>business</mat-icon>
-      <span [class.hide-text]="isSmallScreen$ | async">Business</span>
-    </button>
-    <mat-menu #businessMenu="matMenu" class="business-menu">
-      <button mat-menu-item routerLink="/business/add">
-        <mat-icon>add_business</mat-icon>
-        <span>Add Business</span>
-      </button>
-      <button mat-menu-item [matMenuTriggerFor]="manageMenu">
-        <mat-icon>manage_accounts</mat-icon>
-        <span>Manage Businesses</span>
-      </button>
-      <mat-divider></mat-divider>
-      <button mat-menu-item routerLink="/business/settings">
-        <mat-icon>settings</mat-icon>
-        <span>Business Settings</span>
-      </button>
-    </mat-menu>
-    
-    <mat-menu #manageMenu="matMenu" class="business-submenu">
-      <button mat-menu-item routerLink="/business/manage">
-        <mat-icon>view_list</mat-icon>
-        <span>View Businesses</span>
-      </button>
-      <button mat-menu-item routerLink="/order-forms">
-        <mat-icon>receipt</mat-icon>
-        <span>Order Forms</span>
-      </button>
-      <button mat-menu-item (click)="navigateToWebsiteCreator()">
-        <mat-icon>web</mat-icon>
-        <span>Website Creator</span>
-      </button>
-    </mat-menu>
-    <button mat-button routerLink="/analytics" [class.active]="isRouteActive('/analytics')" *ngIf="!isItemHidden('analytics')">
-      <mat-icon>analytics</mat-icon>
-      <span [class.hide-text]="isSmallScreen$ | async">Analytics</span>
-    </button>
-    <button mat-button routerLink="/about" [class.active]="isRouteActive('/about')" *ngIf="!isItemHidden('about')">
-      <mat-icon>info</mat-icon>
-      <span [class.hide-text]="isSmallScreen$ | async">About</span>
-    </button>
-    <!-- Overflow menu trigger moved to left toolbar -->
-    <mat-menu #moreMenu="matMenu" class="more-menu">
-      <button mat-menu-item [matMenuTriggerFor]="overflowStaffMenu" *ngIf="overflowItems.includes('staff')">
-        <mat-icon>people</mat-icon>
-        <span>Staff</span>
-      </button>
-      <button mat-menu-item routerLink="/" *ngIf="overflowItems.includes('home')">
-        <mat-icon>home</mat-icon>
-        <span>Home</span>
-      </button>
-      <button mat-menu-item [matMenuTriggerFor]="overflowBusinessMenu" *ngIf="overflowItems.includes('business')">
-        <mat-icon>business</mat-icon>
-        <span>Business</span>
-      </button>
-      <button mat-menu-item routerLink="/analytics" *ngIf="overflowItems.includes('analytics')">
-        <mat-icon>analytics</mat-icon>
-        <span>Analytics</span>
-      </button>
-      <button mat-menu-item routerLink="/about" *ngIf="overflowItems.includes('about')">
-        <mat-icon>info</mat-icon>
-        <span>About</span>
-      </button>
-    </mat-menu>
-    <mat-menu #overflowStaffMenu="matMenu" class="staff-overflow-menu">
-      <button mat-menu-item (click)="visitStaffApp()">
-        <mat-icon>launch</mat-icon>
-        <span>Visit Staff App</span>
-      </button>
-      <mat-divider></mat-divider>
-      <button mat-menu-item disabled *ngIf="!hasBusinessesForStaff()">
-        <mat-icon>info</mat-icon>
-        <span>No businesses available</span>
-      </button>
-      <button mat-menu-item *ngFor="let business of userBusinesses" (click)="navigateToStaffManagement(business)">
-        <mat-icon>business</mat-icon>
-        <span>{{ business.basicInfo.businessName }}</span>
-      </button>
-    </mat-menu>
-    <mat-menu #overflowBusinessMenu="matMenu" class="business-overflow-menu">
-      <button mat-menu-item routerLink="/business/add">
-        <mat-icon>add_business</mat-icon>
-        <span>Add Business</span>
-      </button>
-      <button mat-menu-item [matMenuTriggerFor]="overflowManageMenu">
-        <mat-icon>manage_accounts</mat-icon>
-        <span>Manage Businesses</span>
-      </button>
-      <mat-divider></mat-divider>
-      <button mat-menu-item routerLink="/business/settings">
-        <mat-icon>settings</mat-icon>
-        <span>Business Settings</span>
-      </button>
-    </mat-menu>
-    <mat-menu #overflowManageMenu="matMenu" class="business-submenu">
-      <button mat-menu-item routerLink="/business/manage">
-        <mat-icon>view_list</mat-icon>
-        <span>View Businesses</span>
-      </button>
-      <button mat-menu-item routerLink="/order-forms">
-        <mat-icon>receipt</mat-icon>
-        <span>Order Forms</span>
-      </button>
-      <button mat-menu-item (click)="navigateToWebsiteCreator()">
-        <mat-icon>web</mat-icon>
-        <span>Website Creator</span>
-      </button>
-    </mat-menu>
+    <nav class="main-navigation">
+      <!-- Individual Menu Items with Responsive Behavior -->
+      <p-button 
+        *ngIf="!isItemHidden('home')"
+        label="Home" 
+        icon="pi pi-home"
+        [text]="true"
+        routerLink="/"
+        [styleClass]="'nav-item ' + (isRouteActive('/') ? 'active-nav-item' : '')">
+      </p-button>
+      
+      <p-button 
+        *ngIf="!isItemHidden('analytics')"
+        label="Analytics" 
+        icon="pi pi-chart-line"
+        [text]="true"
+        routerLink="/analytics"
+        [styleClass]="'nav-item ' + (isRouteActive('/analytics') ? 'active-nav-item' : '')">
+      </p-button>
+      
+      <p-button 
+        *ngIf="!isItemHidden('about')"
+        label="About" 
+        icon="pi pi-info-circle"
+        [text]="true"
+        routerLink="/about"
+        [styleClass]="'nav-item ' + (isRouteActive('/about') ? 'active-nav-item' : '')">
+      </p-button>
+      
+      
+      <!-- Business Menu -->
+      <p-menu #businessMenu [model]="businessMenuItems" [popup]="true" styleClass="business-dropdown-menu"></p-menu>
+      <p-button 
+        *ngIf="!isItemHidden('business')"
+        label="Business" 
+        icon="pi pi-building"
+        [text]="true"
+        (onClick)="businessMenu.toggle($event)"
+        [styleClass]="'nav-item ' + (isRouteActive('/business') ? 'active-nav-item' : '')">
+      </p-button>
+      
+      <!-- Staff Menu -->
+      <p-menu #staffMenu [model]="staffMenuItems" [popup]="true"></p-menu>
+      <p-button 
+        *ngIf="!isItemHidden('staff')"
+        label="Staff" 
+        icon="pi pi-users"
+        [text]="true"
+        (onClick)="staffMenu.toggle($event)"
+        [styleClass]="'nav-item ' + (isRouteActive('/staff') ? 'active-nav-item' : '')">
+      </p-button>
+      
+      <!-- Overflow Menu (3-dot menu) -->
+      <p-menu #overflowMenu [model]="overflowMenuItems" [popup]="true"></p-menu>
+      <p-button 
+        *ngIf="overflowItems.length > 0"
+        icon="pi pi-ellipsis-h" 
+        [text]="true"
+        (onClick)="overflowMenu.toggle($event)"
+        styleClass="nav-item overflow-menu-button"
+        pTooltip="More options">
+      </p-button>
+    </nav>
   </div>
  
   <div class="toolbar-right">
     <!-- Subscription indicator -->
-    <button mat-button *ngIf="data.currentUser && subscriptionStatus" (click)="navigateToBusinessSettings()" matTooltip="Manage subscription">
-      <mat-icon *ngIf="isTrialing" color="accent">hourglass_empty</mat-icon>
-      <mat-icon *ngIf="isActiveSubscribedNoTrial" color="primary">verified</mat-icon>
-      <mat-icon *ngIf="hasNoSubscription" color="warn">warning</mat-icon>
-      <span [class.hide-text]="isSmallScreen$ | async">
-        {{ isTrialing ? 'Trialing' : (isActiveSubscribedNoTrial ? 'Subscribed' : 'Subscribe') }}
-      </span>
-    </button>
-    <button mat-icon-button *ngIf="!(isSmallScreen$ | async)" matTooltip="Notifications">
-      <mat-icon>notifications</mat-icon>
-    </button>
-    <button mat-icon-button routerLink="/settings" [class.active]="isRouteActive('/settings')" matTooltip="Settings">
-      <mat-icon>settings</mat-icon>
-    </button>
-    <button mat-icon-button routerLink="/sign" [class.active]="isRouteActive('/sign')" class="profile-button" 
-            [matTooltip]="data.currentUser ? data.currentUser.name : 'Sign In'">
-      <div *ngIf="data.currentUser" class="user-avatar">
-        {{ getUserInitials() }}
-      </div>
-      <mat-icon *ngIf="!data.currentUser">account_circle</mat-icon>
-    </button>
+    <p-button 
+      *ngIf="data.currentUser && subscriptionStatus" 
+      (onClick)="navigateToBusinessSettings()" 
+      [text]="true"
+      [label]="isTrialing ? 'Trialing' : (isActiveSubscribedNoTrial ? 'Subscribed' : 'Subscribe')"
+      [icon]="isTrialing ? 'pi pi-clock' : (isActiveSubscribedNoTrial ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle')"
+      [severity]="isTrialing ? 'secondary' : (isActiveSubscribedNoTrial ? 'success' : 'warn')"
+      size="small">
+    </p-button>
+    
+    <p-button 
+      icon="pi pi-bell" 
+      [text]="true" 
+      [rounded]="true" 
+      size="small"
+      pTooltip="Notifications">
+    </p-button>
+    
+    <p-button 
+      icon="pi pi-cog" 
+      [text]="true" 
+      [rounded]="true" 
+      size="small"
+      routerLink="/settings"
+      pTooltip="Settings">
+    </p-button>
+    
+    <!-- User Avatar/Sign In -->
+    <p-button 
+      [icon]="data.currentUser ? '' : 'pi pi-user'"
+      [text]="true" 
+      [rounded]="true" 
+      size="small"
+      routerLink="/sign"
+      [pTooltip]="data.currentUser ? data.currentUser.name : 'Sign In'">
+      <p-avatar 
+        *ngIf="data.currentUser" 
+        [label]="getUserInitials()" 
+        styleClass="user-avatar-primeng"
+        shape="circle"
+        size="normal">
+      </p-avatar>
+    </p-button>
   </div>
-</mat-toolbar>
+</div>

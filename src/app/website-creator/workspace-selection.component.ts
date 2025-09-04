@@ -54,6 +54,12 @@ export class WorkspaceSelectionComponent implements OnInit {
   errorMessage = '';
   private pendingSelectBusinessId: string | null = null;
 
+  // Delete workspace functionality
+  showDeleteConfirmation = false;
+  workspaceToDelete: WorkspaceProject | null = null;
+  deleteConfirmationText = '';
+  isDeletingWorkspace: string | null = null;
+
   // Real business data from service
   businesses: BusinessInfo[] = [];
 
@@ -427,5 +433,110 @@ export class WorkspaceSelectionComponent implements OnInit {
    */
   getUnsavedProjects(): WorkspaceProject[] {
     return this.existingProjects.filter(p => p.isNew);
+  }
+
+  // ===================== DELETE WORKSPACE FUNCTIONALITY =====================
+
+  /**
+   * Initiate workspace deletion process
+   */
+  onDeleteWorkspace(project: WorkspaceProject): void {
+    if (project.isNew) {
+      // For new (unsaved) projects, delete immediately from local array
+      this.deleteLocalProject(project);
+      return;
+    }
+
+    // For saved projects, show confirmation dialog
+    this.workspaceToDelete = project;
+    this.deleteConfirmationText = '';
+    this.showDeleteConfirmation = true;
+  }
+
+  /**
+   * Cancel delete operation
+   */
+  cancelDelete(): void {
+    this.showDeleteConfirmation = false;
+    this.workspaceToDelete = null;
+    this.deleteConfirmationText = '';
+    this.isDeletingWorkspace = null;
+  }
+
+  /**
+   * Confirm and execute workspace deletion
+   */
+  confirmDelete(): void {
+    if (!this.workspaceToDelete || this.deleteConfirmationText !== 'DELETE') {
+      return;
+    }
+
+    const workspaceId = this.workspaceToDelete.id;
+    const workspaceName = this.workspaceToDelete.name;
+
+    this.isDeletingWorkspace = workspaceId;
+
+    this.websiteBuilderService.deleteWorkspace(workspaceId).subscribe({
+      next: (response) => {
+        console.log('Workspace deleted successfully:', response);
+        
+        // Remove from local array
+        this.existingProjects = this.existingProjects.filter(p => p.id !== workspaceId);
+        
+        // Show success message
+        this.showSuccessMessage(`Website project "${workspaceName}" has been deleted successfully.`);
+        
+        // Close dialog and reset state
+        this.cancelDelete();
+      },
+      error: (error) => {
+        console.error('Error deleting workspace:', error);
+        
+        // Handle different error types
+        let errorMessage = 'Failed to delete workspace. Please try again.';
+        
+        if (error.status === 401) {
+          errorMessage = 'Authentication required. Please log in again.';
+          // Could redirect to login here
+        } else if (error.status === 403) {
+          errorMessage = 'You do not have permission to delete this workspace.';
+        } else if (error.status === 404) {
+          errorMessage = 'Workspace not found. It may have already been deleted.';
+          // Remove from local array since it doesn't exist
+          this.existingProjects = this.existingProjects.filter(p => p.id !== workspaceId);
+        } else if (error.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        this.showErrorMessage(errorMessage);
+        this.isDeletingWorkspace = null;
+      }
+    });
+  }
+
+  /**
+   * Delete local (unsaved) project
+   */
+  private deleteLocalProject(project: WorkspaceProject): void {
+    this.existingProjects = this.existingProjects.filter(p => p.id !== project.id);
+    this.showSuccessMessage(`Local project "${project.name}" has been removed.`);
+  }
+
+  /**
+   * Show success message (you can replace this with a proper toast/notification system)
+   */
+  private showSuccessMessage(message: string): void {
+    // For now, using alert - you can replace with a proper notification system
+    alert(`✅ ${message}`);
+  }
+
+  /**
+   * Show error message (you can replace this with a proper toast/notification system)
+   */
+  private showErrorMessage(message: string): void {
+    // For now, using alert - you can replace with a proper notification system
+    alert(`❌ ${message}`);
   }
 } 

@@ -411,7 +411,9 @@
       (dragStart)="onDragStart($event.event, $event.component)"
       (builtInNavPropertiesChange)="onBuiltInNavPropertiesChange($event)"
       (componentInstanceUpdated)="onComponentInstanceUpdated($event)"
-      (componentSelectionChange)="onComponentSelectionChange($event)">
+      (componentSelectionChange)="onComponentSelectionChange($event)"
+      (aiGenerationStateChange)="onAiGenerationStateChange($event)"
+      (websiteUpdated)="onWebsiteUpdatedFromAi($event)">
     </app-left-sidebar>
 
     <!-- Canvas Component -->
@@ -419,6 +421,8 @@
       #canvas
       [selectedDevice]="selectedDevice"
       [builtInNavProperties]="builtInNavProperties"
+      [isAiGenerating]="isAiGenerating"
+      [aiGenerationError]="aiGenerationError"
       (componentInstanceSelectionChange)="onComponentInstanceSelectionChange($event)"
       (builtInNavPropertiesChange)="onBuiltInNavPropertiesChange($event)"
       (pageDataChange)="onPageDataChange($event)"

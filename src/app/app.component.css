@@ -10,7 +10,7 @@
 .main-content {
   flex: 1 0 auto;
   padding: 16px;
-  margin-top: 64px; /* Desktop toolbar height */
+  margin-top: 0; /* No margin needed - PrimeNG toolbars are not fixed positioned */
   width: 100%;
   max-width: 100%;
   min-height: calc(100vh - 64px);
@@ -54,19 +54,19 @@
   flex-wrap: wrap;
 }
 
-/* Desktop toolbar height (64px) for screens above 700px */
+/* Desktop - No margin needed for PrimeNG toolbars */
 @media (min-width: 701px) {
   .app-container .main-content {
-    margin-top: 64px !important; /* Desktop toolbar height */
+    margin-top: 0 !important; /* PrimeNG toolbars are not fixed positioned */
     padding: 16px !important;
     min-height: calc(100vh - 64px) !important;
   }
 }
 
-/* Mobile toolbar height (56px) for screens below 700px */
+/* Mobile - No margin needed for PrimeNG toolbars */
 @media (max-width: 700px) {
   .app-container .main-content {
-    margin-top: 56px !important; /* Mobile toolbar height */
+    margin-top: 0 !important; /* PrimeNG toolbars are not fixed positioned */
     padding: 16px !important;
     min-height: calc(100vh - 56px) !important;
   }
