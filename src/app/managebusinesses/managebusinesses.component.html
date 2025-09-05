@@ -115,11 +115,11 @@
             <div class="business-stats">
               <p>
                 <mat-icon>category</mat-icon>
-                {{business.services?.length || 0}} Services
+                {{business.services.length || 0}} Services
               </p>
               <p>
                 <mat-icon>location_on</mat-icon>
-                {{(business.specificAddresses?.length || 0) + (business.areaSpecifications?.length || 0)}} Locations
+                {{(business.specificAddresses.length || 0) + (business.areaSpecifications.length || 0)}} Locations
               </p>
               <p *ngIf="business.operationType === 'with_staff'">
                 <mat-icon>people</mat-icon>

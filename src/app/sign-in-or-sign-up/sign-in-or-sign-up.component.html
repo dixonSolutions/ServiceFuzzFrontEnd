@@ -10,7 +10,7 @@
       <div mat-card-avatar class="profile-avatar">
         <img *ngIf="userInfo && userInfo.picture" [src]="userInfo.picture" [alt]="serviceFuzzUser.name || ''" class="profile-image">
         <div *ngIf="!userInfo || !userInfo.picture" class="letter-avatar">
-          {{ getFirstLetter(serviceFuzzUser?.name) }}
+          {{ getFirstLetter(serviceFuzzUser.name) }}
         </div>
       </div>
       <mat-card-title>Welcome, {{serviceFuzzUser.name}}!</mat-card-title>
