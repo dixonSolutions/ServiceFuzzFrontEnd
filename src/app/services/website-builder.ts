@@ -125,6 +125,16 @@ export interface BusinessImagesResponse {
   images: BusinessImage[];
 }
 
+// Update Description Request Interface
+export interface UpdateDescriptionRequest {
+  description: string;
+}
+
+// Business API Response Interface
+export interface BusinessApiResponse {
+  message: string;
+}
+
 
 
 @Injectable({
@@ -786,6 +796,108 @@ export class WebsiteBuilderService {
   formatUploadDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  }
+
+  // ===== NEW BUSINESS IMAGE MANAGEMENT ENDPOINTS =====
+
+  /**
+   * Delete a business image by ID
+   * @param imageId - The ID of the image to delete
+   * @returns Observable with success message
+   */
+  deleteBusinessImage(imageId: number): Observable<BusinessApiResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const deleteUrl = `${this.apiBaseUrl}/api/BusinessWebsite/images/${imageId}`;
+    
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    });
+
+    return this.http.delete<BusinessApiResponse>(deleteUrl, { headers });
+  }
+
+  /**
+   * Update image description
+   * @param imageId - The ID of the image to update
+   * @param description - New description for the image
+   * @returns Observable with success message
+   */
+  updateImageDescription(imageId: number, description: string): Observable<BusinessApiResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const updateUrl = `${this.apiBaseUrl}/api/BusinessWebsite/images/${imageId}/description`;
+    
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    });
+
+    const body: UpdateDescriptionRequest = { description };
+
+    return this.http.put<BusinessApiResponse>(updateUrl, body, { headers });
+  }
+
+  /**
+   * Toggle image active/inactive status
+   * @param imageId - The ID of the image to toggle
+   * @returns Observable with success message
+   */
+  toggleImageStatus(imageId: number): Observable<BusinessApiResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const toggleUrl = `${this.apiBaseUrl}/api/BusinessWebsite/images/${imageId}/toggle-status`;
+    
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    });
+
+    return this.http.patch<BusinessApiResponse>(toggleUrl, {}, { headers });
+  }
+
+  /**
+   * Get single image file as blob
+   * @param imageId - The ID of the image to retrieve
+   * @returns Observable with image blob
+   */
+  getImageBlob(imageId: number): Observable<Blob> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const imageUrl = `${this.apiBaseUrl}/api/BusinessWebsite/images/${imageId}`;
+    
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${jwtToken}`
+    });
+
+    return this.http.get(imageUrl, { 
+      headers, 
+      responseType: 'blob' 
+    });
+  }
+
+  /**
+   * Get image URL for display (creates object URL from blob)
+   * @param imageId - The ID of the image to retrieve
+   * @returns Observable with image URL string
+   */
+  getImageUrl(imageId: number): Observable<string> {
+    return this.getImageBlob(imageId).pipe(
+      map(blob => URL.createObjectURL(blob))
+    );
   }
 
   // ===================== WORKSPACE METHODS =====================

@@ -3,6 +3,7 @@ import { ComponentDefinition, ComponentParameter, BusinessImage, BusinessImagesR
 import { ComponentType } from '../../models/workspace.models';
 import { ComponentRendererService } from '../../services/component-renderer.service';
 import { AIWebsiteChatComponent } from '../../ai-website-chat/ai-website-chat';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-left-sidebar',
@@ -55,7 +56,8 @@ export class LeftSidebar implements OnInit, OnChanges {
 
   constructor(
     private websiteBuilder: WebsiteBuilderService,
-    private componentRenderer: ComponentRendererService
+    private componentRenderer: ComponentRendererService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -565,6 +567,122 @@ export class LeftSidebar implements OnInit, OnChanges {
       this.loadApiComponentTypes();
     } else {
       console.log('❌ No business ID, skipping component loading');
+    }
+  }
+
+  // ===== NEW IMAGE MANAGEMENT METHODS =====
+
+  /**
+   * Edit image description with a prompt dialog
+   * @param image - The image to edit
+   */
+  editImageDescription(image: BusinessImage): void {
+    const newDescription = prompt('Enter new description for the image:', image.description || '');
+    
+    if (newDescription !== null && newDescription !== image.description) {
+      this.websiteBuilder.updateImageDescription(image.id, newDescription).subscribe({
+        next: (response) => {
+          this.toastService.success(response.message || 'Description updated successfully', 'Description Updated');
+          image.description = newDescription; // Update local state
+        },
+        error: (error) => {
+          console.error('Error updating description:', error);
+          this.toastService.error('Failed to update description. Please try again.', 'Update Error');
+        }
+      });
+    }
+  }
+
+  /**
+   * Toggle image active/inactive status
+   * @param image - The image to toggle
+   */
+  toggleImageStatus(image: BusinessImage): void {
+    const action = image.isActive ? 'deactivate' : 'activate';
+    
+    if (confirm(`Are you sure you want to ${action} "${image.fileName}"?`)) {
+      this.websiteBuilder.toggleImageStatus(image.id).subscribe({
+        next: (response) => {
+          const statusText = image.isActive ? 'deactivated' : 'activated';
+          this.toastService.success(response.message || `Image ${statusText} successfully`, 'Status Updated');
+          image.isActive = !image.isActive; // Update local state
+        },
+        error: (error) => {
+          console.error('Error toggling status:', error);
+          this.toastService.error('Failed to update image status. Please try again.', 'Status Error');
+        }
+      });
+    }
+  }
+
+  /**
+   * Delete an image with confirmation
+   * @param image - The image to delete
+   */
+  deleteImage(image: BusinessImage): void {
+    if (confirm(`Are you sure you want to permanently delete "${image.fileName}"? This action cannot be undone.`)) {
+      this.websiteBuilder.deleteBusinessImage(image.id).subscribe({
+        next: (response) => {
+          this.toastService.success(response.message || 'Image deleted successfully', 'Image Deleted');
+          this.loadBusinessImages(); // Refresh the images list
+        },
+        error: (error) => {
+          console.error('Error deleting image:', error);
+          this.toastService.error('Failed to delete image. Please try again.', 'Delete Error');
+        }
+      });
+    }
+  }
+
+  /**
+   * Download image file
+   * @param image - The image to download
+   */
+  downloadImage(image: BusinessImage): void {
+    this.websiteBuilder.getImageBlob(image.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = image.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        this.toastService.success('Image downloaded successfully', 'Download Complete');
+      },
+      error: (error) => {
+        console.error('Error downloading image:', error);
+        this.toastService.error('Failed to download image. Please try again.', 'Download Error');
+      }
+    });
+  }
+
+  /**
+   * Show context menu for image management
+   * @param event - Right-click event
+   * @param image - The image to manage
+   */
+  showImageContextMenu(event: MouseEvent, image: BusinessImage): void {
+    event.preventDefault();
+    
+    const actions = [
+      { label: 'Edit Description', action: () => this.editImageDescription(image) },
+      { label: image.isActive ? 'Deactivate' : 'Activate', action: () => this.toggleImageStatus(image) },
+      { label: 'Download', action: () => this.downloadImage(image) },
+      { label: 'Delete', action: () => this.deleteImage(image) }
+    ];
+
+    // Simple context menu using confirm dialogs for now
+    const actionLabels = actions.map(a => a.label).join('\n');
+    const choice = prompt(`Choose action for "${image.fileName}":\n\n${actionLabels}\n\nEnter number (1-4):`);
+    
+    if (choice && !isNaN(Number(choice))) {
+      const actionIndex = Number(choice) - 1;
+      if (actionIndex >= 0 && actionIndex < actions.length) {
+        actions[actionIndex].action();
+      }
     }
   }
 }

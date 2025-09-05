@@ -487,6 +487,7 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.7);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -525,6 +526,51 @@
   background: #218838;
 }
 
+/* Image Actions Container */
+.image-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Action Button Styles */
+.overlay-btn.edit-btn {
+  background: #007bff;
+  color: white;
+}
+
+.overlay-btn.edit-btn:hover {
+  background: #0056b3;
+}
+
+.overlay-btn.toggle-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.overlay-btn.toggle-btn:hover {
+  background: #545b62;
+}
+
+.overlay-btn.download-btn {
+  background: #17a2b8;
+  color: white;
+}
+
+.overlay-btn.download-btn:hover {
+  background: #138496;
+}
+
+.overlay-btn.delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.overlay-btn.delete-btn:hover {
+  background: #c82333;
+}
+
 .image-info {
   padding: 8px;
 }
@@ -542,9 +588,31 @@
 .image-meta {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 10px;
   color: #6c757d;
   margin-bottom: 4px;
+  gap: 8px;
+}
+
+/* Status Indicator */
+.status-indicator {
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-indicator.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-indicator.inactive {
+  background: #f8d7da;
+  color: #721c24;
 }
 
 .image-description {
@@ -553,6 +621,92 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 8px;
+}
+
+/* Always Visible Action Buttons */
+.image-actions-bar {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 8px 4px;
+  border-top: 2px solid #e9ecef;
+  margin-top: 8px;
+  background: #f8f9fa;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background: white;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.action-btn.primary-btn {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.action-btn.primary-btn:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.action-btn.danger-btn {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.action-btn.danger-btn:hover {
+  background: #c82333;
+  border-color: #c82333;
+}
+
+/* Secondary Actions */
+.image-secondary-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.secondary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid #dee2e6;
+  border-radius: 3px;
+  background: white;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 9px;
+  flex: 1;
+}
+
+.secondary-btn:hover {
+  background: #f8f9fa;
+  color: #495057;
 }
 
 .empty-state {

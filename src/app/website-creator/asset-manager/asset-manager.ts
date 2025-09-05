@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { WebsiteBuilderService, BusinessImage, BusinessImagesResponse } from '../../services/website-builder';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-asset-manager',
@@ -29,7 +30,10 @@ export class AssetManagerComponent implements OnInit {
   currentImageAssetProperty: string | null = null;
   currentBuiltInNavProperty: string | null = null;
 
-  constructor(private websiteBuilder: WebsiteBuilderService) {}
+  constructor(
+    private websiteBuilder: WebsiteBuilderService,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit(): void {
     this.loadBusinessImages();
@@ -233,6 +237,123 @@ export class AssetManagerComponent implements OnInit {
   // Utility Methods
   getDisplayableImageUrl(image: BusinessImage): string {
     return image.imageUrl || image.fileName || '';
+  }
+
+  // ===== NEW IMAGE MANAGEMENT METHODS =====
+
+  /**
+   * Delete a business image
+   * @param image - The image to delete
+   */
+  deleteImage(image: BusinessImage): void {
+    if (!confirm(`Are you sure you want to delete "${image.fileName}"?`)) {
+      return;
+    }
+
+    this.websiteBuilder.deleteBusinessImage(image.id).subscribe({
+      next: (response) => {
+        this.toastService.success(response.message || 'Image deleted successfully', 'Image Deleted');
+        this.loadBusinessImages(); // Refresh the list
+      },
+      error: (error) => {
+        console.error('Error deleting image:', error);
+        this.toastService.error('Failed to delete image. Please try again.', 'Delete Error');
+      }
+    });
+  }
+
+  /**
+   * Update image description
+   * @param image - The image to update
+   * @param newDescription - The new description
+   */
+  updateImageDescription(image: BusinessImage, newDescription: string): void {
+    if (newDescription === image.description) {
+      return; // No change
+    }
+
+    this.websiteBuilder.updateImageDescription(image.id, newDescription).subscribe({
+      next: (response) => {
+        this.toastService.success(response.message || 'Description updated successfully', 'Description Updated');
+        image.description = newDescription; // Update local copy
+      },
+      error: (error) => {
+        console.error('Error updating description:', error);
+        this.toastService.error('Failed to update description. Please try again.', 'Update Error');
+      }
+    });
+  }
+
+  /**
+   * Toggle image active/inactive status
+   * @param image - The image to toggle
+   */
+  toggleImageStatus(image: BusinessImage): void {
+    this.websiteBuilder.toggleImageStatus(image.id).subscribe({
+      next: (response) => {
+        const statusText = image.isActive ? 'deactivated' : 'activated';
+        this.toastService.success(response.message || `Image ${statusText} successfully`, 'Status Updated');
+        image.isActive = !image.isActive; // Update local copy
+      },
+      error: (error) => {
+        console.error('Error toggling status:', error);
+        this.toastService.error('Failed to update image status. Please try again.', 'Status Error');
+      }
+    });
+  }
+
+  /**
+   * Get image URL for display
+   * @param image - The image to get URL for
+   * @returns Promise with image URL
+   */
+  async getImageUrl(image: BusinessImage): Promise<string> {
+    try {
+      // First try to use existing imageUrl or imageData
+      if (image.imageUrl) {
+        return image.imageUrl;
+      } else if (image.imageData && image.contentType) {
+        return this.websiteBuilder.convertImageDataToDataUrl(image.imageData, image.contentType);
+      }
+      
+      // Fallback to blob URL - convert to promise properly
+      const urlObservable = this.websiteBuilder.getImageUrl(image.id);
+      return new Promise<string>((resolve) => {
+        urlObservable.subscribe({
+          next: (url) => resolve(url),
+          error: () => resolve('')
+        });
+      });
+    } catch (error) {
+      console.error('Error getting image URL:', error);
+      this.toastService.error('Failed to load image. Please try again.', 'Image Load Error');
+      return '';
+    }
+  }
+
+  /**
+   * Enhanced download image file using blob API
+   * @param image - The image to download
+   */
+  downloadImageBlob(image: BusinessImage): void {
+    this.websiteBuilder.getImageBlob(image.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = image.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        this.toastService.success('Image downloaded successfully', 'Download Complete');
+      },
+      error: (error) => {
+        console.error('Error downloading image:', error);
+        this.toastService.error('Failed to download image. Please try again.', 'Download Error');
+      }
+    });
   }
 
   formatFileSize(bytes: number): string {

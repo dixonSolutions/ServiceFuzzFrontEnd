@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MegaMenuItem } from 'primeng/api';
+import { DataSvrService } from '../services/data-svr.service';
 
 
 @Component({
@@ -329,7 +330,7 @@ export class HomeComponent implements OnInit {
     }
   };
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, public data: DataSvrService) {}
 
   ngOnInit(): void {
     // Component initialized
@@ -450,5 +451,10 @@ export class HomeComponent implements OnInit {
     // For now, just hide the panel
     this.showFeaturePanel = false;
     this.activeFeature = null;
+  }
+
+  // Navigate to analytics dashboard
+  goToDashboard(): void {
+    this.router.navigate(['/analytics']);
   }
 }

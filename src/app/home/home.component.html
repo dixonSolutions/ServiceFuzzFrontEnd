@@ -6,10 +6,14 @@
               <div class="hero-content">
           
           <h1 class="hero-headline">
-            <span class="organgeColour erp-highlight">ServiceFuzz — All‑in‑One ERP system for Service Businesses</span>
+            <span class="organgeColour erp-highlight" *ngIf="!data.currentUser">ServiceFuzz — All‑in‑One ERP system for Service Businesses</span>
+            <span class="organgeColour erp-highlight" *ngIf="data.currentUser">Welcome back to ServiceFuzz, {{data.currentUser.name}}!</span>
           </h1>
-          <p class="hero-intro">
+          <p class="hero-intro" *ngIf="!data.currentUser">
             Run your entire service business in one place: online bookings, website builder, invoicing, payments, inventory, and staff scheduling. Built for growing service companies that need reliable operations, better customer experiences, and SEO‑friendly websites.
+          </p>
+          <p class="hero-intro" *ngIf="data.currentUser">
+            Ready to manage your business? Access your dashboard to view analytics, manage bookings, track payments, and grow your service business with powerful insights.
           </p>
           
           <!-- Featured Services - Eye-catching -->
@@ -50,16 +54,28 @@
               <span>✨Mobile App</span>
             </div>
           </div>
+          
+          <!-- Dashboard Button for Signed In Users -->
+          <div class="dashboard-section" *ngIf="data.currentUser">
+            <p-button 
+              label="Go to Dashboard" 
+              icon="pi pi-arrow-right"
+              styleClass="p-button-primary p-button-lg dashboard-btn"
+              (onClick)="goToDashboard()">
+            </p-button>
+          </div>
+
+          <p class="hero-subtitle">
+            ServiceFuzz automates scheduling, payments, and website updates so you can focus on delivering exceptional service.
+          </p>
+
           <p-button (click)="showDialog()" label="Watch Demo" />
 <p-dialog header="ServiceFuzz Demo" [modal]="true" [(visible)]="Videovisible" [style]="{ width: '50rem' }" [breakpoints]="{ '1199px': '75vw', '575px': '90vw' }" [maximizable]="true">
     <iframe width="560" height="315" src="https://www.youtube.com/watch?v=dQw4w9WgXcQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 </p-dialog>
-          <p class="hero-subtitle">
-            ServiceFuzz automates scheduling, payments, and website updates so you can focus on delivering exceptional service.
-          </p>
         
-        <!-- Single Clear CTA -->
-        <div class="hero-action">
+        <!-- Single Clear CTA for Non-Signed In Users -->
+        <div class="hero-action" *ngIf="!data.currentUser">
           <p-button 
             label="Start Free Trial" 
             icon="pi pi-rocket"

@@ -8,7 +8,7 @@ import { BusinessBasicInfo } from '../models/businessbasicinfo';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 import { Subscription } from 'rxjs';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../services/toast.service';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -55,7 +55,7 @@ export class ManagebusinessesComponent implements OnInit, OnDestroy {
     private manageBusinessesService: ManageBusinessesService,
     private router: Router,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar,
+    private toastService: ToastService,
     private formBuilder: FormBuilder,
     private domSanitizer: DomSanitizer
   ) {

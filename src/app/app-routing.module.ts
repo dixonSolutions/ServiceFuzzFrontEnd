@@ -6,7 +6,6 @@ import { BusinessComponent } from './business/business.component';
 import { ManagebusinessesComponent } from './managebusinesses/managebusinesses.component';
 import { BusinessDetailsComponent } from './business-details/business-details.component';
 import { BusinessSettingsComponent } from './business-settings/business-settings.component';
-import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
 import { BusinessEditComponent } from './business-edit/business-edit.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { Settings } from './settings/settings';
@@ -30,8 +29,7 @@ const routes: Routes = [
   { path: 'business/edit/:id', component: BusinessEditComponent },
   { path: 'business/details', component: BusinessDetailsComponent },
   { path: 'business/settings', component: BusinessSettingsComponent },
-  { path: 'chat', component: ChatWithAiAboutServiceFuzzComponent },
-  {path:'analytics', component: AnalyticsComponent},
+    {path:'analytics', component: AnalyticsComponent},
   {path:'business/forms', component: OrderForms},
   {path:'business/forms/create', component: FormBuilderComponent},
   {path:'business/forms/all', component: OrderForms},

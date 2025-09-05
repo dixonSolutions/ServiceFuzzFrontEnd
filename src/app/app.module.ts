@@ -90,7 +90,6 @@ import { BusinessComponent } from './business/business.component';
 import { ManagebusinessesComponent } from './managebusinesses/managebusinesses.component';
 import { BusinessDetailsComponent } from './business-details/business-details.component';
 import { BusinessSettingsComponent } from './business-settings/business-settings.component';
-import { ChatWithAiAboutServiceFuzzComponent } from './chat-with-ai-about-service-fuzz/chat-with-ai-about-service-fuzz.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { BusinessEditComponent } from './business-edit/business-edit.component';
 
@@ -126,7 +125,6 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     ManagebusinessesComponent,
     BusinessDetailsComponent,
     BusinessSettingsComponent,
-    ChatWithAiAboutServiceFuzzComponent,
     AnalyticsComponent,
     Settings,
     WebsiteCreatorComponent,

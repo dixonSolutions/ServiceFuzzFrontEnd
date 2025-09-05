@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
 import { map, Observable, BehaviorSubject, of } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from './toast.service';
 import { CookieService } from 'ngx-cookie-service';
 import { BusinessBasicInfo } from '../models/businessbasicinfo';
 import confetti from 'canvas-confetti';
@@ -54,7 +54,7 @@ export class DataSvrService {
   // Temporary business details storage
   private _tempBusinessDetails = new BehaviorSubject<BusinessRegistrationDto | null>(null);
 
-  constructor(private http: HttpClient, private snackBar: MatSnackBar, private cookieService: CookieService) {
+  constructor(private http: HttpClient, private toastService: ToastService, private cookieService: CookieService) {
     if (DataSvrService.instance) {
       console.warn('Attempting to create a second instance of DataSvrService');
       return DataSvrService.instance;
@@ -1251,9 +1251,8 @@ Make sure to:
   }
 
   openSnackBar(message: string, action: string, duration: number) {
-    this.snackBar.open(message, action, {
-      duration: duration,
-    });
+    // Use the new toast service for backward compatibility
+    this.toastService.openSnackBar(message, action, duration);
   }
 
   clearState(): void {

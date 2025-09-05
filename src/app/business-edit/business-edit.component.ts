@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../services/toast.service';
 import { Subscription } from 'rxjs';
 import { DataSvrService } from '../services/data-svr.service';
 import { ManageBusinessesService } from '../services/manage-businesses.service';
@@ -87,7 +87,7 @@ export class BusinessEditComponent implements OnInit, OnDestroy {
     private dataSvr: DataSvrService,
     private manageBusinessesService: ManageBusinessesService,
     private registerBusinessService: RegisterBusinessService,
-    private snackBar: MatSnackBar
+    private toastService: ToastService
   ) {
     this.businessForm = this.createBusinessForm();
     this.scheduleForm = this.createScheduleForm();
@@ -109,7 +109,7 @@ export class BusinessEditComponent implements OnInit, OnDestroy {
     const businessId = this.route.snapshot.paramMap.get('id');
     
     if (!businessId) {
-      this.snackBar.open('Business ID not found', 'Close', { duration: 3000 });
+      this.toastService.error('Business ID not found', 'Error');
       this.router.navigate(['/business/manage']);
       return;
     }
@@ -139,14 +139,14 @@ export class BusinessEditComponent implements OnInit, OnDestroy {
           this.business = business;
           this.populateForm(business);
         } else {
-          this.snackBar.open('Business not found', 'Close', { duration: 3000 });
+          this.toastService.error('Business not found', 'Error');
           this.router.navigate(['/business/manage']);
         }
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading business:', error);
-        this.snackBar.open('Error loading business', 'Close', { duration: 3000 });
+        this.toastService.error('Error loading business', 'Error');
         this.router.navigate(['/business/manage']);
         this.isLoading = false;
       }
@@ -287,7 +287,7 @@ export class BusinessEditComponent implements OnInit, OnDestroy {
    */
   saveBusiness(): void {
     if (this.businessForm.invalid || !this.business) {
-      this.snackBar.open('Please fill in all required fields', 'Close', { duration: 3000 });
+      this.toastService.warning('Please fill in all required fields', 'Validation Error');
       return;
     }
 
@@ -323,7 +323,7 @@ export class BusinessEditComponent implements OnInit, OnDestroy {
           this.manageBusinessesService.setBusinessesInstance(businesses);
         }
         
-        this.snackBar.open('Business updated successfully', 'Close', { duration: 3000 });
+        this.toastService.success('Business updated successfully', 'Success');
         this.isUpdating = false;
         
         // Navigate back to manage businesses
@@ -334,11 +334,11 @@ export class BusinessEditComponent implements OnInit, OnDestroy {
         this.isUpdating = false;
         
         if (error.status === 401) {
-          this.snackBar.open('Authentication failed. Please sign in again.', 'Close', { duration: 5000 });
+          this.toastService.error('Authentication failed. Please sign in again.', 'Authentication Error');
         } else if (error.status === 403) {
-          this.snackBar.open('You don\'t have permission to update this business.', 'Close', { duration: 5000 });
+          this.toastService.error('You don\'t have permission to update this business.', 'Permission Denied');
         } else {
-          this.snackBar.open('Error updating business. Please try again.', 'Close', { duration: 3000 });
+          this.toastService.error('Error updating business. Please try again.', 'Update Error');
         }
       }
     });
@@ -580,7 +580,7 @@ export class BusinessEditComponent implements OnInit, OnDestroy {
   // Save schedule
   saveSchedule(): void {
     if (this.scheduleForm.invalid || !this.business) {
-      this.snackBar.open('Please fill in all required schedule fields', 'Close', { duration: 3000 });
+      this.toastService.warning('Please fill in all required schedule fields', 'Validation Error');
       return;
     }
 
@@ -589,7 +589,7 @@ export class BusinessEditComponent implements OnInit, OnDestroy {
     const businessId = routeBusinessId || this.business.basicInfo.businessID;
     
     if (!businessId) {
-      this.snackBar.open('Business ID not found', 'Close', { duration: 3000 });
+      this.toastService.error('Business ID not found', 'Error');
       return;
     }
 
@@ -638,13 +638,13 @@ export class BusinessEditComponent implements OnInit, OnDestroy {
     this.registerBusinessService.registerBusinessSchedule(businessId, schedule).subscribe({
       next: (response) => {
         console.log('Schedule saved successfully:', response);
-        this.snackBar.open(response.message || 'Schedule saved successfully!', 'Close', { duration: 3000 });
+        this.toastService.success(response.message || 'Schedule saved successfully!', 'Success');
         this.businessSchedule = schedule;
         this.isUpdating = false;
       },
       error: (error) => {
         console.error('Error saving schedule:', error);
-        this.snackBar.open(error.message || 'Error saving schedule', 'Close', { duration: 3000 });
+        this.toastService.error(error.message || 'Error saving schedule', 'Save Error');
         this.isUpdating = false;
       }
     });

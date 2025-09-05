@@ -303,19 +303,58 @@
               </button>
               <button 
                 class="overlay-btn download-btn"
-                (click)="onDownloadImage(image); $event.stopPropagation()"
+                (click)="downloadImage(image); $event.stopPropagation()"
                 title="Download image">
                 <i class="pi pi-download"></i>
               </button>
+              <div class="image-actions">
+                <button class="overlay-btn edit-btn" title="Edit description" (click)="$event.stopPropagation(); editImageDescription(image)">
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button class="overlay-btn toggle-btn" [title]="image.isActive ? 'Deactivate image' : 'Activate image'" (click)="$event.stopPropagation(); toggleImageStatus(image)">
+                  <i class="pi" [class.pi-eye]="image.isActive" [class.pi-eye-slash]="!image.isActive"></i>
+                </button>
+                <button class="overlay-btn delete-btn" title="Delete image" (click)="$event.stopPropagation(); deleteImage(image)">
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
             </div>
           </div>
           <div class="image-info">
             <div class="image-name" [title]="image.fileName">{{ image.fileName }}</div>
             <div class="image-meta">
               <span class="file-size">{{ formatFileSize(image.fileSize) }}</span>
-              <span class="upload-date">{{ formatUploadDate(image.uploadedAt) }}</span>
+              <span class="status-indicator" [class.active]="image.isActive" [class.inactive]="!image.isActive">
+                {{ image.isActive ? 'Active' : 'Inactive' }}
+              </span>
             </div>
-            <div class="image-description" *ngIf="image.description">{{ image.description }}</div>
+            <div class="image-description" *ngIf="image.description" [title]="image.description">
+              {{ image.description }}
+            </div>
+            
+            <!-- Always Visible Action Buttons -->
+            <div class="image-actions-bar">
+              <button class="action-btn primary-btn" title="EDIT DESCRIPTION" (click)="$event.stopPropagation(); editImageDescription(image)">
+                <i class="pi pi-pencil"></i>
+                <span>EDIT</span>
+              </button>
+              <button class="action-btn danger-btn" title="DELETE IMAGE" (click)="$event.stopPropagation(); deleteImage(image)">
+                <i class="pi pi-trash"></i>
+                <span>DELETE</span>
+              </button>
+            </div>
+            
+            <!-- Secondary Actions -->
+            <div class="image-secondary-actions">
+              <button class="secondary-btn" [title]="image.isActive ? 'Deactivate' : 'Activate'" (click)="$event.stopPropagation(); toggleImageStatus(image)">
+                <i class="pi" [class.pi-eye]="image.isActive" [class.pi-eye-slash]="!image.isActive"></i>
+                {{ image.isActive ? 'Deactivate' : 'Activate' }}
+              </button>
+              <button class="secondary-btn" title="Download" (click)="$event.stopPropagation(); downloadImage(image)">
+                <i class="pi pi-download"></i>
+                Download
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -450,19 +489,64 @@
         <div 
           *ngFor="let image of businessImages"
           class="image-item selectable"
-          (click)="selectImageFromAssetBrowser(image)">
+          (click)="selectImageFromAssetBrowser(image)"
+          (contextmenu)="showImageContextMenu($event, image)">
           <div class="image-preview">
             <img [src]="getDisplayableImageUrl(image)" [alt]="image.fileName">
             <div class="image-overlay">
-              <button class="overlay-btn select-btn" title="Select this image">
+              <button class="overlay-btn select-btn" title="Select this image" (click)="$event.stopPropagation(); selectImageFromAssetBrowser(image)">
                 <i class="pi pi-check"></i>
               </button>
+              <div class="image-actions">
+                <button class="overlay-btn edit-btn" title="Edit description" (click)="$event.stopPropagation(); editImageDescription(image)">
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button class="overlay-btn toggle-btn" [title]="image.isActive ? 'Deactivate image' : 'Activate image'" (click)="$event.stopPropagation(); toggleImageStatus(image)">
+                  <i class="pi" [class.pi-eye]="image.isActive" [class.pi-eye-slash]="!image.isActive"></i>
+                </button>
+                <button class="overlay-btn download-btn" title="Download image" (click)="$event.stopPropagation(); downloadImage(image)">
+                  <i class="pi pi-download"></i>
+                </button>
+                <button class="overlay-btn delete-btn" title="Delete image" (click)="$event.stopPropagation(); deleteImage(image)">
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
             </div>
           </div>
           <div class="image-info">
             <div class="image-name" [title]="image.fileName">{{ image.fileName }}</div>
             <div class="image-meta">
               <span class="file-size">{{ formatFileSize(image.fileSize) }}</span>
+              <span class="status-indicator" [class.active]="image.isActive" [class.inactive]="!image.isActive">
+                {{ image.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+            <div class="image-description" *ngIf="image.description" [title]="image.description">
+              {{ image.description }}
+            </div>
+            
+            <!-- Always Visible Action Buttons -->
+            <div class="image-actions-bar">
+              <button class="action-btn primary-btn" title="EDIT DESCRIPTION" (click)="$event.stopPropagation(); editImageDescription(image)">
+                <i class="pi pi-pencil"></i>
+                <span>EDIT</span>
+              </button>
+              <button class="action-btn danger-btn" title="DELETE IMAGE" (click)="$event.stopPropagation(); deleteImage(image)">
+                <i class="pi pi-trash"></i>
+                <span>DELETE</span>
+              </button>
+            </div>
+            
+            <!-- Secondary Actions -->
+            <div class="image-secondary-actions">
+              <button class="secondary-btn" [title]="image.isActive ? 'Deactivate' : 'Activate'" (click)="$event.stopPropagation(); toggleImageStatus(image)">
+                <i class="pi" [class.pi-eye]="image.isActive" [class.pi-eye-slash]="!image.isActive"></i>
+                {{ image.isActive ? 'Deactivate' : 'Activate' }}
+              </button>
+              <button class="secondary-btn" title="Download" (click)="$event.stopPropagation(); downloadImage(image)">
+                <i class="pi pi-download"></i>
+                Download
+              </button>
             </div>
           </div>
         </div>
