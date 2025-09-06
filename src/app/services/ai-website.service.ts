@@ -35,6 +35,64 @@ export class AIWebsiteService {
       );
   }
 
+  // ===================== NEW ENHANCED AI METHODS =====================
+
+  /**
+   * AI-powered component enhancement
+   * @param workspaceId The workspace ID
+   * @param componentIds Array of component IDs to enhance
+   * @param userPrompt User's enhancement prompt
+   * @returns Observable of enhanced components
+   */
+  enhanceComponents(workspaceId: string, componentIds: string[], userPrompt: string): Observable<any> {
+    const request = {
+      workspaceId,
+      componentIds,
+      userPrompt
+    };
+
+    return this.http.post<any>(`${this.baseUrl}/enhance-components`, request)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Get AI component suggestions for workspace
+   * @param workspaceId The workspace ID
+   * @returns Observable of component suggestions
+   */
+  getComponentSuggestions(workspaceId: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/component-suggestions/${workspaceId}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Smart layout recommendations
+   * @param workspaceId The workspace ID
+   * @returns Observable of layout suggestions
+   */
+  getLayoutSuggestions(workspaceId: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/layout-suggestions/${workspaceId}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Generate SEO-optimized content
+   * @param businessId The business ID
+   * @param pageType The type of page (home, about, contact, etc.)
+   * @param keywords Array of SEO keywords
+   * @returns Observable of SEO content
+   */
+  generateSEOContent(businessId: string, pageType: string, keywords: string[]): Observable<any> {
+    const request = {
+      businessId,
+      pageType,
+      keywords
+    };
+
+    return this.http.post<any>(`${this.baseUrl}/seo-content`, request)
+      .pipe(catchError(this.handleError));
+  }
+
   /**
    * Get website context for AI generation preview
    * @param businessId The business ID

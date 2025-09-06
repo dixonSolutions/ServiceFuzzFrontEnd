@@ -45,6 +45,21 @@ const routes: Routes = [
   // Edit workspace: /website-creator/{businessId}/{workspaceId}
   { path: 'website-creator/:businessId/:workspaceId', component: WebsiteCreatorComponent },
   { path: 'website-creator', component: WebsiteCreatorComponent },
+  
+  // NEW ENHANCED WEBSITE BUILDER ROUTES
+  {
+    path: 'workspace/:id/builder',
+    component: WebsiteCreatorComponent,
+    children: [
+      { path: '', redirectTo: 'pages', pathMatch: 'full' },
+      { path: 'pages', component: WebsiteCreatorComponent },
+      { path: 'pages/:pageId/edit', component: WebsiteCreatorComponent },
+      { path: 'files', component: WebsiteCreatorComponent },
+      { path: 'assets', component: WebsiteCreatorComponent },
+      { path: 'domains', component: WebsiteCreatorComponent },
+      { path: 'settings', component: WebsiteCreatorComponent }
+    ]
+  },
   { path: 'staff/business/:businessId', component: Staffmanage },
   { path: 'privacy-policy', component: PrivacyPolicy },
   { path: 'terms-of-use', component: TermsOfUse },

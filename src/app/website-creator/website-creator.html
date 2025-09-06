@@ -45,6 +45,36 @@
     </div>
     
     <div class="toolbar-right">
+      <!-- NEW FILE-BASED FEATURES -->
+      <button class="toolbar-btn" title="Website Files Manager" (click)="openFileManager()">
+        <i class="pi pi-folder"></i>
+        Files
+      </button>
+      <button class="toolbar-btn" title="Asset Manager" (click)="openAssetManager()">
+        <i class="pi pi-images"></i>
+        Assets
+      </button>
+      <label class="toolbar-btn" title="Upload Asset" style="cursor: pointer;">
+        <i class="pi pi-upload"></i>
+        Upload
+        <input type="file" 
+               accept="image/*,.woff,.woff2,.ttf,.otf" 
+               (change)="uploadAsset($event)" 
+               style="display: none;">
+      </label>
+      <button class="toolbar-btn" title="Live Preview" (click)="generateLivePreview()">
+        <i class="pi pi-desktop"></i>
+        Live Preview
+      </button>
+      <button class="toolbar-btn" title="Bulk Save All" (click)="saveAllChanges()">
+        <i class="pi pi-save"></i>
+        Save All
+      </button>
+      <button class="toolbar-btn" title="AI Component Suggestions" (click)="getAIComponentSuggestions()" [disabled]="isAiGenerating">
+        <i [class]="isAiGenerating ? 'pi pi-spin pi-spinner' : 'pi pi-sparkles'"></i>
+        AI Suggest
+      </button>
+      
       <button class="toolbar-btn" title="Undo">
         <i class="pi pi-undo"></i>
         Undo

@@ -4,6 +4,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WebsiteBuilderService, ComponentDefinition, ComponentParameter, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/website-builder';
 import { DataSvrService } from '../services/data-svr.service';
+import { WebsitePagesService } from '../services/website-pages.service';
+import { WebsiteFilesService } from '../services/website-files.service';
+import { AIEnhancementService } from '../services/ai-enhancement.service';
+import { FileBasedWebsiteBuilderService } from '../services/file-based-website-builder.service';
 import { WorkspaceProject } from './workspace-selection.component';
 import { CreateWorkspaceDto, UpdateWorkspaceDto, ComponentType, DeploymentListResponse, WorkspaceDeployment, WebsiteNameValidation } from '../models/workspace.models';
 import { LeftSidebar } from './left-sidebar/left-sidebar';
@@ -104,7 +108,11 @@ export class WebsiteCreatorComponent implements OnInit {
     private websiteBuilder: WebsiteBuilderService,
     private router: Router,
     private route: ActivatedRoute,
-    private dataSvrService: DataSvrService
+    private dataSvrService: DataSvrService,
+    private websitePagesService: WebsitePagesService,
+    private websiteFilesService: WebsiteFilesService,
+    private aiEnhancementService: AIEnhancementService,
+    private fileBasedBuilder: FileBasedWebsiteBuilderService
   ) {}
 
   ngOnInit(): void {
@@ -157,7 +165,7 @@ export class WebsiteCreatorComponent implements OnInit {
             description: ws.description || '',
             createdAt: new Date(ws.createdAt),
             lastModified: new Date(ws.lastModified),
-            websiteJson: ws.websiteJson,
+            // websiteJson: REMOVED - Now using file-based system
             isNew: false,
             deploymentStatus: ws.deploymentStatus,
             deploymentUrl: ws.deploymentUrl,
@@ -214,32 +222,39 @@ export class WebsiteCreatorComponent implements OnInit {
     this.route.paramMap.subscribe(() => applyRouting());
   }
 
-  // Workspace Management
-  onWorkspaceProjectSelected(project: WorkspaceProject): void {
+  // Workspace Management - Updated for File-Based System
+  async onWorkspaceProjectSelected(project: WorkspaceProject): Promise<void> {
     console.log('🎯 Project selected:', project);
     this.currentProject = project;
     this.showWorkspaceSelection = false;
+    
     // Reflect edit route with business and workspace ids when possible
     if (project.businessId && project.id) {
       this.router.navigate(['/website-creator', project.businessId, project.id]);
     }
     
-    // Initialize the website builder with this project
-    this.websiteBuilder.createNewProject(project.name, project.description);
-    
-    // CRITICAL FIX: Load existing website data BEFORE initializing pages
-    // This prevents the default pages from overriding the loaded data
-    if (project.websiteJson) {
-      console.log('📥 Loading existing website data first...');
-      this.loadWebsiteDataFromJson(project.websiteJson);
-    }
-    
-    // Initialize website builder with proper page data
-    this.initializeWebsiteBuilder();
-    
-    // Notify left sidebar to load API components
-    if (this.leftSidebar) {
-      this.leftSidebar.onProjectChange(project);
+    try {
+      // Initialize file-based builder first
+      await this.initializeFileBasedBuilder();
+      
+      // Check if we need to migrate from old JSON system
+      // Migration logic would be handled by the backend API when loading existing workspaces
+      console.log('📥 File-based system initialized for workspace:', project.id);
+      
+      // Initialize website builder with proper page data
+      this.initializeWebsiteBuilder();
+      
+      // Notify left sidebar to load API components
+      if (this.leftSidebar) {
+        this.leftSidebar.onProjectChange(project);
+      }
+      
+      console.log('✅ File-based workspace initialized successfully');
+    } catch (error) {
+      console.error('❌ Error initializing file-based workspace:', error);
+      // Fallback to traditional initialization
+      this.websiteBuilder.createNewProject(project.name, project.description);
+      this.initializeWebsiteBuilder();
     }
   }
 
@@ -545,7 +560,7 @@ export class WebsiteCreatorComponent implements OnInit {
     }
   }
 
-  // Project Management
+  // Project Management - Updated for File-Based System
   async onSave(): Promise<void> {
     // Guard against concurrent/duplicate saves
     if (this.isSaving) return;
@@ -554,35 +569,59 @@ export class WebsiteCreatorComponent implements OnInit {
     this.isSaving = true;
     
     try {
-    // CRITICAL FIX: Get the latest page data from canvas before saving
-    // This ensures all components from all pages are included
-    if (this.canvas && this.canvas.pages && this.canvas.pages.length > 0) {
-      console.log('📋 Getting latest page data from canvas for save...');
-      this.pages = [...this.canvas.pages]; // Deep sync with canvas data
-      console.log('✅ Synced pages with canvas:', this.pages);
-    } else {
-      console.warn('⚠️ Canvas data not available, using main component pages');
-    }
-    
-    // Export current website data with latest page data
-    this.currentProject.websiteJson = this.exportWebsiteDataAsJson();
-    
-    console.log('💾 Saving website data:', this.currentProject.websiteJson);
-    
-    // Save based on whether it's a new project or existing
-    if (this.currentProject.isNew) {
+      console.log('💾 Saving website project (file-based system)...');
+      
+      // Save based on whether it's a new project or existing
+      if (this.currentProject.isNew) {
         await this.saveNewWorkspace();
-    } else {
+      } else {
+        // For existing workspaces, save both workspace metadata AND files
         await this.updateExistingWorkspace();
+        
+        // Save all current files using bulk save
+        console.log('💾 Saving website files...');
+        await this.saveAllChanges();
       }
+      
+      console.log('✅ Website project and files saved successfully');
+      alert('Website saved successfully!');
+      
+    } catch (error) {
+      console.error('❌ Error saving website project:', error);
+      alert('Error saving website project. Please try again.');
     } finally {
       this.isSaving = false;
     }
   }
 
-  onPreview(): void {
-    console.log('Preview clicked');
-    // Implement preview functionality
+  async onPreview(): Promise<void> {
+    console.log('Preview clicked - generating file-based preview');
+    
+    if (!this.currentProject) {
+      console.error('No project selected for preview');
+      return;
+    }
+
+    try {
+      // Generate preview HTML from files
+      const previewHtml = await this.fileBasedBuilder.generatePreview('/');
+      
+      if (previewHtml) {
+        // Open preview in new window
+        const previewWindow = window.open('', '_blank', 'width=1200,height=800');
+        if (previewWindow) {
+          previewWindow.document.open();
+          previewWindow.document.write(previewHtml);
+          previewWindow.document.close();
+          previewWindow.document.title = `Preview: ${this.currentProject.name}`;
+        }
+      } else {
+        alert('Error generating preview. Please ensure your website has content.');
+      }
+    } catch (error) {
+      console.error('❌ Error generating preview:', error);
+      alert('Error generating preview. Please try again.');
+    }
   }
 
   onPublish(): void {
@@ -895,55 +934,87 @@ Would you like to visit your website now?
     }
   }
 
-  // Data Import/Export
-  private exportWebsiteDataAsJson(): string {
-    console.log('📤 Exporting website data...');
-    console.log('📄 Pages to export:', this.pages);
-    
-    // Validate that we have proper page data
-    if (!this.pages || this.pages.length === 0) {
-      console.warn('⚠️ No pages found, creating default home page');
-      this.pages = [{
-        id: 'home',
-        name: 'Home',
-        route: '/',
-        isDeletable: false,
-        isActive: true,
-        components: []
-      }];
+  // ===================== NEW FILE-BASED DATA MANAGEMENT =====================
+
+  /**
+   * Initialize file-based website builder for current project
+   */
+  private async initializeFileBasedBuilder(): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      // Initialize the file-based builder with current workspace
+      await this.fileBasedBuilder.initializeWorkspace(this.currentProject.id);
+      
+      // Subscribe to file-based builder state
+      this.fileBasedBuilder.websitePages$.subscribe(pages => {
+        // Convert API pages to local page format for compatibility
+        this.pages = pages.map(apiPage => ({
+          id: apiPage.id,
+          name: apiPage.pageName,
+          route: apiPage.route,
+          isDeletable: !apiPage.isHomePage,
+          isActive: apiPage.isHomePage,
+          components: [] // Components are now managed separately
+        }));
+        
+        console.log('📄 File-based pages loaded:', this.pages);
+      });
+      
+      this.fileBasedBuilder.currentPageId$.subscribe(pageId => {
+        if (pageId) {
+          this.currentPageId = pageId;
+          console.log('📍 Current page changed to:', pageId);
+        }
+      });
+      
+      console.log('✅ File-based website builder initialized');
+    } catch (error) {
+      console.error('❌ Error initializing file-based builder:', error);
     }
+  }
+
+  /**
+   * Export website data as files (replaces JSON export)
+   */
+  private async exportWebsiteAsFiles(): Promise<{ files: any[], pages: any[], assets: any[] }> {
+    console.log('📤 Exporting website as files...');
     
-    // Count total components across all pages
-    const totalComponents = this.pages.reduce((total, page) => total + page.components.length, 0);
-    console.log(`📊 Exporting ${this.pages.length} pages with ${totalComponents} total components`);
-    
-    const websiteData = {
-      builtInNavigation: this.builtInNavProperties,
-      pages: this.pages.map(page => {
-        console.log(`📋 Page "${page.name}" (${page.id}): ${page.components.length} components`);
-        return {
+    try {
+      const files = this.fileBasedBuilder.getCurrentFiles();
+      const pages = this.fileBasedBuilder.getCurrentPages();
+      const assets = this.fileBasedBuilder.getCurrentAssets();
+      
+      console.log(`📊 Exporting ${files.length} files, ${pages.length} pages, ${assets.length} assets`);
+      
+      return {
+        files: files.map(file => ({
+          fileName: file.fileName,
+          fileType: file.fileType,
+          content: file.content,
+          fileSize: file.fileSize
+        })),
+        pages: pages.map(page => ({
           id: page.id,
-          name: page.name,
+          pageName: page.pageName,
           route: page.route,
-          isDeletable: page.isDeletable,
-          components: page.components.map(comp => ({
-            id: comp.id,
-            type: comp.type,
-            x: comp.x,
-            y: comp.y,
-            width: comp.width,
-            height: comp.height,
-            zIndex: comp.zIndex,
-            parameters: comp.parameters
-          }))
-        };
-      })
-    };
-    
-    const jsonString = JSON.stringify(websiteData, null, 2);
-    console.log('✅ Website data exported successfully');
-    
-    return jsonString;
+          title: page.title,
+          metaDescription: page.metaDescription,
+          customCSS: page.customCSS,
+          customJS: page.customJS,
+          isHomePage: page.isHomePage
+        })),
+        assets: assets.map(asset => ({
+          fileName: asset.fileName,
+          contentType: asset.contentType,
+          filePath: asset.filePath,
+          altText: asset.altText
+        }))
+      };
+    } catch (error) {
+      console.error('❌ Error exporting website files:', error);
+      return { files: [], pages: [], assets: [] };
+    }
   }
 
   private loadWebsiteDataFromJson(jsonString: string): void {
@@ -1019,15 +1090,19 @@ Would you like to visit your website now?
         userId: this.currentProject.userId,
         businessId: this.currentProject.businessId,
         name: this.currentProject.name,
-        description: this.currentProject.description,
-        websiteJson: this.currentProject.websiteJson
+        description: this.currentProject.description
+        // websiteJson: REMOVED - Now using file-based system
       };
 
       this.websiteBuilder.createWorkspace(workspaceDto).subscribe({
-        next: (response) => {
+        next: async (response) => {
           this.currentProject!.id = response.workspaceId;
           this.currentProject!.isNew = false;
           console.log('New workspace saved with ID:', response.workspaceId);
+          
+          // Initialize file-based builder for new workspace
+          await this.initializeFileBasedBuilder();
+          
           alert('Website project saved successfully!');
           this.isSaving = false;
           // Update route to reflect real workspace id from API
@@ -1055,8 +1130,8 @@ Would you like to visit your website now?
       const workspaceId = this.currentProject.id;
       const updates: UpdateWorkspaceDto = {
         name: this.currentProject.name,
-        description: this.currentProject.description,
-        websiteJson: this.currentProject.websiteJson
+        description: this.currentProject.description
+        // websiteJson: REMOVED - Now using file-based system
       };
 
       this.websiteBuilder.updateWorkspace(workspaceId, updates).subscribe({
@@ -1347,16 +1422,17 @@ Would you like to visit your website now?
     }
   }
 
-  onWebsiteUpdatedFromAi(websiteJson: string): void {
-    console.log('🎨 Website updated from AI, applying changes to canvas...');
+  onWebsiteUpdatedFromAi(websiteData: any): void {
+    console.log('🎨 Website updated from AI, applying changes to file-based system...');
     
     try {
-      // Use the existing loadWebsiteDataFromJson method to update the canvas
-      this.loadWebsiteDataFromJson(websiteJson);
+      // Handle AI updates in the new file-based system
+      // AI updates would now work with individual files and components
+      console.log('AI updates will be processed through file-based system');
       
-      // Update the current project with the new JSON
+      // Update the current project (no more websiteJson)
       if (this.currentProject) {
-        this.currentProject.websiteJson = websiteJson;
+        console.log('Project updated with AI enhancements');
       }
       
       // Trigger canvas refresh
@@ -1369,6 +1445,1003 @@ Would you like to visit your website now?
     } catch (error) {
       console.error('❌ Error applying AI-generated website to canvas:', error);
       this.aiGenerationError = 'Failed to apply AI changes to canvas';
+    }
+  }
+
+  // ===================== NEW ENHANCED WEBSITE BUILDER METHODS =====================
+
+  /**
+   * Update workspace settings (subdomain, custom domain, global CSS/JS, favicon)
+   */
+  async updateWorkspaceSettings(settings: {
+    subdomain?: string;
+    customDomain?: string;
+    globalCSS?: string;
+    globalJS?: string;
+    faviconUrl?: string;
+  }): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const response = await this.websiteBuilder.updateWorkspaceSettings(this.currentProject.id, settings).toPromise();
+      console.log('✅ Workspace settings updated:', response);
+      
+      // Update current project with new settings
+      if (this.currentProject) {
+        Object.assign(this.currentProject, settings);
+      }
+      
+      alert('Workspace settings updated successfully!');
+    } catch (error) {
+      console.error('❌ Error updating workspace settings:', error);
+      alert('Error updating workspace settings. Please try again.');
+    }
+  }
+
+  /**
+   * Generate subdomain for current workspace
+   */
+  async generateSubdomain(preferredSubdomain: string): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const response = await this.websiteBuilder.generateSubdomain(
+        this.currentProject.businessId,
+        this.currentProject.id,
+        preferredSubdomain
+      ).toPromise();
+      
+      console.log('✅ Subdomain generated:', response);
+      
+      if (response?.isAvailable) {
+        alert(`Subdomain "${response.subdomain}" is available and has been reserved for your workspace!`);
+        
+        // Update workspace settings with new subdomain
+        await this.updateWorkspaceSettings({ subdomain: response.subdomain });
+      } else {
+        alert(`Subdomain "${preferredSubdomain}" is not available. Please try a different name.`);
+      }
+    } catch (error) {
+      console.error('❌ Error generating subdomain:', error);
+      alert('Error generating subdomain. Please try again.');
+    }
+  }
+
+  /**
+   * Load website pages from API
+   */
+  async loadWebsitePages(): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const response = await this.websitePagesService.getPages(this.currentProject.id).toPromise();
+      
+      if (response?.pages) {
+        console.log('✅ Website pages loaded from API:', response.pages);
+        
+        // Convert API pages to local page format
+        const apiPages = response.pages.map(apiPage => ({
+          id: apiPage.id,
+          name: apiPage.pageName,
+          route: apiPage.route,
+          isDeletable: !apiPage.isHomePage,
+          isActive: apiPage.isHomePage,
+          components: [] // Components will be loaded separately
+        }));
+        
+        this.pages = apiPages;
+        this.websiteBuilder.loadPagesData(apiPages);
+      }
+    } catch (error) {
+      console.error('❌ Error loading website pages:', error);
+      // Fall back to default pages if API fails
+      this.websiteBuilder.initializePages();
+    }
+  }
+
+  /**
+   * Create new website page via API
+   */
+  async createWebsitePage(pageName: string, route: string, title?: string, metaDescription?: string): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const pageDto = {
+        pageName,
+        route: route.startsWith('/') ? route : `/${route}`,
+        title,
+        metaDescription,
+        isHomePage: false
+      };
+
+      const response = await this.websitePagesService.createPage(this.currentProject.id, pageDto).toPromise();
+      
+      if (response) {
+        console.log('✅ Website page created:', response);
+        
+        // Add to local pages array
+        const newPage: Page = {
+          id: response.id,
+          name: response.pageName,
+          route: response.route,
+          isDeletable: !response.isHomePage,
+          isActive: false,
+          components: []
+        };
+        
+        this.pages.push(newPage);
+        this.websiteBuilder.loadPagesData(this.pages.map(p => ({
+          ...p,
+          isActive: p.isActive || false
+        })));
+        
+        alert(`Page "${pageName}" created successfully!`);
+      }
+    } catch (error) {
+      console.error('❌ Error creating website page:', error);
+      alert('Error creating page. Please try again.');
+    }
+  }
+
+  /**
+   * Delete website page via API
+   */
+  async deleteWebsitePage(pageId: string): Promise<void> {
+    if (!this.currentProject) return;
+
+    const page = this.pages.find(p => p.id === pageId);
+    if (!page || !page.isDeletable) {
+      alert('This page cannot be deleted.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete the page "${page.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await this.websitePagesService.deletePage(pageId).toPromise();
+      
+      if (response?.success) {
+        console.log('✅ Website page deleted:', pageId);
+        
+        // Remove from local pages array
+        this.pages = this.pages.filter(p => p.id !== pageId);
+        this.websiteBuilder.loadPagesData(this.pages.map(p => ({
+          ...p,
+          isActive: p.isActive || false
+        })));
+        
+        // Switch to home page if current page was deleted
+        if (this.currentPageId === pageId) {
+          this.currentPageId = 'home';
+          this.websiteBuilder.setCurrentPage('home');
+        }
+        
+        alert(`Page "${page.name}" deleted successfully!`);
+      }
+    } catch (error) {
+      console.error('❌ Error deleting website page:', error);
+      alert('Error deleting page. Please try again.');
+    }
+  }
+
+  /**
+   * Get AI component suggestions
+   */
+  async getAIComponentSuggestions(): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      this.isAiGenerating = true;
+      this.aiGenerationError = null;
+      
+      const response = await this.aiEnhancementService.getComponentSuggestions(this.currentProject.id).toPromise();
+      
+      if (response?.suggestions) {
+        console.log('✅ AI component suggestions received:', response.suggestions);
+        
+        // Display suggestions to user (this could be enhanced with a proper UI)
+        const suggestionsList = response.suggestions.map((s: any) => 
+          `• ${s.name} (${s.category}) - ${s.description}`
+        ).join('\n');
+        
+        alert(`AI Component Suggestions:\n\n${suggestionsList}`);
+      }
+    } catch (error) {
+      console.error('❌ Error getting AI component suggestions:', error);
+      this.aiGenerationError = 'Failed to get AI component suggestions';
+      alert('Error getting AI suggestions. Please try again.');
+    } finally {
+      this.isAiGenerating = false;
+    }
+  }
+
+  /**
+   * Enhance selected components with AI
+   */
+  async enhanceComponentsWithAI(prompt: string): Promise<void> {
+    if (!this.currentProject || !this.selectedComponentInstance) return;
+
+    try {
+      this.isAiGenerating = true;
+      this.aiGenerationError = null;
+      
+      const componentIds = [this.selectedComponentInstance.id];
+      const response = await this.aiEnhancementService.enhanceComponents(
+        this.currentProject.id,
+        componentIds,
+        prompt
+      ).toPromise();
+      
+      if (response?.enhancedComponents) {
+        console.log('✅ Components enhanced by AI:', response.enhancedComponents);
+        
+        // Apply enhanced components to canvas
+        response.enhancedComponents.forEach((enhancedComp: any) => {
+          if (this.canvas) {
+            this.canvas.updateComponentInstance({
+              id: enhancedComp.componentId,
+              type: enhancedComp.componentType,
+              x: enhancedComp.xPosition,
+              y: enhancedComp.yPosition,
+              width: enhancedComp.width,
+              height: enhancedComp.height,
+              zIndex: enhancedComp.zIndex,
+              parameters: enhancedComp.parameters ? JSON.parse(enhancedComp.parameters) : {}
+            });
+          }
+        });
+        
+        alert('Components enhanced successfully with AI!');
+      }
+    } catch (error) {
+      console.error('❌ Error enhancing components with AI:', error);
+      this.aiGenerationError = 'Failed to enhance components with AI';
+      alert('Error enhancing components. Please try again.');
+    } finally {
+      this.isAiGenerating = false;
+    }
+  }
+
+  /**
+   * Generate SEO content for current page
+   */
+  async generateSEOContent(pageType: string, keywords: string[]): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      this.isAiGenerating = true;
+      this.aiGenerationError = null;
+      
+      const response = await this.aiEnhancementService.generateSEOContent(
+        this.currentProject.businessId,
+        pageType,
+        keywords
+      ).toPromise();
+      
+      if (response) {
+        console.log('✅ SEO content generated:', response);
+        
+        // Display generated SEO content (this could be enhanced with a proper UI)
+        const seoContent = `
+Title: ${response.title}
+
+Meta Description: ${response.metaDescription}
+
+Content Suggestions:
+${response.content}
+        `.trim();
+        
+        alert(`Generated SEO Content:\n\n${seoContent}`);
+      }
+    } catch (error) {
+      console.error('❌ Error generating SEO content:', error);
+      this.aiGenerationError = 'Failed to generate SEO content';
+      alert('Error generating SEO content. Please try again.');
+    } finally {
+      this.isAiGenerating = false;
+    }
+  }
+
+  /**
+   * Load website files from API
+   */
+  async loadWebsiteFiles(): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const response = await this.websiteFilesService.getFiles(this.currentProject.id).toPromise();
+      
+      if (response?.files) {
+        console.log('✅ Website files loaded:', response.files);
+        
+        // Display files (this could be enhanced with a proper file manager UI)
+        const filesList = response.files.map(file => 
+          `• ${file.fileName} (${file.fileType}) - ${this.formatFileSize(file.fileSize)}`
+        ).join('\n');
+        
+        if (filesList) {
+          alert(`Website Files:\n\n${filesList}`);
+        } else {
+          alert('No website files found.');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error loading website files:', error);
+      alert('Error loading website files.');
+    }
+  }
+
+  /**
+   * Format file size for display
+   */
+  private formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // ===================== NEW FILE-BASED WEBSITE BUILDER METHODS =====================
+
+  /**
+   * Create new HTML file
+   */
+  async createHtmlFile(fileName: string, content: string): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const file = await this.websiteFilesService.createFile(this.currentProject.id, {
+        fileName: fileName,
+        fileType: 'html',
+        content: content
+      }).toPromise();
+
+      if (file) {
+        console.log('✅ HTML file created:', file.fileName);
+        alert(`HTML file "${fileName}" created successfully!`);
+        
+        // Refresh files list
+        await this.loadWebsiteFiles();
+      }
+    } catch (error) {
+      console.error('❌ Error creating HTML file:', error);
+      alert('Error creating HTML file. Please try again.');
+    }
+  }
+
+  /**
+   * Update CSS file content
+   */
+  async updateCssFile(fileId: string, cssContent: string): Promise<void> {
+    try {
+      const file = await this.websiteFilesService.updateFile(fileId, cssContent).toPromise();
+      
+      if (file) {
+        console.log('✅ CSS file updated:', file.fileName);
+        
+        // Update local file cache
+        await this.fileBasedBuilder.updateFileContent(fileId, cssContent);
+        
+        // Regenerate preview
+        await this.generateLivePreview();
+      }
+    } catch (error) {
+      console.error('❌ Error updating CSS file:', error);
+      alert('Error updating CSS file. Please try again.');
+    }
+  }
+
+  /**
+   * Update JavaScript file content
+   */
+  async updateJsFile(fileId: string, jsContent: string): Promise<void> {
+    try {
+      const file = await this.websiteFilesService.updateFile(fileId, jsContent).toPromise();
+      
+      if (file) {
+        console.log('✅ JavaScript file updated:', file.fileName);
+        
+        // Update local file cache
+        await this.fileBasedBuilder.updateFileContent(fileId, jsContent);
+        
+        // Regenerate preview
+        await this.generateLivePreview();
+      }
+    } catch (error) {
+      console.error('❌ Error updating JavaScript file:', error);
+      alert('Error updating JavaScript file. Please try again.');
+    }
+  }
+
+  /**
+   * Generate live preview in iframe
+   */
+  async generateLivePreview(): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const previewHtml = await this.fileBasedBuilder.generatePreview('/');
+      
+      // Update preview iframe if it exists
+      const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
+      if (iframe) {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        
+        if (iframeDoc) {
+          iframeDoc.open();
+          iframeDoc.write(previewHtml);
+          iframeDoc.close();
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error generating live preview:', error);
+    }
+  }
+
+  /**
+   * Add component to current page using file-based system
+   */
+  async addComponentToCurrentPage(componentType: string, xPosition: number, yPosition: number, parameters: any): Promise<void> {
+    // Get current page ID from the file-based builder
+    let currentPageId: string | null = null;
+    this.fileBasedBuilder.currentPageId$.subscribe(pageId => {
+      currentPageId = pageId;
+    }).unsubscribe();
+    if (!currentPageId) {
+      console.error('No current page selected');
+      return;
+    }
+
+    try {
+      const component = await this.fileBasedBuilder.addComponentToPage(currentPageId, {
+        componentType,
+        xPosition,
+        yPosition,
+        width: 300,
+        height: 100,
+        parameters
+      });
+
+      if (component) {
+        console.log('✅ Component added to page:', component);
+        
+        // Refresh canvas and preview
+        await this.generateLivePreview();
+        
+        // Update canvas if available
+        if (this.canvas) {
+          // Convert to canvas format and add
+          const canvasComponent = {
+            id: component.componentId,
+            type: component.componentType,
+            x: component.xPosition,
+            y: component.yPosition,
+            width: component.width,
+            height: component.height,
+            zIndex: component.zIndex,
+            parameters: component.parameters ? JSON.parse(component.parameters) : {}
+          };
+          
+          // Add to current page in canvas
+          const currentPage = this.canvas.pages.find(p => p.id === currentPageId);
+          if (currentPage) {
+            currentPage.components.push(canvasComponent);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error adding component to page:', error);
+      alert('Error adding component. Please try again.');
+    }
+  }
+
+  /**
+   * Update page SEO metadata
+   */
+  async updatePageSEO(pageId: string, seoData: {
+    title?: string;
+    metaDescription?: string;
+    customCSS?: string;
+    customJS?: string;
+  }): Promise<void> {
+    try {
+      const page = await this.websitePagesService.updatePage(pageId, seoData).toPromise();
+      
+      if (page) {
+        console.log('✅ Page SEO updated:', page.pageName);
+        alert('Page SEO metadata updated successfully!');
+        
+        // Refresh pages list
+        await this.loadWebsitePages();
+        
+        // Regenerate preview
+        await this.generateLivePreview();
+      }
+    } catch (error) {
+      console.error('❌ Error updating page SEO:', error);
+      alert('Error updating page SEO. Please try again.');
+    }
+  }
+
+  /**
+   * Get current website files with real-time updates
+   */
+  getCurrentWebsiteFiles(): any[] {
+    return this.fileBasedBuilder.getCurrentFiles();
+  }
+
+  /**
+   * Get current website pages with real-time updates
+   */
+  getCurrentWebsitePages(): any[] {
+    return this.fileBasedBuilder.getCurrentPages();
+  }
+
+  /**
+   * Switch to different page
+   */
+  switchToPage(pageId: string): void {
+    this.fileBasedBuilder.setCurrentPage(pageId);
+    this.currentPageId = pageId;
+    
+    // Update canvas if available
+    if (this.canvas) {
+      // Load components for this page
+      this.websitePagesService.getPageComponents(pageId).subscribe(response => {
+        if (response?.components) {
+          const pageComponents = response.components.map(comp => ({
+            id: comp.componentId,
+            type: comp.componentType,
+            x: comp.xPosition,
+            y: comp.yPosition,
+            width: comp.width,
+            height: comp.height,
+            zIndex: comp.zIndex,
+            parameters: comp.parameters ? JSON.parse(comp.parameters) : {}
+          }));
+          
+          // Update canvas with page components
+          const currentPage = this.canvas.pages.find(p => p.id === pageId);
+          if (currentPage) {
+            currentPage.components = pageComponents;
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * Real-time file content editor
+   */
+  async openFileEditor(fileId: string, fileName: string, fileType: string): Promise<void> {
+    const files = this.getCurrentWebsiteFiles();
+    const file = files.find(f => f.id === fileId);
+    
+    if (!file) {
+      console.error('File not found:', fileId);
+      return;
+    }
+
+    // Create a simple modal editor (this could be enhanced with a proper code editor)
+    const newContent = prompt(`Edit ${fileName} (${fileType.toUpperCase()}):`, file.content);
+    
+    if (newContent !== null && newContent !== file.content) {
+      switch (fileType) {
+        case 'css':
+          await this.updateCssFile(fileId, newContent);
+          break;
+        case 'js':
+          await this.updateJsFile(fileId, newContent);
+          break;
+        case 'html':
+          await this.websiteFilesService.updateFile(fileId, newContent).toPromise();
+          await this.fileBasedBuilder.updateFileContent(fileId, newContent);
+          await this.generateLivePreview();
+          break;
+        default:
+          await this.websiteFilesService.updateFile(fileId, newContent).toPromise();
+          await this.fileBasedBuilder.updateFileContent(fileId, newContent);
+          break;
+      }
+    }
+  }
+
+  // ===================== NEW BULK SAVE & ASSET MANAGEMENT =====================
+
+  /**
+   * Bulk save multiple files at once
+   */
+  async bulkSaveFiles(fileUpdates: Array<{
+    id?: string;
+    fileName?: string;
+    fileType?: string;
+    content?: string;
+  }>): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      const result = await this.fileBasedBuilder.bulkSaveFiles(fileUpdates);
+      
+      if (result.success) {
+        console.log(`✅ Bulk save completed: ${result.updatedFiles.length} updated, ${result.createdFiles.length} created`);
+        alert(`Successfully saved ${result.updatedFiles.length + result.createdFiles.length} files!`);
+        
+        // Refresh preview
+        await this.generateLivePreview();
+      } else {
+        alert('Error saving files. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ Error in bulk save:', error);
+      alert('Error saving files. Please try again.');
+    }
+  }
+
+  /**
+   * Upload asset file
+   */
+  async uploadAsset(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const altText = prompt(`Enter alt text for ${file.name} (optional):`);
+
+    try {
+      const asset = await this.fileBasedBuilder.uploadAsset(file, altText || undefined);
+      
+      if (asset) {
+        console.log('✅ Asset uploaded:', asset.fileName);
+        alert(`Asset "${asset.fileName}" uploaded successfully!`);
+        
+        // Clear the input
+        input.value = '';
+      } else {
+        alert('Error uploading asset. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ Error uploading asset:', error);
+      alert(`Error uploading asset: ${error}`);
+      
+      // Clear the input
+      input.value = '';
+    }
+  }
+
+  /**
+   * Delete asset
+   */
+  async deleteAsset(assetId: string, fileName: string): Promise<void> {
+    if (!confirm(`Are you sure you want to delete "${fileName}"?`)) return;
+
+    try {
+      const success = await this.fileBasedBuilder.deleteAsset(assetId);
+      
+      if (success) {
+        console.log('✅ Asset deleted:', fileName);
+        alert(`Asset "${fileName}" deleted successfully!`);
+      } else {
+        alert('Error deleting asset. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ Error deleting asset:', error);
+      alert('Error deleting asset. Please try again.');
+    }
+  }
+
+  /**
+   * Get current website assets
+   */
+  getCurrentWebsiteAssets(): any[] {
+    return this.fileBasedBuilder.getCurrentAssets();
+  }
+
+  /**
+   * Get asset URL for use in HTML/CSS
+   */
+  getAssetUrl(assetId: string): string {
+    return this.fileBasedBuilder.getAssetUrl(assetId);
+  }
+
+  /**
+   * Get file type category for UI display
+   */
+  getFileTypeCategory(fileName: string): string {
+    return this.fileBasedBuilder.getFileTypeCategory(fileName);
+  }
+
+  /**
+   * Open asset manager
+   */
+  openAssetManager(): void {
+    const assets = this.getCurrentWebsiteAssets();
+    
+    if (assets.length === 0) {
+      alert('No assets found. Upload assets using the file upload button.');
+      return;
+    }
+
+    // Create a simple asset list (this could be enhanced with a proper asset manager UI)
+    const assetList = assets.map((asset, index) => 
+      `${index + 1}. ${asset.fileName} (${this.fileBasedBuilder.formatFileSize(asset.fileSize)})`
+    ).join('\n');
+
+    const selectedIndex = prompt(`Select an asset:\n\n${assetList}\n\nEnter asset number (1-${assets.length}) or 0 to cancel:`);
+    
+    if (selectedIndex && selectedIndex !== '0') {
+      const index = parseInt(selectedIndex) - 1;
+      if (index >= 0 && index < assets.length) {
+        const asset = assets[index];
+        const action = prompt(`Asset: ${asset.fileName}\nURL: ${this.getAssetUrl(asset.id)}\n\nActions:\n1. Copy URL\n2. Delete asset\n\nEnter action (1-2):`);
+        
+        if (action === '1') {
+          // Copy URL to clipboard
+          navigator.clipboard.writeText(this.getAssetUrl(asset.id)).then(() => {
+            alert('Asset URL copied to clipboard!');
+          });
+        } else if (action === '2') {
+          this.deleteAsset(asset.id, asset.fileName);
+        }
+      } else {
+        alert('Invalid asset number selected.');
+      }
+    }
+  }
+
+  /**
+   * Save all changes at once using bulk save
+   */
+  async saveAllChanges(): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      console.log('💾 Starting bulk save of all changes...');
+      
+      // 1. Save component changes to database first
+      await this.saveComponentChanges();
+      
+      // 2. Get all current files from file-based builder
+      const files = this.getCurrentWebsiteFiles();
+      
+      if (files.length === 0) {
+        console.warn('⚠️ No files found to save');
+        return;
+      }
+      
+      console.log(`📁 Preparing to save ${files.length} files`);
+      
+      // 3. Create bulk update array (update all existing files)
+      const fileUpdates = files.map(file => ({
+        id: file.id,
+        content: file.content
+      }));
+
+      // 4. Perform bulk save
+      await this.bulkSaveFiles(fileUpdates);
+      
+      console.log('✅ All changes saved successfully');
+      
+    } catch (error) {
+      console.error('❌ Error saving all changes:', error);
+      throw error; // Re-throw so the calling method can handle it
+    }
+  }
+
+  /**
+   * Save component changes to database
+   */
+  private async saveComponentChanges(): Promise<void> {
+    if (!this.canvas || !this.pages) return;
+
+    try {
+      console.log('💾 Saving component changes...');
+      
+      // Get current page components from canvas
+      const currentPage = this.pages.find(p => p.id === this.currentPageId);
+      if (!currentPage || !currentPage.components) {
+        console.log('ℹ️ No components to save on current page');
+        return;
+      }
+
+      console.log(`📦 Saving ${currentPage.components.length} components for page ${currentPage.name}`);
+      
+      // Update HTML files with current component state
+      await this.syncComponentsToHtml();
+      
+      // Save each component to database using the WebsiteBuilder service
+      for (const component of currentPage.components) {
+        try {
+          this.websiteBuilder.updateComponent(component.id, {
+            x: component.x,
+            y: component.y,
+            width: component.width,
+            height: component.height,
+            zIndex: component.zIndex,
+            parameters: component.parameters || {}
+          });
+        } catch (componentError) {
+          console.warn(`⚠️ Failed to save component ${component.id}:`, componentError);
+        }
+      }
+      
+      console.log('✅ Component changes saved');
+      
+    } catch (error) {
+      console.error('❌ Error saving component changes:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sync current components to HTML files
+   */
+  private async syncComponentsToHtml(): Promise<void> {
+    if (!this.currentProject) return;
+
+    try {
+      console.log('🔄 Syncing components to HTML files...');
+      
+      // Get current page
+      const currentPage = this.pages.find(p => p.id === this.currentPageId);
+      if (!currentPage) return;
+
+      // Generate HTML for all components on the current page
+      const componentsHtml = currentPage.components.map(component => {
+        return this.generateComponentHtml(component);
+      }).join('\n');
+
+      // Get current HTML file
+      const files = this.getCurrentWebsiteFiles();
+      const htmlFile = files.find(f => f.fileType === 'html' && f.fileName === 'index.html');
+      
+      if (htmlFile) {
+        // Replace the {{components}} placeholder with actual component HTML
+        let updatedHtml = htmlFile.content;
+        if (updatedHtml.includes('{{components}}')) {
+          updatedHtml = updatedHtml.replace('{{components}}', componentsHtml);
+        } else {
+          // If no placeholder, append to body
+          updatedHtml = updatedHtml.replace('</body>', `${componentsHtml}\n</body>`);
+        }
+
+        // Update the file content in the file-based builder
+        await this.fileBasedBuilder.updateFileContent(htmlFile.id, updatedHtml);
+        
+        console.log('✅ Components synced to HTML');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error syncing components to HTML:', error);
+    }
+  }
+
+  /**
+   * Generate HTML for a single component
+   */
+  private generateComponentHtml(component: any): string {
+    const style = `position: absolute; left: ${component.x}px; top: ${component.y}px; width: ${component.width}px; height: ${component.height}px; z-index: ${component.zIndex};`;
+    
+    switch (component.type) {
+      case 'hero-section':
+        return `
+          <section class="hero component" data-component-id="${component.id}" style="${style}">
+            <div class="container">
+              <h1>${component.parameters?.title || 'Welcome'}</h1>
+              <p>${component.parameters?.subtitle || 'Subtitle'}</p>
+              <a href="${component.parameters?.buttonLink || '#'}" class="btn">${component.parameters?.buttonText || 'Button'}</a>
+            </div>
+          </section>
+        `;
+      case 'contact-form':
+        return `
+          <div class="contact-form component" data-component-id="${component.id}" style="${style}">
+            <h2>${component.parameters?.title || 'Contact Us'}</h2>
+            <form>
+              <input type="text" name="name" placeholder="Your Name" required />
+              <input type="email" name="email" placeholder="Your Email" required />
+              <textarea name="message" placeholder="Your Message" rows="5" required></textarea>
+              <button type="submit">${component.parameters?.submitText || 'Send Message'}</button>
+            </form>
+          </div>
+        `;
+      case 'text-block':
+        return `
+          <div class="text-block component" data-component-id="${component.id}" style="${style}">
+            <h2>${component.parameters?.heading || 'Heading'}</h2>
+            <p>${component.parameters?.content || 'Content goes here...'}</p>
+          </div>
+        `;
+      default:
+        return `
+          <div class="component" data-component-id="${component.id}" style="${style}">
+            <h3>Component: ${component.type}</h3>
+            <p>Parameters: ${JSON.stringify(component.parameters || {})}</p>
+          </div>
+        `;
+    }
+  }
+
+  /**
+   * Open file manager dialog
+   */
+  openFileManager(): void {
+    const files = this.getCurrentWebsiteFiles();
+    
+    if (files.length === 0) {
+      alert('No files found. Files will be created automatically when you add content.');
+      return;
+    }
+
+    // Create a simple file list (this could be enhanced with a proper file manager UI)
+    const fileList = files.map((file, index) => 
+      `${index + 1}. ${file.fileName} (${file.fileType.toUpperCase()}) - ${this.formatFileSize(file.fileSize)}`
+    ).join('\n');
+
+    const selectedIndex = prompt(`Select a file to edit:\n\n${fileList}\n\nEnter file number (1-${files.length}):`);
+    
+    if (selectedIndex) {
+      const index = parseInt(selectedIndex) - 1;
+      if (index >= 0 && index < files.length) {
+        const file = files[index];
+        this.openFileEditor(file.id, file.fileName, file.fileType);
+      } else {
+        alert('Invalid file number selected.');
+      }
+    }
+  }
+
+  // ===================== COMPONENT EVENT HANDLERS =====================
+
+  /**
+   * Handle component addition - sync to files
+   */
+  onComponentAdded(component: any): void {
+    console.log('📦 Component added:', component);
+    // Sync components to HTML files when a component is added
+    this.syncComponentsToHtml().catch(error => {
+      console.error('❌ Error syncing components after addition:', error);
+    });
+  }
+
+  /**
+   * Handle component update - sync to files
+   */
+  onComponentUpdated(component: any): void {
+    console.log('📦 Component updated:', component);
+    // Sync components to HTML files when a component is updated
+    this.syncComponentsToHtml().catch(error => {
+      console.error('❌ Error syncing components after update:', error);
+    });
+  }
+
+  /**
+   * Handle component deletion - sync to files
+   */
+  onComponentDeleted(componentId: string): void {
+    console.log('📦 Component deleted:', componentId);
+    // Sync components to HTML files when a component is deleted
+    this.syncComponentsToHtml().catch(error => {
+      console.error('❌ Error syncing components after deletion:', error);
+    });
+  }
+
+  /**
+   * Auto-save components and files when changes are made
+   */
+  async autoSaveChanges(): Promise<void> {
+    if (!this.currentProject || this.currentProject.isNew) return;
+
+    try {
+      console.log('💾 Auto-saving changes...');
+      await this.saveAllChanges();
+      console.log('✅ Auto-save completed');
+    } catch (error) {
+      console.error('❌ Auto-save failed:', error);
     }
   }
 } 

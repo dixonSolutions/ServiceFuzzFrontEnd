@@ -385,7 +385,7 @@
         <app-ai-website-chat
           [businessId]="currentProject?.businessId || ''"
           [workspaceId]="currentProject?.id || ''"
-          [currentWebsiteJson]="currentProject?.websiteJson || ''"
+          [currentWebsiteData]="getCurrentWebsiteData()"
           (websiteUpdated)="onWebsiteUpdated($event)"
           (generationStateChange)="onAiGenerationStateChange($event)">
         </app-ai-website-chat>

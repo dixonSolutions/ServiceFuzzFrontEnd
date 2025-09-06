@@ -20,7 +20,7 @@ export interface WorkspaceProject {
   createdAt: Date;
   lastModified: Date;
   thumbnail?: string;
-  websiteJson?: string;
+  // websiteJson?: string; // REMOVED - Now using file-based system
   deploymentStatus?: string;
   deploymentUrl?: string;
   deployedAt?: Date;
@@ -341,7 +341,7 @@ export class WorkspaceSelectionComponent implements OnInit {
       createdAt: new Date(workspace.createdAt),
       lastModified: new Date(workspace.lastModified),
       thumbnail: workspace.thumbnailUrl,
-      websiteJson: workspace.websiteJson,
+      // websiteJson: REMOVED - Now using file-based system
       deploymentStatus: workspace.deploymentStatus,
       deploymentUrl: workspace.deploymentUrl,
       deployedAt: workspace.deployedAt ? new Date(workspace.deployedAt) : undefined,
@@ -360,7 +360,7 @@ export class WorkspaceSelectionComponent implements OnInit {
       name: project.name,
       description: project.description,
       thumbnailUrl: project.thumbnail,
-      websiteJson: project.websiteJson
+      // websiteJson: REMOVED - Now using file-based system
     };
     console.log('Created workspace DTO:', dto);
     return dto;
@@ -403,7 +403,7 @@ export class WorkspaceSelectionComponent implements OnInit {
       name: project.name,
       description: project.description,
       thumbnailUrl: project.thumbnail,
-      websiteJson: project.websiteJson
+      // websiteJson: REMOVED - Now using file-based system
     };
 
     return new Promise((resolve, reject) => {

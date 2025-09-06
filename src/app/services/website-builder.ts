@@ -23,7 +23,33 @@ import {
   DeleteDeploymentResponse,
   DeleteAllDeploymentsResponse,
   DeploymentLimits,
-  DeploymentLimitCheck
+  DeploymentLimitCheck,
+  // NEW IMPORTS FOR ENHANCED WEBSITE BUILDER
+  WebsiteFile,
+  WebsiteAsset,
+  EnhancedWebsitePage,
+  DomainMapping,
+  CreateWebsiteFileDto,
+  UpdateWebsiteFileDto,
+  CreateWebsiteAssetDto,
+  CreateWebsitePageDto,
+  UpdateWebsitePageDto,
+  CreateDomainMappingDto,
+  UpdateDomainMappingDto,
+  WebsiteFileListResponse,
+  WebsiteAssetListResponse,
+  WebsitePageListResponse,
+  DomainMappingListResponse,
+  AIComponentEnhancementRequest,
+  AIComponentEnhancementResponse,
+  AIComponentSuggestionsResponse,
+  AILayoutSuggestionsResponse,
+  AISEOContentRequest,
+  AISEOContentResponse,
+  ReverseDomainResolutionResponse,
+  SubdomainGenerationRequest,
+  SubdomainGenerationResponse,
+  SubdomainAvailabilityResponse
 } from '../models/workspace.models';
 
 // Component Parameter Interface
@@ -1444,13 +1470,15 @@ export class WebsiteBuilderService {
   // ===================== WORKSPACE HELPER METHODS =====================
 
   /**
-   * Saves workspace as JSON
+   * Saves workspace as JSON - DEPRECATED: Now using file-based system
    */
-  saveWorkspaceAsJson(workspaceId: string, websiteJson: any): Observable<{ message: string }> {
-    const updates: UpdateWorkspaceDto = {
-      websiteJson: JSON.stringify(websiteJson)
-    };
-    return this.updateWorkspace(workspaceId, updates);
+  saveWorkspaceAsJson(workspaceId: string, websiteData: any): Observable<{ message: string }> {
+    console.warn('saveWorkspaceAsJson is deprecated. Use file-based system instead.');
+    // Return a mock response for backward compatibility
+    return new Observable(observer => {
+      observer.next({ message: 'File-based system is now used instead of JSON storage' });
+      observer.complete();
+    });
   }
 
   /**
@@ -1670,5 +1698,483 @@ export class WebsiteBuilderService {
     }
 
     return deployments;
+  }
+
+  // ===================== NEW ENHANCED WEBSITE BUILDER METHODS =====================
+
+  /**
+   * Update workspace settings (subdomain, custom domain, global CSS/JS, favicon)
+   */
+  updateWorkspaceSettings(workspaceId: string, settings: {
+    subdomain?: string;
+    customDomain?: string;
+    globalCSS?: string;
+    globalJS?: string;
+    faviconUrl?: string;
+  }): Observable<WorkspaceResponseDto> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.put<WorkspaceResponseDto>(
+      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/settings`, 
+      settings,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Generate subdomain for business
+   */
+  generateSubdomain(businessId: string, workspaceId: string, preferredSubdomain: string): Observable<SubdomainGenerationResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const request: SubdomainGenerationRequest = {
+      businessId,
+      workspaceId,
+      preferredSubdomain
+    };
+
+    return this.http.post<SubdomainGenerationResponse>(
+      `${this.apiBaseUrl}/api/reverse-proxy/generate-subdomain`,
+      request,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Check subdomain availability
+   */
+  checkSubdomainAvailability(subdomain: string): Observable<SubdomainAvailabilityResponse> {
+    return this.http.get<SubdomainAvailabilityResponse>(
+      `${this.apiBaseUrl}/api/reverse-proxy/check-subdomain/${subdomain}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Get all domains for a business
+   */
+  getBusinessDomains(businessId: string): Observable<DomainMappingListResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.get<DomainMappingListResponse>(
+      `${this.apiBaseUrl}/api/reverse-proxy/business/${businessId}/domains`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Resolve domain to workspace information
+   */
+  resolveDomain(domain: string): Observable<ReverseDomainResolutionResponse> {
+    return this.http.get<ReverseDomainResolutionResponse>(
+      `${this.apiBaseUrl}/api/reverse-proxy/resolve-domain/${domain}`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // ===================== WEBSITE FILES MANAGEMENT =====================
+
+  /**
+   * Get all files for workspace
+   */
+  getWebsiteFiles(workspaceId: string): Observable<WebsiteFileListResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.get<WebsiteFileListResponse>(
+      `${this.apiBaseUrl}/api/website-files/workspace/${workspaceId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Create new website file
+   */
+  createWebsiteFile(workspaceId: string, file: CreateWebsiteFileDto): Observable<WebsiteFile> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.post<WebsiteFile>(
+      `${this.apiBaseUrl}/api/website-files/workspace/${workspaceId}`,
+      file,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Update website file content
+   */
+  updateWebsiteFile(fileId: string, updates: UpdateWebsiteFileDto): Observable<WebsiteFile> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.put<WebsiteFile>(
+      `${this.apiBaseUrl}/api/website-files/${fileId}`,
+      updates,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Delete website file
+   */
+  deleteWebsiteFile(fileId: string): Observable<{ success: boolean }> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.delete<{ success: boolean }>(
+      `${this.apiBaseUrl}/api/website-files/${fileId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // ===================== WEBSITE PAGES MANAGEMENT =====================
+
+  /**
+   * Get all pages for workspace
+   */
+  getWebsitePages(workspaceId: string): Observable<WebsitePageListResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.get<WebsitePageListResponse>(
+      `${this.apiBaseUrl}/api/website-pages/workspace/${workspaceId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Create new website page
+   */
+  createWebsitePage(workspaceId: string, page: CreateWebsitePageDto): Observable<EnhancedWebsitePage> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.post<EnhancedWebsitePage>(
+      `${this.apiBaseUrl}/api/website-pages/workspace/${workspaceId}`,
+      page,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Update website page
+   */
+  updateWebsitePage(pageId: string, updates: UpdateWebsitePageDto): Observable<EnhancedWebsitePage> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.put<EnhancedWebsitePage>(
+      `${this.apiBaseUrl}/api/website-pages/${pageId}`,
+      updates,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Delete website page and all its components
+   */
+  deleteWebsitePage(pageId: string): Observable<{ success: boolean }> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.delete<{ success: boolean }>(
+      `${this.apiBaseUrl}/api/website-pages/${pageId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Get all components for a specific page
+   */
+  getPageComponents(pageId: string): Observable<ComponentListResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.get<ComponentListResponse>(
+      `${this.apiBaseUrl}/api/website-pages/${pageId}/components`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // ===================== AI ENHANCEMENT METHODS =====================
+
+  /**
+   * AI-powered component enhancement
+   */
+  enhanceComponents(workspaceId: string, componentIds: string[], userPrompt: string): Observable<AIComponentEnhancementResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const request: AIComponentEnhancementRequest = {
+      workspaceId,
+      componentIds,
+      userPrompt
+    };
+
+    return this.http.post<AIComponentEnhancementResponse>(
+      `${this.apiBaseUrl}/api/ai-website/enhance-components`,
+      request,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Get AI component suggestions for workspace
+   */
+  getAIComponentSuggestions(workspaceId: string): Observable<AIComponentSuggestionsResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.get<AIComponentSuggestionsResponse>(
+      `${this.apiBaseUrl}/api/ai-website/component-suggestions/${workspaceId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Smart layout recommendations
+   */
+  getAILayoutSuggestions(workspaceId: string): Observable<AILayoutSuggestionsResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.get<AILayoutSuggestionsResponse>(
+      `${this.apiBaseUrl}/api/ai-website/layout-suggestions/${workspaceId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Generate SEO-optimized content
+   */
+  generateSEOContent(businessId: string, pageType: string, keywords: string[]): Observable<AISEOContentResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const request: AISEOContentRequest = {
+      businessId,
+      pageType,
+      keywords
+    };
+
+    return this.http.post<AISEOContentResponse>(
+      `${this.apiBaseUrl}/api/ai-website/seo-content`,
+      request,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // ===================== WEBSITE ASSETS MANAGEMENT =====================
+
+  /**
+   * Get all assets for workspace
+   */
+  getWebsiteAssets(workspaceId: string): Observable<WebsiteAssetListResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.get<WebsiteAssetListResponse>(
+      `${this.apiBaseUrl}/api/website-assets/workspace/${workspaceId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Upload website asset
+   */
+  uploadWebsiteAsset(workspaceId: string, file: File, altText?: string): Observable<WebsiteAsset> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    if (altText) {
+      formData.append('altText', altText);
+    }
+
+    return this.http.post<WebsiteAsset>(
+      `${this.apiBaseUrl}/api/website-assets/workspace/${workspaceId}/upload`,
+      formData,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Delete website asset
+   */
+  deleteWebsiteAsset(assetId: string): Observable<{ success: boolean }> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    return this.http.delete<{ success: boolean }>(
+      `${this.apiBaseUrl}/api/website-assets/${assetId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
   }
 }

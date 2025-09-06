@@ -293,15 +293,27 @@ export class LeftSidebar implements OnInit, OnChanges {
     this.dragStart.emit({ event, component });
   }
 
-  onWebsiteUpdated(websiteJson: string): void {
-    // Emit the website update to the parent component
+  onWebsiteUpdated(websiteData: any): void {
+    // Handle website updates in the new file-based system
     if (this.currentProject) {
-      this.currentProject.websiteJson = websiteJson;
-      // You can add additional logic here if needed
-      console.log('Website updated via AI:', websiteJson);
+      console.log('Website updated via AI for project:', this.currentProject.id);
+      console.log('Website updated via AI:', websiteData);
     }
-    // Emit to parent component for canvas update
-    this.websiteUpdated.emit(websiteJson);
+    // Emit to parent component for file-based system update
+    this.websiteUpdated.emit(websiteData);
+  }
+
+  /**
+   * Get current website data for AI chat component
+   */
+  getCurrentWebsiteData(): any {
+    // Return structured data instead of JSON string
+    return {
+      projectId: this.currentProject?.id,
+      projectName: this.currentProject?.name,
+      businessId: this.currentProject?.businessId,
+      // Additional data would come from file-based system
+    };
   }
 
   onAiGenerationStateChange(state: {isGenerating: boolean, error?: string}): void {
