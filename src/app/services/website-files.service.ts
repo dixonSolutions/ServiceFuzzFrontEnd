@@ -164,7 +164,7 @@ export class WebsiteFilesService {
     const queryParams = pageRoute !== '/' ? `?pageRoute=${encodeURIComponent(pageRoute)}` : '';
 
     return this.http.get<PreviewResponse>(
-      `${this.apiBaseUrl}/api/business-website/workspaces/${workspaceId}/preview${queryParams}`,
+      `${this.apiBaseUrl}/api/websitefiles/workspace/${workspaceId}/preview${queryParams}`,
       {
         headers: {
           'Authorization': `Bearer ${jwtToken}`

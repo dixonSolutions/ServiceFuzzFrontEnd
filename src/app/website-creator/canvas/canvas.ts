@@ -6,6 +6,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { AccordionModule } from 'primeng/accordion';
+import { MessageService } from 'primeng/api';
+import { ToastService } from '../../services/toast.service';
 
 export interface Page {
   id: string;
@@ -34,6 +36,7 @@ export class Canvas implements OnInit, OnDestroy {
   @Input() builtInNavProperties: BuiltInNavProperties = {};
   @Input() isAiGenerating: boolean = false;
   @Input() aiGenerationError: string | null = null;
+  @Input() currentWorkspaceId: string | null = null;
   
   // Outputs to parent component
   @Output() componentInstanceSelectionChange = new EventEmitter<ComponentInstance | null>();
@@ -71,7 +74,9 @@ export class Canvas implements OnInit, OnDestroy {
     private websiteBuilder: WebsiteBuilderService,
     private componentRenderer: ComponentRendererService,
     private domSanitizer: DomSanitizer,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private messageService: MessageService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -387,6 +392,75 @@ export class Canvas implements OnInit, OnDestroy {
 
   onDeviceChange(device: string): void {
     this.selectedDevice = device;
+  }
+
+  // Preview functionality
+  onPreviewClick(): void {
+    if (!this.currentWorkspaceId) {
+      this.toastService.error('No workspace selected for preview', 'Preview Error');
+      return;
+    }
+
+    this.toastService.info('Loading website preview...', 'Generating Preview');
+    
+    this.generatePreview();
+  }
+
+  private async generatePreview(): Promise<void> {
+    try {
+      const apiUrl = `https://servicefuzzapi-atf8b4dqawc8dsa9.australiaeast-01.azurewebsites.net/api/websitefiles/workspace/${this.currentWorkspaceId}/preview`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`);
+      }
+
+      const previewData = await response.json();
+      
+      if (previewData && previewData.previewUrl) {
+        // Check if it's a data URL with HTML content
+        if (previewData.previewUrl.startsWith('data:text/html')) {
+          // Extract and decode the HTML content from the data URL
+          const htmlContent = decodeURIComponent(previewData.previewUrl.split(',')[1]);
+          
+          // Open a new window and write the HTML content to it
+          const previewWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+          
+          if (!previewWindow) {
+            this.toastService.warning('Please allow popups and try again', 'Popup Blocked');
+          } else {
+            // Write the decoded HTML content to the new window
+            previewWindow.document.open();
+            previewWindow.document.write(htmlContent);
+            previewWindow.document.close();
+            this.toastService.success('Website preview opened in new window', 'Preview Opened');
+          }
+        } else {
+          // Handle regular URLs
+          const previewWindow = window.open(previewData.previewUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+          
+          if (!previewWindow) {
+            this.toastService.warning('Please allow popups and try again', 'Popup Blocked');
+          } else {
+            this.toastService.success('Website preview opened in new window', 'Preview Opened');
+          }
+        }
+      } else {
+        throw new Error('Invalid response: missing previewUrl');
+      }
+      
+    } catch (error) {
+      this.toastService.error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+        'Preview Failed'
+      );
+    }
   }
 
   // Drag & Drop Operations (migrated from main component)

@@ -453,6 +453,7 @@
       [builtInNavProperties]="builtInNavProperties"
       [isAiGenerating]="isAiGenerating"
       [aiGenerationError]="aiGenerationError"
+      [currentWorkspaceId]="currentProject?.id || null"
       (componentInstanceSelectionChange)="onComponentInstanceSelectionChange($event)"
       (builtInNavPropertiesChange)="onBuiltInNavPropertiesChange($event)"
       (pageDataChange)="onPageDataChange($event)"
