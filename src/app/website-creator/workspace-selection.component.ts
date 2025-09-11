@@ -25,6 +25,12 @@ export interface WorkspaceProject {
   deploymentUrl?: string;
   deployedAt?: Date;
   isNew?: boolean; // Flag to indicate if this is a new workspace not yet saved
+  
+  // 🆕 NEW: Automatic Blob Storage URLs
+  blobAddress?: string;               // Container name (e.g., "project-abc123")
+  blobBaseUrl?: string;               // Base URL: "https://servicefussstorage.blob.core.windows.net/project-abc123/"
+  previewUrl?: string;                // Preview URL: "{blobBaseUrl}preview/"
+  productionUrl?: string;             // Production URL: "{blobBaseUrl}production/"
 }
 
 export interface BusinessInfo {

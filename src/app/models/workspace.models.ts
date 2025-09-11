@@ -5,6 +5,7 @@ export interface CreateWorkspaceDto {
   description?: string;
   thumbnailUrl?: string;
   // websiteJson: REMOVED - Now using proper file structure
+  // NOTE: blobAddress is NOT included here as it's automatically initialized by the backend
 }
 
 export interface UpdateWorkspaceDto {
@@ -20,6 +21,12 @@ export interface UpdateWorkspaceDto {
   globalCSS?: string;
   globalJS?: string;
   faviconUrl?: string;
+  
+  // 🆕 NEW: Automatic Blob Storage URLs
+  blobAddress?: string;               // Container name (e.g., "project-abc123")
+  blobBaseUrl?: string;               // Base URL: "https://servicefussstorage.blob.core.windows.net/project-abc123/"
+  previewUrl?: string;                // Preview URL: "{blobBaseUrl}preview/"
+  productionUrl?: string;             // Production URL: "{blobBaseUrl}production/"
 }
 
 export interface WorkspaceResponseDto {
@@ -42,6 +49,12 @@ export interface WorkspaceResponseDto {
   globalCSS?: string;
   globalJS?: string;
   faviconUrl?: string;
+  
+  // 🆕 NEW: Automatic Blob Storage URLs
+  blobAddress?: string;               // Container name (e.g., "project-abc123")
+  blobBaseUrl?: string;               // Base URL: "https://servicefussstorage.blob.core.windows.net/project-abc123/"
+  previewUrl?: string;                // Preview URL: "{blobBaseUrl}preview/"
+  productionUrl?: string;             // Production URL: "{blobBaseUrl}production/"
 }
 
 export interface CreateWorkspaceComponentDto {
@@ -270,16 +283,61 @@ export interface WebsiteFile {
   updatedAt: Date;
 }
 
-// Website Assets Model
+// Website Assets Model (Enhanced with Blob Storage & Versioning)
 export interface WebsiteAsset {
   id: string;
   workspaceId: string;
   fileName: string;
   contentType: string; // image/jpeg, image/png, etc.
-  filePath: string; // Path to actual file on disk/CDN
+  filePath: string; // Legacy path (kept for backward compatibility)
+  blobUrl?: string; // Full Azure Blob URL
+  blobContainer?: string; // Container name
+  blobPath?: string; // Path within container
+  version: number; // Version number (1, 2, 3...)
+  versionTag?: string; // Optional tag ("draft", "final")
+  versionCreatedAt?: Date; // When this version was created
+  parentAssetId?: string; // Original asset ID for versions
+  isCurrentVersion: boolean; // Is this the active version?
   fileSize: number;
   altText?: string;
   uploadedAt: Date;
+}
+
+// Asset Version Management Interfaces
+export interface AssetVersionHistoryDto {
+  assetId: string;
+  fileName: string;
+  versions: AssetVersionDto[];
+}
+
+export interface AssetVersionDto {
+  id: string;
+  version: number;
+  versionTag?: string;
+  versionCreatedAt?: Date;
+  isCurrentVersion: boolean;
+  fileSize: number;
+  blobUrl?: string;
+}
+
+// Blob Storage Status Interface
+// NOTE: hasBlobAddress should be true for all new workspaces (auto-initialized)
+// Only legacy workspaces created before blob storage implementation may have hasBlobAddress: false
+export interface BlobStorageStatusDto {
+  workspaceId: string;
+  workspaceName: string;
+  hasBlobAddress: boolean;
+  blobAddress?: string;
+  files: {
+    total: number;
+    inBlobStorage: number;
+    percentage: number;
+  };
+  assets: {
+    total: number;
+    inBlobStorage: number;
+    percentage: number;
+  };
 }
 
 // Enhanced Website Pages Model (extends existing WebsitePage)
@@ -325,14 +383,17 @@ export interface UpdateWebsiteFileDto {
   content: string;
 }
 
-// Website Asset DTOs
+// Website Asset DTOs (Enhanced with Versioning)
 export interface CreateWebsiteAssetDto {
   workspaceId: string;
   fileName: string;
   contentType: string;
-  filePath: string;
+  filePath: string; // Legacy - kept for backward compatibility
   fileSize: number;
   altText?: string;
+  // New versioning properties
+  versionTag?: string; // e.g., "draft", "final", "v1.0"
+  parentAssetId?: string; // For creating new versions of existing assets
 }
 
 // Website Page DTOs
@@ -516,11 +577,14 @@ export interface PreviewResponse {
   pageRoute: string;
 }
 
-// Enhanced WebsiteAsset with upload support
+// Enhanced WebsiteAsset with upload support (includes versioning)
 export interface WebsiteAssetUpload {
   workspaceId: string;
   file: File;
   altText?: string;
+  // Versioning support
+  versionTag?: string; // e.g., "draft", "final", "v1.0"
+  parentAssetId?: string; // For creating new versions of existing assets
 }
 
 export interface WebsiteAssetUpdate {
@@ -543,4 +607,42 @@ export interface AssetUrlResponse {
   fileName: string;
   url: string;
   contentType: string;
+}
+
+// ===================== BLOB STORAGE MANAGEMENT INTERFACES =====================
+
+// Workspace Blob Initialization Response
+// NOTE: This is primarily for legacy workspaces that need manual initialization
+// New workspaces automatically have blob storage initialized during creation
+export interface WorkspaceBlobInitializationResponse {
+  success: boolean;
+  workspaceId: string;
+  blobAddress: string;
+  message: string;
+}
+
+// Blob Container Status Response
+export interface BlobContainerStatusResponse {
+  workspaceId: string;
+  containerName: string;
+  isPublic: boolean;
+  blobCount: number;
+  totalSize: number;
+}
+
+// SAS URL Response for temporary access
+export interface SasUrlResponse {
+  assetId: string;
+  sasUrl: string;
+  expiresAt: Date;
+}
+
+// Enhanced Asset Upload Response
+export interface EnhancedAssetUploadResponse {
+  success: boolean;
+  asset?: WebsiteAsset;
+  blobUrl?: string;
+  version: number;
+  isNewAsset: boolean; // true if this is the first version, false if it's a new version
+  error?: string;
 } 
