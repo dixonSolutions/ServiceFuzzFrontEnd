@@ -10,7 +10,6 @@ import { BusinessEditComponent } from './business-edit/business-edit.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { Settings } from './settings/settings';
 import { WebsiteCreatorComponent } from './website-creator/website-creator';
-import { AuthCallback } from './auth-callback/auth-callback';
 import { OrderForms } from './order-forms/order-forms';
 import { FormBuilderComponent } from './form-builder/form-builder';
 import { PrivacyPolicy } from './privacy-policy/privacy-policy';
@@ -23,7 +22,6 @@ const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'home', component: HomeComponent },
   { path: 'sign', component: SignInOrSignUpComponent },
-  { path: 'auth/callback', component: AuthCallback },
   { path: 'business/add', component: BusinessComponent },
   { path: 'business/manage', component: ManagebusinessesComponent },
   { path: 'business/edit/:id', component: BusinessEditComponent },

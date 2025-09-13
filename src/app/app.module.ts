@@ -103,7 +103,6 @@ import { Canvas } from './website-creator/canvas/canvas';
 import { AssetManagerComponent } from './website-creator/asset-manager/asset-manager';
 import { GoogleMapsPickerComponent } from './components/google-maps-picker/google-maps-picker.component';
 import { StripeAccountSetupComponent } from './stripe-account-setup/stripe-account-setup.component';
-import { AuthCallback } from './auth-callback/auth-callback';
 import { OrderForms } from './order-forms/order-forms';
 import { AuthBusinessDialogComponent } from './auth-business-dialog/auth-business-dialog';
 import { PrivacyPolicy } from './privacy-policy/privacy-policy';
@@ -135,7 +134,6 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     Canvas,
     AssetManagerComponent,
     StripeAccountSetupComponent,
-    AuthCallback,
     OrderForms,
     AuthBusinessDialogComponent,
     PrivacyPolicy,

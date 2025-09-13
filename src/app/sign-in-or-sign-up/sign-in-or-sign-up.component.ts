@@ -201,7 +201,6 @@ export class SignInOrSignUpComponent implements OnInit {
     });
   }
 
-  // Magic link verification is now handled by the auth-callback component
 
   private initializeGoogleSignIn() {
     const container = document.querySelector('.social-login');
