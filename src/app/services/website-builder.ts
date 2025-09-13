@@ -1181,7 +1181,7 @@ export class WebsiteBuilderService {
    */
   getWorkspaceComponentsByPage(workspaceId: string, pageId: string): Observable<ComponentListResponse> {
     return this.http.get<ComponentListResponse>(
-      `${this.apiBaseUrl}/api/businesswebsite/workspaces/${workspaceId}/pages/${pageId}/components`
+      `${this.apiBaseUrl}/api/website-pages/workspace/${workspaceId}/pages/${pageId}/components`
     ).pipe(
       catchError(this.handleError)
     );

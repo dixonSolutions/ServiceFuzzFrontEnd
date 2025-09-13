@@ -32,7 +32,7 @@ export class WebsitePagesService {
     }
 
         return this.http.get<WebsitePageListResponse>(
-          `${this.apiBaseUrl}/api/business-website/workspaces/${workspaceId}/pages`,
+          `${this.apiBaseUrl}/api/website-pages/workspace/${workspaceId}`,
       {
         headers: {
           'Authorization': `Bearer ${jwtToken}`
@@ -64,7 +64,7 @@ export class WebsitePagesService {
     };
 
         return this.http.post<EnhancedWebsitePage>(
-          `${this.apiBaseUrl}/api/business-website/workspaces/${workspaceId}/pages`,
+          `${this.apiBaseUrl}/api/website-pages/workspace/${workspaceId}`,
       pageDto,
       {
         headers: {

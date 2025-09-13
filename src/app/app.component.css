@@ -10,7 +10,7 @@
 .main-content {
   flex: 1 0 auto;
   padding: 16px;
-  margin-top: 0; /* No margin needed - PrimeNG toolbars are not fixed positioned */
+  margin-top: 64px; /* Account for fixed desktop topbar */
   width: 100%;
   max-width: 100%;
   min-height: calc(100vh - 64px);
@@ -18,7 +18,10 @@
 
 .app-loading-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,30 +57,30 @@
   flex-wrap: wrap;
 }
 
-/* Desktop - No margin needed for PrimeNG toolbars */
+/* Desktop - Account for fixed topbar */
 @media (min-width: 701px) {
   .app-container .main-content {
-    margin-top: 0 !important; /* PrimeNG toolbars are not fixed positioned */
+    margin-top: 64px !important; /* Account for fixed desktop topbar */
     padding: 16px !important;
     min-height: calc(100vh - 64px) !important;
   }
 }
 
-/* Mobile - No margin needed for PrimeNG toolbars */
+/* Mobile - Account for fixed topbar */
 @media (max-width: 700px) {
   .app-container .main-content {
-    margin-top: 0 !important; /* PrimeNG toolbars are not fixed positioned */
+    margin-top: 56px !important; /* Account for fixed mobile topbar */
     padding: 16px !important;
     min-height: calc(100vh - 56px) !important;
   }
 }
 
-/* Content disappears below 400px - no margin needed */
+/* Very small screens - Account for fixed topbar */
 @media (max-width: 400px) {
   .app-container .main-content {
-    margin-top: 0 !important;
-    padding: 0 !important;
-    min-height: 100vh !important;
+    margin-top: 56px !important; /* Account for fixed mobile topbar */
+    padding: 8px !important;
+    min-height: calc(100vh - 56px) !important;
     width: 100% !important;
     max-width: 100% !important;
   }
@@ -85,9 +88,9 @@
 
 @media (max-width: 412px) {
   .app-container .main-content {
-    margin-top: 0 !important;
-    padding: 0 !important;
-    min-height: 100vh !important;
+    margin-top: 56px !important; /* Account for fixed mobile topbar */
+    padding: 8px !important;
+    min-height: calc(100vh - 56px) !important;
     width: 100% !important;
     max-width: 100% !important;
   }

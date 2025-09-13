@@ -305,7 +305,7 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
     try {
       // Create component in database
       const component = await this.http.post<WorkspaceComponentResponseDto>(
-        `${this.apiBaseUrl}/api/business-website/workspaces/components`,
+        `${this.apiBaseUrl}/api/website-components/workspace/components`,
         {
           workspaceId: this._currentWorkspaceId.value,
           pageId: pageId,

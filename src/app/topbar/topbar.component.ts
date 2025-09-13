@@ -13,6 +13,7 @@ import { ManageBusinessesService } from '../services/manage-businesses.service';
 import { SubscriptionStatus } from '../models/subscription-status';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 import { MenuItem, MegaMenuItem } from 'primeng/api';
+import { UniversalSearchService } from '../services/universal-search.service';
 
 @Component({
   selector: 'app-topbar',
@@ -77,7 +78,8 @@ export class TopbarComponent implements OnInit {
     public data: DataSvrService,
     private router: Router,
     private breakpointObserver: BreakpointObserver,
-    private manageBusinessesService: ManageBusinessesService
+    private manageBusinessesService: ManageBusinessesService,
+    private universalSearchService: UniversalSearchService
   ) {}
 
   ngOnInit(): void {
@@ -500,5 +502,9 @@ export class TopbarComponent implements OnInit {
         routerLink: '/about'
       }
     ];
+  }
+
+  openUniversalSearch(): void {
+    this.universalSearchService.showSearch();
   }
 }

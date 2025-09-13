@@ -32,10 +32,16 @@ export class SignInOrSignUpComponent implements OnInit {
   isSignIn = true;
   authForm: FormGroup;
   isLoading = false;
+  isGoogleLoading = false;
+  isMagicLinkLoading = false;
+  isAutoSignInLoading = false;
   userInfo: GoogleUserInfo | null = null;
   isAuthenticated = false;
   serviceFuzzUser: ServiceFuzzAccount | undefined;
   private redirectUrl: string | null = null;
+  
+  // Auto sign-in preference
+  autoSignInEnabled = true;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -48,7 +54,8 @@ export class SignInOrSignUpComponent implements OnInit {
     private messageService: MessageService
   ) {
     this.authForm = this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]]
+      email: ['', [Validators.required, Validators.email]],
+      autoSignIn: [true] // Default to enabled
     });
 
     // Set up the global callback for Google Sign-In
@@ -71,19 +78,18 @@ export class SignInOrSignUpComponent implements OnInit {
       }
     });
 
-    // Check if already authenticated
-    this.isAuthenticated = !!this.data.currentUser;
-    if (this.isAuthenticated) {
-      this.serviceFuzzUser = this.data.currentUser;
-      this.userInfo = {
-        name: this.serviceFuzzUser?.name || '',
-        email: this.serviceFuzzUser?.email || '',
-        picture: '', // You might want to add profile picture support
-        sub: this.serviceFuzzUser?.email || '',
-        given_name: this.serviceFuzzUser?.name || '',
-        family_name: ''
-      };
-    }
+    // Load auto sign-in preference from service
+    this.autoSignInEnabled = this.data.autoSignInEnabled;
+    this.authForm.patchValue({ autoSignIn: this.autoSignInEnabled });
+
+    // Debug: Check auto sign-in state
+    console.log('🔄 Sign-in component initialized:', {
+      autoSignInEnabled: this.autoSignInEnabled,
+      serviceAutoSignIn: this.data.autoSignInEnabled
+    });
+
+    // Check if already authenticated or if session is being restored
+    this.checkAuthenticationState();
 
     // Initialize Google Sign-In
     setTimeout(() => this.initializeGoogleSignIn(), 100);
@@ -98,6 +104,61 @@ export class SignInOrSignUpComponent implements OnInit {
     // Navigate to redirect URL if provided, otherwise go to home
     const targetUrl = this.redirectUrl || '/business/settings';
     this.router.navigate([targetUrl], { replaceUrl: true });
+  }
+
+  /**
+   * Check authentication state and handle auto sign-in
+   */
+  private checkAuthenticationState() {
+    // Check if already authenticated
+    this.isAuthenticated = !!this.data.currentUser;
+    if (this.isAuthenticated) {
+      this.serviceFuzzUser = this.data.currentUser;
+      this.userInfo = {
+        name: this.serviceFuzzUser?.name || '',
+        email: this.serviceFuzzUser?.email || '',
+        picture: '', // You might want to add profile picture support
+        sub: this.serviceFuzzUser?.email || '',
+        given_name: this.serviceFuzzUser?.name || '',
+        family_name: ''
+      };
+      return;
+    }
+
+    // Check if session is being restored
+    this.data.isRestoringSession$.subscribe(isRestoring => {
+      this.isAutoSignInLoading = isRestoring;
+      if (isRestoring) {
+        this.messageService.add({
+          severity: 'info',
+          summary: 'Restoring Session',
+          detail: 'Please wait while we restore your session...',
+          life: 3000
+        });
+      }
+    });
+
+    // Listen for successful session restoration
+    this.data.currentUser$.subscribe((user: ServiceFuzzAccount | undefined) => {
+      if (user && !this.isAuthenticated) {
+        this.isAuthenticated = true;
+        this.serviceFuzzUser = user;
+        this.userInfo = {
+          name: user.name || '',
+          email: user.email || '',
+          picture: '',
+          sub: user.email || '',
+          given_name: user.name || '',
+          family_name: ''
+        };
+        this.isAutoSignInLoading = false;
+        
+        // Navigate after successful auto sign-in
+        setTimeout(() => {
+          this.navigateAfterAuth();
+        }, 1000);
+      }
+    });
   }
 
   /**
@@ -122,6 +183,7 @@ export class SignInOrSignUpComponent implements OnInit {
     }
 
     this.isLoading = true;
+    this.isMagicLinkLoading = true;
 
     // Authenticate using the sign-in token
     this.data.authenticateWithSignInToken(signinToken).subscribe({
@@ -157,6 +219,7 @@ export class SignInOrSignUpComponent implements OnInit {
         });
         
         this.isLoading = false;
+        this.isMagicLinkLoading = false;
         
         // Clean URL and navigate
         this.router.navigate([], {
@@ -174,6 +237,7 @@ export class SignInOrSignUpComponent implements OnInit {
         console.error('🔗 Magic link authentication failed:', error);
         
         this.isLoading = false;
+        this.isMagicLinkLoading = false;
         this.data.clearState();
         
         // Show error message
@@ -237,7 +301,21 @@ export class SignInOrSignUpComponent implements OnInit {
   }
 
   handleCredentialResponse(response: any) {
+    this.isGoogleLoading = true;
     this.isLoading = true;
+    
+    // Update auto sign-in preference before authentication
+    const autoSignIn = this.authForm.get('autoSignIn')?.value;
+    this.data.autoSignInEnabled = autoSignIn;
+    
+    // Show loading message
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Signing In',
+      detail: 'Please wait while we sign you in with Google...',
+      life: 3000
+    });
+    
     try {
       if (response.credential) {
         const decodedToken = this.decodeJwtToken(response.credential);
@@ -262,15 +340,52 @@ export class SignInOrSignUpComponent implements OnInit {
               this.serviceFuzzUser = response.user;
               this.data.currentUser = response.user;
               console.log('Authentication successful with dual tokens');
+              
+              // Show success message
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Sign In Successful',
+                detail: `Welcome back, ${response.user.name}!`,
+                life: 3000
+              });
+              
+              // Debug: Check if cookies were set after successful authentication
+              setTimeout(() => {
+                const cookieCheck = this.data.hasUserSession();
+                console.log('🍪 Post-authentication cookie check:', {
+                  hasUserSession: cookieCheck,
+                  autoSignInEnabled: this.data.autoSignInEnabled,
+                  allCookies: document.cookie
+                });
+              }, 500);
+              
               this.cdr.detectChanges();
+              
               // Navigate to redirect URL or home after successful authentication
-              this.navigateAfterAuth();
+              setTimeout(() => {
+                this.navigateAfterAuth();
+              }, 1500);
             },
             error: (error: any) => {
               console.error(`Error ${this.isSignIn ? 'verifying' : 'creating'} user:`, error);
               this.isAuthenticated = false;
               this.serviceFuzzUser = undefined;
               this.data.clearState();
+              
+              // Show error message
+              let errorMessage = `Failed to ${this.isSignIn ? 'sign in' : 'create account'} with Google. Please try again.`;
+              if (error.status === 401) {
+                errorMessage = 'Google authentication failed. Please try again.';
+              } else if (error.status === 409) {
+                errorMessage = 'An account with this email already exists. Please sign in instead.';
+              }
+              
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Authentication Failed',
+                detail: errorMessage,
+                life: 5000
+              });
             }
           });
         }
@@ -278,8 +393,16 @@ export class SignInOrSignUpComponent implements OnInit {
     } catch (error) {
       console.error('Error handling Google response:', error);
       this.data.clearState();
+      
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Authentication Error',
+        detail: 'An unexpected error occurred. Please try again.',
+        life: 5000
+      });
     } finally {
       this.isLoading = false;
+      this.isGoogleLoading = false;
       this.cdr.detectChanges();
     }
   }
@@ -301,6 +424,21 @@ export class SignInOrSignUpComponent implements OnInit {
     setTimeout(() => this.initializeGoogleSignIn(), 100);
   }
 
+  /**
+   * Handle auto sign-in preference change
+   */
+  onAutoSignInChange() {
+    const autoSignInValue = this.authForm.get('autoSignIn')?.value;
+    this.autoSignInEnabled = autoSignInValue;
+    this.data.autoSignInEnabled = autoSignInValue;
+    
+    console.log('🔄 Auto sign-in preference changed:', {
+      newValue: autoSignInValue,
+      componentValue: this.autoSignInEnabled,
+      serviceValue: this.data.autoSignInEnabled
+    });
+  }
+
   onSubmit() {
     // Form submission now only handles magic link sending (passwordless)
     this.sendMagicLink();
@@ -308,6 +446,7 @@ export class SignInOrSignUpComponent implements OnInit {
 
   sendMagicLink() {
     const email = this.authForm.get('email')?.value;
+    const autoSignIn = this.authForm.get('autoSignIn')?.value;
     
     // Validate email
     if (!email || !this.magicLinkService.isValidEmail(email)) {
@@ -319,7 +458,11 @@ export class SignInOrSignUpComponent implements OnInit {
       return;
     }
 
+    // Update auto sign-in preference before authentication
+    this.data.autoSignInEnabled = autoSignIn;
+
     this.isLoading = true;
+    this.isMagicLinkLoading = true;
 
     // Store current redirect URL if exists
     if (this.redirectUrl) {
@@ -348,6 +491,7 @@ export class SignInOrSignUpComponent implements OnInit {
           life: 5000
         });
         this.isLoading = false;
+        this.isMagicLinkLoading = false;
       },
       error: (error: any) => {
         this.magicLinkService.logMagicLinkEvent('error', { 
@@ -363,6 +507,7 @@ export class SignInOrSignUpComponent implements OnInit {
           life: 4000
         });
         this.isLoading = false;
+        this.isMagicLinkLoading = false;
       }
     });
   }

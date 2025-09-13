@@ -36,7 +36,7 @@ export class WebsiteFilesService {
     }
 
     return this.http.get<WebsiteFileListResponse>(
-      `${this.apiBaseUrl}/api/business-website/workspaces/${workspaceId}/files`,
+      `${this.apiBaseUrl}/api/website-files/workspace/${workspaceId}`,
       {
         headers: {
           'Authorization': `Bearer ${jwtToken}`
@@ -68,7 +68,7 @@ export class WebsiteFilesService {
     };
 
     return this.http.post<WebsiteFile>(
-      `${this.apiBaseUrl}/api/business-website/workspaces/${workspaceId}/files`,
+      `${this.apiBaseUrl}/api/website-files/workspace/${workspaceId}`,
       fileDto,
       {
         headers: {
@@ -139,7 +139,7 @@ export class WebsiteFilesService {
     const request: BulkSaveRequest = { files: fileUpdates };
 
     return this.http.post<BulkSaveResponse>(
-      `${this.apiBaseUrl}/api/business-website/workspaces/${workspaceId}/bulk-save`,
+      `${this.apiBaseUrl}/api/website-files/workspace/${workspaceId}/bulk-save`,
       request,
       {
         headers: {

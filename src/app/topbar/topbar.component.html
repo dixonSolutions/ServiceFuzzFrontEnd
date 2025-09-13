@@ -147,6 +147,16 @@
         [styleClass]="'nav-item ' + (isRouteActive('/staff') ? 'active-nav-item' : '')">
       </p-button>
       
+      <!-- Universal Search Button -->
+      <p-button 
+        *ngIf="data.currentUser"
+        icon="pi pi-search" 
+        [text]="true"
+        (onClick)="openUniversalSearch()"
+        styleClass="nav-item search-button"
+        pTooltip="Search everything (Ctrl+K)">
+      </p-button>
+      
       <!-- Overflow Menu (3-dot menu) -->
       <p-menu #overflowMenu [model]="overflowMenuItems" [popup]="true"></p-menu>
       <p-button 

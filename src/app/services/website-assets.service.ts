@@ -30,7 +30,7 @@ export class WebsiteAssetsService {
     }
 
     return this.http.get<WebsiteAssetListResponse>(
-      `${this.apiBaseUrl}/api/business-website/workspaces/${workspaceId}/assets`,
+      `${this.apiBaseUrl}/api/website-assets/workspace/${workspaceId}`,
       {
         headers: {
           'Authorization': `Bearer ${jwtToken}`
@@ -77,7 +77,7 @@ export class WebsiteAssetsService {
     }
 
     return this.http.post<WebsiteAssetResponse>(
-      `${this.apiBaseUrl}/api/business-website/workspaces/${workspaceId}/assets/upload`,
+      `${this.apiBaseUrl}/api/website-assets/workspace/${workspaceId}/upload`,
       formData,
       {
         headers: {
@@ -166,7 +166,7 @@ export class WebsiteAssetsService {
     }
 
     return this.http.get<AssetUrlResponse>(
-      `${this.apiBaseUrl}/api/business-website/workspaces/${workspaceId}/assets/url/${encodeURIComponent(fileName)}`,
+      `${this.apiBaseUrl}/api/website-assets/workspace/${workspaceId}/url/${encodeURIComponent(fileName)}`,
       {
         headers: {
           'Authorization': `Bearer ${jwtToken}`

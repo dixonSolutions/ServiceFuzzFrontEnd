@@ -30,9 +30,13 @@ export class DataSvrService {
   private tokenRefreshTimer: any;
   private readonly REGULAR_TOKEN_KEY = 'sf_auth_token';
   private readonly SIGNIN_TOKEN_COOKIE = 'sf_signin_token';
+  private readonly AUTO_SIGNIN_PREFERENCE_KEY = 'sf_auto_signin_enabled';
   public businesses: BusinessBasicInfo[] = [];
   public freeTrialDetails: ServiceFuzzFreeTrialSubscriptions | undefined;
   public jsConfetti: JSConfetti = new JSConfetti();
+  
+  // Auto sign-in preference (default: true)
+  private _autoSignInEnabled = true;
 
   // Business Registration State
   private _businessRegistration = new BehaviorSubject<BusinessRegistration>({
@@ -60,6 +64,10 @@ export class DataSvrService {
       return DataSvrService.instance;
     }
     DataSvrService.instance = this;
+    
+    // Load auto sign-in preference from localStorage
+    const savedPreference = localStorage.getItem(this.AUTO_SIGNIN_PREFERENCE_KEY);
+    this._autoSignInEnabled = savedPreference !== null ? JSON.parse(savedPreference) : true; // Default: true
     
     // Try to restore user session from stored tokens
     this.initializeAuthenticationState();
@@ -298,6 +306,28 @@ export class DataSvrService {
     }
   }
 
+  // Observable for current user changes
+  get currentUser$() {
+    return this._currentUser.asObservable();
+  }
+
+  // Auto sign-in preference management
+  get autoSignInEnabled(): boolean {
+    return this._autoSignInEnabled;
+  }
+
+  set autoSignInEnabled(enabled: boolean) {
+    this._autoSignInEnabled = enabled;
+    localStorage.setItem(this.AUTO_SIGNIN_PREFERENCE_KEY, JSON.stringify(enabled));
+    console.log('Auto sign-in preference updated:', enabled);
+    
+    // If disabled, clear existing sign-in token cookie
+    if (!enabled && this.signInToken) {
+      this.cookieService.delete(this.SIGNIN_TOKEN_COOKIE, '/');
+      console.log('Auto sign-in disabled - cleared sign-in token cookie');
+    }
+  }
+
   get jwtToken(): string | undefined {
     return this._jwtToken.value;
   }
@@ -325,15 +355,78 @@ export class DataSvrService {
 
   set signInToken(token: string | undefined) {
     this._signInToken.next(token);
-    // Store sign-in token in cookie with 2-day expiration
-    if (token) {
+    
+    // Only store sign-in token in cookie if auto sign-in is enabled
+    if (token && this._autoSignInEnabled) {
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + 2); // 2 days expiration
-      this.cookieService.set(this.SIGNIN_TOKEN_COOKIE, token, expirationDate, '/', undefined, true, 'Strict');
-      console.log('Sign-in token stored in cookie with 2-day expiration');
+      
+      console.log('🍪 Setting sign-in token cookie (auto sign-in enabled):', {
+        name: this.SIGNIN_TOKEN_COOKIE,
+        expires: expirationDate.toISOString(),
+        autoSignInEnabled: this._autoSignInEnabled,
+        tokenLength: token.length
+      });
+      
+      try {
+        // Use simple cookie setting without secure/sameSite for maximum compatibility
+        this.cookieService.set(
+          this.SIGNIN_TOKEN_COOKIE, 
+          token, 
+          expirationDate, 
+          '/' // path only
+        );
+        
+        // Also try direct document.cookie as fallback
+        const cookieString = `${this.SIGNIN_TOKEN_COOKIE}=${token}; expires=${expirationDate.toUTCString()}; path=/`;
+        document.cookie = cookieString;
+        
+        console.log('🍪 Cookie set using both methods:', {
+          cookieService: 'attempted',
+          documentCookie: cookieString
+        });
+        
+        // Verify cookie was set
+        setTimeout(() => {
+          const verifyToken = this.cookieService.get(this.SIGNIN_TOKEN_COOKIE);
+          const directCookieCheck = document.cookie.includes(this.SIGNIN_TOKEN_COOKIE);
+          
+          if (verifyToken === token) {
+            console.log('✅ Sign-in token successfully stored in cookie with 2-day expiration');
+          } else {
+            console.error('❌ Failed to store sign-in token in cookie!', {
+              expected: token.substring(0, 20) + '...',
+              actual: verifyToken?.substring(0, 20) + '...' || 'null',
+              allCookies: document.cookie,
+              directCookieCheck: directCookieCheck
+            });
+          }
+        }, 100);
+        
+      } catch (error) {
+        console.error('❌ Error setting cookie:', error);
+        
+        // Fallback: try direct document.cookie
+        try {
+          const cookieString = `${this.SIGNIN_TOKEN_COOKIE}=${token}; expires=${expirationDate.toUTCString()}; path=/`;
+          document.cookie = cookieString;
+          console.log('🍪 Fallback: Set cookie using document.cookie directly');
+        } catch (fallbackError) {
+          console.error('❌ Fallback cookie setting also failed:', fallbackError);
+        }
+      }
+    } else if (token && !this._autoSignInEnabled) {
+      console.log('🍪 Auto sign-in disabled - not storing sign-in token in cookie');
     } else {
-      this.cookieService.delete(this.SIGNIN_TOKEN_COOKIE, '/');
-      console.log('Sign-in token cookie cleared');
+      // Clear cookie when token is cleared
+      try {
+        this.cookieService.delete(this.SIGNIN_TOKEN_COOKIE, '/');
+        // Also clear using document.cookie
+        document.cookie = `${this.SIGNIN_TOKEN_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+        console.log('Sign-in token cookie cleared using both methods');
+      } catch (error) {
+        console.error('Error clearing cookie:', error);
+      }
     }
   }
 
@@ -1338,11 +1431,20 @@ Make sure to:
    * Initialize authentication state from stored tokens
    */
   private initializeAuthenticationState(): void {
+    console.log('🔄 Initializing authentication state...');
+    
     const storedSignInToken = this.cookieService.get(this.SIGNIN_TOKEN_COOKIE);
     const storedRegularToken = sessionStorage.getItem(this.REGULAR_TOKEN_KEY);
     
+    console.log('🔍 Token check during initialization:', {
+      hasSignInCookie: !!storedSignInToken,
+      hasRegularToken: !!storedRegularToken,
+      autoSignInEnabled: this._autoSignInEnabled,
+      allCookies: document.cookie
+    });
+    
     if (storedSignInToken) {
-      console.log('Found stored sign-in token in cookie, attempting to restore session');
+      console.log('✅ Found stored sign-in token in cookie, attempting to restore session');
       this._signInToken.next(storedSignInToken);
       // Enter app-wide restoring session state until request finishes
       this._isRestoringSession.next(true);
@@ -1350,12 +1452,12 @@ Make sure to:
       // Try to authenticate with the sign-in token to get a fresh regular token
       this.authenticateWithSignInToken(storedSignInToken).subscribe({
         next: (response) => {
-          console.log('Successfully restored user session from sign-in token cookie');
+          console.log('✅ Successfully restored user session from sign-in token cookie');
           this.openSnackBar('Welcome back! Session restored.', 'Close', 3000);
           this._isRestoringSession.next(false);
         },
         error: (error: any) => {
-          console.error('Failed to restore user session from sign-in token:', error);
+          console.error('❌ Failed to restore user session from sign-in token:', error);
           // Clear invalid tokens
           this.clearStoredTokens();
           this._isRestoringSession.next(false);
@@ -1363,11 +1465,12 @@ Make sure to:
       });
     } else if (storedRegularToken) {
       // Regular token exists without sign-in token (shouldn't happen in normal flow)
-      console.log('Found orphaned regular token, clearing it');
+      console.log('⚠️ Found orphaned regular token, clearing it');
       sessionStorage.removeItem(this.REGULAR_TOKEN_KEY);
       this._isRestoringSession.next(false);
     } else {
       // No tokens present, nothing to restore
+      console.log('ℹ️ No stored tokens found, user needs to sign in');
       this._isRestoringSession.next(false);
     }
   }
@@ -1386,6 +1489,60 @@ Make sure to:
    */
   public hasUserSession(): boolean {
     return this.cookieService.check(this.SIGNIN_TOKEN_COOKIE);
+  }
+
+  /**
+   * Test cookie functionality for debugging
+   */
+  public testCookieSetup(): void {
+    console.log('🧪 Testing cookie setup...');
+    
+    const testCookieName = 'sf_test_cookie';
+    const testValue = 'test_' + Date.now();
+    const testExpiration = new Date();
+    testExpiration.setMinutes(testExpiration.getMinutes() + 5);
+    
+    console.log('🧪 Current state:', {
+      autoSignInEnabled: this._autoSignInEnabled,
+      cookieServiceAvailable: !!this.cookieService,
+      currentCookies: document.cookie,
+      testCookieName: testCookieName,
+      testValue: testValue
+    });
+    
+    // Test 1: CookieService
+    try {
+      this.cookieService.set(testCookieName, testValue, testExpiration, '/');
+      console.log('🧪 CookieService.set() - Success');
+    } catch (error) {
+      console.error('🧪 CookieService.set() - Failed:', error);
+    }
+    
+    // Test 2: Direct document.cookie
+    try {
+      const cookieString = `${testCookieName}_direct=${testValue}; expires=${testExpiration.toUTCString()}; path=/`;
+      document.cookie = cookieString;
+      console.log('🧪 document.cookie - Success:', cookieString);
+    } catch (error) {
+      console.error('🧪 document.cookie - Failed:', error);
+    }
+    
+    // Test 3: Read back
+    setTimeout(() => {
+      const cookieServiceResult = this.cookieService.get(testCookieName);
+      const directResult = document.cookie.includes(`${testCookieName}_direct=${testValue}`);
+      
+      console.log('🧪 Cookie read test results:', {
+        cookieService: cookieServiceResult,
+        cookieServiceWorking: cookieServiceResult === testValue,
+        directCookie: directResult,
+        allCookies: document.cookie
+      });
+      
+      // Cleanup
+      this.cookieService.delete(testCookieName, '/');
+      document.cookie = `${testCookieName}_direct=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+    }, 100);
   }
 
   /**

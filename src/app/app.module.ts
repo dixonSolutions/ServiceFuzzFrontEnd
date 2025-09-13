@@ -77,6 +77,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { MegaMenuModule } from 'primeng/megamenu';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { RatingModule } from 'primeng/rating';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { AIWebsiteChatComponent } from './ai-website-chat/ai-website-chat';
 
 
@@ -111,6 +112,7 @@ import { FormBuilderComponent } from './form-builder/form-builder';
 import { AuthInterceptorService } from './services/auth-interceptor.service';
 import { Staffmanage } from './staffmanage/staffmanage';
 import { About } from './about/about';
+import { UniversalSearch } from './universal-search/universal-search';
 
 
 const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.googleusercontent.com';
@@ -141,6 +143,7 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     FormBuilderComponent,
     Staffmanage,
     About,
+    UniversalSearch,
 
   ],
   imports: [
@@ -221,6 +224,7 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     MegaMenuModule,
     RadioButtonModule,
     RatingModule,
+    AutoCompleteModule,
     BusinessEditComponent,
     GoogleMapsPickerComponent
   ],

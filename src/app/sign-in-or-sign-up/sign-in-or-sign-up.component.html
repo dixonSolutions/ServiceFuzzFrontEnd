@@ -37,8 +37,26 @@
     </div>
   </p-card>
 
+  <!-- Auto Sign-In Loading Card -->
+  <p-card class="auth-card loading-card" *ngIf="isAutoSignInLoading">
+    <ng-template pTemplate="header">
+      <div class="auth-header">
+        <div class="logo-section">
+          <i class="pi pi-shield" style="font-size: 2.5rem; color: #3b82f6;"></i>
+        </div>
+        <h1 class="auth-title">Restoring Session</h1>
+        <p class="auth-subtitle">Please wait while we sign you back in...</p>
+      </div>
+    </ng-template>
+    
+    <div class="loading-content">
+      <p-progressSpinner styleClass="w-4rem h-4rem" strokeWidth="4"></p-progressSpinner>
+      <p class="loading-text">Checking your saved session...</p>
+    </div>
+  </p-card>
+
   <!-- Auth Card for non-authenticated users -->
-  <p-card class="auth-card" *ngIf="!isAuthenticated">
+  <p-card class="auth-card" *ngIf="!isAuthenticated && !isAutoSignInLoading">
     <ng-template pTemplate="header">
       <div class="auth-header">
         <div class="logo-section">
@@ -75,13 +93,27 @@
         </small>
       </div>
 
+      <!-- Auto Sign-In Checkbox -->
+      <div class="form-field auto-signin-field">
+        <p-checkbox 
+          formControlName="autoSignIn"
+          inputId="autoSignIn"
+          [binary]="true"
+          (onChange)="onAutoSignInChange()">
+        </p-checkbox>
+        <label for="autoSignIn" class="auto-signin-label">
+          Keep me signed in
+          
+        </label>
+      </div>
+
       <!-- Magic Link Button -->
       <div class="form-actions">
         <p-button 
-          [label]="isSignIn ? 'Send Magic Link' : 'Create Account'" 
+          [label]="isMagicLinkLoading ? (isSignIn ? 'Sending Magic Link...' : 'Creating Account...') : (isSignIn ? 'Send Magic Link' : 'Create Account')" 
           type="submit"
-          [disabled]="!authForm.valid || isLoading"
-          [loading]="isLoading"
+          [disabled]="!authForm.valid || isLoading || isMagicLinkLoading"
+          [loading]="isMagicLinkLoading"
           styleClass="p-button-lg w-full">
         </p-button>
       </div>
@@ -96,8 +128,19 @@
 
     <!-- Google Sign-In -->
     <div class="social-login">
-      <div class="google-signin-container">
+      <div class="google-signin-container" *ngIf="!isGoogleLoading">
         <!-- Google Sign-In button will be initialized here by TypeScript -->
+      </div>
+      
+      <!-- Google Loading State -->
+      <div class="google-loading" *ngIf="isGoogleLoading">
+        <p-button 
+          label="Signing in with Google..." 
+          icon="pi pi-google"
+          [loading]="true"
+          disabled="true"
+          styleClass="p-button-lg w-full google-button">
+        </p-button>
       </div>
     </div>
 
