@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
-import { map, Observable, BehaviorSubject, of } from 'rxjs';
+import { map, Observable, BehaviorSubject, of, throwError, catchError } from 'rxjs';
 import { ToastService } from './toast.service';
 import { CookieService } from 'ngx-cookie-service';
 import { BusinessBasicInfo } from '../models/businessbasicinfo';
@@ -523,6 +523,75 @@ export class DataSvrService {
         this.currentUser = response.user;
         console.log('Sign-in token authentication successful - refreshed regular token');
         return response;
+      })
+    );
+  }
+
+  /**
+   * Refresh the current JWT token using the existing token
+   */
+  refreshToken(): Observable<{ user: ServiceFuzzAccount; token: string; message: string; tokenExpires: string }> {
+    const currentToken = this.jwtToken;
+    if (!currentToken) {
+      return throwError(() => new Error('No token available for refresh'));
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${currentToken}`
+    });
+
+    return this.http.post<{ user: ServiceFuzzAccount; token: string; message: string; tokenExpires: string }>(
+      `${this.apiUrl}/api/auth/refresh-token`,
+      {},
+      { headers }
+    ).pipe(
+      map(response => {
+        // Store the new token and update user
+        this.jwtToken = response.token;
+        this.currentUser = response.user;
+        console.log('Token refreshed successfully');
+        return response;
+      }),
+      catchError(error => {
+        console.error('Token refresh failed:', error);
+        if (error.status === 401) {
+          // If refresh fails with 401, try to use sign-in token as fallback
+          const signInToken = this.signInToken;
+          if (signInToken) {
+            console.log('Attempting fallback refresh with sign-in token');
+            return this.authenticateWithSignInToken(signInToken);
+          } else {
+            // No fallback available, clear state
+            this.clearState();
+          }
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Verify if the current JWT token is valid
+   */
+  verifyToken(): Observable<{ message: string; isValid: boolean }> {
+    const currentToken = this.jwtToken;
+    if (!currentToken) {
+      return throwError(() => new Error('No token available for verification'));
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${currentToken}`
+    });
+
+    return this.http.post<{ message: string; isValid: boolean }>(
+      `${this.apiUrl}/api/auth/verify-token`,
+      {},
+      { headers }
+    ).pipe(
+      catchError(error => {
+        console.error('Token verification failed:', error);
+        return throwError(() => error);
       })
     );
   }
@@ -1320,6 +1389,62 @@ Make sure to:
   }
 
   /**
+   * Check if the current JWT token is authenticated (exists and not expired)
+   */
+  public isAuthenticated(): boolean {
+    const token = this.jwtToken;
+    if (!token) return false;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Date.now() / 1000;
+      return payload.exp > now;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Check if the current JWT token needs refresh (expires in next 5 minutes)
+   */
+  public shouldRefreshToken(): boolean {
+    const token = this.jwtToken;
+    if (!token) return false;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Date.now() / 1000;
+      const fiveMinutesFromNow = now + (5 * 60); // 5 minutes in seconds
+      return payload.exp < fiveMinutesFromNow;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Get the current user from the token claims
+   */
+  public getCurrentUserFromToken(): any {
+    const token = this.jwtToken;
+    if (!token) return null;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return {
+        userID: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        hasActiveSubscription: payload.HasActiveSubscription,
+        hasFreeTrial: payload.HasFreeTrial,
+        freeTrialEndDate: payload.FreeTrialEndDate,
+        authorizedBusinesses: payload.AuthorizedBusinesses?.split(',') || []
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Schedule automatic token refresh before expiration
    */
   private scheduleTokenRefresh(token: string): void {
@@ -1356,18 +1481,12 @@ Make sure to:
   }
 
   /**
-   * Automatically refresh the regular token using the sign-in token
+   * Automatically refresh the regular token using the refresh token endpoint
    */
   private refreshTokenAutomatically(): void {
-    const currentSignInToken = this.signInToken;
-    
-    if (!currentSignInToken) {
-      console.warn('No sign-in token available for automatic refresh');
-      return;
-    }
-    
     console.log('Automatically refreshing token');
-    this.authenticateWithSignInToken(currentSignInToken).subscribe({
+    
+    this.refreshToken().subscribe({
       next: (response) => {
         console.log('Token refreshed automatically');
       },
@@ -1377,6 +1496,61 @@ Make sure to:
         this.clearState();
       }
     });
+  }
+
+  /**
+   * Manually refresh token with user feedback
+   */
+  public refreshTokenManually(): Observable<{ user: ServiceFuzzAccount; token: string; message: string; tokenExpires: string }> {
+    return this.refreshToken().pipe(
+      map(response => {
+        this.toastService.openSnackBar('Token refreshed successfully', 'Close', 3000);
+        return response;
+      }),
+      catchError(error => {
+        this.toastService.openSnackBar('Failed to refresh token. Please sign in again.', 'Close', 5000);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Ensure valid token before making API calls
+   * This method checks if token needs refresh and refreshes it if necessary
+   */
+  public ensureValidToken(): Observable<string> {
+    if (!this.isAuthenticated()) {
+      // Try to restore session if we have a sign-in token
+      const signInToken = this.signInToken;
+      if (signInToken) {
+        return this.authenticateWithSignInToken(signInToken).pipe(
+          map(response => response.token)
+        );
+      } else {
+        return throwError(() => new Error('No valid authentication tokens available'));
+      }
+    }
+
+    if (this.shouldRefreshToken()) {
+      return this.refreshToken().pipe(
+        map(response => response.token)
+      );
+    }
+
+    return of(this.jwtToken!);
+  }
+
+  /**
+   * Get authorization headers with a valid token
+   * This method ensures the token is valid before returning headers
+   */
+  public getAuthHeaders(): Observable<HttpHeaders> {
+    return this.ensureValidToken().pipe(
+      map(token => new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }))
+    );
   }
 
   // Confetti Methods

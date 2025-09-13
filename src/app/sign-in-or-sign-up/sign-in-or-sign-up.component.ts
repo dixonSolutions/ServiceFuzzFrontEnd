@@ -48,8 +48,7 @@ export class SignInOrSignUpComponent implements OnInit {
     private messageService: MessageService
   ) {
     this.authForm = this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      email: ['', [Validators.required, Validators.email]]
     });
 
     // Set up the global callback for Google Sign-In
@@ -57,11 +56,18 @@ export class SignInOrSignUpComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Check for redirect URL parameter
+    // Check for redirect URL parameter and magic link token
     this.route.queryParams.subscribe(params => {
       // Store redirect URL if provided
       if (params['redirect']) {
         this.redirectUrl = params['redirect'];
+      }
+      
+      // Handle magic link authentication
+      const signinToken = params['signin_token'];
+      if (signinToken) {
+        this.processMagicLinkAuthentication(signinToken, params['source']);
+        return; // Don't proceed with normal initialization if processing magic link
       }
     });
 
@@ -92,6 +98,107 @@ export class SignInOrSignUpComponent implements OnInit {
     // Navigate to redirect URL if provided, otherwise go to home
     const targetUrl = this.redirectUrl || '/business/settings';
     this.router.navigate([targetUrl], { replaceUrl: true });
+  }
+
+  /**
+   * Process magic link authentication directly in this component
+   */
+  private processMagicLinkAuthentication(signinToken: string, source: string | null) {
+    console.log('🔗 Processing magic link authentication:', { 
+      hasSigninToken: !!signinToken, 
+      source 
+    });
+    
+    // Validate signin_token parameter
+    if (!signinToken || signinToken.trim() === '') {
+      console.error('🔗 Missing or empty signin_token parameter');
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Invalid Magic Link',
+        detail: 'The magic link is invalid or expired. Please try again.',
+        life: 5000
+      });
+      return;
+    }
+
+    this.isLoading = true;
+
+    // Authenticate using the sign-in token
+    this.data.authenticateWithSignInToken(signinToken).subscribe({
+      next: (response) => {
+        console.log('🔗 Magic link authentication successful:', {
+          user: response.user,
+          hasToken: !!response.token,
+          message: response.message
+        });
+        
+        // Update authentication state
+        this.isAuthenticated = true;
+        this.serviceFuzzUser = response.user;
+        this.data.currentUser = response.user;
+        
+        // Set user info for display
+        this.userInfo = {
+          name: response.user.name || '',
+          email: response.user.email || '',
+          picture: '',
+          sub: response.user.email || '',
+          given_name: response.user.name || '',
+          family_name: ''
+        };
+        
+        // Show success message
+        const authType = source === 'signup' ? 'account creation' : 'sign in';
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Authentication Successful',
+          detail: `Successfully completed ${authType} via magic link!`,
+          life: 4000
+        });
+        
+        this.isLoading = false;
+        
+        // Clean URL and navigate
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        }).then(() => {
+          // Navigate after a short delay to show success message
+          setTimeout(() => {
+            this.navigateAfterAuth();
+          }, 2000);
+        });
+      },
+      error: (error: any) => {
+        console.error('🔗 Magic link authentication failed:', error);
+        
+        this.isLoading = false;
+        this.data.clearState();
+        
+        // Show error message
+        let errorMessage = 'Authentication failed. Please try again.';
+        if (error.status === 401) {
+          errorMessage = 'The magic link is invalid or expired. Please request a new one.';
+        } else if (error.status === 400) {
+          errorMessage = 'Invalid request. Please try again.';
+        }
+        
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Authentication Failed',
+          detail: errorMessage,
+          life: 5000
+        });
+        
+        // Clean URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        });
+      }
+    });
   }
 
   // Magic link verification is now handled by the auth-callback component
@@ -196,22 +303,8 @@ export class SignInOrSignUpComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.authForm.valid) {
-      this.isLoading = true;
-      try {
-        if (this.isSignIn) {
-          // Handle sign in
-          // TODO: Implement regular email/password sign in
-          // After successful authentication, call this.navigateAfterAuth();
-        } else {
-          // Handle sign up
-          // TODO: Implement regular email/password sign up
-          // After successful authentication, call this.navigateAfterAuth();
-        }
-      } finally {
-        this.isLoading = false;
-      }
-    }
+    // Form submission now only handles magic link sending (passwordless)
+    this.sendMagicLink();
   }
 
   sendMagicLink() {
