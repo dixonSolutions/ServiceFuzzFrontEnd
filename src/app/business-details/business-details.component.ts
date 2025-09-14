@@ -19,7 +19,7 @@ export class BusinessDetailsComponent implements OnInit {
     private data: DataSvrService
   ) {}
 
-  ngOnInit(): void {
+  ngOnInit(): void {  
     console.log('BusinessDetailsComponent ngOnInit called');
     
     // Get business data from router state
