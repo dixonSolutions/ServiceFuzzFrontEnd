@@ -238,9 +238,9 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
    */
   private async loadWorkspaceFiles(workspaceId: string): Promise<void> {
     try {
-      const response = await this.filesService.getFiles(workspaceId).toPromise();
-      if (response?.files) {
-        this._websiteFiles.next(response.files);
+      const files = await this.filesService.getFiles(workspaceId).toPromise();
+      if (files && Array.isArray(files)) {
+        this._websiteFiles.next(files);
       }
     } catch (error) {
       console.error('Error loading workspace files:', error);

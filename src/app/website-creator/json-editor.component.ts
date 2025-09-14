@@ -1,9 +1,13 @@
-import { Component, OnInit, OnDestroy, Output, EventEmitter, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, Input, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { WebsiteBuilderService } from '../services/website-builder';
+import { WebsiteFilesService } from '../services/website-files.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { ComponentType } from '../models/workspace.models';
+import { FileTreeNode, FileStructureResponse, FileContentResponse, WebsiteFile } from '../models/workspace.models';
+import { TreeNode } from 'primeng/api';
+import { MessageService } from 'primeng/api';
+
 
 @Component({
   selector: 'app-json-editor',
@@ -11,55 +15,113 @@ import { ComponentType } from '../models/workspace.models';
   templateUrl: './json-editor.component.html',
   styleUrls: ['./json-editor.component.css']
 })
-export class JsonEditorComponent implements OnInit, OnDestroy {
+export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
   @Output() close = new EventEmitter<void>();
-  @Output() builtInNavPropertiesChange = new EventEmitter<{ [key: string]: any }>();
-  @Input() builtInNavProperties: { [key: string]: any } = {};
+  @Input() workspaceId: string = '';
+  @ViewChild('codeContainer', { static: false }) codeContainer!: ElementRef;
   
   private destroy$ = new Subject<void>();
   
-  jsonContent: string = '';
-  isValidJson: boolean = true;
-  currentPage: string = 'Home';
-  pages: any[] = [];
-  htmlPreview: string = '';
-  safeHtmlPreview: SafeHtml = '';
+  // File browser properties
+  fileTree: TreeNode[] = [];
+  selectedFile: TreeNode | null = null;
+  fileContent: string = '';
+  selectedFileName: string = '';
+  selectedFileType: string = '';
+  isLoadingFiles: boolean = false;
+  isLoadingContent: boolean = false;
+  files: WebsiteFile[] = [];
   
-  // Add new properties for handling large data
-  showFullJson: boolean = false;
-  sanitizedJsonContent: string = '';
-  originalDataSize: number = 0;
-  sanitizedDataSize: number = 0;
-  binaryFieldsRemoved: string[] = [];
+  // Search and filter
+  searchTerm: string = '';
+  filteredTree: TreeNode[] = [];
+  
+  // Code display properties
+  lineCount: number = 0;
+  
+  // Workspace info
+  workspaceName: string = 'Project Files';
+
+  /**
+   * Get the highlight.js language identifier for the file type
+   */
+  getHighlightLanguage(fileType: string): string {
+    const language = (() => {
+      switch (fileType.toLowerCase()) {
+        case 'html':
+        case 'htm':
+          return 'xml'; // HTML is handled by xml language in highlight.js
+        case 'css':
+          return 'css';
+        case 'js':
+        case 'javascript':
+          return 'javascript';
+        case 'ts':
+        case 'typescript':
+          return 'typescript';
+        case 'json':
+          return 'json';
+        case 'xml':
+          return 'xml';
+        case 'md':
+        case 'markdown':
+          return 'markdown';
+        case 'scss':
+        case 'sass':
+          return 'scss';
+        case 'less':
+          return 'less';
+        default:
+          return 'javascript'; // Default to javascript for better highlighting
+      }
+    })();
+    
+    console.log(`🎨 Mapping file type "${fileType}" to language "${language}"`);
+    return language;
+  }
+
+  /**
+   * Debug method to track highlighting events
+   */
+  onHighlighted(result: any): void {
+    console.log('🎯 Highlighting completed:', result);
+    console.log('🎯 Language used:', result.language);
+    console.log('🎯 Content length:', this.fileContent?.length);
+  }
   
 
   
   constructor(
+    private route: ActivatedRoute,
+    private router: Router,
     private websiteBuilder: WebsiteBuilderService,
-    private sanitizer: DomSanitizer
+    private websiteFilesService: WebsiteFilesService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit() {
-    console.log('JSON Editor component initialized');
-    
-    // Subscribe to pages
-    this.websiteBuilder.pages$.pipe(takeUntil(this.destroy$)).subscribe(pages => {
-      this.pages = pages;
-      this.updateJsonContent();
-      this.generateHtmlPreview();
+    // Get workspace ID from route parameters or input
+    this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const routeWorkspaceId = params.get('workspaceId') || params.get('id');
+      if (routeWorkspaceId) {
+        this.workspaceId = routeWorkspaceId;
+      }
+      
+      if (this.workspaceId) {
+        this.loadWorkspaceInfo();
+        this.loadFileStructure();
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No workspace ID provided'
+        });
+      }
     });
+  }
 
-    // Subscribe to current page
-    this.websiteBuilder.currentPageId$.pipe(takeUntil(this.destroy$)).subscribe(pageId => {
-      const page = this.pages.find(p => p.id === pageId);
-      this.currentPage = page?.name || 'Home';
-      this.updateJsonContent();
-      this.generateHtmlPreview();
-    });
-
-    // Initial load
-    this.updateJsonContent();
-    this.generateHtmlPreview();
+  ngAfterViewInit() {
+    // Component is ready - highlight.js will handle syntax highlighting automatically
   }
 
   ngOnDestroy() {
@@ -67,417 +129,319 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-
-
-  // Store both versions of JSON
-  private fullJsonContent: string = '';
-
-  updateJsonContent() {
+  /**
+   * Load workspace information to get the workspace name
+   */
+  async loadWorkspaceInfo(): Promise<void> {
     try {
-      const websiteData = {
-        id: this.generateId(),
-        name: "New Website",
-        builtInNavigation: this.builtInNavProperties,
-        pages: this.pages.map(page => ({
-          id: page.id,
-          name: page.name,
-          route: page.route,
-          components: page.components.map((comp: any) => ({
-            id: comp.id,
-            type: comp.type,
-            name: this.getComponentName(comp.type),
-            icon: this.getComponentIcon(comp.type),
-            category: this.getComponentCategory(comp.type),
-            properties: comp.parameters
-          }))
-        }))
-      };
-      
-      // Create full JSON
-      this.fullJsonContent = JSON.stringify(websiteData, null, 2);
-      this.originalDataSize = new Blob([this.fullJsonContent]).size;
-      
-      // Create sanitized version
-      const sanitizedData = this.sanitizeDataForDisplay(websiteData);
-      this.sanitizedJsonContent = JSON.stringify(sanitizedData, null, 2);
-      this.sanitizedDataSize = new Blob([this.sanitizedJsonContent]).size;
-      
-      // Use sanitized version by default if original is too large
-      if (this.originalDataSize > 100000) { // 100KB threshold
-        this.jsonContent = this.sanitizedJsonContent;
-        this.showFullJson = false;
-      } else {
-        this.jsonContent = this.fullJsonContent;
-        this.showFullJson = true;
+      const workspace = await this.websiteBuilder.getWorkspace(this.workspaceId).toPromise();
+      if (workspace && workspace.name) {
+        this.workspaceName = workspace.name;
       }
-      
-      this.isValidJson = true;
     } catch (error) {
-      this.isValidJson = false;
+      console.error('Error loading workspace info:', error);
+      // Keep default name if error occurs
     }
   }
 
-  onJsonChange(event: any) {
-    this.jsonContent = event.target.value;
+  /**
+   * Load file structure from API and convert to tree format
+   */
+  async loadFileStructure(): Promise<void> {
+    this.isLoadingFiles = true;
     
-    // Update the appropriate stored version based on current view
-    if (this.showFullJson) {
-      this.fullJsonContent = this.jsonContent;
-    } else {
-      this.sanitizedJsonContent = this.jsonContent;
-    }
-    
-    this.validateAndApplyJson();
-  }
-
-  validateAndApplyJson() {
     try {
-      const parsed = JSON.parse(this.jsonContent);
-      this.isValidJson = true;
+      const files = await this.websiteFilesService.getFiles(this.workspaceId).toPromise();
       
-      // If the JSON contains built-in navigation properties, emit them to the parent
-      if (parsed.builtInNavigation) {
-        this.builtInNavProperties = parsed.builtInNavigation;
-        this.builtInNavPropertiesChange.emit(parsed.builtInNavigation);
+      if (files && Array.isArray(files)) {
+        this.files = files;
+        this.fileTree = this.convertFilesToTree(files);
+        this.filteredTree = [...this.fileTree];
       }
-      
-      // Apply changes back to the service if needed
-      this.generateHtmlPreview();
     } catch (error) {
-      this.isValidJson = false;
+      console.error('Error loading file structure:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load file structure'
+      });
+    } finally {
+      this.isLoadingFiles = false;
     }
   }
 
-  generateHtmlPreview() {
-    const currentPageData = this.pages.find(p => p.name === this.currentPage);
-    if (!currentPageData) {
-      this.htmlPreview = '<p>No page selected</p>';
-      this.safeHtmlPreview = this.sanitizer.bypassSecurityTrustHtml(this.htmlPreview);
+  /**
+   * Convert WebsiteFile array to PrimeNG TreeNode format with proper folder structure
+   */
+  private convertFilesToTree(files: WebsiteFile[]): TreeNode[] {
+    // Create root project node
+    const rootNode: TreeNode = {
+      key: 'root',
+      label: this.workspaceName,
+      data: { type: 'root' },
+      icon: 'pi pi-folder',
+      expandedIcon: 'pi pi-folder-open',
+      collapsedIcon: 'pi pi-folder',
+      expanded: true,
+      children: []
+    };
+
+    // Map to store folder nodes by their full path
+    const folderMap = new Map<string, TreeNode>();
+    folderMap.set('', rootNode); // Root folder
+
+    // Process each file
+    files.forEach(file => {
+      const pathParts = file.fileName.split('/');
+      const fileName = pathParts.pop() || file.fileName; // Get the actual file name
+      const folderPath = pathParts.join('/'); // Get the folder path
+
+      // Create folder structure if it doesn't exist
+      this.ensureFolderPath(folderPath, folderMap, rootNode);
+
+      // Get the parent folder
+      const parentFolder = folderMap.get(folderPath);
+      if (parentFolder && parentFolder.children) {
+        // Create file node
+        const fileNode = this.createFileNode(file, fileName);
+        parentFolder.children.push(fileNode);
+      }
+    });
+
+    // Sort folders and files
+    this.sortTreeNodes(rootNode);
+
+    return [rootNode];
+  }
+
+  /**
+   * Ensure folder path exists in the tree structure
+   */
+  private ensureFolderPath(folderPath: string, folderMap: Map<string, TreeNode>, rootNode: TreeNode): void {
+    if (!folderPath || folderMap.has(folderPath)) {
+      return; // Path already exists or is root
+    }
+
+    const pathParts = folderPath.split('/');
+    let currentPath = '';
+
+    for (let i = 0; i < pathParts.length; i++) {
+      const folderName = pathParts[i];
+      const parentPath = currentPath;
+      currentPath = currentPath ? `${currentPath}/${folderName}` : folderName;
+
+      if (!folderMap.has(currentPath)) {
+        // Create new folder node
+        const folderNode: TreeNode = {
+          key: currentPath,
+          label: folderName,
+          data: { type: 'folder', path: currentPath },
+          icon: 'pi pi-folder',
+          expandedIcon: 'pi pi-folder-open',
+          collapsedIcon: 'pi pi-folder',
+          expanded: true,
+          children: []
+        };
+
+        // Add to parent folder
+        const parentFolder = folderMap.get(parentPath);
+        if (parentFolder && parentFolder.children) {
+          parentFolder.children.push(folderNode);
+        }
+
+        // Store in map
+        folderMap.set(currentPath, folderNode);
+      }
+    }
+  }
+
+  /**
+   * Sort tree nodes: folders first, then files, both alphabetically
+   */
+  private sortTreeNodes(node: TreeNode): void {
+    if (node.children && node.children.length > 0) {
+      // Sort children: folders first, then files, both alphabetically
+      node.children.sort((a, b) => {
+        const aIsFolder = a.data?.type === 'folder' || a.data?.type === 'root';
+        const bIsFolder = b.data?.type === 'folder' || b.data?.type === 'root';
+
+        if (aIsFolder && !bIsFolder) return -1;
+        if (!aIsFolder && bIsFolder) return 1;
+        
+        return (a.label || '').localeCompare(b.label || '');
+      });
+
+      // Recursively sort children
+      node.children.forEach(child => this.sortTreeNodes(child));
+    }
+  }
+
+  /**
+   * Create a file node for the tree
+   */
+  private createFileNode(file: WebsiteFile, displayName?: string): TreeNode {
+    return {
+      key: file.id,
+      label: displayName || file.fileName,
+      data: file,
+      icon: this.getFileIcon(file.fileType),
+      leaf: true,
+      styleClass: 'file-node'
+    };
+  }
+
+  /**
+   * Get icon for folder based on file type
+   */
+  getFolderIcon(fileType: string): string {
+    const icons: { [key: string]: string } = {
+      html: 'pi pi-file',
+      css: 'pi pi-palette',
+      js: 'pi pi-code',
+      json: 'pi pi-database'
+    };
+    return icons[fileType] || 'pi pi-folder';
+  }
+
+  /**
+   * Get icon for file based on file type
+   */
+  getFileIcon(fileType: string): string {
+    const icons: { [key: string]: string } = {
+      html: 'pi pi-file',
+      css: 'pi pi-palette',
+      js: 'pi pi-code',
+      json: 'pi pi-database'
+    };
+    return icons[fileType] || 'pi pi-file';
+  }
+
+  /**
+   * Handle file selection in tree
+   */
+  onFileSelect(event: any): void {
+    const node = event.node;
+    
+    if (node.leaf && node.data && node.data.id) {
+      this.selectedFile = node;
+      this.loadFileContent(node.data);
+    }
+  }
+
+  /**
+   * Load content of selected file
+   */
+  async loadFileContent(file: WebsiteFile): Promise<void> {
+    this.isLoadingContent = true;
+    this.selectedFileName = file.fileName;
+    this.selectedFileType = file.fileType;
+    
+    try {
+      // Use the content from the file object
+      this.fileContent = file.content || '';
+      
+      // Process content for display
+      this.processFileContent();
+      
+    } catch (error) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load file content'
+      });
+      this.fileContent = 'Error loading file content';
+      this.processFileContent();
+    } finally {
+      this.isLoadingContent = false;
+    }
+  }
+
+  /**
+   * Process file content for display
+   */
+  private processFileContent(): void {
+    if (!this.fileContent) {
+      this.lineCount = 0;
       return;
     }
 
-    let html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${this.sanitizeText(currentPageData.name)} - New Website</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    .navigation { background: #ffffff; padding: 12px 24px; border-bottom: 1px solid #ddd; }
-    .nav-brand { font-weight: bold; color: #333; }
-    .nav-menu { display: flex; gap: 20px; margin-top: 8px; }
-    .nav-item { color: #666; text-decoration: none; }
-    .nav-item.active { color: #007bff; }
-  </style>
-</head>
-<body>
-  <div class="navigation">
-    <div class="nav-brand">
-      ${this.builtInNavProperties['logoType'] === 'image' && this.builtInNavProperties['logoImage'] ? 
-        `<img src="${this.sanitizeText(this.builtInNavProperties['logoImage'])}" alt="Logo" style="height: 24px; margin-right: 8px; vertical-align: middle;">` : 
-        ''}
-      ${this.sanitizeText(this.builtInNavProperties['logoText'] || 'Your Business')}
-    </div>
-    <div class="nav-menu">`;
+    // Count lines for display
+    this.lineCount = this.fileContent.split('\n').length;
+  }
 
-    // Add navigation menu
-    this.pages.forEach(page => {
-      const isActive = page.name === this.currentPage ? ' class="nav-item active"' : ' class="nav-item"';
-      html += `      <a href="${this.sanitizeText(page.route)}"${isActive}>${this.sanitizeText(page.name)}</a>\n`;
-    });
 
-    html += `    </div>
-  </div>
-  <main>`;
+  /**
+   * Escape HTML characters for safe display
+   */
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
 
-    // Add page components
-    if (currentPageData.components && currentPageData.components.length > 0) {
-      currentPageData.components.forEach((component: any) => {
-        html += this.generateComponentHtml(component);
-      });
-    } else {
-      html += `    <div style="padding: 40px; text-align: center; color: #666;">
-      <h2>Empty Page</h2>
-      <p>No components added to this page yet.</p>
-    </div>`;
+  /**
+   * Filter tree based on search term
+   */
+  onSearch(): void {
+    if (!this.searchTerm.trim()) {
+      this.filteredTree = [...this.fileTree];
+      return;
     }
 
-    html += `  </main>
-</body>
-</html>`;
-
-    this.htmlPreview = html;
-    this.safeHtmlPreview = this.sanitizer.bypassSecurityTrustHtml(html);
+    const searchLower = this.searchTerm.toLowerCase();
+    this.filteredTree = this.filterTreeNodes(this.fileTree, searchLower);
   }
 
-  generateComponentHtml(component: any): string {
-    const params = component.parameters || component.properties || {};
-    
-    switch (component.type) {
-      case 'hero-section':
-        return `    <section style="padding: 60px 24px; background: ${this.sanitizeText(params.backgroundColor || '#f8f9fa')}; color: ${this.sanitizeText(params.textColor || '#333')}; text-align: center;">
-      <h1>${this.sanitizeText(params.title || 'Welcome to Our Website')}</h1>
-      <p>${this.sanitizeText(params.subtitle || 'Discover amazing services and solutions')}</p>
-      <button style="padding: 12px 24px; background: ${this.sanitizeText(params.ctaButtonColor || '#007bff')}; color: white; border: none; border-radius: 6px;">
-        ${this.sanitizeText(params.ctaText || 'Get Started')}
-      </button>
-    </section>\n`;
+  /**
+   * Recursively filter tree nodes
+   */
+  private filterTreeNodes(nodes: TreeNode[], searchTerm: string): TreeNode[] {
+    return nodes.map(node => {
+      const matchesSearch = node.label?.toLowerCase().includes(searchTerm);
+      const filteredChildren = node.children ? this.filterTreeNodes(node.children, searchTerm) : [];
       
-      case 'text-block':
-        return `    <div style="padding: 24px; text-align: ${this.sanitizeText(params.alignment || 'left')};">
-      ${params.title ? `<h3>${this.sanitizeText(params.title)}</h3>` : ''}
-      <p style="color: ${this.sanitizeText(params.textColor || '#666')};">${this.sanitizeText(params.content || 'Your text content goes here...')}</p>
-    </div>\n`;
-      
-      case 'top-navigation':
-        return `    <!-- Top Navigation Component -->\n`;
-      
-      default:
-        return `    <div style="padding: 20px; background: #f8f9fa; border: 1px dashed #ddd; margin: 10px;">
-      <strong>${this.sanitizeText(this.getComponentName(component.type))}</strong>
-      <br><small>Component ID: ${this.sanitizeText(component.id)}</small>
-    </div>\n`;
-    }
+      if (matchesSearch || filteredChildren.length > 0) {
+        return {
+          ...node,
+          children: filteredChildren,
+          expanded: filteredChildren.length > 0
+        };
+      }
+      return null;
+    }).filter(node => node !== null) as TreeNode[];
   }
 
-  private sanitizeText(text: string): string {
-    if (!text) return '';
-    return text.toString().replace(/[<>&"']/g, (match) => {
-      const escapeMap: { [key: string]: string } = {
-        '<': '&lt;',
-        '>': '&gt;',
-        '&': '&amp;',
-        '"': '&quot;',
-        "'": '&#x27;'
-      };
-      return escapeMap[match];
-    });
+  /**
+   * Refresh file structure
+   */
+  onRefresh(): void {
+    this.loadFileStructure();
   }
 
-  onPageSelect(page: any) {
-    this.currentPage = page.name;
-    this.websiteBuilder.setCurrentPage(page.id);
-  }
-
-  addPage() {
-    const name = prompt('Enter page name:');
-    const route = prompt('Enter page route (e.g., /new-page):');
-    
-    if (name && route) {
-      this.websiteBuilder.addPage(name, route);
-    }
-  }
-
-  applyChanges() {
-    if (this.isValidJson) {
-      try {
-        const parsed = JSON.parse(this.jsonContent);
-        console.log('Applying JSON changes:', parsed);
-        
-        // Update built-in navigation properties if present
-        if (parsed.builtInNavigation) {
-          this.builtInNavProperties = { ...parsed.builtInNavigation };
-          this.builtInNavPropertiesChange.emit(this.builtInNavProperties);
-        }
-        
-        // Apply changes to the website builder service
-        if (parsed.pages && Array.isArray(parsed.pages)) {
-          // Update pages data in the service
-          this.updateWebsitePages(parsed.pages);
-        }
-        
-        // Update the local pages data
-        this.pages = parsed.pages || this.pages;
-        
-        // Refresh the preview
-        this.generateHtmlPreview();
-        
-        alert('Changes applied successfully!');
-      } catch (error) {
-        console.error('Error applying changes:', error);
-        alert('Error applying changes: ' + error);
+  /**
+   * Close the file browser
+   */
+  closeEditor(): void {
+    // If used as a standalone route, navigate back
+    if (this.route.snapshot.url.length > 0) {
+      // Check if we came from website creator
+      const referrer = document.referrer;
+      if (referrer && referrer.includes('website-creator')) {
+        window.history.back();
+      } else {
+        // Navigate to website creator for this workspace
+        this.router.navigate(['/website-creator']);
       }
     } else {
-      alert('Please fix JSON syntax errors before applying changes.');
+      // If used as a component, emit close event
+      this.close.emit();
     }
   }
 
-  private updateWebsitePages(pages: any[]) {
-    // Update pages in the website builder service
-    try {
-      pages.forEach(page => {
-        const existingPage = this.websiteBuilder.getCurrentPage();
-        if (existingPage && existingPage.id === page.id) {
-          // Update current page components
-          if (page.components) {
-            existingPage.components = page.components.map((comp: any) => ({
-              id: comp.id,
-              type: comp.type,
-              x: comp.x || 0,
-              y: comp.y || 0,
-              width: comp.width || 300,
-              height: comp.height || 100,
-              parameters: comp.properties || comp.parameters || {},
-              zIndex: comp.zIndex || 1
-            }));
-          }
-        }
-      });
-    } catch (error) {
-      console.error('Error updating website pages:', error);
-    }
-  }
-
-  refreshPreview() {
-    this.generateHtmlPreview();
-  }
-
-  closeEditor() {
-    this.close.emit();
-  }
-
-  private generateId(): string {
-    return 'id_' + Math.random().toString(36).substr(2, 9);
-  }
-
-  private getComponentName(type: string): string {
-    // First check local component definitions
-    const componentDef = this.websiteBuilder.getComponentDefinition(type);
-    if (componentDef) {
-      return componentDef.name;
-    }
-    
-    // Then check API component types
-    const apiComponent = this.websiteBuilder.getCachedApiComponentTypes().find(comp => comp.id === type);
-    if (apiComponent) {
-      return apiComponent.name;
-    }
-    
-    // Fallback mapping for known types
-    const names: { [key: string]: string } = {
-      'top-navigation': 'Top Navigation',
-      'hero-section': 'Hero Section',
-      'text-block': 'Text Block',
-      'image': 'Image',
-      'button': 'Button',
-      'footer': 'Footer'
-    };
-    return names[type] || type;
-  }
-
-  private getComponentIcon(type: string): string {
-    // First check local component definitions
-    const componentDef = this.websiteBuilder.getComponentDefinition(type);
-    if (componentDef) {
-      return componentDef.icon;
-    }
-    
-    // Then check API component types
-    const apiComponent = this.websiteBuilder.getCachedApiComponentTypes().find(comp => comp.id === type);
-    if (apiComponent) {
-      return apiComponent.icon || 'pi pi-box';
-    }
-    
-    // Fallback mapping for known types
-    const icons: { [key: string]: string } = {
-      'top-navigation': '🧭',
-      'hero-section': '⭐',
-      'text-block': '📝',
-      'image': '🖼️',
-      'button': '🔘',
-      'footer': '📄'
-    };
-    return icons[type] || '📦';
-  }
-
-  private getComponentCategory(type: string): string {
-    // First check local component definitions
-    const componentDef = this.websiteBuilder.getComponentDefinition(type);
-    if (componentDef) {
-      return componentDef.category.toLowerCase();
-    }
-    
-    // Then check API component types
-    const apiComponent = this.websiteBuilder.getCachedApiComponentTypes().find(comp => comp.id === type);
-    if (apiComponent) {
-      return apiComponent.category.toLowerCase();
-    }
-    
-    // Fallback mapping for known types
-    const categories: { [key: string]: string } = {
-      'top-navigation': 'ui',
-      'hero-section': 'ui',
-      'text-block': 'ui',
-      'image': 'ui',
-      'button': 'ui',
-      'footer': 'ui'
-    };
-    return categories[type] || 'ui';
-  }
-
-  // Utility methods for handling large data
-  private sanitizeDataForDisplay(data: any): any {
-    this.binaryFieldsRemoved = [];
-    return this.recursiveSanitize(data, '');
-  }
-
-  private recursiveSanitize(obj: any, path: string): any {
-    if (obj === null || obj === undefined) {
-      return obj;
-    }
-
-    if (typeof obj === 'string') {
-      // Check if it's likely base64 image data
-      if (this.isBase64ImageData(obj)) {
-        const fieldPath = path || 'root';
-        this.binaryFieldsRemoved.push(fieldPath);
-        return `[BINARY_DATA_REMOVED: ${this.formatFileSize(obj.length)} base64 data]`;
-      }
-      // Check if it's a very long string (potential binary data)
-      if (obj.length > 10000) {
-        const fieldPath = path || 'root';
-        this.binaryFieldsRemoved.push(fieldPath);
-        return `[LARGE_DATA_REMOVED: ${this.formatFileSize(obj.length)} string data]`;
-      }
-      return obj;
-    }
-
-    if (Array.isArray(obj)) {
-      return obj.map((item, index) => this.recursiveSanitize(item, `${path}[${index}]`));
-    }
-
-    if (typeof obj === 'object') {
-      const sanitized: any = {};
-      for (const [key, value] of Object.entries(obj)) {
-        const currentPath = path ? `${path}.${key}` : key;
-        sanitized[key] = this.recursiveSanitize(value, currentPath);
-      }
-      return sanitized;
-    }
-
-    return obj;
-  }
-
-  private isBase64ImageData(str: string): boolean {
-    // Check if string looks like base64 image data
-    if (str.length < 100) return false; // Too short to be meaningful image data
-    
-    // Check for data URL pattern
-    if (str.startsWith('data:image/')) return true;
-    
-    // Check for pure base64 pattern (common prefixes/suffixes for images)
-    const base64Pattern = /^[A-Za-z0-9+/]+={0,2}$/;
-    if (str.length > 1000 && base64Pattern.test(str)) {
-      // Additional check for common image file headers in base64
-      const imageHeaders = ['/9j/', 'iVBORw0KGgo', 'R0lGODlh', 'UklGR']; // JPEG, PNG, GIF, WebP
-      return imageHeaders.some(header => str.startsWith(header));
-    }
-    
-    return false;
-  }
-
-  private formatFileSize(bytes: number): string {
+  /**
+   * Get file size formatted string
+   */
+  getFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -485,21 +449,7 @@ export class JsonEditorComponent implements OnInit, OnDestroy {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  toggleJsonView(): void {
-    this.showFullJson = !this.showFullJson;
-    // Switch between stored versions
-    if (this.showFullJson) {
-      this.jsonContent = this.fullJsonContent;
-    } else {
-      this.jsonContent = this.sanitizedJsonContent;
-    }
-  }
 
-  getDataSizeInfo(): string {
-    if (this.originalDataSize > this.sanitizedDataSize) {
-      const savedSize = this.originalDataSize - this.sanitizedDataSize;
-      return `Showing sanitized version (${this.formatFileSize(this.sanitizedDataSize)}) - ${this.formatFileSize(savedSize)} of binary data hidden`;
-    }
-    return `Data size: ${this.formatFileSize(this.originalDataSize)}`;
-  }
+
+  // Helper methods for file operations
 } 

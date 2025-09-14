@@ -83,9 +83,13 @@
         <i class="pi pi-redo"></i>
         Redo
       </button>
-      <button class="toolbar-btn" title="JSON Editor" (click)="onJsonEditor()">
-        <i class="pi pi-code"></i>
-        JSON Editor
+      <button class="toolbar-btn" title="File Browser" (click)="onJsonEditor()">
+        <i class="pi pi-folder-open"></i>
+        File Browser
+      </button>
+      <button class="toolbar-btn" title="Open File Browser in New Tab" (click)="openFileBrowserInNewTab()">
+        <i class="pi pi-external-link"></i>
+        Files (New Tab)
       </button>
       <button class="toolbar-btn preview-btn" (click)="onPreview()">
         <i class="pi pi-eye"></i>
@@ -106,8 +110,8 @@
     </div>
   </div>
 
-  <!-- JSON Editor (full screen overlay) -->
-  <app-json-editor *ngIf="showJsonEditor" [builtInNavProperties]="builtInNavProperties" (builtInNavPropertiesChange)="onBuiltInNavPropertiesChange($event)" (close)="onJsonEditor()"></app-json-editor>
+  <!-- File Browser (full screen overlay) -->
+  <app-json-editor *ngIf="showJsonEditor" [workspaceId]="currentProject?.id || ''" (close)="onJsonEditor()"></app-json-editor>
 
   <!-- Deployment Dialog -->
   <div *ngIf="showDeploymentDialog" class="deployment-dialog-overlay">

@@ -645,4 +645,42 @@ export interface EnhancedAssetUploadResponse {
   version: number;
   isNewAsset: boolean; // true if this is the first version, false if it's a new version
   error?: string;
+}
+
+// ===================== FILE TREE BROWSER INTERFACES =====================
+
+// File Tree Node interface for PrimeNG Tree
+export interface FileTreeNode {
+  key?: string;
+  label?: string;
+  data?: any;
+  icon?: string;
+  expandedIcon?: string;
+  collapsedIcon?: string;
+  children?: FileTreeNode[];
+  leaf?: boolean;
+  expanded?: boolean;
+  type?: string;
+  parent?: FileTreeNode;
+  partialSelected?: boolean;
+  styleClass?: string;
+  draggable?: boolean;
+  droppable?: boolean;
+  selectable?: boolean;
+}
+
+// File structure response from API
+export interface FileStructureResponse {
+  files: FileTreeNode[];
+  totalFiles: number;
+}
+
+// File content response
+export interface FileContentResponse {
+  id: string;
+  fileName: string;
+  fileType: string;
+  content: string;
+  fileSize: number;
+  lastModified: Date;
 } 

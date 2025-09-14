@@ -844,6 +844,15 @@ Would you like to visit your website now?
     this.showJsonEditor = !this.showJsonEditor;
   }
 
+  openFileBrowserInNewTab(): void {
+    if (this.currentProject?.id) {
+      const url = `/file-browser/${this.currentProject.id}`;
+      window.open(url, '_blank');
+    } else {
+      alert('Please select a workspace first.');
+    }
+  }
+
   // Tab Management
   onTabChange(tab: 'components' | 'properties' | 'assets' | 'ai'): void {
     this.activeTab = tab;
@@ -1751,13 +1760,13 @@ ${response.content}
     if (!this.currentProject) return;
 
     try {
-      const response = await this.websiteFilesService.getFiles(this.currentProject.id).toPromise();
+      const files = await this.websiteFilesService.getFiles(this.currentProject.id).toPromise();
       
-      if (response?.files) {
-        console.log('✅ Website files loaded:', response.files);
+      if (files && Array.isArray(files)) {
+        console.log('✅ Website files loaded:', files);
         
         // Display files (this could be enhanced with a proper file manager UI)
-        const filesList = response.files.map(file => 
+        const filesList = files.map((file: any) => 
           `• ${file.fileName} (${file.fileType}) - ${this.formatFileSize(file.fileSize)}`
         ).join('\n');
         

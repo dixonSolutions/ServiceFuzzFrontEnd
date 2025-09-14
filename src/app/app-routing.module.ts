@@ -16,6 +16,7 @@ import { PrivacyPolicy } from './privacy-policy/privacy-policy';
 import { TermsOfUse } from './terms-of-use/terms-of-use';
 import { Staffmanage } from './staffmanage/staffmanage';
 import { About } from './about/about';
+import { JsonEditorComponent } from './website-creator/json-editor.component';
 
 
 const routes: Routes = [
@@ -43,6 +44,10 @@ const routes: Routes = [
   // Edit workspace: /website-creator/{businessId}/{workspaceId}
   { path: 'website-creator/:businessId/:workspaceId', component: WebsiteCreatorComponent },
   { path: 'website-creator', component: WebsiteCreatorComponent },
+  
+  // File Browser routes
+  { path: 'file-browser/:workspaceId', component: JsonEditorComponent },
+  { path: 'workspace/:workspaceId/files', component: JsonEditorComponent },
   
   // NEW ENHANCED WEBSITE BUILDER ROUTES
   {

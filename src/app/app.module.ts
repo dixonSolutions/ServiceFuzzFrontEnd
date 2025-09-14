@@ -78,6 +78,8 @@ import { MegaMenuModule } from 'primeng/megamenu';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { RatingModule } from 'primeng/rating';
 import { AutoCompleteModule } from 'primeng/autocomplete';
+import { TreeModule } from 'primeng/tree';
+import { HighlightModule, HIGHLIGHT_OPTIONS } from 'ngx-highlightjs';
 import { AIWebsiteChatComponent } from './ai-website-chat/ai-website-chat';
 
 
@@ -225,6 +227,8 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     RadioButtonModule,
     RatingModule,
     AutoCompleteModule,
+    TreeModule,
+    HighlightModule,
     BusinessEditComponent,
     GoogleMapsPickerComponent
   ],
@@ -245,6 +249,23 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     CookieService,
     ConfirmationService,
     MessageService,
+    {
+      provide: HIGHLIGHT_OPTIONS,
+      useValue: {
+        coreLibraryLoader: () => import('highlight.js/lib/core'),
+        lineNumbersLoader: () => import('ngx-highlightjs/line-numbers'),
+        languages: {
+          typescript: () => import('highlight.js/lib/languages/typescript'),
+          javascript: () => import('highlight.js/lib/languages/javascript'),
+          css: () => import('highlight.js/lib/languages/css'),
+          xml: () => import('highlight.js/lib/languages/xml'),
+          json: () => import('highlight.js/lib/languages/json'),
+          scss: () => import('highlight.js/lib/languages/scss'),
+          less: () => import('highlight.js/lib/languages/less'),
+          markdown: () => import('highlight.js/lib/languages/markdown')
+        }
+      }
+    },
     {
       provide: 'SocialAuthServiceConfig',
       useValue: {

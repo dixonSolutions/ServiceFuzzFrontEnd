@@ -7,7 +7,6 @@ import {
   WebsiteFile,
   CreateWebsiteFileDto,
   UpdateWebsiteFileDto,
-  WebsiteFileListResponse,
   BulkFileUpdate,
   BulkSaveRequest,
   BulkSaveResponse,
@@ -29,14 +28,14 @@ export class WebsiteFilesService {
   /**
    * Get all files for workspace
    */
-  getFiles(workspaceId: string): Observable<WebsiteFileListResponse> {
+  getFiles(workspaceId: string): Observable<WebsiteFile[]> {
     const jwtToken = this.dataSvr.jwtToken;
     if (!jwtToken) {
       throw new Error('No JWT token available. User may not be authenticated.');
     }
 
-    return this.http.get<WebsiteFileListResponse>(
-      `${this.apiBaseUrl}/api/website-files/workspace/${workspaceId}`,
+    return this.http.get<WebsiteFile[]>(
+      `${this.apiBaseUrl}/api/WebsiteFiles/workspace/${workspaceId}`,
       {
         headers: {
           'Authorization': `Bearer ${jwtToken}`
@@ -68,7 +67,7 @@ export class WebsiteFilesService {
     };
 
     return this.http.post<WebsiteFile>(
-      `${this.apiBaseUrl}/api/website-files/workspace/${workspaceId}`,
+      `${this.apiBaseUrl}/api/WebsiteFiles/workspace/${workspaceId}`,
       fileDto,
       {
         headers: {
@@ -93,7 +92,7 @@ export class WebsiteFilesService {
     const updates: UpdateWebsiteFileDto = { content };
 
     return this.http.put<WebsiteFile>(
-      `${this.apiBaseUrl}/api/business-website/files/${fileId}`,
+      `${this.apiBaseUrl}/api/WebsiteFiles/${fileId}`,
       updates,
       {
         headers: {
@@ -116,7 +115,7 @@ export class WebsiteFilesService {
     }
 
     return this.http.delete<{ success: boolean }>(
-      `${this.apiBaseUrl}/api/business-website/files/${fileId}`,
+      `${this.apiBaseUrl}/api/WebsiteFiles/${fileId}`,
       {
         headers: {
           'Authorization': `Bearer ${jwtToken}`
@@ -139,7 +138,7 @@ export class WebsiteFilesService {
     const request: BulkSaveRequest = { files: fileUpdates };
 
     return this.http.post<BulkSaveResponse>(
-      `${this.apiBaseUrl}/api/website-files/workspace/${workspaceId}/bulk-save`,
+      `${this.apiBaseUrl}/api/WebsiteFiles/workspace/${workspaceId}/bulk-save`,
       request,
       {
         headers: {
@@ -164,7 +163,7 @@ export class WebsiteFilesService {
     const queryParams = pageRoute !== '/' ? `?pageRoute=${encodeURIComponent(pageRoute)}` : '';
 
     return this.http.get<PreviewResponse>(
-      `${this.apiBaseUrl}/api/websitefiles/workspace/${workspaceId}/preview${queryParams}`,
+      `${this.apiBaseUrl}/api/WebsiteFiles/workspace/${workspaceId}/preview${queryParams}`,
       {
         headers: {
           'Authorization': `Bearer ${jwtToken}`

@@ -36,7 +36,6 @@ import {
   UpdateWebsitePageDto,
   CreateDomainMappingDto,
   UpdateDomainMappingDto,
-  WebsiteFileListResponse,
   WebsiteAssetListResponse,
   WebsitePageListResponse,
   DomainMappingListResponse,
@@ -1808,14 +1807,14 @@ export class WebsiteBuilderService {
   /**
    * Get all files for workspace
    */
-  getWebsiteFiles(workspaceId: string): Observable<WebsiteFileListResponse> {
+  getWebsiteFiles(workspaceId: string): Observable<WebsiteFile[]> {
     const jwtToken = this.dataSvr.jwtToken;
     if (!jwtToken) {
       throw new Error('No JWT token available. User may not be authenticated.');
     }
 
-    return this.http.get<WebsiteFileListResponse>(
-      `${this.apiBaseUrl}/api/website-files/workspace/${workspaceId}`,
+    return this.http.get<WebsiteFile[]>(
+      `${this.apiBaseUrl}/api/WebsiteFiles/workspace/${workspaceId}`,
       {
         headers: {
           'Authorization': `Bearer ${jwtToken}`

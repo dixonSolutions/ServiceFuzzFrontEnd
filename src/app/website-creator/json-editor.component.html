@@ -1,142 +1,152 @@
-<div class="json-editor-container">
-  <!-- Top Navigation Tabs -->
-  <div class="page-tabs">
-    <button 
-      *ngFor="let page of pages" 
-      class="page-tab"
-      [class.active]="page.name === currentPage"
-      (click)="onPageSelect(page)">
-      {{ page.name }}
-      <span class="page-route">{{ page.route }}</span>
-    </button>
-    <button class="add-page-btn" (click)="addPage()" title="Add Page">
-      + Add Page
-    </button>
-  </div>
-
-  <!-- Action Buttons -->
-  <div class="action-buttons">
-    <button class="action-btn apply-btn" (click)="applyChanges()" [disabled]="!isValidJson">
-      <i class="pi pi-check"></i>
-      Apply Changes
-    </button>
-    <button class="action-btn refresh-btn" (click)="refreshPreview()">
-      <i class="pi pi-refresh"></i>
-      Refresh Preview
-    </button>
-    <div class="view-indicator">
-      <span class="desktop-view">🖥️ Desktop View</span>
-      <button class="close-editor-btn" (click)="closeEditor()" title="Close JSON Editor">
+<!-- File Browser Component -->
+<div class="file-browser-container">
+  <!-- Header -->
+  <div class="file-browser-header">
+    <div class="header-left">
+      <div class="header-title">
+        <i class="pi pi-folder-open"></i>
+        <span>File Browser</span>
+      </div>
+      <div class="file-count" *ngIf="files.length > 0">
+        {{ files.length }} files
+      </div>
+    </div>
+    <div class="header-actions">
+      <button 
+        class="action-btn refresh-btn" 
+        (click)="onRefresh()" 
+        [disabled]="isLoadingFiles"
+        title="Refresh files">
+        <i class="pi pi-refresh" [class.pi-spin]="isLoadingFiles"></i>
+      </button>
+      <button 
+        class="action-btn close-btn" 
+        (click)="closeEditor()"
+        title="Close file browser">
         <i class="pi pi-times"></i>
-        Close Editor
       </button>
     </div>
   </div>
 
-  <!-- Main Content Area -->
-  <div class="editor-content">
-    <!-- Left Panel - JSON Editor -->
-    <div class="json-panel">
+  <!-- Search Bar -->
+  <div class="search-container">
+    <div class="search-input-wrapper">
+      <i class="pi pi-search search-icon"></i>
+      <input 
+        type="text" 
+        class="search-input"
+        placeholder="Search files..."
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()">
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="file-browser-content">
+    <!-- Left Panel - File Tree -->
+    <div class="file-tree-panel">
       <div class="panel-header">
-        <div class="panel-title">
-          <i class="pi pi-file-edit"></i>
-          <span>Website JSON</span>
+        <span class="panel-title">Files</span>
+      </div>
+      
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoadingFiles">
+        <div class="loading-spinner">
+          <i class="pi pi-spin pi-spinner"></i>
         </div>
-        <div class="json-controls">
-          <div class="data-size-info">
-            <small>{{ getDataSizeInfo() }}</small>
+        <p>Loading files...</p>
+      </div>
+
+      <!-- File Tree -->
+      <div class="file-tree-container" *ngIf="!isLoadingFiles">
+        <p-tree 
+          [value]="filteredTree"
+          selectionMode="single"
+          [(selection)]="selectedFile"
+          (onNodeSelect)="onFileSelect($event)"
+          [loading]="isLoadingFiles"
+          styleClass="github-tree">
+          
+          <ng-template let-node pTemplate="default">
+            <div class="tree-node-content">
+              <span class="node-label">{{ node.label }}</span>
+              <span class="file-size" *ngIf="node.leaf && node.data?.fileSize">
+                {{ getFileSize(node.data.fileSize) }}
+              </span>
+            </div>
+          </ng-template>
+        </p-tree>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="filteredTree.length === 0 && !isLoadingFiles">
+          <div class="empty-icon">
+            <i class="pi pi-folder-open"></i>
           </div>
-          <div class="view-controls" *ngIf="originalDataSize > sanitizedDataSize">
-            <button 
-              class="toggle-view-btn" 
-              (click)="toggleJsonView()"
-              [title]="showFullJson ? 'Switch to sanitized view' : 'Switch to full view'">
-              {{ showFullJson ? '🔍 Sanitized' : '📄 Full' }}
-            </button>
-          </div>
-        <div class="json-status">
-          <span class="status-indicator" [class.valid]="isValidJson" [class.invalid]="!isValidJson">
-            {{ isValidJson ? '✓ Valid JSON' : '✗ Invalid JSON' }}
-          </span>
-          </div>
+          <p *ngIf="searchTerm">No files match your search</p>
+          <p *ngIf="!searchTerm">No files found</p>
         </div>
-      </div>
-      
-      <div class="json-editor">
-        <textarea
-          class="json-textarea"
-          [value]="jsonContent"
-          (input)="onJsonChange($event)"
-          placeholder="Loading JSON..."
-          spellcheck="false"></textarea>
-      </div>
-      
-      <!-- Binary Data Information -->
-      <div class="binary-data-info" *ngIf="binaryFieldsRemoved.length > 0">
-        <details>
-          <summary>🗂️ Hidden Binary Data ({{ binaryFieldsRemoved.length }} fields)</summary>
-          <div class="binary-fields-list">
-            <p><strong>The following fields contain large binary data and have been hidden:</strong></p>
-            <ul>
-              <li *ngFor="let field of binaryFieldsRemoved">
-                <code>{{ field }}</code>
-              </li>
-            </ul>
-            <p><em>Use the "Full" view button above to see the complete JSON with binary data.</em></p>
-          </div>
-        </details>
-      </div>
-      
-      <!-- JSON Structure Help -->
-      <div class="json-help">
-        <details>
-          <summary>📖 JSON Structure Help</summary>
-          <div class="help-content">
-            <p><strong>Website Structure:</strong></p>
-            <ul>
-              <li><code>id</code> - Unique website identifier</li>
-              <li><code>name</code> - Website name</li>
-              <li><code>pages</code> - Array of page objects</li>
-            </ul>
-            <p><strong>Page Structure:</strong></p>
-            <ul>
-              <li><code>id</code> - Unique page identifier</li>
-              <li><code>name</code> - Page display name</li>
-              <li><code>route</code> - URL route (e.g., "/about")</li>
-              <li><code>components</code> - Array of component objects</li>
-            </ul>
-          </div>
-        </details>
       </div>
     </div>
 
-    <!-- Right Panel - HTML Preview -->
-    <div class="preview-panel">
-      <div class="panel-header">
-        <div class="panel-title">
-          <i class="pi pi-eye"></i>
-          <span>HTML Preview</span>
-        </div>
-        <div class="preview-info">
-          <span class="showing-page">Showing: {{ currentPage }}</span>
+    <!-- Right Panel - File Content -->
+    <div class="file-content-panel">
+      <div class="panel-header" *ngIf="selectedFile">
+        <div class="file-info">
+          <i [class]="getFileIcon(selectedFileType)" class="file-type-icon"></i>
+          <span class="file-name">{{ selectedFileName }}</span>
+          <span class="file-type-badge">{{ selectedFileType.toUpperCase() }}</span>
         </div>
       </div>
-      
-      <div class="html-preview">
-        <iframe 
-          class="preview-iframe"
-          [srcdoc]="htmlPreview"
-          sandbox="allow-scripts">
-        </iframe>
-      </div>
-      
-      <!-- HTML Source View -->
-      <div class="html-source">
-        <details>
-          <summary>📝 View HTML Source</summary>
-          <pre class="html-code">{{ htmlPreview }}</pre>
-        </details>
+
+      <!-- Content Area -->
+      <div class="content-area">
+        <!-- No File Selected -->
+        <div class="no-selection" *ngIf="!selectedFile">
+          <div class="no-selection-icon">
+            <i class="pi pi-file"></i>
+          </div>
+          <h3>Select a file to view its contents</h3>
+          <p>Choose a file from the tree on the left to see its content here.</p>
+        </div>
+
+        <!-- Loading Content -->
+        <div class="loading-content" *ngIf="selectedFile && isLoadingContent">
+          <div class="loading-spinner">
+            <i class="pi pi-spin pi-spinner"></i>
+          </div>
+          <p>Loading file content...</p>
+        </div>
+
+        <!-- File Content -->
+        <div class="file-content-container" *ngIf="selectedFile && !isLoadingContent">
+          <div class="content-header">
+            <div class="content-stats">
+              <span class="line-count">{{ lineCount }} lines</span>
+              <span class="char-count">{{ fileContent.length }} characters</span>
+            </div>
+          </div>
+          
+          <div class="code-container" #codeContainer>
+            <div class="code-wrapper">
+              <!-- Code Content with Syntax Highlighting and Line Numbers -->
+              <div class="code-content-wrapper">
+                <pre class="code-content">
+                  <code 
+                    [highlight]="fileContent" 
+                    [language]="getHighlightLanguage(selectedFileType)"
+                    lineNumbers 
+                    (highlighted)="onHighlighted($event)">
+                  </code>
+                </pre>
+                <!-- Debug info -->
+                <div class="debug-info" style="font-size: 10px; color: #666; margin-top: 5px;">
+                  Language: {{ getHighlightLanguage(selectedFileType) }} | Content: {{ fileContent.length }} chars
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</div> 
+</div>
