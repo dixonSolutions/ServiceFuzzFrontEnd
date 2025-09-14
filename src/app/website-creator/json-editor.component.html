@@ -18,6 +18,13 @@
     </div>
     <div class="header-actions">
       <button 
+        class="action-btn search-btn" 
+        (click)="toggleSearchPanel()" 
+        [class.active]="showSearchPanel"
+        title="Search in files">
+        <i class="pi pi-search"></i>
+      </button>
+      <button 
         class="action-btn refresh-btn" 
         (click)="onRefresh()" 
         [disabled]="isLoadingFiles"
@@ -171,33 +178,292 @@
 
         <!-- File Content -->
         <div class="file-content-container" *ngIf="selectedFile && !isLoadingContent">
-          <div class="content-header">
-            <div class="content-stats">
-              <span class="line-count">{{ lineCount }} lines</span>
-              <span class="char-count">{{ fileContent.length }} characters</span>
+          
+          <!-- Media Files (Images, Videos, Audio) -->
+          <div class="media-content" *ngIf="isMediaFile()">
+            <div class="media-header">
+              <div class="media-info">
+                <span class="file-name">{{ selectedFileName }}</span>
+                <span class="file-type-badge">{{ selectedFileType.toUpperCase() }}</span>
+              </div>
+            </div>
+            
+            <!-- Image Display -->
+            <div class="image-viewer" *ngIf="isImageFile()">
+              <img [src]="getAssetUrl()" 
+                   [alt]="selectedFileName"
+                   style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            </div>
+            
+            <!-- Video Display -->
+            <div class="video-viewer" *ngIf="isVideoFile()">
+              <video controls 
+                     [src]="getAssetUrl()"
+                     style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            
+            <!-- Audio Display -->
+            <div class="audio-viewer" *ngIf="isAudioFile()">
+              <div class="audio-player-container" style="padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                <div class="audio-icon" style="font-size: 48px; color: #6c757d; margin-bottom: 16px;">
+                  <i class="pi pi-volume-up"></i>
+                </div>
+                <audio controls 
+                       [src]="getAssetUrl()"
+                       style="width: 100%; max-width: 400px;">
+                  Your browser does not support the audio tag.
+                </audio>
+              </div>
             </div>
           </div>
-          
-          <div class="code-container" #codeContainer>
-            <div class="code-wrapper">
-              <!-- Code Content with Syntax Highlighting and Line Numbers -->
-              <div class="code-content-wrapper">
-                <pre class="code-content">
-                  <code 
-                    [highlight]="fileContent" 
-                    [language]="getHighlightLanguage(selectedFileType)"
-                    lineNumbers 
-                    (highlighted)="onHighlighted($event)">
-                  </code>
-                </pre>
-                <!-- Debug info -->
-                <div class="debug-info" style="font-size: 10px; color: #666; margin-top: 5px;">
-                  Language: {{ getHighlightLanguage(selectedFileType) }} | Content: {{ fileContent.length }} chars
+
+          <!-- Code Files -->
+          <div class="code-content" *ngIf="!isMediaFile()">
+            <div class="content-header">
+              <div class="content-stats">
+                <span class="line-count">{{ lineCount }} lines</span>
+                <span class="char-count">{{ fileContent.length }} characters</span>
+              </div>
+            </div>
+            
+            <div class="code-container" #codeContainer>
+              <div class="code-wrapper">
+                <!-- Line Numbers Column -->
+                <div class="line-numbers-column">
+                  <div class="line-numbers">
+                    <span 
+                      *ngFor="let line of getLineNumbers(); let i = index" 
+                      class="line-number"
+                      [class.highlighted]="highlightedLine === i + 1"
+                      (click)="jumpToLine(i + 1)"
+                      title="Go to line {{ i + 1 }}">
+                      {{ i + 1 }}
+                    </span>
+                  </div>
+                </div>
+                
+                <!-- Code Content with Syntax Highlighting -->
+                <div class="code-content-wrapper">
+                  <pre class="code-content">
+                    <code 
+                      [highlight]="fileContent" 
+                      [language]="getHighlightLanguage(selectedFileType)"
+                      (highlighted)="onHighlighted($event)">
+                    </code>
+                  </pre>
+                  <!-- Debug info -->
+                  <div class="debug-info" style="font-size: 10px; color: #666; margin-top: 5px;">
+                    Language: {{ getHighlightLanguage(selectedFileType) }} | Content: {{ fileContent.length }} chars
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search Panel -->
+<div class="search-panel" *ngIf="showSearchPanel" [style.width.px]="searchPanelWidth">
+  <div class="codebase-search-container">
+    <!-- Search Header -->
+    <div class="search-header">
+      <div class="search-title">
+        <i class="pi pi-search"></i>
+        <span>Search Codebase</span>
+      </div>
+      <button class="close-btn" (click)="closeSearchPanel()" title="Close Search">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <!-- Search Input -->
+    <div class="search-input-section">
+      <div class="search-input-wrapper">
+        <input 
+          type="text" 
+          class="search-input"
+          placeholder="Search in files..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearchInput(searchInput.value)"
+          #searchInput>
+        <button 
+          class="clear-search-btn" 
+          *ngIf="searchQuery"
+          (click)="clearSearch()"
+          title="Clear search">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <!-- Search Navigation -->
+      <div class="search-navigation" *ngIf="searchResults.length > 0">
+        <button 
+          class="nav-btn"
+          (click)="navigateToPreviousMatch()"
+          title="Previous match"
+          [disabled]="totalMatches === 0">
+          <i class="pi pi-chevron-up"></i>
+        </button>
+        <button 
+          class="nav-btn"
+          (click)="navigateToNextMatch()"
+          title="Next match"
+          [disabled]="totalMatches === 0">
+          <i class="pi pi-chevron-down"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Advanced Options -->
+    <div class="advanced-options-section">
+      <button 
+        class="advanced-toggle"
+        (click)="toggleAdvancedOptions()"
+        [class.active]="showAdvancedOptions">
+        <i class="pi pi-cog"></i>
+        <span>Advanced Options</span>
+        <i class="pi" [class.pi-chevron-down]="!showAdvancedOptions" [class.pi-chevron-up]="showAdvancedOptions"></i>
+      </button>
+
+      <div class="advanced-options" *ngIf="showAdvancedOptions">
+        <!-- Search Options -->
+        <div class="option-group">
+          <label class="option-label">
+            <input 
+              type="checkbox" 
+              [(ngModel)]="searchOptions.caseSensitive"
+              (change)="updateSearchOptions()">
+            <span>Case Sensitive</span>
+          </label>
+          <label class="option-label">
+            <input 
+              type="checkbox" 
+              [(ngModel)]="searchOptions.wholeWord"
+              (change)="updateSearchOptions()">
+            <span>Whole Word</span>
+          </label>
+          <label class="option-label">
+            <input 
+              type="checkbox" 
+              [(ngModel)]="searchOptions.useRegex"
+              (change)="updateSearchOptions()">
+            <span>Use Regex</span>
+          </label>
+        </div>
+
+        <!-- File Type Filters -->
+        <div class="file-type-filters">
+          <label class="filter-label">Include File Types:</label>
+          <div class="file-type-checkboxes">
+            <label 
+              *ngFor="let fileType of availableFileTypes" 
+              class="file-type-option">
+              <input 
+                type="checkbox" 
+                [value]="fileType.value"
+                [checked]="searchOptions.includeFileTypes.includes(fileType.value)"
+                (change)="onFileTypeChange($event, fileType.value, 'include')">
+              <span>{{ fileType.label }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Results Summary -->
+    <div class="search-summary" *ngIf="searchQuery && !isSearching">
+      <div class="summary-text" *ngIf="totalMatches > 0">
+        <span class="match-count">{{ totalMatches }}</span> results in 
+        <span class="file-count">{{ matchingFilesCount }}</span> files
+      </div>
+      <div class="no-results" *ngIf="totalMatches === 0 && searchQuery">
+        No results found for "{{ searchQuery }}"
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isSearching">
+      <div class="loading-spinner">
+        <i class="pi pi-spin pi-spinner"></i>
+      </div>
+      <span>Searching...</span>
+    </div>
+
+    <!-- Search Results -->
+    <div class="search-results" *ngIf="!isSearching && searchResults.length > 0">
+      <div 
+        *ngFor="let result of searchResults; trackBy: trackByFileId" 
+        class="result-file">
+        
+        <!-- File Header -->
+        <div 
+          class="file-header"
+          (click)="toggleFileExpansion(result.file.id)">
+          <div class="file-info">
+            <i [class]="getFileIcon(result.file.fileType)" class="file-icon"></i>
+            <span class="file-name">{{ getDisplayPath(result.file.fileName) }}</span>
+            <span class="match-badge">{{ result.totalMatches }}</span>
+          </div>
+          <i 
+            class="pi expand-icon"
+            [class.pi-chevron-right]="!isFileExpanded(result.file.id)"
+            [class.pi-chevron-down]="isFileExpanded(result.file.id)"></i>
+        </div>
+
+        <!-- File Matches -->
+        <div class="file-matches" *ngIf="isFileExpanded(result.file.id)">
+          <div 
+            *ngFor="let match of result.matches; let matchIndex = index"
+            class="match-item"
+            [class.selected]="isMatchSelected(result.file.id, matchIndex)"
+            (click)="selectMatch(result, matchIndex)">
+            
+            <!-- Line Number and Content -->
+            <div class="match-line">
+              <span class="line-number">{{ match.lineNumber }}</span>
+              <div class="line-content" [innerHTML]="getHighlightedLine(match)"></div>
+            </div>
+
+            <!-- Context Lines (if available) -->
+            <div class="context-lines" *ngIf="match.contextBefore.length > 0 || match.contextAfter.length > 0">
+              <div 
+                *ngFor="let contextLine of match.contextBefore; let i = index"
+                class="context-line before">
+                <span class="line-number">{{ match.lineNumber - match.contextBefore.length + i }}</span>
+                <div class="line-content">{{ contextLine }}</div>
+              </div>
+              <div 
+                *ngFor="let contextLine of match.contextAfter; let i = index"
+                class="context-line after">
+                <span class="line-number">{{ match.lineNumber + i + 1 }}</span>
+                <div class="line-content">{{ contextLine }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!searchQuery && !isSearching">
+      <div class="empty-icon">
+        <i class="pi pi-search"></i>
+      </div>
+      <h3>Search Your Codebase</h3>
+      <p>Enter a search term to find text across all files in your workspace.</p>
+      <div class="search-tips">
+        <h4>Tips:</h4>
+        <ul>
+          <li>Use quotes for exact phrases: <code>"exact phrase"</code></li>
+          <li>Enable regex for pattern matching</li>
+          <li>Use file type filters to narrow results</li>
+          <li>Navigate results with ↑↓ arrows</li>
+        </ul>
       </div>
     </div>
   </div>

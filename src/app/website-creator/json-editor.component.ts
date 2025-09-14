@@ -3,7 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { WebsiteBuilderService } from '../services/website-builder';
 import { WebsiteFilesService } from '../services/website-files.service';
 import { WebsiteAssetsService } from '../services/website-assets.service';
-import { Subject } from 'rxjs';
+import { CodebaseSearchService, SearchResult, SearchMatch, SearchOptions } from '../services/codebase-search.service';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FileTreeNode, FileStructureResponse, FileContentResponse, WebsiteFile } from '../models/workspace.models';
 import { TreeNode } from 'primeng/api';
@@ -49,6 +50,42 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
   isDragOver = false;
   isUploading = false;
 
+  // Search functionality
+  showSearchPanel: boolean = false;
+  searchPanelWidth: number = 400;
+  highlightedLine: number | null = null;
+  
+  // Search state
+  private searchSubject$ = new Subject<string>();
+  searchQuery: string = '';
+  searchResults: SearchResult[] = [];
+  isSearching: boolean = false;
+  totalMatches: number = 0;
+  matchingFilesCount: number = 0;
+  
+  // Search options
+  searchOptions: SearchOptions = {
+    caseSensitive: false,
+    wholeWord: false,
+    useRegex: false,
+    includeFileTypes: ['html', 'css', 'js', 'json'], // All file types selected by default
+    excludeFileTypes: [],
+    maxResults: 1000
+  };
+  
+  // Search UI state
+  showAdvancedOptions: boolean = false;
+  expandedFiles: Set<string> = new Set();
+  selectedMatch: { fileId: string; matchIndex: number } | null = null;
+  
+  // File type options for search
+  availableFileTypes = [
+    { label: 'HTML', value: 'html' },
+    { label: 'CSS', value: 'css' },
+    { label: 'JavaScript', value: 'js' },
+    { label: 'JSON', value: 'json' }
+  ];
+
   /**
    * Get the highlight.js language identifier for the file type
    */
@@ -83,7 +120,6 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     })();
     
-    console.log(`🎨 Mapping file type "${fileType}" to language "${language}"`);
     return language;
   }
 
@@ -104,6 +140,7 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
     private websiteBuilder: WebsiteBuilderService,
     private websiteFilesService: WebsiteFilesService,
     private websiteAssetsService: WebsiteAssetsService,
+    private codebaseSearchService: CodebaseSearchService,
     private messageService: MessageService
   ) {}
 
@@ -126,10 +163,60 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
         });
       }
     });
+
+    // Set up search functionality
+    this.setupSearch();
+  }
+
+  /**
+   * Set up search functionality
+   */
+  private setupSearch(): void {
+    // Set up debounced search
+    this.searchSubject$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(query => {
+      this.performSearch(query);
+    });
+
+    // Subscribe to search state
+    this.codebaseSearchService.getSearchState().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(state => {
+      this.searchResults = state.results;
+      this.isSearching = state.isSearching;
+      this.totalMatches = this.codebaseSearchService.getTotalMatches();
+      this.matchingFilesCount = this.codebaseSearchService.getMatchingFilesCount();
+    });
   }
 
   ngAfterViewInit() {
     // Component is ready - highlight.js will handle syntax highlighting automatically
+    this.setupScrollSync();
+  }
+
+  /**
+   * Set up synchronized scrolling between line numbers and code content
+   */
+  private setupScrollSync(): void {
+    if (this.codeContainer) {
+      const codeWrapper = this.codeContainer.nativeElement.querySelector('.code-content-wrapper');
+      const lineNumbers = this.codeContainer.nativeElement.querySelector('.line-numbers');
+      
+      if (codeWrapper && lineNumbers) {
+        // Sync line numbers when code content scrolls
+        codeWrapper.addEventListener('scroll', () => {
+          lineNumbers.scrollTop = codeWrapper.scrollTop;
+        });
+        
+        // Sync code content when line numbers scroll (if user scrolls line numbers directly)
+        lineNumbers.addEventListener('scroll', () => {
+          codeWrapper.scrollTop = lineNumbers.scrollTop;
+        });
+      }
+    }
   }
 
   ngOnDestroy() {
@@ -314,18 +401,6 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
     return icons[fileType] || 'pi pi-folder';
   }
 
-  /**
-   * Get icon for file based on file type
-   */
-  getFileIcon(fileType: string): string {
-    const icons: { [key: string]: string } = {
-      html: 'pi pi-file',
-      css: 'pi pi-palette',
-      js: 'pi pi-code',
-      json: 'pi pi-database'
-    };
-    return icons[fileType] || 'pi pi-file';
-  }
 
   /**
    * Handle file selection in tree
@@ -378,6 +453,9 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Count lines for display
     this.lineCount = this.fileContent.split('\n').length;
+    
+    // Set up scroll sync after content is processed
+    setTimeout(() => this.setupScrollSync(), 100);
   }
 
 
@@ -775,24 +853,612 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Create asset file using alternative method
+   * Create asset file with data URL content for proper display
    */
   private async createAssetFile(fileName: string, base64Content: string, extension: string): Promise<void> {
-    // Create a simple HTML file that references the asset
-    const assetHtml = `<!-- Asset: ${fileName} -->
-<div class="asset-file" data-filename="${fileName}" data-extension="${extension}">
-  <script type="application/octet-stream" data-asset="${fileName}">
-    ${base64Content}
-  </script>
-</div>`;
+    try {
+      // Create a data URL for the asset
+      const mimeType = this.getMimeType(extension);
+      const dataUrl = `data:${mimeType};base64,${base64Content}`;
+      
+      // Store the data URL as the file content
+      // This allows the file to be displayed properly as media
+      const assetFileName = `assets/${fileName}`;
+      
+      await this.websiteFilesService.createFile(this.workspaceId, {
+        fileName: assetFileName,
+        fileType: 'html', // Use HTML type to store the data URL
+        content: dataUrl
+      }).toPromise();
+      
+      console.log('✅ Asset file created successfully:', assetFileName);
+      
+    } catch (error) {
+      console.error('❌ Error creating asset file:', error);
+      throw error;
+    }
+  }
 
-    // Use WebsiteFilesService to create the file
-    const assetFileName = `assets/${fileName}.asset.html`;
-    await this.websiteFilesService.createFile(this.workspaceId, {
-      fileName: assetFileName,
-      fileType: 'html',
-      content: assetHtml
-    }).toPromise();
+  /**
+   * Get MIME type for file extension
+   */
+  private getMimeType(extension: string): string {
+    const mimeTypes: { [key: string]: string } = {
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'svg': 'image/svg+xml',
+      'webp': 'image/webp',
+      'mp4': 'video/mp4',
+      'webm': 'video/webm',
+      'avi': 'video/x-msvideo',
+      'mov': 'video/quicktime',
+      'wmv': 'video/x-ms-wmv',
+      'flv': 'video/x-flv',
+      'mkv': 'video/x-matroska',
+      'mp3': 'audio/mpeg',
+      'wav': 'audio/wav',
+      'ogg': 'audio/ogg',
+      'aac': 'audio/aac',
+      'flac': 'audio/flac',
+      'm4a': 'audio/mp4'
+    };
+    return mimeTypes[extension.toLowerCase()] || 'application/octet-stream';
+  }
+
+  /**
+   * Get file extension from filename
+   */
+  private getFileExtension(): string {
+    if (!this.selectedFileName) return '';
+    const parts = this.selectedFileName.split('.');
+    return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+  }
+
+  /**
+   * Check if the selected file is an image
+   */
+  isImageFile(): boolean {
+    if (!this.selectedFile) return false;
+    const extension = this.getFileExtension();
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'tiff'];
+    
+    // Check both file type and extension (for assets stored as HTML files)
+    return imageExtensions.includes(this.selectedFileType.toLowerCase()) || 
+           imageExtensions.includes(extension) ||
+           (!!this.fileContent && this.fileContent.startsWith('data:image/'));
+  }
+
+  /**
+   * Check if the selected file is a video
+   */
+  isVideoFile(): boolean {
+    if (!this.selectedFile) return false;
+    const extension = this.getFileExtension();
+    const videoExtensions = ['mp4', 'webm', 'avi', 'mov', 'wmv', 'flv', 'mkv'];
+    
+    // Check both file type and extension (for assets stored as HTML files)
+    return videoExtensions.includes(this.selectedFileType.toLowerCase()) || 
+           videoExtensions.includes(extension) ||
+           (!!this.fileContent && this.fileContent.startsWith('data:video/'));
+  }
+
+  /**
+   * Check if the selected file is an audio file
+   */
+  isAudioFile(): boolean {
+    if (!this.selectedFile) return false;
+    const extension = this.getFileExtension();
+    const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'];
+    
+    // Check both file type and extension (for assets stored as HTML files)
+    return audioExtensions.includes(this.selectedFileType.toLowerCase()) || 
+           audioExtensions.includes(extension) ||
+           (!!this.fileContent && this.fileContent.startsWith('data:audio/'));
+  }
+
+  /**
+   * Get asset URL for display
+   */
+  getAssetUrl(): string {
+    if (!this.selectedFile || !this.fileContent) return '';
+    
+    // If the content is already a data URL, return it directly
+    if (this.fileContent.startsWith('data:')) {
+      return this.fileContent;
+    }
+    
+    // Otherwise, create a data URL from the base64 content
+    const mimeType = this.getMimeType(this.selectedFileType);
+    return `data:${mimeType};base64,${this.fileContent}`;
+  }
+
+  /**
+   * Check if file should be displayed as media (not code)
+   */
+  isMediaFile(): boolean {
+    return this.isImageFile() || this.isVideoFile() || this.isAudioFile();
+  }
+
+  /**
+   * Get line numbers array for display
+   */
+  getLineNumbers(): string[] {
+    if (!this.fileContent) return [];
+    return this.fileContent.split('\n');
+  }
+
+  /**
+   * Jump to a specific line number
+   */
+  jumpToLine(lineNumber: number): void {
+    this.highlightedLine = lineNumber;
+    setTimeout(() => this.scrollToLine(lineNumber), 100);
+  }
+
+  /**
+   * Toggle search panel
+   */
+  toggleSearchPanel(): void {
+    this.showSearchPanel = !this.showSearchPanel;
+  }
+
+  /**
+   * Handle search input change
+   */
+  onSearchInput(query: string): void {
+    this.searchQuery = query;
+    this.searchSubject$.next(query);
+  }
+
+  /**
+   * Perform the search
+   */
+  private performSearch(query: string): void {
+    if (!query.trim()) {
+      this.codebaseSearchService.clearSearch();
+      return;
+    }
+
+    // Use the already loaded files instead of fetching them again
+    if (this.files && this.files.length > 0) {
+      // Perform search directly with loaded files
+      const results = this.performDirectSearch(this.files, query, this.searchOptions);
+      
+      // Update the search service state
+      this.searchResults = results;
+      this.totalMatches = results.reduce((total, result) => total + result.totalMatches, 0);
+      this.matchingFilesCount = results.length;
+      this.isSearching = false;
+    } else {
+      // Fallback to service-based search
+      this.codebaseSearchService.searchCodebase(this.workspaceId, query, this.searchOptions)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe();
+    }
+  }
+
+  /**
+   * Perform search directly on loaded files
+   */
+  private performDirectSearch(files: WebsiteFile[], query: string, options: SearchOptions): SearchResult[] {
+    const results: SearchResult[] = [];
+    let totalResults = 0;
+
+    for (const file of files) {
+      if (totalResults >= options.maxResults) break;
+
+      // Filter by file type if specified
+      if (options.includeFileTypes.length > 0 && !options.includeFileTypes.includes(file.fileType)) {
+        continue;
+      }
+      if (options.excludeFileTypes.length > 0 && options.excludeFileTypes.includes(file.fileType)) {
+        continue;
+      }
+
+      // Skip binary files or files without content
+      if (!file.content || this.isBinaryFile(file)) {
+        continue;
+      }
+
+      const matches = this.searchInFile(file.content, query, options);
+      if (matches.length > 0) {
+        results.push({
+          file,
+          matches,
+          totalMatches: matches.length
+        });
+        totalResults += matches.length;
+      }
+    }
+
+    // Sort results by relevance
+    results.sort((a, b) => {
+      if (a.totalMatches !== b.totalMatches) {
+        return b.totalMatches - a.totalMatches;
+      }
+      return a.file.fileName.localeCompare(b.file.fileName);
+    });
+
+    return results;
+  }
+
+  /**
+   * Check if a file is binary (should be skipped in text search)
+   */
+  private isBinaryFile(file: WebsiteFile): boolean {
+    // Check if content starts with data URL (binary assets)
+    if (file.content && file.content.startsWith('data:')) {
+      return true;
+    }
+
+    // Check file extensions that are typically binary
+    const binaryExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'tiff', 
+                             'mp4', 'webm', 'avi', 'mov', 'wmv', 'flv', 'mkv',
+                             'mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a',
+                             'woff', 'woff2', 'ttf', 'otf', 'eot'];
+    
+    const fileName = file.fileName.toLowerCase();
+    return binaryExtensions.some(ext => fileName.endsWith(`.${ext}`));
+  }
+
+  /**
+   * Search within a single file
+   */
+  private searchInFile(content: string, query: string, options: SearchOptions): SearchMatch[] {
+    const lines = content.split('\n');
+    const matches: SearchMatch[] = [];
+
+    let searchPattern: RegExp;
+    
+    try {
+      if (options.useRegex) {
+        const flags = options.caseSensitive ? 'g' : 'gi';
+        searchPattern = new RegExp(query, flags);
+      } else {
+        const escapedQuery = this.escapeRegExp(query);
+        const wordBoundary = options.wholeWord ? '\\b' : '';
+        const flags = options.caseSensitive ? 'g' : 'gi';
+        searchPattern = new RegExp(`${wordBoundary}${escapedQuery}${wordBoundary}`, flags);
+      }
+    } catch (error) {
+      // Invalid regex, fall back to literal search
+      const flags = options.caseSensitive ? 'g' : 'gi';
+      searchPattern = new RegExp(this.escapeRegExp(query), flags);
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const lineMatches = Array.from(line.matchAll(searchPattern));
+
+      for (const match of lineMatches) {
+        if (match.index !== undefined) {
+          matches.push({
+            lineNumber: i + 1,
+            lineContent: line,
+            matchStart: match.index,
+            matchEnd: match.index + match[0].length,
+            contextBefore: this.getContextLines(lines, i, -2, 0),
+            contextAfter: this.getContextLines(lines, i, 1, 2)
+          });
+        }
+      }
+    }
+
+    return matches;
+  }
+
+  /**
+   * Get context lines around a match
+   */
+  private getContextLines(lines: string[], currentIndex: number, startOffset: number, endOffset: number): string[] {
+    const start = Math.max(0, currentIndex + startOffset);
+    const end = Math.min(lines.length - 1, currentIndex + endOffset);
+    const context: string[] = [];
+
+    for (let i = start; i <= end; i++) {
+      if (i !== currentIndex) {
+        context.push(lines[i]);
+      }
+    }
+
+    return context;
+  }
+
+  /**
+   * Escape special regex characters
+   */
+  private escapeRegExp(string: string): string {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
+   * Clear search
+   */
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.searchResults = [];
+    this.totalMatches = 0;
+    this.matchingFilesCount = 0;
+    this.isSearching = false;
+    this.expandedFiles.clear();
+    this.selectedMatch = null;
+    this.codebaseSearchService.clearSearch();
+  }
+
+  /**
+   * Toggle advanced search options
+   */
+  toggleAdvancedOptions(): void {
+    this.showAdvancedOptions = !this.showAdvancedOptions;
+  }
+
+  /**
+   * Update search options and re-search
+   */
+  updateSearchOptions(): void {
+    if (this.searchQuery.trim()) {
+      this.performSearch(this.searchQuery);
+    }
+  }
+
+  /**
+   * Toggle file expansion in results
+   */
+  toggleFileExpansion(fileId: string): void {
+    if (this.expandedFiles.has(fileId)) {
+      this.expandedFiles.delete(fileId);
+    } else {
+      this.expandedFiles.add(fileId);
+    }
+  }
+
+  /**
+   * Check if file is expanded
+   */
+  isFileExpanded(fileId: string): boolean {
+    return this.expandedFiles.has(fileId);
+  }
+
+  /**
+   * Select a file (without specific line)
+   */
+  selectSearchFile(file: WebsiteFile): void {
+    this.onSearchFileSelected({ file });
+  }
+
+  /**
+   * Select a specific match (file + line)
+   */
+  selectMatch(result: SearchResult, matchIndex: number): void {
+    const match = result.matches[matchIndex];
+    this.selectedMatch = { fileId: result.file.id, matchIndex };
+    this.onSearchFileSelected({ 
+      file: result.file, 
+      lineNumber: match.lineNumber 
+    });
+  }
+
+  /**
+   * Check if a match is selected
+   */
+  isMatchSelected(fileId: string, matchIndex: number): boolean {
+    return this.selectedMatch?.fileId === fileId && this.selectedMatch?.matchIndex === matchIndex;
+  }
+
+  /**
+   * Navigate to next match
+   */
+  navigateToNextMatch(): void {
+    if (this.searchResults.length === 0) return;
+
+    let nextFileIndex = 0;
+    let nextMatchIndex = 0;
+
+    if (this.selectedMatch) {
+      // Find current position
+      const currentFileIndex = this.searchResults.findIndex(r => r.file.id === this.selectedMatch!.fileId);
+      const currentMatchIndex = this.selectedMatch.matchIndex;
+
+      // Calculate next position
+      if (currentMatchIndex < this.searchResults[currentFileIndex].matches.length - 1) {
+        nextFileIndex = currentFileIndex;
+        nextMatchIndex = currentMatchIndex + 1;
+      } else if (currentFileIndex < this.searchResults.length - 1) {
+        nextFileIndex = currentFileIndex + 1;
+        nextMatchIndex = 0;
+      }
+      // If at the end, stay at the last match
+      else {
+        return;
+      }
+    }
+
+    this.selectMatch(this.searchResults[nextFileIndex], nextMatchIndex);
+  }
+
+  /**
+   * Navigate to previous match
+   */
+  navigateToPreviousMatch(): void {
+    if (this.searchResults.length === 0) return;
+
+    let prevFileIndex = this.searchResults.length - 1;
+    let prevMatchIndex = this.searchResults[prevFileIndex].matches.length - 1;
+
+    if (this.selectedMatch) {
+      // Find current position
+      const currentFileIndex = this.searchResults.findIndex(r => r.file.id === this.selectedMatch!.fileId);
+      const currentMatchIndex = this.selectedMatch.matchIndex;
+
+      // Calculate previous position
+      if (currentMatchIndex > 0) {
+        prevFileIndex = currentFileIndex;
+        prevMatchIndex = currentMatchIndex - 1;
+      } else if (currentFileIndex > 0) {
+        prevFileIndex = currentFileIndex - 1;
+        prevMatchIndex = this.searchResults[prevFileIndex].matches.length - 1;
+      }
+      // If at the beginning, stay at the first match
+      else {
+        return;
+      }
+    }
+
+    this.selectMatch(this.searchResults[prevFileIndex], prevMatchIndex);
+  }
+
+  /**
+   * Get highlighted line content
+   */
+  getHighlightedLine(match: SearchMatch): string {
+    const line = match.lineContent;
+    const before = line.substring(0, match.matchStart);
+    const matchText = line.substring(match.matchStart, match.matchEnd);
+    const after = line.substring(match.matchEnd);
+    
+    return `${before}<mark class="search-highlight">${matchText}</mark>${after}`;
+  }
+
+  /**
+   * Get file icon class based on file type
+   */
+  getFileIcon(fileType: string): string {
+    const iconMap: { [key: string]: string } = {
+      'html': 'pi pi-file-code',
+      'css': 'pi pi-palette',
+      'js': 'pi pi-code',
+      'json': 'pi pi-database'
+    };
+    return iconMap[fileType] || 'pi pi-file';
+  }
+
+  /**
+   * Get relative file path for display
+   */
+  getDisplayPath(fileName: string): string {
+    // Remove workspace prefix if present
+    return fileName.startsWith('/') ? fileName.substring(1) : fileName;
+  }
+
+  /**
+   * Track by function for ngFor performance
+   */
+  trackByFileId(index: number, result: SearchResult): string {
+    return result.file.id;
+  }
+
+  /**
+   * Handle file type filter changes
+   */
+  onFileTypeChange(event: any, fileType: string, filterType: 'include' | 'exclude'): void {
+    const isChecked = event.target.checked;
+    
+    if (filterType === 'include') {
+      if (isChecked) {
+        if (!this.searchOptions.includeFileTypes.includes(fileType)) {
+          this.searchOptions.includeFileTypes.push(fileType);
+        }
+      } else {
+        this.searchOptions.includeFileTypes = this.searchOptions.includeFileTypes.filter(t => t !== fileType);
+      }
+    } else {
+      if (isChecked) {
+        if (!this.searchOptions.excludeFileTypes.includes(fileType)) {
+          this.searchOptions.excludeFileTypes.push(fileType);
+        }
+      } else {
+        this.searchOptions.excludeFileTypes = this.searchOptions.excludeFileTypes.filter(t => t !== fileType);
+      }
+    }
+    
+    this.updateSearchOptions();
+  }
+
+  /**
+   * Handle file selection from search
+   */
+  onSearchFileSelected(event: { file: WebsiteFile; lineNumber?: number }): void {
+    // Find the file in the tree and select it
+    const fileNode = this.findFileInTree(event.file.fileName);
+    if (fileNode) {
+      this.selectedFile = fileNode;
+      this.selectedFileName = event.file.fileName;
+      this.selectedFileType = event.file.fileType;
+      this.fileContent = event.file.content || '';
+      this.highlightedLine = event.lineNumber || null;
+      
+      // Process content for display
+      this.processFileContent();
+      
+      // Scroll to highlighted line if specified
+      if (event.lineNumber) {
+        setTimeout(() => this.scrollToLine(event.lineNumber!), 100);
+      }
+    }
+  }
+
+  /**
+   * Find a file in the tree by filename
+   */
+  private findFileInTree(fileName: string): TreeNode | null {
+    const searchInNodes = (nodes: TreeNode[]): TreeNode | null => {
+      for (const node of nodes) {
+        if (node.data && node.data.fileName === fileName) {
+          return node;
+        }
+        if (node.children) {
+          const found = searchInNodes(node.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    return searchInNodes(this.fileTree);
+  }
+
+  /**
+   * Scroll to a specific line in the code editor
+   */
+  private scrollToLine(lineNumber: number): void {
+    if (this.codeContainer) {
+      const codeWrapper = this.codeContainer.nativeElement.querySelector('.code-content-wrapper');
+      if (codeWrapper) {
+        // Calculate approximate line height (assuming 1.45 line-height and 12px font-size)
+        const lineHeight = 12 * 1.45; // approximately 17.4px per line
+        const targetScrollTop = (lineNumber - 1) * lineHeight;
+        
+        // Scroll to the calculated position
+        codeWrapper.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        });
+        
+        // Also scroll the line numbers to match
+        const lineNumbersElement = this.codeContainer.nativeElement.querySelector('.line-numbers');
+        if (lineNumbersElement) {
+          lineNumbersElement.scrollTo({
+            top: targetScrollTop,
+            behavior: 'smooth'
+          });
+        }
+        
+        // Clear highlight after 3 seconds
+        setTimeout(() => {
+          this.highlightedLine = null;
+        }, 3000);
+      }
+    }
+  }
+
+  /**
+   * Close search panel
+   */
+  closeSearchPanel(): void {
+    this.showSearchPanel = false;
+    this.highlightedLine = null;
   }
 
   /**
