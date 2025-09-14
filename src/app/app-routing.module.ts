@@ -49,6 +49,9 @@ const routes: Routes = [
   { path: 'file-browser/:workspaceId', component: JsonEditorComponent },
   { path: 'workspace/:workspaceId/files', component: JsonEditorComponent },
   
+  // Developers section route
+  { path: 'developers/:workspaceId', component: JsonEditorComponent },
+  
   // NEW ENHANCED WEBSITE BUILDER ROUTES
   {
     path: 'workspace/:id/builder',

@@ -98,25 +98,36 @@
 
 .toolbar-right {
   display: flex;
-  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  padding: 0 20px;
 }
 
 .toolbar-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid #dee2e6;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 2px solid #e9ecef;
   background: white;
-  border-radius: 4px;
-  font-size: 13px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 120px;
+  text-align: center;
 }
 
 .toolbar-btn:hover {
   background: #f8f9fa;
-  border-color: #adb5bd;
+  border-color: #007bff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
 }
 
 .preview-btn {
@@ -126,15 +137,84 @@
 }
 
 .save-btn {
-  background: #e8f5e8;
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
   border-color: #4caf50;
   color: #2e7d32;
 }
 
+.save-btn:hover {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-color: #388e3c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
 .publish-btn {
-  background: #fff3e0;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%);
   border-color: #ff9800;
   color: #f57c00;
+}
+
+.publish-btn:hover {
+  background: linear-gradient(135deg, #ffcc02 0%, #ffa000 100%);
+  border-color: #f57c00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+.history-btn {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  border-color: #9c27b0;
+  color: #7b1fa2;
+}
+
+.history-btn:hover {
+  background: linear-gradient(135deg, #e1bee7 0%, #ce93d8 100%);
+  border-color: #8e24aa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+}
+
+/* Save All button styling */
+.toolbar-btn[title="Bulk Save All"] {
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+.toolbar-btn[title="Bulk Save All"]:hover {
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  border-color: #388e3c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+/* Developers button styling */
+.toolbar-btn[title="Developer Tools"] {
+  background: linear-gradient(135deg, #e8f4fd 0%, #bbdefb 100%);
+  border-color: #2196f3;
+  color: #1565c0;
+}
+
+.toolbar-btn[title="Developer Tools"]:hover {
+  background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+  border-color: #1976d2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+/* Assets button styling */
+.toolbar-btn[title="Asset Manager"] {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+  border-color: #673ab7;
+  color: #512da8;
+}
+
+.toolbar-btn[title="Asset Manager"]:hover {
+  background: linear-gradient(135deg, #e8eaf6 0%, #d1c4e9 100%);
+  border-color: #5e35b1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(103, 58, 183, 0.3);
 }
 
 /* Main Layout */

@@ -45,59 +45,10 @@
     </div>
     
     <div class="toolbar-right">
-      <!-- NEW FILE-BASED FEATURES -->
-      <button class="toolbar-btn" title="Website Files Manager" (click)="openFileManager()">
-        <i class="pi pi-folder"></i>
-        Files
-      </button>
-      <button class="toolbar-btn" title="Asset Manager" (click)="openAssetManager()">
-        <i class="pi pi-images"></i>
-        Assets
-      </button>
-      <label class="toolbar-btn" title="Upload Asset" style="cursor: pointer;">
-        <i class="pi pi-upload"></i>
-        Upload
-        <input type="file" 
-               accept="image/*,.woff,.woff2,.ttf,.otf" 
-               (change)="uploadAsset($event)" 
-               style="display: none;">
-      </label>
-      <button class="toolbar-btn" title="Live Preview" (click)="generateLivePreview()">
-        <i class="pi pi-desktop"></i>
-        Live Preview
-      </button>
+      <!-- Simplified Toolbar Options -->
       <button class="toolbar-btn" title="Bulk Save All" (click)="saveAllChanges()">
         <i class="pi pi-save"></i>
         Save All
-      </button>
-      <button class="toolbar-btn" title="AI Component Suggestions" (click)="getAIComponentSuggestions()" [disabled]="isAiGenerating">
-        <i [class]="isAiGenerating ? 'pi pi-spin pi-spinner' : 'pi pi-sparkles'"></i>
-        AI Suggest
-      </button>
-      
-      <button class="toolbar-btn" title="Undo">
-        <i class="pi pi-undo"></i>
-        Undo
-      </button>
-      <button class="toolbar-btn" title="Redo">
-        <i class="pi pi-redo"></i>
-        Redo
-      </button>
-      <button class="toolbar-btn" title="File Browser" (click)="onJsonEditor()">
-        <i class="pi pi-folder-open"></i>
-        File Browser
-      </button>
-      <button class="toolbar-btn" title="Open File Browser in New Tab" (click)="openFileBrowserInNewTab()">
-        <i class="pi pi-external-link"></i>
-        Files (New Tab)
-      </button>
-      <button class="toolbar-btn preview-btn" (click)="onPreview()">
-        <i class="pi pi-eye"></i>
-        Preview
-      </button>
-      <button class="toolbar-btn save-btn" (click)="onSave()" [disabled]="isSaving">
-        <i [class]="isSaving ? 'pi pi-spin pi-spinner' : 'pi pi-save'"></i>
-        {{ isSaving ? 'Saving...' : 'Save' }}
       </button>
       <button class="toolbar-btn publish-btn" (click)="onPublish()" [disabled]="isDeploying">
         <i [class]="isDeploying ? 'pi pi-spin pi-spinner' : 'pi pi-upload'"></i>
@@ -106,6 +57,14 @@
       <button class="toolbar-btn history-btn" (click)="onShowDeploymentHistory()" title="View Deployment History">
         <i class="pi pi-history"></i>
         History
+      </button>
+      <button class="toolbar-btn" title="Developer Tools" (click)="onDevelopersSection()">
+        <i class="pi pi-code"></i>
+        Developers
+      </button>
+      <button class="toolbar-btn" title="Asset Manager" (click)="openAssetManager()">
+        <i class="pi pi-images"></i>
+        Assets
       </button>
     </div>
   </div>

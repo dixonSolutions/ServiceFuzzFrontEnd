@@ -844,6 +844,16 @@ Would you like to visit your website now?
     this.showJsonEditor = !this.showJsonEditor;
   }
 
+  onDevelopersSection(): void {
+    if (!this.currentProject?.id) {
+      alert('Please select a workspace first.');
+      return;
+    }
+    
+    // Navigate to developers section with workspace ID
+    this.router.navigate(['/developers', this.currentProject.id]);
+  }
+
   openFileBrowserInNewTab(): void {
     if (this.currentProject?.id) {
       const url = `/file-browser/${this.currentProject.id}`;

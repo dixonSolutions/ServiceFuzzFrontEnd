@@ -1,11 +1,16 @@
 <!-- File Browser Component -->
-<div class="file-browser-container">
+<div class="file-browser-container"
+     (dragover)="onDragOver($event)"
+     (dragenter)="onDragEnter($event)"
+     (dragleave)="onDragLeave($event)"
+     (drop)="onDrop($event)"
+     [class.global-drag-over]="isDragOver && isDevelopersRoute()">
   <!-- Header -->
   <div class="file-browser-header">
     <div class="header-left">
       <div class="header-title">
         <i class="pi pi-folder-open"></i>
-        <span>File Browser</span>
+        <span>{{ isDevelopersRoute() ? 'Developer Tools' : 'File Browser' }}</span>
       </div>
       <div class="file-count" *ngIf="files.length > 0">
         {{ files.length }} files
@@ -22,8 +27,9 @@
       <button 
         class="action-btn close-btn" 
         (click)="closeEditor()"
-        title="Close file browser">
-        <i class="pi pi-times"></i>
+        [title]="isDevelopersRoute() ? 'Back to Website Creator' : 'Close file browser'">
+        <i [class]="isDevelopersRoute() ? 'pi pi-arrow-left' : 'pi pi-times'"></i>
+        <span *ngIf="isDevelopersRoute()" class="back-text">Back</span>
       </button>
     </div>
   </div>
@@ -89,7 +95,13 @@
     </div>
 
     <!-- Right Panel - File Content -->
-    <div class="file-content-panel">
+    <div class="file-content-panel" 
+         (dragover)="onDragOver($event)"
+         (dragenter)="onDragEnter($event)"
+         (dragleave)="onDragLeave($event)"
+         (drop)="onDrop($event)"
+         [class.drag-over]="isDragOver"
+         [class.assets-selected]="isAssetsFolder(selectedFile) && isDevelopersRoute()">
       <div class="panel-header" *ngIf="selectedFile">
         <div class="file-info">
           <i [class]="getFileIcon(selectedFileType)" class="file-type-icon"></i>
@@ -107,6 +119,46 @@
           </div>
           <h3>Select a file to view its contents</h3>
           <p>Choose a file from the tree on the left to see its content here.</p>
+        </div>
+
+        <!-- Assets Folder Selected - Drag and Drop Zone -->
+        <div class="assets-drop-zone" *ngIf="selectedFile && isAssetsFolder(selectedFile) && isDevelopersRoute()">
+          <div class="drop-zone-content">
+            <div class="drop-zone-icon">
+              <i class="pi pi-cloud-upload"></i>
+            </div>
+            <h3>Assets Folder</h3>
+            <p>Drag and drop files here to upload them to your assets folder.</p>
+            <div class="supported-formats">
+              <span class="format-label">Supported formats:</span>
+              <div class="format-list">
+                <span class="format-item">Images: JPG, PNG, GIF, SVG, WebP, BMP, TIFF</span>
+                <span class="format-item">Videos: MP4, WebM, AVI, MOV, WMV, FLV, MKV</span>
+                <span class="format-item">Audio: MP3, WAV, OGG, AAC, FLAC, M4A</span>
+                <span class="format-item">Documents: PDF, TXT, JSON</span>
+                <span class="format-item">Fonts: WOFF, WOFF2, TTF, OTF</span>
+                <span class="format-item">Maximum size: 100MB per file</span>
+              </div>
+            </div>
+            <div class="upload-status" *ngIf="isUploading">
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>Uploading files...</span>
+            </div>
+            
+            <!-- Alternative Upload Button -->
+            <div class="alternative-upload">
+              <span>Or click to browse files:</span>
+              <label class="browse-btn">
+                <input type="file" 
+                       multiple 
+                       accept="image/*,video/*,audio/*,.pdf,.txt,.json,.woff,.woff2,.ttf,.otf"
+                       (change)="onFileInputChange($event)"
+                       style="display: none;">
+                <i class="pi pi-folder-open"></i>
+                Browse Files
+              </label>
+            </div>
+          </div>
         </div>
 
         <!-- Loading Content -->
