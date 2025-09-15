@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ToastService } from '../services/toast.service';
+import { ToastService } from '../services/Main/messaging/toast.service';
 import { Subscription } from 'rxjs';
-import { DataSvrService } from '../services/data-svr.service';
-import { ManageBusinessesService } from '../services/manage-businesses.service';
-import { RegisterBusinessService } from '../services/register-business.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
+import { ManageBusinessesService } from '../services/Business/Manage/manage-businesses.service';
+import { RegisterBusinessService } from '../services/Business/Add/register-business.service';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 import { 
   BusinessSchedule, 

@@ -21,7 +21,7 @@ import {
   ValidationError,
   CustomFormTheme
 } from '../models/custom-order-forms.model';
-import { CustomOrderFormsService } from '../services/custom-order-forms.service';
+import { CustomOrderFormsService } from '../services/Business/Manage/OrderForms/custom-order-forms.service';
 
 @Component({
   selector: 'app-order-forms',

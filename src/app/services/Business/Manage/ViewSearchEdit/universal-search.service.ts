@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
-import { DataSvrService } from './data-svr.service';
-import { BusinessBasicInfo } from '../models/businessbasicinfo';
-import { ManageBusinessesService } from './manage-businesses.service';
-import { BusinessRegistrationDto } from '../models/business-registration-dto';
+import { DataSvrService } from '../../../Other/data-svr.service';
+import { BusinessBasicInfo } from '../../../../models/businessbasicinfo';
+import { ManageBusinessesService } from '../manage-businesses.service';
+import { BusinessRegistrationDto } from '../../../../models/business-registration-dto';
 
 export interface SearchResult {
   id: string;

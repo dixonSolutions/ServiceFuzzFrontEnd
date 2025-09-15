@@ -9,8 +9,8 @@ import {
   WebsiteAssetResponse,
   WebsiteAssetListResponse,
   AssetUrlResponse
-} from '../models/workspace.models';
-import { DataSvrService } from './data-svr.service';
+} from '../../../../../models/workspace.models';
+import { DataSvrService } from '../../../../Other/data-svr.service';
 
 @Injectable({
   providedIn: 'root'

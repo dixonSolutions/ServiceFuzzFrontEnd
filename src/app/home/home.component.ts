@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MegaMenuItem } from 'primeng/api';
-import { DataSvrService } from '../services/data-svr.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
 
 
 @Component({

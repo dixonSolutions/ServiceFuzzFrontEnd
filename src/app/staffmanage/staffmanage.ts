@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ManageBusinessesService } from '../services/manage-businesses.service';
+import { ManageBusinessesService } from '../services/Business/Manage/manage-businesses.service';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 
 @Component({

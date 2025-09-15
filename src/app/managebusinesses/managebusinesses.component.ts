@@ -2,13 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DataSvrService } from '../services/data-svr.service';
-import { ManageBusinessesService, StripeAccountResponse, CreateStripeAccountRequest } from '../services/manage-businesses.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
+import { ManageBusinessesService, StripeAccountResponse, CreateStripeAccountRequest } from '../services/Business/Manage/manage-businesses.service';
 import { BusinessBasicInfo } from '../models/businessbasicinfo';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 import { Subscription } from 'rxjs';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { ToastService } from '../services/toast.service';
+import { ToastService } from '../services/Main/messaging/toast.service';
 import { forkJoin } from 'rxjs';
 
 @Component({

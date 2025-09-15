@@ -1,13 +1,13 @@
 import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { ComponentDefinition, ComponentParameter, ComponentInstance, WebsiteBuilderService } from '../../services/website-builder';
+import { ComponentDefinition, ComponentParameter, ComponentInstance, WebsiteBuilderService } from '../../services/Business/WebsiteCreator/manual/website-builder';
 import { ComponentType, ComponentRenderContext } from '../../models/workspace.models';
-import { ComponentRendererService } from '../../services/component-renderer.service';
+import { ComponentRendererService } from '../../services/Business/WebsiteCreator/manual/components/component-renderer.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { AccordionModule } from 'primeng/accordion';
 import { MessageService } from 'primeng/api';
-import { ToastService } from '../../services/toast.service';
+import { ToastService } from '../../services/Main/messaging/toast.service';
 
 export interface Page {
   id: string;

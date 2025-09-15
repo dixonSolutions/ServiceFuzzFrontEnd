@@ -111,10 +111,11 @@ import { AuthBusinessDialogComponent } from './auth-business-dialog/auth-busines
 import { PrivacyPolicy } from './privacy-policy/privacy-policy';
 import { TermsOfUse } from './terms-of-use/terms-of-use';
 import { FormBuilderComponent } from './form-builder/form-builder';
-import { AuthInterceptorService } from './services/auth-interceptor.service';
+import { AuthInterceptorService } from './services/Main/User/Auth/auth-interceptor.service';
 import { Staffmanage } from './staffmanage/staffmanage';
 import { About } from './about/about';
 import { UniversalSearch } from './universal-search/universal-search';
+import { FileEditorComponent } from './components/file-editor/file-editor.component';
 
 
 const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.googleusercontent.com';
@@ -146,6 +147,7 @@ const GOOGLE_CLIENT_ID = '81721436395-8jqa7b3brs76k6c1731m1ja74c1ok2b4.apps.goog
     Staffmanage,
     About,
     UniversalSearch,
+    FileEditorComponent,
 
   ],
   imports: [

@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
-import { UniversalSearchService, SearchResult, RecentSearch } from '../services/universal-search.service';
-import { DataSvrService } from '../services/data-svr.service';
+import { UniversalSearchService, SearchResult, RecentSearch } from '../services/Business/Manage/ViewSearchEdit/universal-search.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
 import { MessageService } from 'primeng/api';
 
 @Component({

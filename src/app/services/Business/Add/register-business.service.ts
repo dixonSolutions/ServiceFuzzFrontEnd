@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map, catchError, throwError } from 'rxjs';
-import { BusinessRegistration } from '../models/business-registration';
-import { BusinessBasicInfo } from '../models/businessbasicinfo';
-import { ServicesForBusiness } from '../models/services-for-business';
-import { BusinessPlace } from '../models/business-place';
-import { BusinessSpecificAdr } from '../models/business-specific-adr';
-import { S2CareaSpecification } from '../models/s2c-area-specification';
-import { BusinessSchedule } from '../models/businessSchedules';
+import { BusinessRegistration } from '../../../models/business-registration';
+import { BusinessBasicInfo } from '../../../models/businessbasicinfo';
+import { ServicesForBusiness } from '../../../models/services-for-business';
+import { BusinessPlace } from '../../../models/business-place';
+import { BusinessSpecificAdr } from '../../../models/business-specific-adr';
+import { S2CareaSpecification } from '../../../models/s2c-area-specification';
+import { BusinessSchedule } from '../../../models/businessSchedules';
 import { 
   BusinessRegistrationDto, 
   BusinessBasicInfoDto, 
@@ -16,15 +16,15 @@ import {
   S2CareaSpecificationDto,
   ServiceToPlaceAssignmentDto,
   StaffMemberDto
-} from '../models/business-registration-dto';
-import { DataSvrService } from './data-svr.service';
+} from '../../../models/business-registration-dto';
+import { DataSvrService } from '../../Other/data-svr.service';
 import { 
   CreateStripeAccountRequest, 
   StripeAccountResponse,
   StripeAccountCreationState,
   STRIPE_SUPPORTED_COUNTRIES,
   CountryOption
-} from '../models/stripe-account.model';
+} from '../../../models/stripe-account.model';
 
 export interface RegisterBusinessResponse {
   success: boolean;

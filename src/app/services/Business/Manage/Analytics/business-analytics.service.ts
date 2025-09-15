@@ -11,11 +11,11 @@ import {
   AnalyticsSortOptions,
   BusinessSelectionOption,
   BusinessSelectionState
-} from '../models/business-analytics.model';
-import { DataSvrService } from './data-svr.service';
-import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
-import { ManageBusinessesService } from './manage-businesses.service';
-import { BusinessRegistrationDto } from '../models/business-registration-dto';
+} from '../../../../models/business-analytics.model';
+import { DataSvrService } from '../../../Other/data-svr.service';
+import { ServiceFuzzAccount } from '../../../../models/ServiceFuzzAccounts';
+import { ManageBusinessesService } from '../manage-businesses.service';
+import { BusinessRegistrationDto } from '../../../../models/business-registration-dto';
 
 @Injectable({
   providedIn: 'root'

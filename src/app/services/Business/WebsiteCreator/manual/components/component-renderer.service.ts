@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ComponentType, ComponentInstance, ComponentRenderContext, ComponentParameter } from '../models/workspace.models';
+import { ComponentType, ComponentInstance, ComponentRenderContext, ComponentParameter } from '../../../../../models/workspace.models';
 
 @Injectable({
   providedIn: 'root'

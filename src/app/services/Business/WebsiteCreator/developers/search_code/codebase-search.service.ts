@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
-import { WebsiteFilesService } from './website-files.service';
-import { WebsiteFile } from '../models/workspace.models';
+import { WebsiteFilesService } from '../files/website-files.service';
+import { WebsiteFile } from '../../../../../models/workspace.models';
 
 export interface SearchResult {
   file: WebsiteFile;

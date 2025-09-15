@@ -1,0 +1,172 @@
+<!-- File Editor Component -->
+<div class="file-editor-container" [class.theme-dark]="theme === 'dark'">
+  <!-- Header -->
+  <div class="file-editor-header">
+    <div class="file-info">
+      <i [class]="getFileIcon()"></i>
+      <span class="file-name">{{ fileName }}</span>
+      <span class="git-status" *ngIf="gitStatus" 
+            [style.color]="getGitStatusColor()" 
+            [title]="getGitStatusLabel()">
+        {{ gitStatus.status }}
+      </span>
+      <span class="modified-indicator" *ngIf="hasUnsavedChanges">●</span>
+    </div>
+    
+    <div class="editor-actions">
+      <!-- Diff Stats -->
+      <div class="diff-stats" *ngIf="diffStats.additions > 0 || diffStats.deletions > 0 || diffStats.modifications > 0">
+        <span class="stat additions" *ngIf="diffStats.additions > 0" title="Lines added">
+          +{{ diffStats.additions }}
+        </span>
+        <span class="stat deletions" *ngIf="diffStats.deletions > 0" title="Lines deleted">
+          -{{ diffStats.deletions }}
+        </span>
+        <span class="stat modifications" *ngIf="diffStats.modifications > 0" title="Lines modified">
+          ~{{ diffStats.modifications }}
+        </span>
+      </div>
+      
+      <!-- Action Buttons -->
+      <button class="action-btn" 
+              (click)="toggleFindReplace()" 
+              title="Find & Replace (Ctrl+F)">
+        <i class="pi pi-search"></i>
+      </button>
+      
+      <button class="action-btn" 
+              (click)="navigateToPreviousChange()" 
+              [disabled]="lineHighlights.length === 0"
+              title="Previous Change">
+        <i class="pi pi-angle-up"></i>
+      </button>
+      
+      <button class="action-btn" 
+              (click)="navigateToNextChange()" 
+              [disabled]="lineHighlights.length === 0"
+              title="Next Change">
+        <i class="pi pi-angle-down"></i>
+      </button>
+      
+      <button class="action-btn" 
+              (click)="formatCode()" 
+              title="Format Code">
+        <i class="pi pi-align-left"></i>
+      </button>
+      
+      <button class="action-btn save-btn" 
+              (click)="saveFile()" 
+              [disabled]="!hasUnsavedChanges || isSaving || readOnly"
+              title="Save File (Ctrl+S)">
+        <i class="pi pi-save" [class.pi-spin]="isSaving"></i>
+        <span *ngIf="!isSaving">Save</span>
+        <span *ngIf="isSaving">Saving...</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Find & Replace Panel -->
+  <div class="find-replace-panel" *ngIf="showFindReplace">
+    <div class="find-section">
+      <input type="text" 
+             class="find-input" 
+             placeholder="Find..." 
+             [(ngModel)]="findText"
+             (keyup.enter)="findNext()"
+             (keyup.escape)="showFindReplace = false">
+      
+      <button class="find-btn" (click)="findNext()" title="Find Next">
+        <i class="pi pi-angle-down"></i>
+      </button>
+      
+      <button class="find-btn" (click)="findPrevious()" title="Find Previous">
+        <i class="pi pi-angle-up"></i>
+      </button>
+    </div>
+    
+    <div class="replace-section">
+      <input type="text" 
+             class="replace-input" 
+             placeholder="Replace..." 
+             [(ngModel)]="replaceText"
+             (keyup.enter)="replaceNext()">
+      
+      <button class="replace-btn" (click)="replaceNext()" title="Replace Next">
+        Replace
+      </button>
+      
+      <button class="replace-btn" (click)="replaceAll()" title="Replace All">
+        Replace All
+      </button>
+    </div>
+    
+    <button class="close-find" (click)="showFindReplace = false" title="Close">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <!-- Editor Container -->
+  <div class="editor-container">
+    <!-- Loading State -->
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="loading-spinner">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Loading file...</span>
+      </div>
+    </div>
+
+    <!-- Line Numbers -->
+    <div class="line-numbers-container" *ngIf="showLineNumbers">
+      <div #lineNumbers class="line-numbers"></div>
+    </div>
+
+    <!-- Diff Gutter -->
+    <div class="diff-gutter-container" *ngIf="showDiffHighlights">
+      <div #diffGutter class="diff-gutter"></div>
+    </div>
+
+    <!-- Code Editor -->
+    <div class="code-editor-container">
+      <textarea #codeEditor 
+                class="code-editor"
+                [value]="editorContent"
+                [readonly]="readOnly || isLoading"
+                spellcheck="false"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                wrap="off"
+                [placeholder]="getPlaceholderText()">
+      </textarea>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="status-left">
+      <span class="cursor-position">
+        Ln {{ currentLineNumber }}, Col {{ currentColumnNumber }}
+      </span>
+      
+      <span class="file-type">{{ fileType.toUpperCase() }}</span>
+      
+      <span class="syntax-mode" *ngIf="syntaxMode !== 'text'">{{ syntaxMode }}</span>
+    </div>
+    
+    <div class="status-right">
+      <span class="line-count">{{ lineCount }} lines</span>
+      
+      <span class="scroll-indicator" *ngIf="lineCount > 20" title="Scroll position">
+        <i class="pi pi-arrows-v"></i>
+        {{ getScrollPercentage() }}%
+      </span>
+      
+      <span class="encoding">UTF-8</span>
+      
+      <span class="git-branch" *ngIf="gitStatus">
+        <i class="pi pi-code-branch"></i>
+        main
+      </span>
+    </div>
+  </div>
+</div>

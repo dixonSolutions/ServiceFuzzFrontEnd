@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of, forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { BusinessRegistrationDto } from '../models/business-registration-dto';
-import { SubscriptionStatus } from '../models/subscription-status';
-import { DataSvrService } from './data-svr.service';
+import { BusinessRegistrationDto } from '../../../models/business-registration-dto';
+import { SubscriptionStatus } from '../../../models/subscription-status';
+import { DataSvrService } from '../../Other/data-svr.service';
 
 /**
  * Interface for Stripe account API response

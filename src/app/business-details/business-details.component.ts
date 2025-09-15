@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
-import { DataSvrService } from '../services/data-svr.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
 
 @Component({
   selector: 'app-business-details',

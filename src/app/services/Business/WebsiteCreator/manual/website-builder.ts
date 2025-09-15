@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { tap, catchError, map, share } from 'rxjs/operators';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { DataSvrService } from './data-svr.service';
+import { DataSvrService } from '../../../Other/data-svr.service';
 import { 
   CreateWorkspaceDto, 
   UpdateWorkspaceDto, 
@@ -49,7 +49,7 @@ import {
   SubdomainGenerationRequest,
   SubdomainGenerationResponse,
   SubdomainAvailabilityResponse
-} from '../models/workspace.models';
+} from '../../../../models/workspace.models';
 
 // Component Parameter Interface
 export interface ComponentParameter {

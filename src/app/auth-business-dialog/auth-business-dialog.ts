@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
-import { DataSvrService } from '../services/data-svr.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
 
 @Component({
   selector: 'app-auth-business-dialog',

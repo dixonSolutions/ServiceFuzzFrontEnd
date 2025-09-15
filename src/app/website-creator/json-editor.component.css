@@ -84,6 +84,114 @@
   color: white;
 }
 
+/* New File and Save All buttons */
+.new-file-btn,
+.save-all-btn {
+  width: auto;
+  padding: 0 12px;
+  min-width: 100px;
+  gap: 6px;
+}
+
+.new-file-btn {
+  background: #2ea043;
+  border-color: #2ea043;
+  color: white;
+}
+
+.new-file-btn:hover {
+  background: #2c974b;
+  border-color: #2c974b;
+}
+
+.save-all-btn {
+  background: #0969da;
+  border-color: #0969da;
+  color: white;
+}
+
+.save-all-btn:hover:not(:disabled) {
+  background: #0860ca;
+  border-color: #0860ca;
+}
+
+.save-all-btn:disabled {
+  background: #8c959f;
+  border-color: #8c959f;
+  color: white;
+}
+
+/* Cache Controls */
+.cache-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border-left: 1px solid #d1d9e0;
+  border-right: 1px solid #d1d9e0;
+}
+
+.cache-refresh-btn {
+  background: #0969da;
+  border-color: #0969da;
+  color: white;
+}
+
+.cache-refresh-btn:hover {
+  background: #0860ca;
+  border-color: #0860ca;
+}
+
+.cache-clear-btn {
+  background: #cf222e;
+  border-color: #cf222e;
+  color: white;
+}
+
+.cache-clear-btn:hover {
+  background: #a40e26;
+  border-color: #a40e26;
+}
+
+.cache-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #f6f8fa;
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #656d76;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.cache-status i {
+  font-size: 14px;
+}
+
+.cache-text {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  .cache-controls {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .cache-status {
+    max-width: 150px;
+  }
+  
+  .cache-text {
+    display: none;
+  }
+}
+
 /* Back button styling when in developers mode */
 .close-btn:has(.back-text) {
   width: auto;
@@ -511,6 +619,19 @@
   font-size: 24px;
   color: #0969da;
   margin-bottom: 12px;
+}
+
+.file-browser-description {
+  font-size: 12px;
+  color: #656d76;
+  text-align-horizontal: center;
+  text-align-vertical: center;
+  text-align: center;
+  text-align-last: center;
+  text-align-first: center;
+  text-align-middle: center;
+  text-align-bottom: center;
+  text-align-top: center;
 }
 
 .loading-state p,

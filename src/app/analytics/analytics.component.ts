@@ -21,7 +21,7 @@ import {
   RadarController,
   PolarAreaController
 } from 'chart.js';
-import { BusinessAnalyticsService } from '../services/business-analytics.service';
+import { BusinessAnalyticsService } from '../services/Business/Manage/Analytics/business-analytics.service';
 import { BusinessAnalytics, AnalyticsLoadingState, BusinessSelectionOption, BusinessSelectionState } from '../models/business-analytics.model';
 
 @Component({

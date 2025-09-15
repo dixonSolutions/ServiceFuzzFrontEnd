@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { DataSvrService } from './services/data-svr.service';
-import { ManageBusinessesService } from './services/manage-businesses.service';
-import { CheckoutService } from './services/checkout';
+import { DataSvrService } from './services/Other/data-svr.service';
+import { ManageBusinessesService } from './services/Business/Manage/manage-businesses.service';
+import { CheckoutService } from './services/Main/stripe/checkout';
 import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 import { Subscription, filter } from 'rxjs';

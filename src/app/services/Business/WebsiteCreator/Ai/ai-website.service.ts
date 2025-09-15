@@ -9,7 +9,7 @@ import {
   ComponentsResponse,
   ValidationResponse,
   ApiErrorResponse
-} from '../models/ai-website.models';
+} from '../../../../models/ai-website.models';
 
 @Injectable({
   providedIn: 'root'

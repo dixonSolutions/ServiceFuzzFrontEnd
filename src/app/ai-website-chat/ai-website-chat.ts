@@ -7,7 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
-import { AIWebsiteService } from '../services/ai-website.service';
+import { AIWebsiteService } from '../services/Business/WebsiteCreator/Ai/ai-website.service';
 import { AIWebsiteUtils } from '../utils/ai-website.utils';
 
 import { 

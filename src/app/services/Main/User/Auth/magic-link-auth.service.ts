@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { DataSvrService } from './data-svr.service';
+import { DataSvrService } from '../../../Other/data-svr.service';
 
 export interface MagicLinkRequest {
   email: string;

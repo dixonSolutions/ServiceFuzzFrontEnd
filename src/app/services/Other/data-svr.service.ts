@@ -1,18 +1,18 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
+import { ServiceFuzzAccount } from '../../models/ServiceFuzzAccounts';
 import { map, Observable, BehaviorSubject, of, throwError, catchError } from 'rxjs';
-import { ToastService } from './toast.service';
+import { ToastService } from '../Main/messaging/toast.service';
 import { CookieService } from 'ngx-cookie-service';
-import { BusinessBasicInfo } from '../models/businessbasicinfo';
+import { BusinessBasicInfo } from '../../models/businessbasicinfo';
 import confetti from 'canvas-confetti';
-import { ServiceFuzzFreeTrialSubscriptions } from '../models/FreeTrialDetails';
+import { ServiceFuzzFreeTrialSubscriptions } from '../../models/FreeTrialDetails';
 import JSConfetti from 'js-confetti'; // Import the JSConfetti class
-import { ChatMessage } from '../models/chat-message';
-import { BusinessRegistration, BusinessPlaceAndServicesJunction } from '../models/business-registration';
-import { ServicesForBusiness } from '../models/services-for-business';
-import { BusinessPlace } from '../models/business-place';
-import { BusinessRegistrationDto } from '../models/business-registration-dto';
+import { ChatMessage } from '../../models/chat-message';
+import { BusinessRegistration, BusinessPlaceAndServicesJunction } from '../../models/business-registration';
+import { ServicesForBusiness } from '../../models/services-for-business';
+import { BusinessPlace } from '../../models/business-place';
+import { BusinessRegistrationDto } from '../../models/business-registration-dto';
 
 @Injectable({
   providedIn: 'root'

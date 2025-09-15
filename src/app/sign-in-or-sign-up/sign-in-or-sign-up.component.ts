@@ -2,9 +2,9 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SocialAuthService, GoogleLoginProvider } from '@abacritt/angularx-social-login';
 import { Router, ActivatedRoute } from '@angular/router';
-import { DataSvrService } from '../services/data-svr.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
 import { ServiceFuzzAccount } from '../models/ServiceFuzzAccounts';
-import { MagicLinkAuthService } from '../services/magic-link-auth.service';
+import { MagicLinkAuthService } from '../services/Main/User/Auth/magic-link-auth.service';
 import { MessageService } from 'primeng/api';
 
 interface GoogleUserInfo {

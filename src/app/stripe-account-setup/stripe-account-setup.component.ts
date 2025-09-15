@@ -4,8 +4,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription, of } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
-import { RegisterBusinessService } from '../services/register-business.service';
-import { DataSvrService } from '../services/data-svr.service';
+import { RegisterBusinessService } from '../services/Business/Add/register-business.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
 import { 
   CreateStripeAccountRequest, 
   StripeAccountResponse,

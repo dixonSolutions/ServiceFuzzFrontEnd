@@ -2,14 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { DataSvrService } from './data-svr.service';
+import { DataSvrService } from '../../../../Other/data-svr.service';
 import {
   EnhancedWebsitePage,
   CreateWebsitePageDto,
   UpdateWebsitePageDto,
   WebsitePageListResponse,
   ComponentListResponse
-} from '../models/workspace.models';
+} from '../../../../../models/workspace.models';
 
 @Injectable({
   providedIn: 'root'

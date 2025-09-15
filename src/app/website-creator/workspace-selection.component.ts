@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ManageBusinessesService } from '../services/manage-businesses.service';
+import { ManageBusinessesService } from '../services/Business/Manage/manage-businesses.service';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
-import { WebsiteBuilderService } from '../services/website-builder';
-import { DataSvrService } from '../services/data-svr.service';
+import { WebsiteBuilderService } from '../services/Business/WebsiteCreator/manual/website-builder';
+import { DataSvrService } from '../services/Other/data-svr.service';
 import { 
   WorkspaceResponseDto, 
   CreateWorkspaceDto, 

@@ -2,18 +2,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
 import { map, switchMap, tap, catchError } from 'rxjs/operators';
-import { DataSvrService } from './data-svr.service';
-import { WebsiteFilesService } from './website-files.service';
-import { WebsitePagesService } from './website-pages.service';
-import { AIEnhancementService } from './ai-enhancement.service';
-import { WebsiteAssetsService } from './website-assets.service';
+import { DataSvrService } from '../../../Other/data-svr.service';
+import { WebsiteFilesService } from '../developers/files/website-files.service';
+import { WebsitePagesService } from './data/website-pages.service';
+import { AIEnhancementService } from '../Ai/ai-enhancement.service';
+import { WebsiteAssetsService } from '../developers/upload_asssets/website-assets.service';
 import {
   WebsiteFile,
   WebsiteAsset,
   EnhancedWebsitePage,
   WorkspaceComponentResponseDto,
   ComponentType
-} from '../models/workspace.models';
+} from '../../../../models/workspace.models';
 
 export interface WebsitePreviewData {
   html: string;

@@ -12,7 +12,7 @@ import {
   Inject
 } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
-import { GoogleMapsService, PlaceResult, AddressComponents } from '../../services/google-maps.service';
+import { GoogleMapsService, PlaceResult, AddressComponents } from '../../services/Other/google-maps.service';
 import { Subscription, Subject } from 'rxjs';
 import { filter, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import * as L from 'leaflet';

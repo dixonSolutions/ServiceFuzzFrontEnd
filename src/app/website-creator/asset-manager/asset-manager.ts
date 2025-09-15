@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { WebsiteBuilderService, BusinessImage, BusinessImagesResponse } from '../../services/website-builder';
-import { ToastService } from '../../services/toast.service';
+import { WebsiteBuilderService, BusinessImage, BusinessImagesResponse } from '../../services/Business/WebsiteCreator/manual/website-builder';
+import { ToastService } from '../../services/Main/messaging/toast.service';
 
 @Component({
   selector: 'app-asset-manager',

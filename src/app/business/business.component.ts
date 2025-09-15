@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataSvrService } from '../services/data-svr.service';
-import { RegisterBusinessService, RegisterBusinessResponse } from '../services/register-business.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
+import { RegisterBusinessService, RegisterBusinessResponse } from '../services/Business/Add/register-business.service';
 import { StripeAccountResponse } from '../models/stripe-account.model';
 import { BusinessRegistration, BusinessPlaceAndServicesJunction } from '../models/business-registration';
 import { ServicesForBusiness } from '../models/services-for-business';

@@ -16,7 +16,7 @@ import {
   FormBuilderState,
   ValidationError,
   FormServiceJunction
-} from '../models/custom-order-forms.model';
+} from '../../../../models/custom-order-forms.model';
 
 interface ComponentPaletteItem {
   type: CustomFormComponentType;

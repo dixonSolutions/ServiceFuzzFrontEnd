@@ -2,12 +2,12 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { WebsiteBuilderService, ComponentDefinition, ComponentParameter, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/website-builder';
-import { DataSvrService } from '../services/data-svr.service';
-import { WebsitePagesService } from '../services/website-pages.service';
-import { WebsiteFilesService } from '../services/website-files.service';
-import { AIEnhancementService } from '../services/ai-enhancement.service';
-import { FileBasedWebsiteBuilderService } from '../services/file-based-website-builder.service';
+import { WebsiteBuilderService, ComponentDefinition, ComponentParameter, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/Business/WebsiteCreator/manual/website-builder';
+import { DataSvrService } from '../services/Other/data-svr.service';
+import { WebsitePagesService } from '../services/Business/WebsiteCreator/manual/data/website-pages.service';
+import { WebsiteFilesService } from '../services/Business/WebsiteCreator/developers/files/website-files.service';
+import { AIEnhancementService } from '../services/Business/WebsiteCreator/Ai/ai-enhancement.service';
+import { FileBasedWebsiteBuilderService } from '../services/Business/WebsiteCreator/manual/file-based-website-builder.service';
 import { WorkspaceProject } from './workspace-selection.component';
 import { CreateWorkspaceDto, UpdateWorkspaceDto, ComponentType, DeploymentListResponse, WorkspaceDeployment, WebsiteNameValidation } from '../models/workspace.models';
 import { LeftSidebar } from './left-sidebar/left-sidebar';
@@ -793,7 +793,7 @@ Would you like to visit your website now?
           
           // Check deployment limits
           this.deploymentLimitCheck = this.websiteBuilder.checkDeploymentLimit(this.deploymentHistory);
-          this.showDeploymentLimitWarning = this.deploymentLimitCheck.isAtWarningThreshold || !this.deploymentLimitCheck.canDeploy;
+          this.showDeploymentLimitWarning = this.deploymentLimitCheck?.isAtWarningThreshold || !this.deploymentLimitCheck?.canDeploy;
           
           console.log('✅ Deployment history loaded:', response);
         }

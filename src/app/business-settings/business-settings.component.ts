@@ -1,9 +1,9 @@
 import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { DataSvrService } from '../services/data-svr.service';
-import { ManageBusinessesService } from '../services/manage-businesses.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
+import { ManageBusinessesService } from '../services/Business/Manage/manage-businesses.service';
 import { SubscriptionStatus } from '../models/subscription-status';
-import { CheckoutService } from '../services/checkout';
+import { CheckoutService } from '../services/Main/stripe/checkout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 

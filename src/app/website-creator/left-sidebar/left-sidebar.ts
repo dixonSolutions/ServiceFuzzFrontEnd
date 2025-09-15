@@ -1,9 +1,9 @@
 import { Component, OnInit, OnChanges, SimpleChanges, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
-import { ComponentDefinition, ComponentParameter, BusinessImage, BusinessImagesResponse, WebsiteBuilderService } from '../../services/website-builder';
+import { ComponentDefinition, ComponentParameter, BusinessImage, BusinessImagesResponse, WebsiteBuilderService } from '../../services/Business/WebsiteCreator/manual/website-builder';
 import { ComponentType } from '../../models/workspace.models';
-import { ComponentRendererService } from '../../services/component-renderer.service';
+import { ComponentRendererService } from '../../services/Business/WebsiteCreator/manual/components/component-renderer.service';
 import { AIWebsiteChatComponent } from '../../ai-website-chat/ai-website-chat';
-import { ToastService } from '../../services/toast.service';
+import { ToastService } from '../../services/Main/messaging/toast.service';
 
 @Component({
   selector: 'app-left-sidebar',

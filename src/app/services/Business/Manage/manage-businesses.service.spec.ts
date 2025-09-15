@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ManageBusinessesService } from './manage-businesses.service';
-import { DataSvrService } from './data-svr.service';
+import { DataSvrService } from '../../Other/data-svr.service';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 
 describe('ManageBusinessesService', () => {

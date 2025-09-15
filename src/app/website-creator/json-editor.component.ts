@@ -1,9 +1,12 @@
 import { Component, OnInit, OnDestroy, Output, EventEmitter, Input, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { WebsiteBuilderService } from '../services/website-builder';
-import { WebsiteFilesService } from '../services/website-files.service';
-import { WebsiteAssetsService } from '../services/website-assets.service';
-import { CodebaseSearchService, SearchResult, SearchMatch, SearchOptions } from '../services/codebase-search.service';
+import { WebsiteBuilderService } from '../services/Business/WebsiteCreator/manual/website-builder';
+import { WebsiteFilesService } from '../services/Business/WebsiteCreator/developers/files/website-files.service';
+import { WebsiteAssetsService } from '../services/Business/WebsiteCreator/developers/upload_asssets/website-assets.service';
+import { CodebaseSearchService, SearchResult, SearchMatch, SearchOptions } from '../services/Business/WebsiteCreator/developers/search_code/codebase-search.service';
+import { FileEditorService } from '../services/Business/WebsiteCreator/developers/editor/file-editor.service';
+import { GitStatusService } from '../services/Business/WebsiteCreator/developers/editor/git-status.service';
+import { LineDiffService } from '../services/Business/WebsiteCreator/developers/editor/line-diff.service';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FileTreeNode, FileStructureResponse, FileContentResponse, WebsiteFile } from '../models/workspace.models';
@@ -86,6 +89,9 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
     { label: 'JSON', value: 'json' }
   ];
 
+  // Cache status
+  cacheStatus: any = null;
+
   /**
    * Get the highlight.js language identifier for the file type
    */
@@ -141,7 +147,10 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
     private websiteFilesService: WebsiteFilesService,
     private websiteAssetsService: WebsiteAssetsService,
     private codebaseSearchService: CodebaseSearchService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private fileEditorService: FileEditorService,
+    private gitStatusService: GitStatusService,
+    private lineDiffService: LineDiffService
   ) {}
 
   ngOnInit() {
@@ -155,6 +164,8 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
       if (this.workspaceId) {
         this.loadWorkspaceInfo();
         this.loadFileStructure();
+        this.initializeFileEditorServices();
+        this.updateCacheStatus();
       } else {
         this.messageService.add({
           severity: 'error',
@@ -222,6 +233,11 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    
+    // Cleanup editor services
+    this.fileEditorService.cleanup();
+    this.gitStatusService.cleanup();
+    this.lineDiffService.cleanup();
   }
 
   /**
@@ -243,27 +259,55 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Load file structure from API and convert to tree format
+   * Load file structure using cached data and reactive updates
    */
   async loadFileStructure(): Promise<void> {
     this.isLoadingFiles = true;
     
     try {
-      const files = await this.websiteFilesService.getFiles(this.workspaceId).toPromise();
-      
-      if (files && Array.isArray(files)) {
-        this.files = files;
-        this.fileTree = this.convertFilesToTree(files);
-        this.filteredTree = [...this.fileTree];
-      }
-    } catch (error) {
-      console.error('Error loading file structure:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to load file structure'
+      // Subscribe to reactive cached data for real-time updates
+      this.websiteFilesService.getFiles$(this.workspaceId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (files) => {
+            console.log(`📁 Received ${files.length} files from cache for workspace ${this.workspaceId}`);
+            
+            if (files && Array.isArray(files)) {
+              this.files = files;
+              this.fileTree = this.convertFilesToTree(files);
+              this.filteredTree = [...this.fileTree];
+              
+              // Apply current search filter if active
+              if (this.searchTerm) {
+                this.onSearch();
+              }
+            }
+            this.isLoadingFiles = false;
+          },
+          error: (error) => {
+            console.error('Error loading file structure:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to load file structure'
+            });
+            this.isLoadingFiles = false;
+          }
+        });
+
+      // Trigger initial load (will use cache if available, otherwise fetch from API)
+      this.websiteFilesService.getFiles(this.workspaceId).subscribe({
+        next: () => {
+          console.log('✅ Initial file load triggered');
+        },
+        error: (error) => {
+          console.error('❌ Error in initial file load:', error);
+          this.isLoadingFiles = false;
+        }
       });
-    } finally {
+      
+    } catch (error) {
+      console.error('Error setting up file structure subscription:', error);
       this.isLoadingFiles = false;
     }
   }
@@ -405,12 +449,34 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
    * Handle file selection in tree
    */
-  onFileSelect(event: any): void {
+  async onFileSelect(event: any): Promise<void> {
     const node = event.node;
+    
+    console.log('🎯 File selected:', {
+      nodeLabel: node.label,
+      nodeData: node.data,
+      hasId: !!node.data?.id,
+      hasContent: !!node.data?.content
+    });
     
     if (node.leaf && node.data && node.data.id) {
       this.selectedFile = node;
-      this.loadFileContent(node.data);
+      await this.loadFileContent(node.data);
+      
+      // Open the file in the editor service for editing
+      if (!this.isMediaFile()) {
+        try {
+          await this.fileEditorService.openFile(
+            node.data.id,
+            node.data.fileName,
+            node.data.fileType,
+            this.workspaceId
+          );
+          console.log('📝 File opened in editor:', node.data.fileName);
+        } catch (error) {
+          console.error('❌ Error opening file in editor:', error);
+        }
+      }
     }
   }
 
@@ -425,6 +491,13 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
     try {
       // Use the content from the file object
       this.fileContent = file.content || '';
+      
+      console.log('📄 Loading file content:', {
+        fileName: file.fileName,
+        fileType: file.fileType,
+        contentLength: this.fileContent.length,
+        firstChars: this.fileContent.substring(0, 100)
+      });
       
       // Process content for display
       this.processFileContent();
@@ -1490,5 +1563,240 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  // ===================== FILE EDITOR INTEGRATION =====================
+
+  /**
+   * Initialize file editor services when workspace is loaded
+   */
+  private async initializeFileEditorServices(): Promise<void> {
+    if (!this.workspaceId) return;
+
+    try {
+      // Initialize git status tracking
+      await this.gitStatusService.initializeWorkspaceGitStatus(this.workspaceId);
+      
+      console.log('✅ File editor services initialized');
+    } catch (error) {
+      console.error('❌ Error initializing file editor services:', error);
+    }
+  }
+
+  /**
+   * Handle file content changes from the editor
+   */
+  onFileContentChanged(content: string): void {
+    this.fileContent = content;
+    this.lineCount = content.split('\n').length;
+    
+    console.log('📝 File content changed:', {
+      fileName: this.selectedFileName,
+      contentLength: content.length,
+      lineCount: this.lineCount
+    });
+  }
+
+  /**
+   * Handle file save events
+   */
+  onFileSaved(): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'File Saved',
+      detail: `${this.selectedFileName} has been saved successfully`
+    });
+    
+    // Refresh file tree to show updated modification times
+    this.onRefresh();
+    
+    console.log('💾 File saved:', this.selectedFileName);
+  }
+
+  /**
+   * Handle file modification status changes
+   */
+  onFileModified(isModified: boolean): void {
+    // Update UI to show modification status
+    // This could be used to show indicators in the file tree
+    console.log('📝 File modification status changed:', {
+      fileName: this.selectedFileName,
+      isModified
+    });
+  }
+
+  /**
+   * Create a new file
+   */
+  createNewFile(): void {
+    const fileName = prompt('Enter file name (e.g., new-file.html, styles.css, script.js):');
+    if (!fileName) return;
+
+    const fileExtension = fileName.split('.').pop()?.toLowerCase() || 'txt';
+    
+    // Create new file using the file editor service
+    this.fileEditorService.createNewFile(fileName, fileExtension);
+    
+    // Update selected file to the new file
+    this.selectedFileName = fileName;
+    this.selectedFileType = fileExtension;
+    this.fileContent = '';
+    this.lineCount = 0;
+    
+    console.log('📄 New file created:', fileName);
+  }
+
+  /**
+   * Save all modified files
+   */
+  async saveAllFiles(): Promise<void> {
+    if (!this.workspaceId) return;
+
+    try {
+      const success = await this.fileEditorService.saveAllFiles(this.workspaceId);
+      
+      if (success) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'All Files Saved',
+          detail: 'All modified files have been saved successfully'
+        });
+        
+        // Refresh file tree
+        this.onRefresh();
+      }
+    } catch (error) {
+      console.error('❌ Error saving all files:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Save Error',
+        detail: 'Failed to save some files'
+      });
+    }
+  }
+
+  /**
+   * Check if there are unsaved changes
+   */
+  hasUnsavedChanges(): boolean {
+    return this.fileEditorService.hasUnsavedChanges();
+  }
+
+  /**
+   * Get git status for file tree display
+   */
+  getFileGitStatus(fileId: string): string {
+    const status = this.gitStatusService.getFileStatus(fileId);
+    return status ? status.status : '';
+  }
+
+  /**
+   * Get git status color for file tree display
+   */
+  getFileGitStatusColor(fileId: string): string {
+    const status = this.gitStatusService.getFileStatus(fileId);
+    return status ? this.gitStatusService.getStatusColor(status.status) : '';
+  }
+
   // Helper methods for file operations
+
+  // ===================== CACHE MANAGEMENT =====================
+
+  /**
+   * Update cache status information
+   */
+  updateCacheStatus(): void {
+    if (this.workspaceId) {
+      this.cacheStatus = this.websiteFilesService.getCacheStatus(this.workspaceId);
+      console.log('📊 Cache status:', this.cacheStatus);
+    }
+  }
+
+  /**
+   * Force refresh cache and reload files
+   */
+  refreshCache(): void {
+    if (this.workspaceId) {
+      this.isLoadingFiles = true;
+      this.websiteFilesService.forceRefresh(this.workspaceId).subscribe({
+        next: (files) => {
+          this.updateCacheStatus();
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Cache Refreshed',
+            detail: `Reloaded ${files.length} files from server`
+          });
+          console.log('🔄 Cache refreshed successfully');
+        },
+        error: (error) => {
+          console.error('❌ Error refreshing cache:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to refresh cache'
+          });
+        },
+        complete: () => {
+          this.isLoadingFiles = false;
+        }
+      });
+    }
+  }
+
+  /**
+   * Clear all cache
+   */
+  clearCache(): void {
+    this.websiteFilesService.clearAllCache();
+    this.updateCacheStatus();
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Cache Cleared',
+      detail: 'All cached data has been removed'
+    });
+    console.log('🗑️ All cache cleared');
+  }
+
+  /**
+   * Get cache status display text
+   */
+  getCacheStatusText(): string {
+    if (!this.cacheStatus) return 'No cache info';
+    
+    const { hasMemoryCache, hasBrowserCache, isValid, fileCount, lastUpdated } = this.cacheStatus;
+    
+    if (!hasMemoryCache && !hasBrowserCache) {
+      return 'No cache';
+    }
+    
+    const status = isValid ? 'Valid' : 'Expired';
+    const location = hasMemoryCache ? 'Memory' : 'Browser';
+    const time = lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : 'Unknown';
+    
+    return `${status} (${location}, ${fileCount} files, ${time})`;
+  }
+
+  /**
+   * Get cache status icon
+   */
+  getCacheStatusIcon(): string {
+    if (!this.cacheStatus) return 'pi-question-circle';
+    
+    const { hasMemoryCache, isValid } = this.cacheStatus;
+    
+    if (hasMemoryCache && isValid) return 'pi-check-circle';
+    if (hasMemoryCache && !isValid) return 'pi-exclamation-triangle';
+    return 'pi-times-circle';
+  }
+
+  /**
+   * Get cache status color
+   */
+  getCacheStatusColor(): string {
+    if (!this.cacheStatus) return '#6c757d';
+    
+    const { hasMemoryCache, isValid } = this.cacheStatus;
+    
+    if (hasMemoryCache && isValid) return '#28a745'; // Green
+    if (hasMemoryCache && !isValid) return '#ffc107'; // Yellow
+    return '#dc3545'; // Red
+  }
 } 

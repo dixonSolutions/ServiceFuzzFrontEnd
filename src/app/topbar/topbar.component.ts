@@ -3,17 +3,17 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatSidenavModule} from '@angular/material/sidenav';
-import { DataSvrService } from '../services/data-svr.service';
+import { DataSvrService } from '../services/Other/data-svr.service';
 import { Router } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { MatSidenav } from '@angular/material/sidenav';
-import { ManageBusinessesService } from '../services/manage-businesses.service';
+import { ManageBusinessesService } from '../services/Business/Manage/manage-businesses.service';
 import { SubscriptionStatus } from '../models/subscription-status';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 import { MenuItem, MegaMenuItem } from 'primeng/api';
-import { UniversalSearchService } from '../services/universal-search.service';
+import { UniversalSearchService } from '../services/Business/Manage/ViewSearchEdit/universal-search.service';
 
 @Component({
   selector: 'app-topbar',
