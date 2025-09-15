@@ -14,6 +14,20 @@ import {
   PreviewResponse
 } from '../../../../../models/workspace.models';
 
+interface LightFileChange {
+  fileId: string;
+  oldString: string;
+  newString: string;
+  lineNumber?: number; // Optional line hint for faster processing
+}
+
+interface LightUpdateResponse {
+  success: boolean;
+  fileId: string;
+  fileName: string;
+  updatedAt: string;
+}
+
 interface CachedWorkspaceData {
   files: WebsiteFile[];
   lastUpdated: number;
@@ -367,6 +381,85 @@ export class WebsiteFilesService {
       }),
       catchError(this.handleError)
     );
+  }
+
+  /**
+   * LIGHT UPDATE: Update file with just the changes (old_string -> new_string)
+   * This is much faster and more efficient than sending the entire file content
+   */
+  updateFileLight(change: LightFileChange): Observable<LightUpdateResponse> {
+    const jwtToken = this.dataSvr.jwtToken;
+    if (!jwtToken) {
+      throw new Error('No JWT token available. User may not be authenticated.');
+    }
+
+    console.log(`⚡ Light update for file ${change.fileId}:`, {
+      oldLength: change.oldString.length,
+      newLength: change.newString.length,
+      lineHint: change.lineNumber
+    });
+
+    return this.http.patch<LightUpdateResponse>(
+      `${this.apiBaseUrl}/api/WebsiteFiles/${change.fileId}/light-update`,
+      {
+        oldString: change.oldString,
+        newString: change.newString,
+        lineNumber: change.lineNumber
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        }
+      }
+    ).pipe(
+      tap(response => {
+        if (response.success) {
+          // Update cache by applying the same change locally
+          this.applyCacheChange(change);
+          console.log(`⚡ Light update successful for ${response.fileName}`);
+        }
+      }),
+      catchError(error => {
+        console.warn('⚠️ Light update failed, falling back to full update');
+        // If light update fails, we could fall back to full update
+        return this.handleError(error);
+      })
+    );
+  }
+
+  /**
+   * Apply light change to cached file content
+   */
+  private applyCacheChange(change: LightFileChange): void {
+    for (const [workspaceId, cached] of this.memoryCache.entries()) {
+      const fileIndex = cached.files.findIndex(f => f.id === change.fileId);
+      if (fileIndex !== -1) {
+        const file = cached.files[fileIndex];
+        
+        // Apply the string replacement
+        const updatedContent = file.content.replace(change.oldString, change.newString);
+        
+        if (updatedContent !== file.content) {
+          // Update the cached file
+          cached.files[fileIndex] = {
+            ...file,
+            content: updatedContent,
+            updatedAt: new Date()
+          };
+          
+          cached.lastUpdated = Date.now();
+          cached.version++;
+          
+          // Update browser cache and notify subscribers
+          this.saveToBrowserCache(workspaceId, cached);
+          this.getCacheSubject(workspaceId).next(cached.files);
+          
+          console.log(`💾 Applied light change to cached file ${file.fileName}`);
+        }
+        break;
+      }
+    }
   }
 
   /**

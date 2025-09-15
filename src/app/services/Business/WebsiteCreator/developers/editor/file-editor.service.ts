@@ -12,6 +12,10 @@ export interface FileEditState {
   isModified: boolean;
   isNew: boolean;
   lastSaved: Date | null;
+  lastChangeStart?: number; // Track where the last change started
+  lastChangeEnd?: number;   // Track where the last change ended
+  lastOldString?: string;   // Track what was replaced
+  lastNewString?: string;   // Track what it was replaced with
 }
 
 export interface LineChange {
@@ -146,22 +150,56 @@ export class FileEditorService {
   }
 
   /**
-   * Update file content
+   * Update file content and track changes for light saving
    */
-  updateFileContent(fileId: string, newContent: string): void {
+  updateFileContent(fileId: string, newContent: string, changeStart?: number, changeEnd?: number): void {
     const openFiles = this._openFiles.value;
     const updatedFiles = openFiles.map(file => {
       if (file.fileId === fileId) {
         const isModified = newContent !== file.originalContent;
+        
+        // Detect the change if not provided
+        let oldString = '';
+        let newString = '';
+        let actualStart = changeStart;
+        let actualEnd = changeEnd;
+        
+        if (changeStart !== undefined && changeEnd !== undefined) {
+          // Use provided change boundaries
+          oldString = file.currentContent.substring(changeStart, changeEnd);
+          newString = newContent.substring(changeStart, changeStart + (newContent.length - file.currentContent.length) + (changeEnd - changeStart));
+        } else {
+          // Auto-detect changes using simple diff
+          const changes = this.detectChanges(file.currentContent, newContent);
+          if (changes) {
+            oldString = changes.oldString;
+            newString = changes.newString;
+            actualStart = changes.start;
+            actualEnd = changes.end;
+          }
+        }
+        
         const updatedFile = {
           ...file,
           currentContent: newContent,
-          isModified
+          isModified,
+          lastChangeStart: actualStart,
+          lastChangeEnd: actualEnd,
+          lastOldString: oldString,
+          lastNewString: newString
         };
         
         // Update file status
         const status = file.isNew ? 'U' : (isModified ? 'M' : 'M');
         this.updateFileStatus(fileId, file.fileName, status, isModified);
+        
+        console.log(`📝 Content updated for ${file.fileName}:`, {
+          oldLength: file.currentContent.length,
+          newLength: newContent.length,
+          changeDetected: !!oldString,
+          oldString: oldString.substring(0, 50) + (oldString.length > 50 ? '...' : ''),
+          newString: newString.substring(0, 50) + (newString.length > 50 ? '...' : '')
+        });
         
         return updatedFile;
       }
@@ -169,6 +207,42 @@ export class FileEditorService {
     });
     
     this._openFiles.next(updatedFiles);
+  }
+
+  /**
+   * Simple change detection between old and new content
+   */
+  private detectChanges(oldContent: string, newContent: string): { oldString: string; newString: string; start: number; end: number } | null {
+    // Find the first difference
+    let start = 0;
+    while (start < oldContent.length && start < newContent.length && oldContent[start] === newContent[start]) {
+      start++;
+    }
+    
+    // If no differences found
+    if (start === oldContent.length && start === newContent.length) {
+      return null;
+    }
+    
+    // Find the last difference
+    let oldEnd = oldContent.length;
+    let newEnd = newContent.length;
+    
+    while (oldEnd > start && newEnd > start && 
+           oldContent[oldEnd - 1] === newContent[newEnd - 1]) {
+      oldEnd--;
+      newEnd--;
+    }
+    
+    const oldString = oldContent.substring(start, oldEnd);
+    const newString = newContent.substring(start, newEnd);
+    
+    return {
+      oldString,
+      newString,
+      start,
+      end: oldEnd
+    };
   }
 
   /**
@@ -198,8 +272,34 @@ export class FileEditorService {
           content: fileToSave.currentContent
         }).toPromise();
       } else {
-        // Update existing file
-        savedFile = await this.filesService.updateFile(fileId, fileToSave.currentContent).toPromise();
+        // Use LIGHT UPDATE for existing files - much faster!
+        if (fileToSave.lastOldString && fileToSave.lastNewString) {
+          console.log(`⚡ Using light update for ${fileToSave.fileName}`);
+          
+          const lightResponse = await this.filesService.updateFileLight({
+            fileId: fileId,
+            oldString: fileToSave.lastOldString,
+            newString: fileToSave.lastNewString,
+            lineNumber: fileToSave.lastChangeStart ? this.getLineNumber(fileToSave.originalContent, fileToSave.lastChangeStart) : undefined
+          }).toPromise();
+          
+          if (lightResponse?.success) {
+            // Create a mock saved file response for compatibility
+            savedFile = {
+              id: fileId,
+              fileName: fileToSave.fileName,
+              fileType: fileToSave.fileType,
+              content: fileToSave.currentContent,
+              updatedAt: new Date(lightResponse.updatedAt),
+              createdAt: new Date(),
+              workspaceId: workspaceId
+            };
+          }
+        } else {
+          // Fallback to full update if no light changes detected
+          console.log(`📄 Fallback to full update for ${fileToSave.fileName}`);
+          savedFile = await this.filesService.updateFile(fileId, fileToSave.currentContent).toPromise();
+        }
       }
 
       if (savedFile) {
@@ -212,7 +312,12 @@ export class FileEditorService {
               originalContent: fileToSave.currentContent,
               isModified: false,
               isNew: false,
-              lastSaved: new Date()
+              lastSaved: new Date(),
+              // Clear light change tracking after successful save
+              lastChangeStart: undefined,
+              lastChangeEnd: undefined,
+              lastOldString: undefined,
+              lastNewString: undefined
             };
             
             // Update original content for diff comparison
@@ -236,7 +341,7 @@ export class FileEditorService {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: `File saved: ${fileToSave.fileName}`
+          detail: `File saved: ${fileToSave.fileName} ⚡`
         });
         
         console.log(`💾 File saved: ${fileToSave.fileName}`);
@@ -253,6 +358,13 @@ export class FileEditorService {
       });
       return false;
     }
+  }
+
+  /**
+   * Get line number from character position
+   */
+  private getLineNumber(content: string, position: number): number {
+    return content.substring(0, position).split('\n').length;
   }
 
   /**
