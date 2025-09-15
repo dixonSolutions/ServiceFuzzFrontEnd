@@ -53,72 +53,70 @@
   gap: 8px;
 }
 
-.action-btn {
+.action-link {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid #d1d9e0;
-  background: #ffffff;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  gap: 4px;
+  text-decoration: none;
   color: #656d76;
-  gap: 6px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  white-space: nowrap;
 }
 
-.action-btn:hover {
-  background: #f3f4f6;
-  border-color: #afb8c1;
+.action-link:hover {
+  color: #24292f;
+  text-decoration: underline;
 }
 
-.action-btn:disabled {
+.action-link.disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
-.close-btn:hover {
-  background: #ff6b6b;
-  border-color: #ff6b6b;
-  color: white;
+.action-link i {
+  font-size: 12px;
 }
 
-/* New File and Save All buttons */
-.new-file-btn,
-.save-all-btn {
-  width: auto;
-  padding: 0 12px;
-  min-width: 100px;
-  gap: 6px;
+.close-link:hover {
+  color: #dc3545;
+  text-decoration: underline;
 }
 
-.new-file-btn {
-  background: #2ea043;
-  border-color: #2ea043;
-  color: white;
+/* Specific link styles */
+.new-file-link {
+  color: #2ea043;
 }
 
-.new-file-btn:hover {
-  background: #2c974b;
-  border-color: #2c974b;
+.new-file-link:hover {
+  color: #2c974b;
+  text-decoration: underline;
 }
 
-.save-all-btn {
-  background: #0969da;
-  border-color: #0969da;
-  color: white;
+.save-all-link {
+  color: #0969da;
 }
 
-.save-all-btn:hover:not(:disabled) {
-  background: #0860ca;
-  border-color: #0860ca;
+.save-all-link:hover:not(.disabled) {
+  color: #0860ca;
+  text-decoration: underline;
 }
 
-.save-all-btn:disabled {
-  background: #8c959f;
-  border-color: #8c959f;
-  color: white;
+.save-all-link.disabled {
+  color: #8c959f;
+}
+
+.search-link.active {
+  color: #0969da;
+  font-weight: 600;
+}
+
+.search-link:hover {
+  color: #0860ca;
+  text-decoration: underline;
 }
 
 /* Cache Controls */
@@ -131,26 +129,22 @@
   border-right: 1px solid #d1d9e0;
 }
 
-.cache-refresh-btn {
-  background: #0969da;
-  border-color: #0969da;
-  color: white;
+.cache-refresh-link {
+  color: #0969da;
 }
 
-.cache-refresh-btn:hover {
-  background: #0860ca;
-  border-color: #0860ca;
+.cache-refresh-link:hover:not(.disabled) {
+  color: #0860ca;
+  text-decoration: underline;
 }
 
-.cache-clear-btn {
-  background: #cf222e;
-  border-color: #cf222e;
-  color: white;
+.cache-clear-link {
+  color: #cf222e;
 }
 
-.cache-clear-btn:hover {
-  background: #a40e26;
-  border-color: #a40e26;
+.cache-clear-link:hover {
+  color: #a40e26;
+  text-decoration: underline;
 }
 
 .cache-status {
@@ -192,23 +186,10 @@
   }
 }
 
-/* Back button styling when in developers mode */
-.close-btn:has(.back-text) {
-  width: auto;
-  padding: 0 12px;
-  min-width: 80px;
-}
-
-.close-btn:has(.back-text):hover {
-  background: #007bff;
-  border-color: #007bff;
-  color: white;
-}
-
+/* Back text styling */
 .back-text {
   font-size: 14px;
   font-weight: 500;
-  margin-left: 4px;
 }
 
 /* Drag and Drop Styles */
@@ -624,14 +605,7 @@
 .file-browser-description {
   font-size: 12px;
   color: #656d76;
-  text-align-horizontal: center;
-  text-align-vertical: center;
   text-align: center;
-  text-align-last: center;
-  text-align-first: center;
-  text-align-middle: center;
-  text-align-bottom: center;
-  text-align-top: center;
 }
 
 .loading-state p,
@@ -932,18 +906,9 @@ div.code-content, div.media-content {
   overflow: hidden;
 }
 
-/* Search Button Styles */
-.search-btn {
+/* Search Link Styles */
+.search-link {
   transition: all 0.2s ease;
-}
-
-.search-btn.active {
-  background: #0969da !important;
-  color: white !important;
-}
-
-.search-btn.active:hover {
-  background: #0860ca !important;
 }
 
 /* Highlighted Line Styles */

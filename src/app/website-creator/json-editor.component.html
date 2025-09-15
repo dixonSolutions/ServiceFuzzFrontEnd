@@ -18,64 +18,68 @@
       </div>
     </div>
     <div class="header-actions">
-      <button 
-        class="action-btn new-file-btn" 
+      <a 
+        class="action-link new-file-link" 
         (click)="createNewFile()" 
         title="Create new file">
         <i class="pi pi-plus"></i>
         <span>New File</span>
-      </button>
-      <button 
-        class="action-btn save-all-btn" 
+      </a>
+      <a 
+        class="action-link save-all-link" 
         (click)="saveAllFiles()" 
-        [disabled]="!hasUnsavedChanges()"
+        [class.disabled]="!hasUnsavedChanges()"
         title="Save all modified files">
         <i class="pi pi-save"></i>
         <span>Save All</span>
-      </button>
-      <button 
-        class="action-btn search-btn" 
+      </a>
+      <a 
+        class="action-link search-link" 
         (click)="toggleSearchPanel()" 
         [class.active]="showSearchPanel"
         title="Search in files">
         <i class="pi pi-search"></i>
-      </button>
-      <button 
-        class="action-btn refresh-btn" 
+        <span>Search</span>
+      </a>
+      <a 
+        class="action-link refresh-link" 
         (click)="onRefresh()" 
-        [disabled]="isLoadingFiles"
+        [class.disabled]="isLoadingFiles"
         title="Refresh files">
         <i class="pi pi-refresh" [class.pi-spin]="isLoadingFiles"></i>
-      </button>
+        <span>Refresh</span>
+      </a>
       
       <!-- Cache Management -->
       <div class="cache-controls">
-        <button 
-          class="action-btn cache-refresh-btn" 
+        <a 
+          class="action-link cache-refresh-link" 
           (click)="refreshCache()" 
-          [disabled]="isLoadingFiles"
+          [class.disabled]="isLoadingFiles"
           title="Force refresh cache from server">
           <i class="pi pi-cloud-download"></i>
-        </button>
-        <button 
-          class="action-btn cache-clear-btn" 
+          <span>Cache</span>
+        </a>
+        <a 
+          class="action-link cache-clear-link" 
           (click)="clearCache()" 
           title="Clear all cached data">
           <i class="pi pi-trash"></i>
-        </button>
+          <span>Clear</span>
+        </a>
         <div class="cache-status" [title]="getCacheStatusText()">
           <i [class]="'pi ' + getCacheStatusIcon()" [style.color]="getCacheStatusColor()"></i>
           <span class="cache-text">{{ getCacheStatusText() }}</span>
         </div>
       </div>
       
-      <button 
-        class="action-btn close-btn" 
+      <a 
+        class="action-link close-link" 
         (click)="closeEditor()"
         [title]="isDevelopersRoute() ? 'Back to Website Creator' : 'Close file browser'">
         <i [class]="isDevelopersRoute() ? 'pi pi-arrow-left' : 'pi pi-times'"></i>
-        <span *ngIf="isDevelopersRoute()" class="back-text">Back</span>
-      </button>
+        <span class="back-text">{{ isDevelopersRoute() ? 'Back' : 'Close' }}</span>
+      </a>
     </div>
   </div>
 
