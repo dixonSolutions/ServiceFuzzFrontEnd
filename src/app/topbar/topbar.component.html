@@ -103,7 +103,9 @@
         icon="pi pi-home"
         [text]="true"
         routerLink="/"
-        [styleClass]="'nav-item ' + (isRouteActive('/') ? 'active-nav-item' : '')">
+        routerLinkActive="active-nav-item"
+        [routerLinkActiveOptions]="{exact: true}"
+        styleClass="nav-item">
       </p-button>
       
       <p-button 
@@ -112,7 +114,8 @@
         icon="pi pi-chart-line"
         [text]="true"
         routerLink="/analytics"
-        [styleClass]="'nav-item ' + (isRouteActive('/analytics') ? 'active-nav-item' : '')">
+        routerLinkActive="active-nav-item"
+        styleClass="nav-item">
       </p-button>
       
       <p-button 
@@ -121,9 +124,9 @@
         icon="pi pi-info-circle"
         [text]="true"
         routerLink="/about"
-        [styleClass]="'nav-item ' + (isRouteActive('/about') ? 'active-nav-item' : '')">
+        routerLinkActive="active-nav-item"
+        styleClass="nav-item">
       </p-button>
-      
       
       <!-- Business Menu -->
       <p-menu #businessMenu [model]="businessMenuItems" [popup]="true" styleClass="business-dropdown-menu"></p-menu>
@@ -133,7 +136,8 @@
         icon="pi pi-building"
         [text]="true"
         (onClick)="businessMenu.toggle($event)"
-        [styleClass]="'nav-item ' + (isRouteActive('/business') ? 'active-nav-item' : '')">
+        [class.active-nav-item]="isRouteActive('/business')"
+        styleClass="nav-item">
       </p-button>
       
       <!-- Staff Menu -->
@@ -144,7 +148,8 @@
         icon="pi pi-users"
         [text]="true"
         (onClick)="staffMenu.toggle($event)"
-        [styleClass]="'nav-item ' + (isRouteActive('/staff') ? 'active-nav-item' : '')">
+        [class.active-nav-item]="isRouteActive('/staff')"
+        styleClass="nav-item">
       </p-button>
       
       <!-- Universal Search Button -->

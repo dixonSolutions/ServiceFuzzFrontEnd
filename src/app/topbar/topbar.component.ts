@@ -1,13 +1,13 @@
-import { Component, OnInit, ViewChild, HostListener } from '@angular/core';
+import { Component, OnInit, ViewChild, HostListener, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import {MatIconModule} from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {MatToolbarModule} from '@angular/material/toolbar';
 import {MatSidenavModule} from '@angular/material/sidenav';
 import { DataSvrService } from '../services/Other/data-svr.service';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Observable } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { map, shareReplay, filter } from 'rxjs/operators';
 import { MatSidenav } from '@angular/material/sidenav';
 import { ManageBusinessesService } from '../services/Business/Manage/manage-businesses.service';
 import { SubscriptionStatus } from '../models/subscription-status';
@@ -21,7 +21,7 @@ import { UniversalSearchService } from '../services/Business/Manage/ViewSearchEd
   templateUrl: './topbar.component.html',
   styleUrls: ['./topbar.component.css']
 })
-export class TopbarComponent implements OnInit {
+export class TopbarComponent implements OnInit, OnDestroy {
   @ViewChild('mobileDrawer') mobileDrawer!: MatSidenav;
 
   // Window reference for debug info
@@ -42,6 +42,9 @@ export class TopbarComponent implements OnInit {
   // Subscription status indicator state
   subscriptionStatus: SubscriptionStatus | null = null;
   isLoadingSubscription: boolean = false;
+
+  // Router subscription for active state detection
+  private routerSubscription: Subscription = new Subscription();
 
   // Responsive nav collapse settings - every 100px
   private readonly baseCollapseWidth = 1200;
@@ -79,7 +82,8 @@ export class TopbarComponent implements OnInit {
     private router: Router,
     private breakpointObserver: BreakpointObserver,
     private manageBusinessesService: ManageBusinessesService,
-    private universalSearchService: UniversalSearchService
+    private universalSearchService: UniversalSearchService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -116,14 +120,30 @@ export class TopbarComponent implements OnInit {
 
     // Initialize responsive nav state
     this.updateResponsiveNav(window.innerWidth || 0);
+
+    // Subscribe to router events to update active states
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.cdr.detectChanges();
+      });
+  }
+
+  ngOnDestroy(): void {
+    if (this.authWatchIntervalId) {
+      clearInterval(this.authWatchIntervalId);
+    }
+    this.routerSubscription.unsubscribe();
   }
 
   isRouteActive(route: string): boolean {
+    const currentUrl = this.router.url;
+    
     if (route === '/') {
       // For home route, check both '/' and '/home'
-      return this.router.url === '/' || this.router.url === '/home';
+      return currentUrl === '/' || currentUrl === '/home';
     }
-    return this.router.url === route || this.router.url.startsWith(route + '/');
+    return currentUrl === route || currentUrl.startsWith(route + '/');
   }
 
   getUserInitials(): string {

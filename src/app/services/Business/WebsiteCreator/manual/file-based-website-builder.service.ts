@@ -527,28 +527,36 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
    */
   private initializeWebSocket(workspaceId: string): void {
     try {
-      this.websocket = new WebSocket(`ws://localhost:7196/ws/workspace/${workspaceId}`);
+      console.log(`🔌 Initializing WebSocket connection for workspace: ${workspaceId}`);
+      const wsUrl = `ws://localhost:7196/ws/workspace/${workspaceId}`;
+      console.log(`🔗 WebSocket URL: ${wsUrl}`);
+      
+      this.websocket = new WebSocket(wsUrl);
       
       this.websocket.onopen = () => {
-        console.log('WebSocket connected for workspace:', workspaceId);
+        console.log('✅ WebSocket connected successfully for workspace:', workspaceId);
       };
       
       this.websocket.onmessage = (event) => {
+        console.log('📨 WebSocket message received:', event.data);
         const data = JSON.parse(event.data);
         this.handleWebSocketMessage(data);
       };
       
-      this.websocket.onclose = () => {
-        console.log('WebSocket disconnected');
+      this.websocket.onclose = (event) => {
+        console.log('❌ WebSocket disconnected. Code:', event.code, 'Reason:', event.reason);
         // Attempt to reconnect after 5 seconds
-        setTimeout(() => this.initializeWebSocket(workspaceId), 5000);
+        setTimeout(() => {
+          console.log('🔄 Attempting to reconnect WebSocket...');
+          this.initializeWebSocket(workspaceId);
+        }, 5000);
       };
       
       this.websocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket error:', error);
       };
     } catch (error) {
-      console.error('Error initializing WebSocket:', error);
+      console.error('❌ Error initializing WebSocket:', error);
     }
   }
 
@@ -1030,10 +1038,42 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
   }
 
   /**
+   * Manually initialize WebSocket connection (for developer portal or other components)
+   */
+  public initializeWebSocketConnection(workspaceId: string): void {
+    console.log('🔌 Manual WebSocket initialization requested for workspace:', workspaceId);
+    this._currentWorkspaceId.next(workspaceId);
+    this.initializeWebSocket(workspaceId);
+  }
+
+  /**
+   * Check if WebSocket is connected
+   */
+  public isWebSocketConnected(): boolean {
+    return this.websocket?.readyState === WebSocket.OPEN;
+  }
+
+  /**
+   * Get current WebSocket state
+   */
+  public getWebSocketState(): string {
+    if (!this.websocket) return 'Not initialized';
+    
+    switch (this.websocket.readyState) {
+      case WebSocket.CONNECTING: return 'Connecting';
+      case WebSocket.OPEN: return 'Connected';
+      case WebSocket.CLOSING: return 'Closing';
+      case WebSocket.CLOSED: return 'Closed';
+      default: return 'Unknown';
+    }
+  }
+
+  /**
    * Cleanup WebSocket connection
    */
   disconnect(): void {
     if (this.websocket) {
+      console.log('🔌 Disconnecting WebSocket...');
       this.websocket.close();
       this.websocket = null;
     }

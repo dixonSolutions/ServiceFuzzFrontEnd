@@ -41,66 +41,91 @@
   flex: 1;
   display: flex;
   justify-content: center;
+  align-items: stretch;
+  height: 100%;
 }
 
 /* Main Navigation Styling */
 .main-navigation {
   display: flex;
   align-items: center;
+  justify-content: space-evenly;
+  width: 100%;
+  height: 100%;
+  border-bottom: 1px solid rgba(33, 150, 243, 0.2);
   gap: 8px;
 }
 
-/* Navigation Item Styling */
+/* Navigation Item Styling - Light Blue Tab Design */
 ::ng-deep .nav-item {
   color: #1565c0 !important;
   background: rgba(255, 255, 255, 0.7) !important;
   border: 1px solid rgba(33, 150, 243, 0.2) !important;
-  border-radius: 8px !important;
-  padding: 8px 16px !important;
-  margin: 0 4px !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 8px 8px 0 0 !important;
+  padding: 12px 16px !important;
+  margin: 0 2px !important;
   transition: all 0.3s ease !important;
   font-weight: 500 !important;
+  font-size: 14px !important;
   position: relative !important;
+  text-transform: none !important;
+  letter-spacing: 0.025em !important;
+  flex: 1 !important;
+  text-align: center !important;
+  min-width: 120px !important;
+  white-space: nowrap !important;
 }
 
 ::ng-deep .nav-item:hover {
-  background: rgba(255, 255, 255, 0.95) !important;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2) !important;
-  transform: translateY(-2px) !important;
+  cursor: pointer !important;
 }
 
-/* Active Navigation Item with Underline */
+/* Active Navigation Item - Only Blue Underline */
+::ng-deep .primeng-desktop-toolbar .p-button.nav-item.active-nav-item,
+::ng-deep .primeng-desktop-toolbar .p-button.active-nav-item,
+::ng-deep .nav-item.active-nav-item,
 ::ng-deep .active-nav-item {
-  background: linear-gradient(135deg, #e3f2fd, #bbdefb) !important;
-  color: #0d47a1 !important;
-  border: 1px solid rgba(33, 150, 243, 0.4) !important;
-  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15) !important;
+  border-bottom: 3px solid #2196f3 !important;
+  font-weight: 600 !important;
 }
 
 ::ng-deep .active-nav-item::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 3px;
-  background: linear-gradient(90deg, #2196f3, #1976d2);
-  border-radius: 2px;
-  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+  display: none !important;
+}
+
+/* Extra specific rules for PrimeNG button active states */
+::ng-deep .primeng-desktop-toolbar .p-button.active-nav-item .p-button-label {
+  color: #0d47a1 !important;
+  font-weight: 700 !important;
+}
+
+::ng-deep .primeng-desktop-toolbar .p-button.active-nav-item .p-button-icon {
+  color: #0d47a1 !important;
+}
+
+/* Navigation Section Dividers */
+.nav-section-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(33, 150, 243, 0.3);
+  margin: 0 8px;
+  align-self: center;
 }
 
 /* Overflow Menu Button */
 ::ng-deep .overflow-menu-button {
   background: rgba(255, 255, 255, 0.8) !important;
   border: 2px dashed rgba(33, 150, 243, 0.3) !important;
+  border-radius: 8px !important;
   color: #1976d2 !important;
+  padding: 12px 16px !important;
+  flex: none !important;
+  min-width: auto !important;
 }
 
 ::ng-deep .overflow-menu-button:hover {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 2px dashed rgba(33, 150, 243, 0.6) !important;
-  transform: scale(1.05) !important;
+  cursor: pointer !important;
 }
 
 /* Dropdown Menu Styling */
@@ -289,12 +314,12 @@
   color: #1565c0 !important;
   background: rgba(255, 255, 255, 0.7) !important;
   border: 1px solid rgba(33, 150, 243, 0.2) !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
 }
 
 ::ng-deep .primeng-desktop-toolbar .p-button:hover {
-  background: rgba(255, 255, 255, 0.95) !important;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2) !important;
-  transform: translateY(-1px);
+  cursor: pointer !important;
 }
 
 ::ng-deep .primeng-desktop-toolbar .p-button.p-button-text {
@@ -1440,12 +1465,18 @@ button:hover {
 
 /* Universal Search Button Styling */
 :host ::ng-deep .search-button {
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(33, 150, 243, 0.2) !important;
+  border-radius: 8px !important;
+  color: #1565c0 !important;
+  padding: 12px 16px !important;
+  transition: all 0.3s ease;
+  flex: none !important;
+  min-width: auto !important;
 }
 
 :host ::ng-deep .search-button:hover {
-  background: rgba(0, 188, 212, 0.1) !important;
-  color: #00bcd4 !important;
+  cursor: pointer !important;
 }
 
 :host ::ng-deep .search-button .p-button-icon {
