@@ -12,7 +12,10 @@ import {
   WebsiteAsset,
   EnhancedWebsitePage,
   WorkspaceComponentResponseDto,
-  ComponentType
+  ComponentType,
+  WorkspaceComponent,
+  CreateWorkspaceComponentDto,
+  UpdateWorkspaceComponentDto
 } from '../../../../models/workspace.models';
 
 export interface WebsitePreviewData {
@@ -25,6 +28,32 @@ export interface WebsitePreviewData {
 export interface ComponentHtmlGenerator {
   componentType: string;
   generate: (parameters: any, componentId: string) => string;
+}
+
+export interface ParameterSchema {
+  type: 'object';
+  properties: {
+    [parameterName: string]: {
+      type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+      description?: string;
+      default?: any;
+      enum?: any[];
+      format?: string;
+      minimum?: number;
+      maximum?: number;
+      items?: any;
+    };
+  };
+  required?: string[];
+}
+
+export interface TemplateVariables {
+  instanceId: string;
+  componentId: string;
+  componentName: string;
+  componentClass: string;
+  parametersJson: string;
+  [parameterName: string]: any;
 }
 
 @Injectable({
@@ -43,8 +72,13 @@ export class FileBasedWebsiteBuilderService {
   // WebSocket for real-time collaboration
   private websocket: WebSocket | null = null;
   
-  // Component HTML generators
+  // Component HTML generators (legacy support)
   private componentGenerators = new Map<string, ComponentHtmlGenerator>();
+  
+  // Component type cache for performance
+  private componentTypesCache = new Map<string, ComponentType>();
+  private componentTypesCacheExpiry = 0;
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   constructor(
     private http: HttpClient,
@@ -289,10 +323,178 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
     }
   }
 
-  // ===================== COMPONENT MANAGEMENT =====================
+  // ===================== COMPONENT TYPE MANAGEMENT =====================
 
   /**
-   * Add component to page and generate HTML
+   * Get all active component types
+   */
+  async getComponentTypes(): Promise<{totalComponentTypes: number, componentTypes: ComponentType[]}> {
+    try {
+      const response = await this.http.get<{totalComponentTypes: number, componentTypes: ComponentType[]}>(
+        `${this.apiBaseUrl}/api/BusinessWebsite/component-types`,
+        { headers: this.getAuthHeaders() }
+      ).toPromise();
+      
+      if (response?.componentTypes) {
+        // Update cache
+        response.componentTypes.forEach(type => {
+          this.componentTypesCache.set(type.id, type);
+        });
+        this.componentTypesCacheExpiry = Date.now() + this.CACHE_DURATION;
+      }
+      
+      return response || { totalComponentTypes: 0, componentTypes: [] };
+    } catch (error) {
+      console.error('Error fetching component types:', error);
+      return { totalComponentTypes: 0, componentTypes: [] };
+    }
+  }
+
+  /**
+   * Get component types by category
+   */
+  async getComponentTypesByCategory(category: string): Promise<{category: string, totalComponentTypes: number, componentTypes: ComponentType[]}> {
+    try {
+      const response = await this.http.get<{category: string, totalComponentTypes: number, componentTypes: ComponentType[]}>(
+        `${this.apiBaseUrl}/api/BusinessWebsite/component-types/category/${category}`,
+        { headers: this.getAuthHeaders() }
+      ).toPromise();
+      
+      if (response?.componentTypes) {
+        // Update cache
+        response.componentTypes.forEach(type => {
+          this.componentTypesCache.set(type.id, type);
+        });
+      }
+      
+      return response || { category, totalComponentTypes: 0, componentTypes: [] };
+    } catch (error) {
+      console.error(`Error fetching component types for category ${category}:`, error);
+      return { category, totalComponentTypes: 0, componentTypes: [] };
+    }
+  }
+
+  /**
+   * Get specific component type with caching
+   */
+  async getComponentType(componentTypeId: string): Promise<ComponentType | null> {
+    try {
+      // Check cache first
+      if (this.componentTypesCache.has(componentTypeId) && Date.now() < this.componentTypesCacheExpiry) {
+        return this.componentTypesCache.get(componentTypeId)!;
+      }
+
+      const response = await this.http.get<ComponentType>(
+        `${this.apiBaseUrl}/api/BusinessWebsite/component-types/${componentTypeId}`,
+        { headers: this.getAuthHeaders() }
+      ).toPromise();
+      
+      if (response) {
+        // Update cache
+        this.componentTypesCache.set(componentTypeId, response);
+        this.componentTypesCacheExpiry = Date.now() + this.CACHE_DURATION;
+      }
+      
+      return response || null;
+    } catch (error) {
+      console.error(`Error fetching component type ${componentTypeId}:`, error);
+      return null;
+    }
+  }
+
+  // ===================== WORKSPACE COMPONENT MANAGEMENT =====================
+
+  /**
+   * Get all components for a workspace
+   */
+  async getWorkspaceComponents(workspaceId: string): Promise<{workspaceId: string, totalComponents: number, components: WorkspaceComponent[]}> {
+    try {
+      const response = await this.http.get<{workspaceId: string, totalComponents: number, components: WorkspaceComponent[]}>(
+        `${this.apiBaseUrl}/api/BusinessWebsite/workspaces/${workspaceId}/components`,
+        { headers: this.getAuthHeaders() }
+      ).toPromise();
+      
+      return response || { workspaceId, totalComponents: 0, components: [] };
+    } catch (error) {
+      console.error(`Error fetching workspace components for ${workspaceId}:`, error);
+      return { workspaceId, totalComponents: 0, components: [] };
+    }
+  }
+
+  /**
+   * Get components for specific page (Enhanced version)
+   */
+  async getPageComponentsEnhanced(workspaceId: string, pageId: string): Promise<{workspaceId: string, pageId: string, totalComponents: number, components: WorkspaceComponent[]}> {
+    try {
+      const response = await this.http.get<{workspaceId: string, pageId: string, totalComponents: number, components: WorkspaceComponent[]}>(
+        `${this.apiBaseUrl}/api/BusinessWebsite/workspaces/${workspaceId}/pages/${pageId}/components`,
+        { headers: this.getAuthHeaders() }
+      ).toPromise();
+      
+      return response || { workspaceId, pageId, totalComponents: 0, components: [] };
+    } catch (error) {
+      console.error(`Error fetching page components for ${pageId}:`, error);
+      return { workspaceId, pageId, totalComponents: 0, components: [] };
+    }
+  }
+
+  /**
+   * Create component instance using new API
+   */
+  async createComponentEnhanced(component: CreateWorkspaceComponentDto): Promise<{componentId: string, message: string} | null> {
+    try {
+      const response = await this.http.post<{componentId: string, message: string}>(
+        `${this.apiBaseUrl}/api/BusinessWebsite/workspaces/components`,
+        component,
+        { headers: this.getAuthHeaders() }
+      ).toPromise();
+      
+      return response || null;
+    } catch (error) {
+      console.error('Error creating component:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update component instance
+   */
+  async updateComponentEnhanced(componentId: string, update: UpdateWorkspaceComponentDto): Promise<{message: string} | null> {
+    try {
+      const response = await this.http.put<{message: string}>(
+        `${this.apiBaseUrl}/api/BusinessWebsite/workspaces/components/${componentId}`,
+        update,
+        { headers: this.getAuthHeaders() }
+      ).toPromise();
+      
+      return response || null;
+    } catch (error) {
+      console.error(`Error updating component ${componentId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete component instance
+   */
+  async deleteComponentEnhanced(componentId: string): Promise<{message: string} | null> {
+    try {
+      const response = await this.http.delete<{message: string}>(
+        `${this.apiBaseUrl}/api/BusinessWebsite/workspaces/components/${componentId}`,
+        { headers: this.getAuthHeaders() }
+      ).toPromise();
+      
+      return response || null;
+    } catch (error) {
+      console.error(`Error deleting component ${componentId}:`, error);
+      return null;
+    }
+  }
+
+  // ===================== LEGACY COMPONENT MANAGEMENT (Updated) =====================
+
+  /**
+   * Add component to page using enhanced system
    */
   async addComponentToPage(pageId: string, componentData: {
     componentType: string;
@@ -303,27 +505,30 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
     parameters: any;
   }): Promise<WorkspaceComponentResponseDto | null> {
     try {
-      // Create component in database
-      const component = await this.http.post<WorkspaceComponentResponseDto>(
-        `${this.apiBaseUrl}/api/website-components/workspace/components`,
-        {
-          workspaceId: this._currentWorkspaceId.value,
-          pageId: pageId,
-          componentId: this.generateId(),
-          componentType: componentData.componentType,
-          xPosition: componentData.xPosition,
-          yPosition: componentData.yPosition,
-          width: componentData.width,
-          height: componentData.height,
-          zIndex: 1,
-          parameters: JSON.stringify(componentData.parameters)
-        },
-        { headers: this.getAuthHeaders() }
-      ).toPromise();
+      const workspaceId = this._currentWorkspaceId.value;
+      if (!workspaceId) return null;
 
-      if (component) {
-        // Generate HTML for component and update page file
-        await this.updatePageHtmlWithComponent(pageId, component);
+      // Use the new enhanced API
+      const createDto: CreateWorkspaceComponentDto = {
+        workspaceId: workspaceId,
+        pageId: pageId,
+        componentId: this.generateId(),
+        componentType: componentData.componentType,
+        xPosition: componentData.xPosition,
+        yPosition: componentData.yPosition,
+        width: componentData.width,
+        height: componentData.height,
+        zIndex: 1,
+        parameters: JSON.stringify(componentData.parameters)
+      };
+
+      const response = await this.createComponentEnhanced(createDto);
+      
+      if (response) {
+        console.log(`✅ Component created: ${response.componentId}`);
+        
+        // Load the component using the new system
+        await this.loadPageComponents(workspaceId, pageId);
         
         // Refresh preview
         await this.generatePreview();
@@ -331,11 +536,25 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
         // Notify via WebSocket
         this.sendWebSocketMessage({
           type: 'COMPONENT_ADDED',
-          component: component
+          componentId: response.componentId,
+          componentType: componentData.componentType
         });
+
+        // Return legacy format for compatibility
+        return {
+          id: response.componentId,
+          componentId: createDto.componentId,
+          componentType: componentData.componentType,
+          xPosition: componentData.xPosition,
+          yPosition: componentData.yPosition,
+          width: componentData.width,
+          height: componentData.height,
+          zIndex: 1,
+          parameters: JSON.stringify(componentData.parameters)
+        } as WorkspaceComponentResponseDto;
       }
 
-      return component || null;
+      return null;
     } catch (error) {
       console.error('Error adding component to page:', error);
       return null;
@@ -621,10 +840,270 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
     this._websitePages.next(updatedPages);
   }
 
-  // ===================== COMPONENT GENERATORS =====================
+  // ===================== TEMPLATE PROCESSING SYSTEM =====================
 
   /**
-   * Initialize component HTML generators
+   * Process template with variables
+   */
+  processTemplate(template: string, variables: TemplateVariables): string {
+    let processed = template;
+    
+    // Replace all {{variable}} placeholders
+    Object.keys(variables).forEach(key => {
+      const placeholder = new RegExp(`{{${key}}}`, 'g');
+      const value = variables[key];
+      processed = processed.replace(placeholder, value !== undefined ? String(value) : '');
+    });
+    
+    return processed;
+  }
+
+  /**
+   * Convert string to PascalCase
+   */
+  toPascalCase(str: string): string {
+    return str.replace(/(?:^|\s)\w/g, match => match.toUpperCase()).replace(/\s/g, '');
+  }
+
+  /**
+   * Convert string to kebab-case
+   */
+  toKebabCase(str: string): string {
+    return str.toLowerCase().replace(/\s+/g, '-');
+  }
+
+  /**
+   * Validate parameters against schema
+   */
+  validateParameters(parameters: any, schema: ParameterSchema): boolean {
+    try {
+      // Basic validation - can be enhanced with a proper JSON schema validator
+      if (schema.required) {
+        for (const requiredField of schema.required) {
+          if (!(requiredField in parameters)) {
+            console.warn(`Required parameter '${requiredField}' is missing`);
+            return false;
+          }
+        }
+      }
+      
+      // Type validation
+      for (const [key, value] of Object.entries(parameters)) {
+        const propertySchema = schema.properties[key];
+        if (propertySchema && !this.validateParameterType(value, propertySchema.type)) {
+          console.warn(`Parameter '${key}' has invalid type. Expected: ${propertySchema.type}`);
+          return false;
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error validating parameters:', error);
+      return false;
+    }
+  }
+
+  private validateParameterType(value: any, expectedType: string): boolean {
+    switch (expectedType) {
+      case 'string': return typeof value === 'string';
+      case 'number': return typeof value === 'number';
+      case 'boolean': return typeof value === 'boolean';
+      case 'array': return Array.isArray(value);
+      case 'object': return typeof value === 'object' && value !== null && !Array.isArray(value);
+      default: return true;
+    }
+  }
+
+  // ===================== RUNTIME CSS/JS INJECTION =====================
+
+  /**
+   * Inject CSS scoped to instance ID
+   */
+  injectCSS(css: string, instanceId: string): void {
+    const styleId = `component-style-${instanceId}`;
+    
+    // Remove existing style if it exists
+    const existingStyle = document.getElementById(styleId);
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+    
+    // Create new style element
+    const styleElement = document.createElement('style');
+    styleElement.id = styleId;
+    styleElement.textContent = css;
+    
+    // Append to head
+    document.head.appendChild(styleElement);
+  }
+
+  /**
+   * Inject JavaScript scoped to instance ID
+   */
+  injectJavaScript(js: string, instanceId: string): void {
+    const scriptId = `component-script-${instanceId}`;
+    
+    // Remove existing script if it exists
+    const existingScript = document.getElementById(scriptId);
+    if (existingScript) {
+      existingScript.remove();
+    }
+    
+    // Create new script element
+    const scriptElement = document.createElement('script');
+    scriptElement.id = scriptId;
+    scriptElement.textContent = js;
+    
+    // Append to body
+    document.body.appendChild(scriptElement);
+  }
+
+  // ===================== ENHANCED COMPONENT LOADING =====================
+
+  /**
+   * Load and render page components with priority-based loading
+   */
+  async loadPageComponents(workspaceId: string, pageId: string): Promise<void> {
+    try {
+      console.log(`🔄 Loading components for page ${pageId}...`);
+      
+      // Get component instances
+      const response = await this.getPageComponentsEnhanced(workspaceId, pageId);
+      const components = response.components;
+      
+      if (components.length === 0) {
+        console.log('📭 No components found for this page');
+        return;
+      }
+      
+      // Get all component type definitions
+      const componentTypes = new Map<string, ComponentType>();
+      for (const component of components) {
+        if (!componentTypes.has(component.componentType)) {
+          const type = await this.getComponentType(component.componentType);
+          if (type) {
+            componentTypes.set(component.componentType, type);
+          }
+        }
+      }
+      
+      // Sort by loading priority and z-index
+      const sortedComponents = components.sort((a, b) => {
+        const aType = componentTypes.get(a.componentType);
+        const bType = componentTypes.get(b.componentType);
+        const aPriority = aType?.loadingPriority || 5;
+        const bPriority = bType?.loadingPriority || 5;
+        
+        // First by loading priority (lower = higher priority)
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        // Then by z-index
+        return a.zIndex - b.zIndex;
+      });
+      
+      console.log(`📦 Loading ${sortedComponents.length} components in priority order...`);
+      
+      // Load components in priority order
+      for (const component of sortedComponents) {
+        const componentType = componentTypes.get(component.componentType);
+        if (componentType) {
+          await this.loadComponent(component, componentType);
+        }
+      }
+      
+      console.log('✅ All components loaded successfully');
+      
+    } catch (error) {
+      console.error('❌ Error loading page components:', error);
+    }
+  }
+
+  /**
+   * Load individual component with runtime assembly
+   */
+  async loadComponent(component: WorkspaceComponent, componentType: ComponentType): Promise<void> {
+    try {
+      console.log(`🔧 Loading component ${component.id} (${componentType.name})...`);
+      
+      // Parse parameters
+      const parameters = component.parameters ? 
+        JSON.parse(component.parameters) : 
+        JSON.parse(componentType.defaultParameters || '{}');
+      
+      // Validate parameters if schema exists
+      if (componentType.parametersSchema) {
+        const schema = JSON.parse(componentType.parametersSchema) as ParameterSchema;
+        if (!this.validateParameters(parameters, schema)) {
+          console.warn(`⚠️ Parameter validation failed for component ${component.id}`);
+        }
+      }
+      
+      // Template variables
+      const templateVars: TemplateVariables = {
+        instanceId: component.id,
+        componentId: component.componentId,
+        componentName: this.toPascalCase(componentType.name),
+        componentClass: this.toKebabCase(componentType.name),
+        parametersJson: JSON.stringify(parameters),
+        ...parameters
+      };
+      
+      // Process and inject CSS (scoped to instance)
+      if (componentType.cssTemplate) {
+        const css = this.processTemplate(componentType.cssTemplate, templateVars);
+        this.injectCSS(css, component.id);
+      }
+      
+      // Process and inject JavaScript (scoped to instance)
+      if (componentType.javaScriptTemplate) {
+        const js = this.processTemplate(componentType.javaScriptTemplate, templateVars);
+        this.injectJavaScript(js, component.id);
+      }
+      
+      // Generate and render HTML
+      const html = this.processTemplate(componentType.htmlTemplate || '', templateVars);
+      this.renderComponent(component, html);
+      
+      console.log(`✅ Component ${component.id} loaded successfully`);
+      
+    } catch (error) {
+      console.error(`❌ Error loading component ${component.id}:`, error);
+    }
+  }
+
+  /**
+   * Render component HTML with positioning and dual ID system
+   */
+  renderComponent(component: WorkspaceComponent, html: string): void {
+    // Create wrapper element with dual ID system
+    const wrapper = document.createElement('div');
+    wrapper.setAttribute('data-component-type', component.componentType);
+    wrapper.setAttribute('data-instance-id', component.id);
+    wrapper.setAttribute('data-component-id', component.componentId);
+    wrapper.className = 'component-wrapper';
+    
+    // Apply positioning styles
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = `${component.xPosition}px`;
+    wrapper.style.top = `${component.yPosition}px`;
+    wrapper.style.width = `${component.width}px`;
+    wrapper.style.height = `${component.height}px`;
+    wrapper.style.zIndex = component.zIndex.toString();
+    
+    // Set inner HTML
+    wrapper.innerHTML = html;
+    
+    // Append to page container
+    const pageContainer = document.getElementById('page-container') || document.body;
+    pageContainer.appendChild(wrapper);
+  }
+
+  // ===================== COMPONENT GENERATORS (Legacy Support) =====================
+
+  /**
+   * Initialize component HTML generators (Legacy support)
    */
   private initializeComponentGenerators(): void {
     // Hero Section
@@ -1077,5 +1556,176 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
       this.websocket.close();
       this.websocket = null;
     }
+  }
+
+  // ===================== ENHANCED SYSTEM PUBLIC METHODS =====================
+
+  /**
+   * Load components for current page using enhanced system
+   */
+  async loadCurrentPageComponents(): Promise<void> {
+    const workspaceId = this._currentWorkspaceId.value;
+    const pageId = this._currentPageId.value;
+    
+    if (workspaceId && pageId) {
+      await this.loadPageComponents(workspaceId, pageId);
+    }
+  }
+
+  /**
+   * Clear all component styles and scripts from DOM
+   */
+  clearAllComponentAssets(): void {
+    // Remove all component styles
+    const styles = document.querySelectorAll('style[id^="component-style-"]');
+    styles.forEach(style => style.remove());
+    
+    // Remove all component scripts
+    const scripts = document.querySelectorAll('script[id^="component-script-"]');
+    scripts.forEach(script => script.remove());
+    
+    // Remove all component wrappers
+    const wrappers = document.querySelectorAll('.component-wrapper');
+    wrappers.forEach(wrapper => wrapper.remove());
+  }
+
+  /**
+   * Reload page with enhanced component system
+   */
+  async reloadPageWithEnhancedSystem(pageId?: string): Promise<void> {
+    const workspaceId = this._currentWorkspaceId.value;
+    const targetPageId = pageId || this._currentPageId.value;
+    
+    if (workspaceId && targetPageId) {
+      // Clear existing components
+      this.clearAllComponentAssets();
+      
+      // Load components using enhanced system
+      await this.loadPageComponents(workspaceId, targetPageId);
+    }
+  }
+
+  /**
+   * Get component types for UI (public method)
+   */
+  async getAvailableComponentTypes(): Promise<ComponentType[]> {
+    const response = await this.getComponentTypes();
+    return response.componentTypes;
+  }
+
+  /**
+   * Get component types by category for UI (public method)
+   */
+  async getComponentTypesByCategory_Public(category: string): Promise<ComponentType[]> {
+    const response = await this.getComponentTypesByCategory(category);
+    return response.componentTypes;
+  }
+
+  /**
+   * Create component using enhanced system (public method)
+   */
+  async createComponentWithEnhancedSystem(
+    pageId: string,
+    componentTypeId: string,
+    position: { x: number; y: number },
+    size: { width: number; height: number },
+    parameters: any = {},
+    zIndex: number = 1
+  ): Promise<string | null> {
+    const workspaceId = this._currentWorkspaceId.value;
+    if (!workspaceId) return null;
+
+    const createDto: CreateWorkspaceComponentDto = {
+      workspaceId: workspaceId,
+      pageId: pageId,
+      componentId: this.generateId(),
+      componentType: componentTypeId,
+      xPosition: position.x,
+      yPosition: position.y,
+      width: size.width,
+      height: size.height,
+      zIndex: zIndex,
+      parameters: JSON.stringify(parameters)
+    };
+
+    const response = await this.createComponentEnhanced(createDto);
+    
+    if (response) {
+      // Reload components to show the new one
+      await this.loadPageComponents(workspaceId, pageId);
+      return response.componentId;
+    }
+    
+    return null;
+  }
+
+  /**
+   * Update component parameters using enhanced system
+   */
+  async updateComponentParameters(
+    componentId: string,
+    parameters: any
+  ): Promise<boolean> {
+    const updateDto: UpdateWorkspaceComponentDto = {
+      parameters: JSON.stringify(parameters)
+    };
+
+    const response = await this.updateComponentEnhanced(componentId, updateDto);
+    
+    if (response) {
+      // Reload current page to reflect changes
+      await this.loadCurrentPageComponents();
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Move component using enhanced system
+   */
+  async moveComponent(
+    componentId: string,
+    position: { x: number; y: number },
+    size?: { width: number; height: number }
+  ): Promise<boolean> {
+    const updateDto: UpdateWorkspaceComponentDto = {
+      xPosition: position.x,
+      yPosition: position.y,
+      ...(size && { width: size.width, height: size.height })
+    };
+
+    const response = await this.updateComponentEnhanced(componentId, updateDto);
+    
+    if (response) {
+      // Reload current page to reflect changes
+      await this.loadCurrentPageComponents();
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Delete component using enhanced system
+   */
+  async deleteComponentWithEnhancedSystem(componentId: string): Promise<boolean> {
+    const response = await this.deleteComponentEnhanced(componentId);
+    
+    if (response) {
+      // Remove component assets from DOM
+      const styleElement = document.getElementById(`component-style-${componentId}`);
+      if (styleElement) styleElement.remove();
+      
+      const scriptElement = document.getElementById(`component-script-${componentId}`);
+      if (scriptElement) scriptElement.remove();
+      
+      const wrapper = document.querySelector(`[data-instance-id="${componentId}"]`);
+      if (wrapper) wrapper.remove();
+      
+      return true;
+    }
+    
+    return false;
   }
 }

@@ -106,10 +106,30 @@ export interface ComponentType {
   parametersSchema?: string;
   defaultParameters?: string;
   htmlTemplate?: string;
+  cssTemplate?: string;           // 🆕 CSS template for runtime injection
+  javaScriptTemplate?: string;    // 🆕 JavaScript template for runtime injection
+  loadingPriority?: number;       // 🆕 1=critical, 10=lazy (1-10 scale)
   defaultWidth: number;
   defaultHeight: number;
   isActive: boolean;
   createdAt: Date;
+  updatedAt?: Date;               // 🆕 Last update timestamp
+}
+
+export interface WorkspaceComponent {
+  id: string;                     // 🔑 INSTANCE ID (unique per placement)
+  workspaceId: string;            // Workspace identifier
+  pageId: string;                 // Page identifier
+  componentId: string;            // Component identifier within page
+  componentType: string;          // 🔑 COMPONENT TYPE ID (references ComponentTypes.id)
+  xPosition: number;              // X coordinate
+  yPosition: number;              // Y coordinate
+  width: number;                  // Component width
+  height: number;                 // Component height
+  zIndex: number;                 // Layer order
+  parameters?: string;            // Instance-specific parameters (JSON)
+  createdAt: Date;                // Creation timestamp
+  updatedAt: Date;                // Last update timestamp
 }
 
 export interface DeployWorkspaceDto {
