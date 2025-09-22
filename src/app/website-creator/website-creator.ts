@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WebsiteBuilderService, ComponentDefinition, ComponentParameter, ComponentInstance, BusinessImage, BusinessImagesResponse } from '../services/Business/WebsiteCreator/manual/website-builder';
+import { EnhancedWebsiteBuilderService } from '../services/Business/WebsiteCreator/enhanced/enhanced-website-builder.service';
 import { DataSvrService } from '../services/Other/data-svr.service';
 import { WebsitePagesService } from '../services/Business/WebsiteCreator/manual/data/website-pages.service';
 import { WebsiteFilesService } from '../services/Business/WebsiteCreator/developers/files/website-files.service';
@@ -106,6 +107,7 @@ export class WebsiteCreatorComponent implements OnInit {
 
   constructor(
     private websiteBuilder: WebsiteBuilderService,
+    private enhancedWebsiteBuilder: EnhancedWebsiteBuilderService,
     private router: Router,
     private route: ActivatedRoute,
     private dataSvrService: DataSvrService,
@@ -236,6 +238,20 @@ export class WebsiteCreatorComponent implements OnInit {
     try {
       // Initialize file-based builder first
       await this.initializeFileBasedBuilder();
+      
+      // Initialize enhanced website builder system
+      if (project.id && !project.isNew) {
+        try {
+          console.log('🚀 Initializing enhanced website builder for workspace:', project.id);
+          await this.enhancedWebsiteBuilder.initializeBuilder(project.id);
+          console.log('✅ Enhanced website builder initialized for workspace:', project.id);
+        } catch (error) {
+          console.error('❌ Error initializing enhanced website builder:', error);
+          console.error('❌ Project details:', { id: project.id, isNew: project.isNew, name: project.name });
+        }
+      } else {
+        console.log('⚠️ Skipping enhanced system initialization - project is new or missing ID:', { id: project.id, isNew: project.isNew });
+      }
       
       // Check if we need to migrate from old JSON system
       // Migration logic would be handled by the backend API when loading existing workspaces

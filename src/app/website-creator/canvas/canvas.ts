@@ -1,7 +1,9 @@
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ComponentDefinition, ComponentParameter, ComponentInstance, WebsiteBuilderService } from '../../services/Business/WebsiteCreator/manual/website-builder';
-import { ComponentType, ComponentRenderContext } from '../../models/workspace.models';
+import { ComponentType, ComponentRenderContext, WorkspaceComponentResponseDto } from '../../models/workspace.models';
 import { ComponentRendererService } from '../../services/Business/WebsiteCreator/manual/components/component-renderer.service';
+import { EnhancedWebsiteBuilderService } from '../../services/Business/WebsiteCreator/enhanced/enhanced-website-builder.service';
+import { ComponentRenderer } from '../../services/Business/WebsiteCreator/rendering/component-renderer.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -28,7 +30,7 @@ export interface BuiltInNavProperties {
   templateUrl: './canvas.html',
   styleUrl: './canvas.css'
 })
-export class Canvas implements OnInit, OnDestroy {
+export class Canvas implements OnInit, OnChanges, OnDestroy {
   @ViewChild('canvas', { static: true }) canvasElement!: ElementRef<HTMLDivElement>;
 
   // Inputs from parent component
@@ -50,6 +52,10 @@ export class Canvas implements OnInit, OnDestroy {
   currentPageId: string = 'home';
   selectedComponentInstance: ComponentInstance | null = null;
   currentPageComponents: ComponentInstance[] = [];
+  
+  // Enhanced system state
+  currentWorkspaceComponents: WorkspaceComponentResponseDto[] = [];
+  availableComponentTypes: ComponentType[] = [];
   
   // Drag & Drop State (migrated from main component)
   private isDragging = false;
@@ -73,6 +79,8 @@ export class Canvas implements OnInit, OnDestroy {
   constructor(
     private websiteBuilder: WebsiteBuilderService,
     private componentRenderer: ComponentRendererService,
+    private enhancedWebsiteBuilder: EnhancedWebsiteBuilderService,
+    private newComponentRenderer: ComponentRenderer,
     private domSanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef,
     private messageService: MessageService,
@@ -81,6 +89,14 @@ export class Canvas implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initializeCanvas();
+  }
+
+  ngOnChanges(): void {
+    // Reinitialize enhanced system if workspace ID changes
+    if (this.currentWorkspaceId) {
+      console.log('🔄 Canvas: Workspace ID changed, reinitializing enhanced system:', this.currentWorkspaceId);
+      this.initializeEnhancedSystem();
+    }
   }
 
   ngOnDestroy(): void {
@@ -92,6 +108,66 @@ export class Canvas implements OnInit, OnDestroy {
     this.initializePages();
     this.subscribeToPageChanges();
     this.loadApiComponentTypes();
+    this.initializeEnhancedSystem();
+  }
+
+  // Initialize enhanced website builder system
+  private enhancedSystemInitialized = false;
+  
+  private initializeEnhancedSystem(): void {
+    console.log('🎯 Canvas: Initializing enhanced system with workspace ID:', this.currentWorkspaceId);
+    if (this.currentWorkspaceId && !this.enhancedSystemInitialized) {
+      console.log('🎯 Canvas: Setting up enhanced system subscriptions');
+      
+      // Subscribe to enhanced system observables
+      this.subscriptions.push(
+        this.enhancedWebsiteBuilder.currentPageComponents$.subscribe(components => {
+          console.log('🎯 Canvas: Enhanced system components updated:', components.length);
+          this.currentWorkspaceComponents = components;
+          this.cdr.detectChanges();
+        })
+      );
+
+      this.subscriptions.push(
+        this.enhancedWebsiteBuilder.availableComponentTypes$.subscribe(types => {
+          console.log('🎯 Canvas: Enhanced system component types updated:', types.length);
+          this.availableComponentTypes = types;
+          this.cdr.detectChanges();
+        })
+      );
+
+      this.subscriptions.push(
+        this.enhancedWebsiteBuilder.currentPageId$.subscribe(pageId => {
+          console.log('🎯 Canvas: Enhanced system page ID changed to:', pageId);
+          if (pageId && pageId !== this.currentPageId) {
+            this.currentPageId = pageId;
+            this.currentPageChange.emit(pageId);
+            
+            // Load page components when page changes
+            if (this.currentWorkspaceId) {
+              this.enhancedWebsiteBuilder.loadPage(this.currentWorkspaceId, pageId).catch(error => {
+                console.error('❌ Error loading page components in enhanced system:', error);
+              });
+            }
+            
+            this.cdr.detectChanges();
+          }
+        })
+      );
+
+      // Initialize the enhanced builder
+      console.log('🎯 Canvas: Calling enhanced builder initialization');
+      this.enhancedWebsiteBuilder.initializeBuilder(this.currentWorkspaceId).catch(error => {
+        console.error('Failed to initialize enhanced website builder:', error);
+        this.toastService.error('Failed to initialize website builder', 'Initialization Error');
+      });
+      
+      this.enhancedSystemInitialized = true;
+    } else if (!this.currentWorkspaceId) {
+      console.log('⚠️ Canvas: Cannot initialize enhanced system - no workspace ID');
+    } else {
+      console.log('⚠️ Canvas: Enhanced system already initialized');
+    }
   }
 
   private loadApiComponentTypes(): void {
@@ -357,7 +433,17 @@ export class Canvas implements OnInit, OnDestroy {
       page.isActive = page.id === pageId;
     });
     this.updateCurrentPageComponents();
-         this.websiteBuilder.setCurrentPage(pageId);
+    
+    // Notify legacy website builder service
+    this.websiteBuilder.setCurrentPage(pageId);
+    
+    // Load page in enhanced system
+    if (this.currentWorkspaceId) {
+      this.enhancedWebsiteBuilder.loadPage(this.currentWorkspaceId, pageId).catch(error => {
+        console.error('❌ Error loading page in enhanced system:', error);
+      });
+    }
+    
     this.currentPageChange.emit(pageId);
   }
 
@@ -463,7 +549,7 @@ export class Canvas implements OnInit, OnDestroy {
     }
   }
 
-  // Drag & Drop Operations (migrated from main component)
+  // Drag & Drop Operations (updated for enhanced system)
   onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -479,6 +565,67 @@ export class Canvas implements OnInit, OnDestroy {
 
       console.log('🎯 Dropping component:', component);
 
+      // Calculate smart positioning to avoid overlaps
+      let finalX = Math.max(0, x - 50);
+      let finalY = Math.max(80, y - 25); // Start below navigation bar
+      
+      // If dropping near existing components, offset position
+      if (this.currentWorkspaceComponents.length > 0) {
+        const componentAtPosition = this.currentWorkspaceComponents.find(c => 
+          Math.abs(c.xPosition - finalX) < 50 && Math.abs(c.yPosition - finalY) < 50
+        );
+        
+        if (componentAtPosition) {
+          // Offset by 20px to create a cascade effect
+          const offset = (this.currentWorkspaceComponents.length % 10) * 20;
+          finalX += offset;
+          finalY += offset;
+        }
+      }
+
+      // Use enhanced website builder service to add component
+      if (this.currentWorkspaceId) {
+        this.addComponentUsingEnhancedSystem(component.id, finalX, finalY);
+      } else {
+        // Fallback to legacy system
+        this.addComponentUsingLegacySystem(component, finalX, finalY);
+      }
+    } catch (error) {
+      console.error('❌ Error processing drop:', error);
+      this.toastService.error('Failed to add component to canvas', 'Drop Error');
+    }
+  }
+
+  // Add component using enhanced system
+  private async addComponentUsingEnhancedSystem(componentTypeId: string, x: number, y: number): Promise<void> {
+    try {
+      if (!this.currentWorkspaceId) {
+        throw new Error('No workspace ID available');
+      }
+
+      const currentPageId = this.currentPageId;
+      if (!currentPageId) {
+        throw new Error('No current page selected');
+      }
+
+      const instanceId = await this.enhancedWebsiteBuilder.addComponentToPage(
+        this.currentWorkspaceId,
+        currentPageId,
+        componentTypeId,
+        { x, y }
+      );
+
+      console.log('✅ Component added via enhanced system:', instanceId);
+      this.toastService.success('Component added successfully', 'Success');
+    } catch (error) {
+      console.error('❌ Error adding component via enhanced system:', error);
+      this.toastService.error('Failed to add component', 'Error');
+    }
+  }
+
+  // Fallback to legacy system
+  private addComponentUsingLegacySystem(component: any, finalX: number, finalY: number): void {
+    try {
       // Get default parameters for the component
       const defaultParameters = this.getDefaultProps(component.id);
       console.log('⚙️ Default parameters for component:', defaultParameters);
@@ -489,24 +636,6 @@ export class Canvas implements OnInit, OnDestroy {
         ? Math.max(...currentPage.components.map(c => c.zIndex)) 
         : 0;
 
-      // Calculate smart positioning to avoid overlaps
-      let finalX = Math.max(0, x - 50);
-      let finalY = Math.max(80, y - 25); // Start below navigation bar
-      
-      // If dropping near existing components, offset position
-      if (currentPage && currentPage.components.length > 0) {
-        const componentAtPosition = currentPage.components.find(c => 
-          Math.abs(c.x - finalX) < 50 && Math.abs(c.y - finalY) < 50
-        );
-        
-        if (componentAtPosition) {
-          // Offset by 20px to create a cascade effect
-          const offset = (currentPage.components.length % 10) * 20;
-          finalX += offset;
-          finalY += offset;
-        }
-      }
-
       // Use website builder service to add component (ensures proper component management)
       try {
         const newInstance = this.websiteBuilder.addComponent(component.id, finalX, finalY);
@@ -514,7 +643,7 @@ export class Canvas implements OnInit, OnDestroy {
         // Update z-index to ensure new component is on top
         this.websiteBuilder.updateComponent(newInstance.id, { zIndex: maxZIndex + 1 });
         
-        console.log('📋 Component added via website builder service:', newInstance);
+        console.log('📋 Component added via legacy website builder service:', newInstance);
 
         // Select the newly created component
         this.selectedComponentInstance = newInstance;
@@ -526,41 +655,43 @@ export class Canvas implements OnInit, OnDestroy {
           this.pageDataChange.emit(this.pages);
         });
         
-        console.log('✅ Component added to page and selected:', newInstance);
+        console.log('✅ Component added to page and selected via legacy system:', newInstance);
       } catch (error) {
-        console.error('❌ Error adding component via website builder service:', error);
+        console.error('❌ Error adding component via legacy website builder service:', error);
         // Fallback to manual addition if service fails
         console.log('🔄 Falling back to manual component addition...');
 
-      // Create new component instance with proper positioning and z-index
-      const newInstance: ComponentInstance = {
-        id: this.generateUniqueId(),
-        type: component.id,
-        x: finalX,
-        y: finalY,
-        width: component.defaultWidth || 300,
-        height: component.defaultHeight || 100,
-        zIndex: maxZIndex + 1, // Ensure new component is on top
-        parameters: defaultParameters
-      };
+        // Create new component instance with proper positioning and z-index
+        const newInstance: ComponentInstance = {
+          id: this.generateUniqueId(),
+          type: component.id,
+          x: finalX,
+          y: finalY,
+          width: component.defaultWidth || 300,
+          height: component.defaultHeight || 100,
+          zIndex: maxZIndex + 1, // Ensure new component is on top
+          parameters: defaultParameters
+        };
 
         console.log('📋 Created new component instance manually:', newInstance);
 
-      // Add to current page
-      if (currentPage) {
-        currentPage.components.push(newInstance);
-        this.updateCurrentPageComponents();
-        this.pageDataChange.emit(this.pages);
-        
-        // Select the newly created component
-        this.selectedComponentInstance = newInstance;
-        this.componentInstanceSelectionChange.emit(newInstance);
-        
+        // Add to current page
+        const currentPage = this.pages.find(p => p.id === this.currentPageId);
+        if (currentPage) {
+          currentPage.components.push(newInstance);
+          this.updateCurrentPageComponents();
+          this.pageDataChange.emit(this.pages);
+          
+          // Select the newly created component
+          this.selectedComponentInstance = newInstance;
+          this.componentInstanceSelectionChange.emit(newInstance);
+          
           console.log('✅ Component added to page and selected manually:', newInstance);
         }
       }
     } catch (error) {
-      console.error('❌ Error dropping component:', error);
+      console.error('❌ Error in legacy component addition:', error);
+      this.toastService.error('Failed to add component', 'Legacy System Error');
     }
   }
 
@@ -832,8 +963,15 @@ export class Canvas implements OnInit, OnDestroy {
     // Update current page components
     this.updateCurrentPageComponents();
     
-    // Notify website builder service
+    // Notify website builder service (legacy)
     this.websiteBuilder.setCurrentPage(pageId);
+    
+    // Load page in enhanced system
+    if (this.currentWorkspaceId) {
+      this.enhancedWebsiteBuilder.loadPage(this.currentWorkspaceId, pageId).catch(error => {
+        console.error('❌ Error loading page in enhanced system:', error);
+      });
+    }
     
     // Emit navigation event to parent
     this.navigationClick.emit({ event: event as MouseEvent, pageId });
