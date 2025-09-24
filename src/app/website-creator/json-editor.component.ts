@@ -154,19 +154,39 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngOnInit() {
+    console.log(`🚀 [DEBUG] JsonEditorComponent ngOnInit called`);
+    console.log(`🚀 [DEBUG] Component initialization timestamp: ${new Date().toISOString()}`);
+    console.log(`🚀 [DEBUG] Initial workspaceId from input: ${this.workspaceId}`);
+    
     // Get workspace ID from route parameters or input
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      console.log(`🚀 [DEBUG] Route params received:`, params.keys.map(key => ({ key, value: params.get(key) })));
+      
       const routeWorkspaceId = params.get('workspaceId') || params.get('id');
+      console.log(`🚀 [DEBUG] Extracted workspace ID from route: ${routeWorkspaceId}`);
+      
       if (routeWorkspaceId) {
         this.workspaceId = routeWorkspaceId;
+        console.log(`🚀 [DEBUG] Workspace ID set to: ${this.workspaceId}`);
       }
       
       if (this.workspaceId) {
+        console.log(`🚀 [DEBUG] Starting workspace initialization for: ${this.workspaceId}`);
+        console.log(`🚀 [DEBUG] Is developers route: ${this.isDevelopersRoute()}`);
+        
+        console.log(`🚀 [DEBUG] Loading workspace info...`);
         this.loadWorkspaceInfo();
+        
+        console.log(`🚀 [DEBUG] Loading file structure...`);
         this.loadFileStructure();
+        
+        console.log(`🚀 [DEBUG] Initializing file editor services...`);
         this.initializeFileEditorServices();
+        
+        console.log(`🚀 [DEBUG] Updating cache status...`);
         this.updateCacheStatus();
       } else {
+        console.error(`🚀 [DEBUG] No workspace ID available - cannot initialize`);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -175,8 +195,10 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // Set up search functionality
+    console.log(`🚀 [DEBUG] Setting up search functionality...`);
     this.setupSearch();
+    
+    console.log(`🚀 [DEBUG] JsonEditorComponent ngOnInit completed`);
   }
 
   /**
@@ -244,48 +266,113 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
    * Load workspace information to get the workspace name
    */
   async loadWorkspaceInfo(): Promise<void> {
+    console.log(`🚀 [DEBUG] loadWorkspaceInfo called for workspace: ${this.workspaceId}`);
+    console.log(`🚀 [DEBUG] Current workspace name: ${this.workspaceName}`);
+    
     try {
+      console.log(`🚀 [DEBUG] Fetching workspace details from API...`);
       const workspace = await this.websiteBuilder.getWorkspace(this.workspaceId).toPromise();
+      
+      console.log(`🚀 [DEBUG] Workspace API response:`, {
+        hasWorkspace: !!workspace,
+        workspaceId: workspace?.id,
+        workspaceName: workspace?.name,
+        businessId: workspace?.businessId,
+        timestamp: new Date().toISOString()
+      });
+      
       if (workspace) {
         this.workspaceDetails = workspace;
+        console.log(`🚀 [DEBUG] Workspace details stored:`, this.workspaceDetails);
+        
         if (workspace.name) {
-        this.workspaceName = workspace.name;
+          const oldName = this.workspaceName;
+          this.workspaceName = workspace.name;
+          console.log(`🚀 [DEBUG] Workspace name updated: ${oldName} -> ${this.workspaceName}`);
+        } else {
+          console.warn(`🚀 [DEBUG] Workspace has no name, keeping default: ${this.workspaceName}`);
         }
+      } else {
+        console.warn(`🚀 [DEBUG] No workspace data received from API`);
       }
     } catch (error) {
-      console.error('Error loading workspace info:', error);
+      console.error(`🚀 [DEBUG] Error loading workspace info for ${this.workspaceId}:`, error);
+      console.error(`🚀 [DEBUG] Error details:`, {
+        status: (error as any)?.status,
+        message: (error as any)?.message,
+        error: (error as any)?.error,
+        timestamp: new Date().toISOString()
+      });
       // Keep default name if error occurs
     }
   }
 
   /**
-   * Load file structure using cached data and reactive updates
+   * Load file structure using direct API calls (CACHE DISABLED FOR DEBUGGING)
    */
   async loadFileStructure(): Promise<void> {
+    console.log(`🚀 [DEBUG] loadFileStructure called for workspace: ${this.workspaceId}`);
+    console.log(`🚀 [DEBUG] Current loading state: ${this.isLoadingFiles}`);
+    console.log(`🚀 [DEBUG] Timestamp: ${new Date().toISOString()}`);
+    
     this.isLoadingFiles = true;
     
     try {
-      // Subscribe to reactive cached data for real-time updates
+      console.log(`🚀 [DEBUG] Setting up reactive subscription for workspace: ${this.workspaceId}`);
+      
+      // Subscribe to reactive data stream for real-time updates
       this.websiteFilesService.getFiles$(this.workspaceId)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (files) => {
-            console.log(`📁 Received ${files.length} files from cache for workspace ${this.workspaceId}`);
+            console.log(`🚀 [DEBUG] Reactive stream received files for workspace ${this.workspaceId}`);
+            console.log(`🚀 [DEBUG] Files count: ${files?.length || 0}`);
+            console.log(`🚀 [DEBUG] Files is array: ${Array.isArray(files)}`);
+            console.log(`🚀 [DEBUG] Timestamp: ${new Date().toISOString()}`);
             
             if (files && Array.isArray(files)) {
+              console.log(`🚀 [DEBUG] Processing ${files.length} files`);
+              
+              // Log file details for debugging
+              if (files.length > 0) {
+                console.log(`🚀 [DEBUG] Sample files:`, files.slice(0, 5).map(f => ({
+                  id: f.id,
+                  fileName: f.fileName,
+                  fileType: f.fileType,
+                  hasContent: !!f.content,
+                  contentLength: f.content?.length || 0
+                })));
+              }
+              
               this.files = files;
+              console.log(`🚀 [DEBUG] Converting files to tree structure`);
               this.fileTree = this.convertFilesToTree(files);
+              console.log(`🚀 [DEBUG] File tree created with ${this.fileTree.length} root nodes`);
+              
               this.filteredTree = [...this.fileTree];
+              console.log(`🚀 [DEBUG] Filtered tree initialized`);
               
               // Apply current search filter if active
               if (this.searchTerm) {
+                console.log(`🚀 [DEBUG] Applying search filter: ${this.searchTerm}`);
                 this.onSearch();
               }
+            } else {
+              console.warn(`🚀 [DEBUG] Invalid files data received:`, files);
             }
+            
             this.isLoadingFiles = false;
+            console.log(`🚀 [DEBUG] File loading completed successfully`);
           },
           error: (error) => {
-            console.error('Error loading file structure:', error);
+            console.error(`🚀 [DEBUG] Error in reactive stream for workspace ${this.workspaceId}:`, error);
+            console.error(`🚀 [DEBUG] Error details:`, {
+              status: error.status,
+              message: error.message,
+              error: error.error,
+              timestamp: new Date().toISOString()
+            });
+            
             this.messageService.add({
               severity: 'error',
               summary: 'Error',
@@ -295,19 +382,30 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
           }
         });
 
-      // Trigger initial load (will use cache if available, otherwise fetch from API)
+      console.log(`🚀 [DEBUG] Triggering initial file load for workspace: ${this.workspaceId}`);
+      
+      // Trigger initial load (now always fetches from API due to cache being disabled)
       this.websiteFilesService.getFiles(this.workspaceId).subscribe({
-        next: () => {
-          console.log('✅ Initial file load triggered');
+        next: (files) => {
+          console.log(`🚀 [DEBUG] Initial file load completed successfully`);
+          console.log(`🚀 [DEBUG] Received ${files?.length || 0} files directly from API`);
+          console.log(`🚀 [DEBUG] Timestamp: ${new Date().toISOString()}`);
         },
         error: (error) => {
-          console.error('❌ Error in initial file load:', error);
+          console.error(`🚀 [DEBUG] Error in initial file load for workspace ${this.workspaceId}:`, error);
+          console.error(`🚀 [DEBUG] Error details:`, {
+            status: error.status,
+            message: error.message,
+            error: error.error,
+            timestamp: new Date().toISOString()
+          });
           this.isLoadingFiles = false;
         }
       });
       
     } catch (error) {
-      console.error('Error setting up file structure subscription:', error);
+      console.error(`🚀 [DEBUG] Exception in loadFileStructure for workspace ${this.workspaceId}:`, error);
+      console.error(`🚀 [DEBUG] Exception timestamp: ${new Date().toISOString()}`);
       this.isLoadingFiles = false;
     }
   }
@@ -450,21 +548,39 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
    * Handle file selection in tree
    */
   async onFileSelect(event: any): Promise<void> {
-    const node = event.node;
+    console.log(`🚀 [DEBUG] onFileSelect called`);
+    console.log(`🚀 [DEBUG] Event:`, event);
     
-    console.log('🎯 File selected:', {
-      nodeLabel: node.label,
-      nodeData: node.data,
-      hasId: !!node.data?.id,
-      hasContent: !!node.data?.content
+    const node = event.node;
+    console.log(`🚀 [DEBUG] Selected node:`, {
+      key: node.key,
+      label: node.label,
+      leaf: node.leaf,
+      hasData: !!node.data,
+      dataType: node.data?.type,
+      timestamp: new Date().toISOString()
     });
     
+    if (node.data) {
+      console.log(`🚀 [DEBUG] Node data details:`, {
+        id: node.data.id,
+        fileName: node.data.fileName,
+        fileType: node.data.fileType,
+        hasContent: !!node.data.content,
+        contentLength: node.data.content?.length || 0
+      });
+    }
+    
     if (node.leaf && node.data && node.data.id) {
+      console.log(`🚀 [DEBUG] Valid file node selected, processing...`);
       this.selectedFile = node;
+      
+      console.log(`🚀 [DEBUG] Loading file content for: ${node.data.fileName}`);
       await this.loadFileContent(node.data);
       
       // Open the file in the editor service for editing
       if (!this.isMediaFile()) {
+        console.log(`🚀 [DEBUG] Opening file in editor service: ${node.data.fileName}`);
         try {
           await this.fileEditorService.openFile(
             node.data.id,
@@ -472,11 +588,22 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
             node.data.fileType,
             this.workspaceId
           );
-          console.log('📝 File opened in editor:', node.data.fileName);
+          console.log(`🚀 [DEBUG] File opened in editor successfully: ${node.data.fileName}`);
         } catch (error) {
-          console.error('❌ Error opening file in editor:', error);
+          console.error(`🚀 [DEBUG] Error opening file in editor:`, error);
+          console.error(`🚀 [DEBUG] Error details:`, {
+            fileId: node.data.id,
+            fileName: node.data.fileName,
+            fileType: node.data.fileType,
+            workspaceId: this.workspaceId,
+            timestamp: new Date().toISOString()
+          });
         }
+      } else {
+        console.log(`🚀 [DEBUG] File is media type, skipping editor service: ${node.data.fileName}`);
       }
+    } else {
+      console.log(`🚀 [DEBUG] Node is not a valid file or missing required data`);
     }
   }
 
@@ -484,25 +611,51 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
    * Load content of selected file
    */
   async loadFileContent(file: WebsiteFile): Promise<void> {
+    console.log(`🚀 [DEBUG] loadFileContent called for file: ${file.fileName}`);
+    console.log(`🚀 [DEBUG] File details:`, {
+      id: file.id,
+      fileName: file.fileName,
+      fileType: file.fileType,
+      hasContent: !!file.content,
+      contentLength: file.content?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+    
     this.isLoadingContent = true;
+    console.log(`🚀 [DEBUG] Loading state set to true`);
+    
     this.selectedFileName = file.fileName;
     this.selectedFileType = file.fileType;
+    console.log(`🚀 [DEBUG] Selected file properties updated:`, {
+      selectedFileName: this.selectedFileName,
+      selectedFileType: this.selectedFileType
+    });
     
     try {
       // Use the content from the file object
       this.fileContent = file.content || '';
-      
-      console.log('📄 Loading file content:', {
-        fileName: file.fileName,
-        fileType: file.fileType,
+      console.log(`🚀 [DEBUG] File content loaded:`, {
         contentLength: this.fileContent.length,
-        firstChars: this.fileContent.substring(0, 100)
+        isEmpty: !this.fileContent,
+        isDataUrl: this.fileContent.startsWith('data:'),
+        firstChars: this.fileContent.substring(0, 100),
+        timestamp: new Date().toISOString()
       });
       
       // Process content for display
+      console.log(`🚀 [DEBUG] Processing file content for display...`);
       this.processFileContent();
+      console.log(`🚀 [DEBUG] File content processing completed`);
       
     } catch (error) {
+      console.error(`🚀 [DEBUG] Error loading file content for ${file.fileName}:`, error);
+      console.error(`🚀 [DEBUG] Error details:`, {
+        error: error,
+        fileName: file.fileName,
+        fileId: file.id,
+        timestamp: new Date().toISOString()
+      });
+      
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -512,6 +665,7 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
       this.processFileContent();
     } finally {
       this.isLoadingContent = false;
+      console.log(`🚀 [DEBUG] Loading state set to false, content loading completed`);
     }
   }
 
@@ -577,7 +731,13 @@ export class JsonEditorComponent implements OnInit, OnDestroy, AfterViewInit {
    * Refresh file structure
    */
   onRefresh(): void {
+    console.log(`🚀 [DEBUG] onRefresh called for workspace: ${this.workspaceId}`);
+    console.log(`🚀 [DEBUG] Refresh timestamp: ${new Date().toISOString()}`);
+    console.log(`🚀 [DEBUG] Current files count: ${this.files?.length || 0}`);
+    console.log(`🚀 [DEBUG] Current loading state: ${this.isLoadingFiles}`);
+    
     this.loadFileStructure();
+    console.log(`🚀 [DEBUG] File structure reload triggered`);
   }
 
   /**

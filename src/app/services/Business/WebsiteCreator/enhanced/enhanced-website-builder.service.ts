@@ -328,19 +328,34 @@ export class EnhancedWebsiteBuilderService {
   // ===================== COMPONENT INSTANCE MANAGEMENT =====================
 
   /**
-   * Get all components for a specific page
+   * Get all components for a specific page (ENHANCED DEBUGGING)
    */
   async getPageComponents(workspaceId: string, pageId: string): Promise<WorkspaceComponentResponseDto[]> {
+    console.log(`🚀 [DEBUG] getPageComponents called for page: ${pageId} in workspace: ${workspaceId}`);
+    console.log(`🚀 [DEBUG] Timestamp: ${new Date().toISOString()}`);
+    
     const jwtToken = this.dataSvr.jwtToken;
+    console.log(`🚀 [DEBUG] JWT Token available: ${!!jwtToken}`);
+    console.log(`🚀 [DEBUG] JWT Token length: ${jwtToken?.length || 0}`);
+    
     if (!jwtToken) {
-      console.error('❌ No JWT token available for page components API call');
+      console.error('🚀 [DEBUG] No JWT token available for page components API call');
       throw new Error('No JWT token available. User may not be authenticated.');
     }
 
     const apiUrl = `${this.apiBaseUrl}/api/BusinessWebsite/workspaces/${workspaceId}/pages/${pageId}/components`;
-    console.log('🌐 Making API call to get page components:', apiUrl);
+    console.log('🚀 [DEBUG] Making API call to get page components:', apiUrl);
+    console.log('🚀 [DEBUG] API Base URL:', this.apiBaseUrl);
+    console.log('🚀 [DEBUG] Full request details:', {
+      method: 'GET',
+      url: apiUrl,
+      headers: {
+        'Authorization': `Bearer ${jwtToken.substring(0, 20)}...`
+      }
+    });
 
     try {
+      console.log('🚀 [DEBUG] Sending HTTP GET request...');
       const response = await this.http.get<ComponentListResponse>(
         apiUrl,
         {
@@ -350,16 +365,43 @@ export class EnhancedWebsiteBuilderService {
         }
       ).toPromise();
 
-      console.log('📡 API response for page components:', response);
+      console.log('🚀 [DEBUG] Raw API response received:', response);
+      console.log('🚀 [DEBUG] Response type:', typeof response);
+      console.log('🚀 [DEBUG] Response keys:', response ? Object.keys(response) : 'null');
+      
       const components = response?.components || [];
-      console.log('🧩 Extracted components:', components.length, 'components found');
+      console.log('🚀 [DEBUG] Extracted components array:', components);
+      console.log('🚀 [DEBUG] Components count:', components.length);
+      
+      if (components.length > 0) {
+        console.log('🚀 [DEBUG] First component details:', {
+          id: components[0].id,
+          componentType: components[0].componentType,
+          xPosition: components[0].xPosition,
+          yPosition: components[0].yPosition,
+          parameters: components[0].parameters
+        });
+      } else {
+        console.warn('🚀 [DEBUG] No components found in API response');
+        console.log('🚀 [DEBUG] This could mean:');
+        console.log('🚀 [DEBUG] 1. The page has no components added yet');
+        console.log('🚀 [DEBUG] 2. The API endpoint is incorrect');
+        console.log('🚀 [DEBUG] 3. The workspace/page IDs are wrong');
+        console.log('🚀 [DEBUG] 4. There\'s an authentication issue');
+      }
       
       return components;
     } catch (error) {
-      console.error('❌ Error fetching page components:', error);
-      console.error('❌ API URL was:', apiUrl);
-      console.error('❌ Workspace ID:', workspaceId);
-      console.error('❌ Page ID:', pageId);
+      console.error('🚀 [DEBUG] Error fetching page components:', error);
+      console.error('🚀 [DEBUG] Error type:', (error as any)?.constructor?.name || 'Unknown');
+      console.error('🚀 [DEBUG] Error message:', (error as any)?.message || 'No message');
+      console.error('🚀 [DEBUG] Error status:', (error as any)?.status);
+      console.error('🚀 [DEBUG] Error statusText:', (error as any)?.statusText);
+      console.error('🚀 [DEBUG] Error response body:', (error as any)?.error);
+      console.error('🚀 [DEBUG] API URL was:', apiUrl);
+      console.error('🚀 [DEBUG] Workspace ID:', workspaceId);
+      console.error('🚀 [DEBUG] Page ID:', pageId);
+      console.error('🚀 [DEBUG] Timestamp:', new Date().toISOString());
       return [];
     }
   }

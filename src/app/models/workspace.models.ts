@@ -234,6 +234,7 @@ export interface ComponentParameter {
   required?: boolean;
   options?: string[];
   defaultValue?: any;
+  binding?: 'content' | 'attribute' | 'css-variable' | 'class' | 'visibility' | 'data-attribute';
 }
 
 export interface ComponentInstance {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef, Injector } from '@angular/core';
 import { ComponentDefinition, ComponentParameter, ComponentInstance, WebsiteBuilderService } from '../../services/Business/WebsiteCreator/manual/website-builder';
 import { ComponentType, ComponentRenderContext, WorkspaceComponentResponseDto } from '../../models/workspace.models';
 import { ComponentRendererService } from '../../services/Business/WebsiteCreator/manual/components/component-renderer.service';
@@ -10,6 +10,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { AccordionModule } from 'primeng/accordion';
 import { MessageService } from 'primeng/api';
 import { ToastService } from '../../services/Main/messaging/toast.service';
+import { WebsiteFilesService } from '../../services/Business/WebsiteCreator/developers/files/website-files.service';
 
 export interface Page {
   id: string;
@@ -84,11 +85,14 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
     private domSanitizer: DomSanitizer,
     private cdr: ChangeDetectorRef,
     private messageService: MessageService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private injector: Injector
   ) { }
 
   ngOnInit(): void {
+    console.log('🚀 Canvas component initialized with Enhanced v3.0 system');
     this.initializeCanvas();
+    this.setupEnhancedComponentSystem();
   }
 
   ngOnChanges(): void {
@@ -101,6 +105,1029 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.cleanupEnhancedSystem();
+  }
+
+  // ===================== ENHANCED COMPONENT SYSTEM v3.0 =====================
+
+  /**
+   * Setup enhanced component system with event listeners
+   */
+  private setupEnhancedComponentSystem(): void {
+    console.log('🔧 Setting up Enhanced Component System v3.0...');
+
+    // Listen for component system events
+    this.componentRenderer.addEventListener('componentSystemReady', (event) => {
+      console.log('✅ Component System Ready:', event.detail);
+    });
+
+    this.componentRenderer.addEventListener('componentRendered', (event) => {
+      console.log('🎨 Component Rendered:', event.detail);
+    });
+
+    this.componentRenderer.addEventListener('allComponentsRefreshed', (event) => {
+      console.log('🔄 All Components Refreshed:', event.detail);
+      this.cdr.detectChanges(); // Trigger Angular change detection
+    });
+
+    // Register sample components from the guide
+    this.registerSampleComponents();
+  }
+
+  /**
+   * Register sample components based on the guide
+   */
+  private registerSampleComponents(): void {
+    // Hero Section Component
+    this.componentRenderer.registerComponent('hero-section', {
+      schema: {
+        title: {
+          name: 'title',
+          type: 'text',
+          label: 'Hero Title',
+          defaultValue: 'Welcome to Our Business',
+          binding: 'content'
+        },
+        subtitle: {
+          name: 'subtitle',
+          type: 'text',
+          label: 'Hero Subtitle',
+          defaultValue: 'We provide excellent services',
+          binding: 'content'
+        },
+        backgroundImage: {
+          name: 'backgroundImage',
+          type: 'image-asset',
+          label: 'Background Image',
+          defaultValue: '',
+          binding: 'css-variable'
+        },
+        buttonText: {
+          name: 'buttonText',
+          type: 'text',
+          label: 'Button Text',
+          defaultValue: 'Get Started',
+          binding: 'content'
+        },
+        buttonColor: {
+          name: 'buttonColor',
+          type: 'color',
+          label: 'Button Color',
+          defaultValue: '#3b82f6',
+          binding: 'css-variable'
+        }
+      },
+      template: `
+        <section class="hero-section" data-instance-id="{{instanceId}}">
+          <div class="hero-content">
+            <h1 class="hero-title">{{title}}</h1>
+            <p class="hero-subtitle">{{subtitle}}</p>
+            <button class="hero-button">{{buttonText}}</button>
+          </div>
+        </section>
+      `,
+      styles: `
+        [data-instance-id="{{instanceId}}"] .hero-section {
+          background-image: url(var(--backgroundImage));
+          background-size: cover;
+          background-position: center;
+          padding: 4rem 2rem;
+          text-align: center;
+          color: white;
+          min-height: 400px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        [data-instance-id="{{instanceId}}"] .hero-content {
+          max-width: 600px;
+        }
+        [data-instance-id="{{instanceId}}"] .hero-title {
+          font-size: 3rem;
+          font-weight: bold;
+          margin-bottom: 1rem;
+        }
+        [data-instance-id="{{instanceId}}"] .hero-subtitle {
+          font-size: 1.25rem;
+          margin-bottom: 2rem;
+        }
+        [data-instance-id="{{instanceId}}"] .hero-button {
+          background-color: var(--buttonColor);
+          color: white;
+          padding: 1rem 2rem;
+          border: none;
+          border-radius: 0.5rem;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: opacity 0.2s;
+        }
+        [data-instance-id="{{instanceId}}"] .hero-button:hover {
+          opacity: 0.9;
+        }
+      `,
+      metadata: {
+        name: 'Hero Section',
+        category: 'layout',
+        description: 'A hero section with title, subtitle, and call-to-action button'
+      }
+    });
+
+    console.log('✅ Sample components registered');
+  }
+
+  /**
+   * Fast refresh all components on current page
+   */
+  refreshPageComponents(forceRefresh = false): void {
+    console.log('🔄 Fast refreshing page components...');
+    
+    if (forceRefresh) {
+      this.componentRenderer.clearRenderCache();
+    }
+    
+    // Re-render all components
+    this.updateComponentRenderContexts();
+    
+    // Trigger Angular change detection
+    this.cdr.detectChanges();
+    
+    console.log('✅ Page components refreshed');
+  }
+
+  /**
+   * Update component parameters and re-render
+   */
+  updateComponentParameters(componentId: string, newParameters: any): void {
+    console.log(`🔧 Updating parameters for component: ${componentId}`);
+    
+    const component = this.currentPageComponents.find(c => c.id === componentId);
+    if (component) {
+      component.parameters = { ...component.parameters, ...newParameters };
+      
+      // Clear cache for this component to force re-render
+      this.componentRenderer.clearRenderCache(component.type);
+      
+      // Re-render components
+      this.updateComponentRenderContexts();
+      
+      // Trigger change detection
+      this.cdr.detectChanges();
+      
+      console.log('✅ Component parameters updated and re-rendered');
+    } else {
+      console.warn('❌ Component not found:', componentId);
+    }
+  }
+
+  /**
+   * Get component performance statistics
+   */
+  getComponentPerformanceStats(): any {
+    return this.componentRenderer.getPerformanceStats();
+  }
+
+  /**
+   * Manually trigger component loading from API (for debugging)
+   */
+  async forceLoadComponentsFromAPI(): Promise<void> {
+    console.log(`🚀 [DEBUG] Manually triggering component load from API...`);
+    if (this.currentWorkspaceId && this.currentPageId) {
+      await this.loadPageComponentsFromAPI();
+    } else {
+      console.error(`🚀 [DEBUG] Cannot force load: missing workspace ID (${this.currentWorkspaceId}) or page ID (${this.currentPageId})`);
+    }
+  }
+
+  /**
+   * Manually trigger source code parsing (for debugging)
+   */
+  forceSampleComponents(): void {
+    console.log(`🚀 [DEBUG] Manually triggering source code parsing...`);
+    this.renderFromWebsiteSource();
+  }
+
+  /**
+   * Force refresh current page to trigger new component system
+   */
+  forceRefreshPage(): void {
+    console.log(`🚀 [DEBUG] Force refreshing page: ${this.currentPageId}`);
+    this.updateCurrentPageComponents();
+  }
+
+  /**
+   * Render page from website source code files - parse components dynamically
+   */
+  private async renderFromWebsiteSource(): Promise<void> {
+    if (!this.currentWorkspaceId || !this.currentPageId) {
+      console.warn('🚀 [DEBUG] Cannot render from source: missing workspace ID or page ID');
+      return;
+    }
+
+    try {
+      console.log(`🚀 [DEBUG] Parsing website source code for dynamic components: ${this.currentPageId}`);
+      
+      // Get all website files
+      const websiteFilesService = this.injector.get(WebsiteFilesService);
+      const files = await websiteFilesService.getFiles(this.currentWorkspaceId).toPromise();
+      
+      if (!files) {
+        console.log(`🚀 [DEBUG] No files returned from service`);
+        return;
+      }
+
+      // Get the HTML file for this page
+      const pageFileName = this.currentPageId === 'home' ? 'index.html' : `${this.currentPageId}.html`;
+      const htmlFile = files.find(f => f.fileName === pageFileName || f.fileName.endsWith(pageFileName));
+      
+      if (!htmlFile) {
+        console.log(`🚀 [DEBUG] No HTML file found for page: ${this.currentPageId}`);
+        return;
+      }
+
+      console.log(`🚀 [DEBUG] Parsing HTML source: ${htmlFile.fileName}`);
+      
+      // Parse the HTML source code to extract component instances
+      const parsedComponents = await this.parseComponentsFromSource(htmlFile.content, files);
+      
+      if (parsedComponents.length > 0) {
+        console.log(`🚀 [DEBUG] Found ${parsedComponents.length} components in source code`);
+        this.currentPageComponents = parsedComponents;
+        
+        // If these are default components, add them to the source code
+        if (htmlFile.content.includes('{{components}}')) {
+          console.log(`🚀 [DEBUG] Adding default components to template source code`);
+          await this.addComponentsToTemplateSource(parsedComponents, files);
+        }
+        
+        this.updateComponentRenderContexts();
+      } else {
+        console.log(`🚀 [DEBUG] No components found in source code - rendering static HTML`);
+        await this.injectWebsiteHTML(htmlFile.content || '');
+      }
+      
+    } catch (error) {
+      console.error(`🚀 [DEBUG] Error parsing website source:`, error);
+    }
+  }
+
+  /**
+   * Parse components from website source code
+   */
+  private async parseComponentsFromSource(htmlContent: string, allFiles: any[]): Promise<ComponentInstance[]> {
+    console.log(`🚀 [DEBUG] Starting component parsing from source code`);
+    const components: ComponentInstance[] = [];
+
+    try {
+      // Create a temporary DOM to parse the HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, 'text/html');
+      
+      // Look for component markers in the HTML
+      // Components can be marked with data attributes or specific class patterns
+      const componentElements = doc.querySelectorAll('[data-component-id], [data-component-type], .component-instance');
+      
+      console.log(`🚀 [DEBUG] Found ${componentElements.length} potential component elements`);
+      console.log(`🚀 [DEBUG] HTML content preview:`, htmlContent.substring(0, 500));
+      
+      // Check if this is a template file with placeholders
+      if (htmlContent.includes('{{components}}') || htmlContent.includes('{{page.')) {
+        console.log(`🚀 [DEBUG] Detected template file with placeholders - creating default components`);
+        console.log(`🚀 [DEBUG] Template content contains:`, {
+          hasComponentsPlaceholder: htmlContent.includes('{{components}}'),
+          hasPagePlaceholder: htmlContent.includes('{{page.'),
+          contentLength: htmlContent.length
+        });
+        return this.createDefaultComponentsForPage();
+      }
+      
+      for (let i = 0; i < componentElements.length; i++) {
+        const element = componentElements[i];
+        const componentData = await this.extractComponentFromElement(element, i);
+        
+        if (componentData) {
+          components.push(componentData);
+          console.log(`🚀 [DEBUG] Parsed component: ${componentData.type} (${componentData.id})`);
+        }
+      }
+
+      // Also look for component patterns in comments or script tags
+      const additionalComponents = await this.parseComponentsFromComments(htmlContent);
+      components.push(...additionalComponents);
+
+      // Parse CSS for component positioning and styling
+      await this.parseComponentStyling(allFiles, components);
+
+      console.log(`🚀 [DEBUG] Total components parsed: ${components.length}`);
+      return components;
+
+    } catch (error) {
+      console.error(`🚀 [DEBUG] Error parsing components from source:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Extract component data from DOM element
+   */
+  private async extractComponentFromElement(element: Element, index: number): Promise<ComponentInstance | null> {
+    try {
+      // Get component ID and type from data attributes
+      let componentId = element.getAttribute('data-component-id') || 
+                       element.getAttribute('id') || 
+                       `parsed-component-${Date.now()}-${index}`;
+      
+      let componentType = element.getAttribute('data-component-type') || 
+                         element.getAttribute('data-type') ||
+                         this.inferComponentTypeFromElement(element);
+
+      if (!componentType) {
+        console.log(`🚀 [DEBUG] Could not determine component type for element:`, element);
+        return null;
+      }
+
+      // Extract positioning from style attributes or CSS classes
+      const positioning = this.extractPositioningFromElement(element);
+      
+      // Extract parameters from data attributes and content
+      const parameters = this.extractParametersFromElement(element);
+
+      const component: ComponentInstance = {
+        id: componentId,
+        type: componentType,
+        x: positioning.x,
+        y: positioning.y,
+        width: positioning.width,
+        height: positioning.height,
+        zIndex: positioning.zIndex,
+        parameters: parameters
+      };
+
+      return component;
+
+    } catch (error) {
+      console.error(`🚀 [DEBUG] Error extracting component from element:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Infer component type from element structure
+   */
+  private inferComponentTypeFromElement(element: Element): string | null {
+    const tagName = element.tagName.toLowerCase();
+    const className = element.className || '';
+    const innerHTML = element.innerHTML.toLowerCase();
+
+    // Common component patterns
+    if (className.includes('hero') || className.includes('banner')) return 'hero-section';
+    if (className.includes('button') || tagName === 'button') return 'button';
+    if (className.includes('card')) return 'card';
+    if (className.includes('nav') || tagName === 'nav') return 'navigation';
+    if (className.includes('footer') || tagName === 'footer') return 'footer';
+    if (className.includes('header') || tagName === 'header') return 'header';
+    if (className.includes('accordion') || innerHTML.includes('accordion')) return 'accordion';
+    if (className.includes('carousel') || innerHTML.includes('carousel')) return 'carousel';
+    if (className.includes('gallery')) return 'gallery';
+    if (className.includes('testimonial')) return 'testimonial';
+    if (className.includes('pricing')) return 'pricing-table';
+    if (className.includes('contact') && className.includes('form')) return 'contact-form';
+    if (tagName === 'form') return 'form';
+    if (tagName === 'img' || className.includes('image')) return 'image';
+    if (className.includes('text') || tagName === 'p') return 'text';
+    if (tagName.match(/h[1-6]/)) return 'heading';
+
+    // Default to generic component
+    return 'generic-component';
+  }
+
+  /**
+   * Extract positioning information from element
+   */
+  private extractPositioningFromElement(element: Element): {x: number, y: number, width: number, height: number, zIndex: number} {
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+
+    return {
+      x: parseInt(element.getAttribute('data-x') || style.left || '0') || rect.left || 0,
+      y: parseInt(element.getAttribute('data-y') || style.top || '0') || rect.top || 0,
+      width: parseInt(element.getAttribute('data-width') || style.width || '300') || rect.width || 300,
+      height: parseInt(element.getAttribute('data-height') || style.height || '100') || rect.height || 100,
+      zIndex: parseInt(element.getAttribute('data-z-index') || style.zIndex || '1') || 1
+    };
+  }
+
+  /**
+   * Extract parameters from element attributes and content
+   */
+  private extractParametersFromElement(element: Element): {[key: string]: any} {
+    const parameters: {[key: string]: any} = {};
+
+    // Extract data-param-* attributes
+    Array.from(element.attributes).forEach(attr => {
+      if (attr.name.startsWith('data-param-')) {
+        const paramName = attr.name.replace('data-param-', '');
+        parameters[paramName] = attr.value;
+      }
+    });
+
+    // Extract common content parameters
+    const textContent = element.textContent?.trim();
+    if (textContent) {
+      parameters['text'] = textContent;
+      parameters['content'] = textContent;
+    }
+
+    // Extract specific element properties
+    if (element.tagName === 'IMG') {
+      parameters['src'] = element.getAttribute('src') || '';
+      parameters['alt'] = element.getAttribute('alt') || '';
+    }
+
+    if (element.tagName === 'A') {
+      parameters['href'] = element.getAttribute('href') || '';
+      parameters['target'] = element.getAttribute('target') || '';
+    }
+
+    // Extract style-based parameters
+    const style = window.getComputedStyle(element);
+    if (style.backgroundColor && style.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+      parameters['backgroundColor'] = style.backgroundColor;
+    }
+    if (style.color) {
+      parameters['textColor'] = style.color;
+    }
+
+    return parameters;
+  }
+
+  /**
+   * Parse components from HTML comments or script tags
+   */
+  private async parseComponentsFromComments(htmlContent: string): Promise<ComponentInstance[]> {
+    const components: ComponentInstance[] = [];
+    
+    // Look for component definitions in comments
+    const commentRegex = /<!--\s*COMPONENT:\s*(\{.*?\})\s*-->/gs;
+    let match;
+    
+    while ((match = commentRegex.exec(htmlContent)) !== null) {
+      try {
+        const componentData = JSON.parse(match[1]);
+        if (componentData.id && componentData.type) {
+          components.push({
+            id: componentData.id,
+            type: componentData.type,
+            x: componentData.x || 0,
+            y: componentData.y || 0,
+            width: componentData.width || 300,
+            height: componentData.height || 100,
+            zIndex: componentData.zIndex || 1,
+            parameters: componentData.parameters || {}
+          });
+          console.log(`🚀 [DEBUG] Parsed component from comment: ${componentData.type}`);
+        }
+      } catch (error) {
+        console.warn(`🚀 [DEBUG] Failed to parse component from comment:`, error);
+      }
+    }
+
+    return components;
+  }
+
+  /**
+   * Parse component styling from CSS files
+   */
+  private async parseComponentStyling(allFiles: any[], components: ComponentInstance[]): Promise<void> {
+    const cssFiles = allFiles.filter(f => f.fileName.endsWith('.css'));
+    
+    for (const cssFile of cssFiles) {
+      if (!cssFile.content) continue;
+      
+      // Parse CSS for component-specific styles
+      components.forEach(component => {
+        const componentSelector = `#${component.id}, .${component.id}`;
+        const styleMatch = cssFile.content.match(new RegExp(`${componentSelector}\\s*\\{([^}]*)\\}`, 'i'));
+        
+        if (styleMatch) {
+          console.log(`🚀 [DEBUG] Found CSS styles for component: ${component.id}`);
+          // Parse CSS properties and update component parameters
+          this.parseCSSPropertiesIntoParameters(styleMatch[1], component);
+        }
+      });
+    }
+  }
+
+  /**
+   * Create default components for template pages
+   */
+  private createDefaultComponentsForPage(): ComponentInstance[] {
+    const components: ComponentInstance[] = [];
+    const pageId = this.currentPageId;
+    
+    console.log(`🚀 [DEBUG] Creating default components for page: ${pageId}`);
+    
+    switch (pageId) {
+      case 'home':
+        components.push(
+          {
+            id: `hero-${Date.now()}`,
+            type: 'hero-section',
+            x: 0,
+            y: 80,
+            width: 1200,
+            height: 400,
+            zIndex: 1,
+            parameters: {
+              title: 'Welcome to Our Website',
+              subtitle: 'Discover amazing products and services',
+              buttonText: 'Get Started',
+              backgroundColor: '#f8f9fa',
+              textColor: '#333'
+            }
+          },
+          {
+            id: `features-${Date.now()}`,
+            type: 'card',
+            x: 0,
+            y: 500,
+            width: 1200,
+            height: 300,
+            zIndex: 2,
+            parameters: {
+              title: 'Our Features',
+              content: 'Explore what makes us special',
+              backgroundColor: '#ffffff',
+              textColor: '#333'
+            }
+          }
+        );
+        break;
+        
+      case 'about':
+        components.push(
+          {
+            id: `about-header-${Date.now()}`,
+            type: 'header',
+            x: 0,
+            y: 80,
+            width: 1200,
+            height: 200,
+            zIndex: 1,
+            parameters: {
+              title: 'About Us',
+              subtitle: 'Learn more about our story',
+              backgroundColor: '#e9ecef',
+              textColor: '#333'
+            }
+          },
+          {
+            id: `about-content-${Date.now()}`,
+            type: 'text',
+            x: 0,
+            y: 300,
+            width: 1200,
+            height: 400,
+            zIndex: 2,
+            parameters: {
+              content: 'We are a company dedicated to providing excellent products and services. Our team is passionate about innovation and customer satisfaction.',
+              fontSize: '16px',
+              textColor: '#666'
+            }
+          }
+        );
+        break;
+        
+      case 'shop':
+        components.push(
+          {
+            id: `shop-header-${Date.now()}`,
+            type: 'header',
+            x: 0,
+            y: 80,
+            width: 1200,
+            height: 200,
+            zIndex: 1,
+            parameters: {
+              title: 'Our Shop',
+              subtitle: 'Browse our amazing products',
+              backgroundColor: '#f8f9fa',
+              textColor: '#333'
+            }
+          },
+          {
+            id: `product-grid-${Date.now()}`,
+            type: 'gallery',
+            x: 0,
+            y: 300,
+            width: 1200,
+            height: 600,
+            zIndex: 2,
+            parameters: {
+              title: 'Featured Products',
+              layout: 'grid',
+              columns: 3
+            }
+          }
+        );
+        break;
+        
+      default:
+        // Generic page components
+        components.push(
+          {
+            id: `page-header-${Date.now()}`,
+            type: 'header',
+            x: 0,
+            y: 80,
+            width: 1200,
+            height: 200,
+            zIndex: 1,
+            parameters: {
+              title: pageId.charAt(0).toUpperCase() + pageId.slice(1),
+              subtitle: `Welcome to the ${pageId} page`,
+              backgroundColor: '#f8f9fa',
+              textColor: '#333'
+            }
+          }
+        );
+        break;
+    }
+    
+    console.log(`🚀 [DEBUG] Created ${components.length} default components for ${pageId} page`);
+    return components;
+  }
+
+  /**
+   * Add components to template source code
+   */
+  private async addComponentsToTemplateSource(components: ComponentInstance[], allFiles: any[]): Promise<void> {
+    try {
+      console.log(`🚀 [DEBUG] Converting template to actual HTML with ${components.length} components`);
+      
+      const websiteFilesService = this.injector.get(WebsiteFilesService);
+      if (!this.currentWorkspaceId) return;
+      
+      const pageFileName = this.currentPageId === 'home' ? 'index.html' : `${this.currentPageId}.html`;
+      const htmlFile = allFiles.find(f => f.fileName === pageFileName);
+      
+      if (!htmlFile || !htmlFile.content) return;
+      
+      // Generate HTML for all components
+      let componentsHtml = '';
+      components.forEach(component => {
+        const componentHtml = this.generateComponentHTML(component);
+        componentsHtml += componentHtml + '\n';
+      });
+      
+      // Replace the {{components}} placeholder with actual component HTML
+      let updatedHtml = htmlFile.content.replace('{{components}}', componentsHtml);
+      
+      // Replace other common placeholders
+      updatedHtml = updatedHtml.replace('{{page.title}}', this.getPageTitle());
+      updatedHtml = updatedHtml.replace('{{page.metaDescription}}', this.getPageDescription());
+      updatedHtml = updatedHtml.replace('{{global.css}}', '');
+      updatedHtml = updatedHtml.replace('{{page.css}}', '');
+      updatedHtml = updatedHtml.replace('{{global.js}}', '');
+      updatedHtml = updatedHtml.replace('{{page.js}}', '');
+      
+      // Update the HTML file
+      await websiteFilesService.updateFile(htmlFile.id, updatedHtml).toPromise();
+      
+      // Update CSS with component styles
+      await this.addComponentsToCSS(components, allFiles);
+      
+      console.log(`✅ Template converted to actual HTML with components`);
+      
+    } catch (error) {
+      console.error(`🚀 [DEBUG] Error adding components to template:`, error);
+    }
+  }
+
+  /**
+   * Generate HTML for a component
+   */
+  private generateComponentHTML(component: ComponentInstance): string {
+    const params = component.parameters;
+    let html = '';
+    
+    switch (component.type) {
+      case 'hero-section':
+        html = `
+    <section id="${component.id}" data-component-id="${component.id}" data-component-type="${component.type}" class="hero-section">
+      <div class="hero-content">
+        <h1 data-param-title="${params['title'] || ''}">${params['title'] || 'Hero Title'}</h1>
+        <p data-param-subtitle="${params['subtitle'] || ''}">${params['subtitle'] || 'Hero subtitle'}</p>
+        ${params['buttonText'] ? `<button data-param-buttonText="${params['buttonText']}" class="hero-button">${params['buttonText']}</button>` : ''}
+      </div>
+    </section>`;
+        break;
+        
+      case 'header':
+        html = `
+    <header id="${component.id}" data-component-id="${component.id}" data-component-type="${component.type}" class="page-header">
+      <h1 data-param-title="${params['title'] || ''}">${params['title'] || 'Header Title'}</h1>
+      ${params['subtitle'] ? `<p data-param-subtitle="${params['subtitle']}" class="header-subtitle">${params['subtitle']}</p>` : ''}
+    </header>`;
+        break;
+        
+      case 'text':
+        html = `
+    <div id="${component.id}" data-component-id="${component.id}" data-component-type="${component.type}" class="text-content">
+      <p data-param-content="${params['content'] || ''}">${params['content'] || 'Text content'}</p>
+    </div>`;
+        break;
+        
+      case 'card':
+        html = `
+    <div id="${component.id}" data-component-id="${component.id}" data-component-type="${component.type}" class="card">
+      <h3 data-param-title="${params['title'] || ''}">${params['title'] || 'Card Title'}</h3>
+      <p data-param-content="${params['content'] || ''}">${params['content'] || 'Card content'}</p>
+    </div>`;
+        break;
+        
+      case 'gallery':
+        html = `
+    <div id="${component.id}" data-component-id="${component.id}" data-component-type="${component.type}" class="gallery">
+      <h2 data-param-title="${params['title'] || ''}">${params['title'] || 'Gallery'}</h2>
+      <div class="gallery-grid" data-param-columns="${params['columns'] || 3}">
+        <!-- Gallery items will be added here -->
+      </div>
+    </div>`;
+        break;
+        
+      default:
+        html = `
+    <div id="${component.id}" data-component-id="${component.id}" data-component-type="${component.type}" class="component">
+      <p>Component: ${component.type}</p>
+    </div>`;
+        break;
+    }
+    
+    return html;
+  }
+
+  /**
+   * Add component styles to CSS
+   */
+  private async addComponentsToCSS(components: ComponentInstance[], allFiles: any[]): Promise<void> {
+    try {
+      const websiteFilesService = this.injector.get(WebsiteFilesService);
+      const cssFile = allFiles.find(f => f.fileName.endsWith('.css'));
+      
+      if (!cssFile) return;
+      
+      let cssContent = cssFile.content || '';
+      
+      // Add styles for each component
+      components.forEach(component => {
+        const componentCSS = this.generateComponentCSS(component);
+        cssContent += '\n' + componentCSS;
+      });
+      
+      // Update the CSS file
+      await websiteFilesService.updateFile(cssFile.id, cssContent).toPromise();
+      
+      console.log(`✅ Added CSS styles for ${components.length} components`);
+      
+    } catch (error) {
+      console.error(`🚀 [DEBUG] Error adding component CSS:`, error);
+    }
+  }
+
+  /**
+   * Generate CSS for a component
+   */
+  private generateComponentCSS(component: ComponentInstance): string {
+    const params = component.parameters;
+    let css = `
+#${component.id} {
+  position: absolute;
+  left: ${component.x}px;
+  top: ${component.y}px;
+  width: ${component.width}px;
+  height: ${component.height}px;
+  z-index: ${component.zIndex};`;
+
+    // Add parameter-based styles
+    if (params['backgroundColor']) css += `\n  background-color: ${params['backgroundColor']};`;
+    if (params['textColor']) css += `\n  color: ${params['textColor']};`;
+    if (params['fontSize']) css += `\n  font-size: ${params['fontSize']};`;
+    if (params['fontFamily']) css += `\n  font-family: ${params['fontFamily']};`;
+    if (params['borderRadius']) css += `\n  border-radius: ${params['borderRadius']};`;
+    if (params['padding']) css += `\n  padding: ${params['padding']};`;
+    if (params['margin']) css += `\n  margin: ${params['margin']};`;
+
+    css += '\n}';
+    
+    // Add component-specific styles
+    switch (component.type) {
+      case 'hero-section':
+        css += `
+#${component.id} .hero-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+}
+
+#${component.id} .hero-button {
+  margin-top: 20px;
+  padding: 12px 24px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}`;
+        break;
+        
+      case 'card':
+        css += `
+#${component.id} {
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}`;
+        break;
+        
+      case 'gallery':
+        css += `
+#${component.id} .gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(${params['columns'] || 3}, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+}`;
+        break;
+    }
+    
+    return css;
+  }
+
+  /**
+   * Get page title based on current page
+   */
+  private getPageTitle(): string {
+    switch (this.currentPageId) {
+      case 'home': return 'Home - Your Website';
+      case 'about': return 'About Us - Your Website';
+      case 'shop': return 'Shop - Your Website';
+      default: return `${this.currentPageId.charAt(0).toUpperCase() + this.currentPageId.slice(1)} - Your Website`;
+    }
+  }
+
+  /**
+   * Get page description based on current page
+   */
+  private getPageDescription(): string {
+    switch (this.currentPageId) {
+      case 'home': return 'Welcome to our website - discover amazing products and services';
+      case 'about': return 'Learn more about our company, mission, and team';
+      case 'shop': return 'Browse our collection of high-quality products';
+      default: return `${this.currentPageId} page of our website`;
+    }
+  }
+
+  /**
+   * Parse CSS properties into component parameters
+   */
+  private parseCSSPropertiesIntoParameters(cssText: string, component: ComponentInstance): void {
+    const properties = cssText.split(';');
+    
+    properties.forEach(prop => {
+      const [key, value] = prop.split(':').map(s => s.trim());
+      if (!key || !value) return;
+      
+      // Map CSS properties to component parameters
+      switch (key) {
+        case 'background-color':
+          component.parameters['backgroundColor'] = value;
+          break;
+        case 'color':
+          component.parameters['textColor'] = value;
+          break;
+        case 'font-size':
+          component.parameters['fontSize'] = value;
+          break;
+        case 'font-family':
+          component.parameters['fontFamily'] = value;
+          break;
+        case 'border-radius':
+          component.parameters['borderRadius'] = value;
+          break;
+        case 'padding':
+          component.parameters['padding'] = value;
+          break;
+        case 'margin':
+          component.parameters['margin'] = value;
+          break;
+      }
+    });
+  }
+
+  /**
+   * Inject HTML content into the canvas
+   */
+  private async injectWebsiteHTML(htmlContent: string): Promise<void> {
+    console.log(`🚀 [DEBUG] Injecting HTML content into canvas`);
+    
+    if (!htmlContent.trim()) {
+      console.log(`🚀 [DEBUG] HTML content is empty`);
+      return;
+    }
+
+    try {
+      // Create a container for the website content
+      const canvasElement = this.canvasElement?.nativeElement;
+      if (!canvasElement) {
+        console.error(`🚀 [DEBUG] Canvas element not found`);
+        return;
+      }
+
+      // Clear existing content
+      const existingWebsiteContent = canvasElement.querySelector('.website-source-content');
+      if (existingWebsiteContent) {
+        existingWebsiteContent.remove();
+      }
+
+      // Create container for website source
+      const websiteContainer = document.createElement('div');
+      websiteContainer.className = 'website-source-content';
+      websiteContainer.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background: white;
+        z-index: 1;
+      `;
+
+      // Extract body content if it's a full HTML document
+      let contentToInject = htmlContent;
+      const bodyMatch = htmlContent.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      if (bodyMatch) {
+        contentToInject = bodyMatch[1];
+        console.log(`🚀 [DEBUG] Extracted body content`);
+      }
+
+      // Inject the content
+      websiteContainer.innerHTML = contentToInject;
+      canvasElement.appendChild(websiteContainer);
+
+      console.log(`✅ Website source code rendered successfully`);
+    } catch (error) {
+      console.error(`🚀 [DEBUG] Error injecting HTML content:`, error);
+    }
+  }
+
+  /**
+   * Add sample components to empty pages for demonstration
+   */
+  addSampleComponentsToPage(): void {
+    if (this.currentPageComponents.length === 0 && this.currentPageId) {
+      console.log(`➕ Adding sample components to empty page: ${this.currentPageId}`);
+      
+      // Add a hero section component
+      const heroComponent: ComponentInstance = {
+        id: `sample_hero_${Date.now()}`,
+        type: 'hero-section',
+        x: 0,
+        y: 0,
+        width: 800,
+        height: 400,
+        zIndex: 1,
+        parameters: {
+          title: `Welcome to ${this.currentPageId.charAt(0).toUpperCase() + this.currentPageId.slice(1)} Page`,
+          subtitle: 'This is a sample component added by the Enhanced Component System v3.0',
+          buttonText: 'Get Started',
+          buttonColor: '#3b82f6'
+        }
+      };
+
+      // Add to current page
+      const currentPage = this.pages.find(p => p.id === this.currentPageId);
+      if (currentPage) {
+        if (!currentPage.components) {
+          currentPage.components = [];
+        }
+        currentPage.components.push(heroComponent);
+        this.updateCurrentPageComponents();
+        
+        console.log('✅ Sample hero component added to page');
+      }
+    }
+  }
+
+  /**
+   * Cleanup enhanced system
+   */
+  private cleanupEnhancedSystem(): void {
+    console.log('🧹 Cleaning up Enhanced Component System');
   }
 
   // Initialize canvas operations (migrated from main component)
@@ -232,14 +1259,77 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
   }
 
   updateCurrentPageComponents(): void {
+    console.log(`🚀 [DEBUG] updateCurrentPageComponents called for page: ${this.currentPageId}`);
+    console.log(`🚀 [DEBUG] Current workspace ID: ${this.currentWorkspaceId}`);
+    console.log(`🚀 [DEBUG] Available pages:`, this.pages.map(p => ({ id: p.id, name: p.name, hasComponents: !!p.components, componentCount: p.components?.length || 0 })));
+    
     const currentPage = this.pages.find(p => p.id === this.currentPageId);
-    if (currentPage) {
+    if (currentPage && currentPage.components && Array.isArray(currentPage.components) && currentPage.components.length > 0) {
+      // Page has components in memory
       this.currentPageComponents = currentPage.components;
+      console.log(`📄 Loading ${this.currentPageComponents.length} components for page: ${this.currentPageId}`);
       this.updateComponentRenderContexts();
+    } else {
+      // Page has no components in memory OR components array is empty - try API
+      if (this.currentWorkspaceId && this.currentPageId) {
+        console.log(`🚀 [DEBUG] Page has no components (${currentPage?.components?.length || 0}), attempting to load from API...`);
+        this.loadPageComponentsFromAPI();
+      } else {
+        // Handle missing workspace/page ID
+        this.currentPageComponents = [];
+        console.log(`📄 Cannot load components: missing workspace ID (${this.currentWorkspaceId}) or page ID (${this.currentPageId})`);
+        this.componentRenderContexts = []; // Clear render contexts
+      }
     }
   }
 
-  // Component Rendering Methods
+  /**
+   * Load page components directly from API
+   */
+  private async loadPageComponentsFromAPI(): Promise<void> {
+    if (!this.currentWorkspaceId || !this.currentPageId) {
+      console.warn('🚀 [DEBUG] Cannot load components: missing workspace ID or page ID');
+      return;
+    }
+
+    try {
+      console.log(`🚀 [DEBUG] Loading components from API for page: ${this.currentPageId} in workspace: ${this.currentWorkspaceId}`);
+      
+      const components = await this.enhancedWebsiteBuilder.getPageComponents(this.currentWorkspaceId, this.currentPageId);
+      console.log(`🚀 [DEBUG] API returned ${components.length} components`);
+      
+      if (components.length > 0) {
+        // Convert API components to ComponentInstance format
+        this.currentPageComponents = components.map(comp => ({
+          id: comp.id,
+          type: comp.componentType,
+          x: comp.xPosition,
+          y: comp.yPosition,
+          width: comp.width,
+          height: comp.height,
+          zIndex: comp.zIndex,
+          parameters: comp.parameters ? JSON.parse(comp.parameters) : {}
+        }));
+        
+        console.log(`✅ Converted ${this.currentPageComponents.length} components for rendering`);
+        this.updateComponentRenderContexts();
+      } else {
+        this.currentPageComponents = [];
+        this.componentRenderContexts = [];
+        console.log(`📄 No components found for page: ${this.currentPageId} - rendering from website source code`);
+        console.log(`🚀 [DEBUG] *** TRIGGERING SOURCE CODE PARSING ***`);
+        
+        // Render from website source code instead of components
+        await this.renderFromWebsiteSource();
+      }
+    } catch (error) {
+      console.error(`🚀 [DEBUG] Error loading components from API:`, error);
+      this.currentPageComponents = [];
+      this.componentRenderContexts = [];
+    }
+  }
+
+  // Enhanced Component Rendering Methods v3.0
   private updateComponentRenderContexts(): void {
     // Defer rendering until API component types are ready
     if (!this.apiComponentTypesLoaded) {
@@ -249,7 +1339,13 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
 
     this.componentRenderContexts = [];
     
-    console.log('🔄 Updating component render contexts for', this.currentPageComponents.length, 'components');
+    // Only log if there are actually components to render
+    if (this.currentPageComponents.length > 0) {
+      console.log('🚀 Enhanced v3.0: Updating component render contexts for', this.currentPageComponents.length, 'components');
+    } else {
+      console.log('📄 Current page has no components to render');
+      return; // Exit early if no components
+    }
     
     try {
       this.currentPageComponents.forEach(component => {
@@ -257,9 +1353,9 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
         if (componentType) {
           console.log('✅ Found component type for', component.type, ':', componentType.name);
           
-          // Convert instance and render
+          // Convert instance and render using FAST rendering
           const modelComponent = this.convertToModelComponent(component);
-          const renderContext = this.componentRenderer.renderComponent(componentType, modelComponent);
+          const renderContext = this.componentRenderer.renderComponentFast(componentType, modelComponent);
           
           // Check if this is a dynamic component (like accordion)
           const isDynamic = this.componentRenderer.isDynamicComponent(componentType);
@@ -276,16 +1372,17 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
           
           this.componentRenderContexts.push(renderContext);
           
-          console.log('🎨 Rendered component:', component.type, 'with HTML length:', renderContext.renderedHTML.length);
+          console.log('⚡ Fast-rendered component:', component.type, 'with HTML length:', renderContext.renderedHTML.length);
         } else {
           console.warn('❌ Component type not found for:', component.type);
         }
       });
+      
+      console.log('📊 Total render contexts created:', this.componentRenderContexts.length);
+      console.log('📈 Render performance:', this.componentRenderer.getPerformanceStats());
     } catch (e) {
       console.error('❌ Error while building render contexts:', e);
     }
-    
-    console.log('📊 Total render contexts created:', this.componentRenderContexts.length);
   }
 
   private convertToModelComponent(component: any): any {
@@ -859,6 +1956,10 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
       this.isDragging = false;
       document.removeEventListener('mousemove', mouseMoveHandler);
       document.removeEventListener('mouseup', mouseUpHandler);
+      
+      // Update source code after drag
+      this.updateWebsiteSourceAfterModification(instance);
+      
       this.pageDataChange.emit(this.pages);
     };
 
@@ -883,6 +1984,10 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
       this.resizeMode = '';
       document.removeEventListener('mousemove', mouseMoveHandler);
       document.removeEventListener('mouseup', mouseUpHandler);
+      
+      // Update source code after resize
+      this.updateWebsiteSourceAfterModification(instance);
+      
       this.pageDataChange.emit(this.pages);
     };
 
@@ -931,6 +2036,7 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
     if (currentPage) {
       const componentIndex = currentPage.components.findIndex(c => c.id === instanceId);
       if (componentIndex > -1) {
+        const deletedComponent = currentPage.components[componentIndex];
         currentPage.components.splice(componentIndex, 1);
         
         // Clear selection if deleted component was selected
@@ -938,6 +2044,9 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
           this.selectedComponentInstance = null;
           this.componentInstanceSelectionChange.emit(null);
         }
+
+        // Update source code to remove the component
+        this.updateWebsiteSourceAfterDelete(deletedComponent);
         
         this.updateCurrentPageComponents();
         this.pageDataChange.emit(this.pages);
@@ -1254,23 +2363,280 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
     this.updateCurrentPageComponents();
   }
 
-  // Method to update specific component instance
-  updateComponentInstance(updatedInstance: ComponentInstance): void {
-    const currentPage = this.pages.find(p => p.id === this.currentPageId);
-    if (currentPage) {
-      const componentIndex = currentPage.components.findIndex(c => c.id === updatedInstance.id);
-      if (componentIndex > -1) {
-        currentPage.components[componentIndex] = updatedInstance;
-        this.updateCurrentPageComponents();
-        this.pageDataChange.emit(this.pages);
-      }
-    }
-  }
 
   // Method to refresh canvas after AI updates
   refreshCanvas(): void {
     console.log('🔄 Refreshing canvas after AI update');
     this.updateCurrentPageComponents();
     this.cdr.detectChanges();
+  }
+
+  /**
+   * Update website source code after component deletion
+   */
+  private async updateWebsiteSourceAfterDelete(deletedComponent: ComponentInstance): Promise<void> {
+    try {
+      console.log(`🚀 [DEBUG] Updating source code after deleting component: ${deletedComponent.id}`);
+      
+      const websiteFilesService = this.injector.get(WebsiteFilesService);
+      if (!this.currentWorkspaceId) return;
+      const files = await websiteFilesService.getFiles(this.currentWorkspaceId).toPromise();
+      
+      if (!files) return;
+
+      const pageFileName = this.currentPageId === 'home' ? 'index.html' : `${this.currentPageId}.html`;
+      const htmlFile = files.find(f => f.fileName === pageFileName);
+      
+      if (!htmlFile || !htmlFile.content) return;
+
+      // Remove component from HTML
+      let updatedHtml = this.removeComponentFromHTML(htmlFile.content, deletedComponent);
+      
+      // Update the file
+      await websiteFilesService.updateFile(htmlFile.id, updatedHtml).toPromise();
+      
+      console.log(`✅ Source code updated after component deletion`);
+      
+    } catch (error) {
+      console.error(`🚀 [DEBUG] Error updating source code after deletion:`, error);
+    }
+  }
+
+  /**
+   * Update website source code after component modification
+   */
+  private async updateWebsiteSourceAfterModification(modifiedComponent: ComponentInstance): Promise<void> {
+    try {
+      console.log(`🚀 [DEBUG] Updating source code after modifying component: ${modifiedComponent.id}`);
+      
+      const websiteFilesService = this.injector.get(WebsiteFilesService);
+      if (!this.currentWorkspaceId) return;
+      const files = await websiteFilesService.getFiles(this.currentWorkspaceId).toPromise();
+      
+      if (!files) return;
+
+      const pageFileName = this.currentPageId === 'home' ? 'index.html' : `${this.currentPageId}.html`;
+      const htmlFile = files.find(f => f.fileName === pageFileName);
+      
+      if (!htmlFile || !htmlFile.content) return;
+
+      // Update component in HTML
+      let updatedHtml = this.updateComponentInHTML(htmlFile.content, modifiedComponent);
+      
+      // Update CSS if needed
+      const cssFile = files.find(f => f.fileName.endsWith('.css'));
+      if (cssFile && cssFile.content) {
+        let updatedCss = this.updateComponentInCSS(cssFile.content, modifiedComponent);
+        await websiteFilesService.updateFile(cssFile.id, updatedCss).toPromise();
+      }
+      
+      // Update the HTML file
+      await websiteFilesService.updateFile(htmlFile.id, updatedHtml).toPromise();
+      
+      console.log(`✅ Source code updated after component modification`);
+      
+    } catch (error) {
+      console.error(`🚀 [DEBUG] Error updating source code after modification:`, error);
+    }
+  }
+
+  /**
+   * Remove component from HTML source code
+   */
+  private removeComponentFromHTML(htmlContent: string, component: ComponentInstance): string {
+    // Remove by ID
+    let updatedHtml = htmlContent.replace(new RegExp(`<[^>]*id="${component.id}"[^>]*>.*?</[^>]*>`, 'gs'), '');
+    
+    // Remove by data-component-id
+    updatedHtml = updatedHtml.replace(new RegExp(`<[^>]*data-component-id="${component.id}"[^>]*>.*?</[^>]*>`, 'gs'), '');
+    
+    // Remove component comments
+    updatedHtml = updatedHtml.replace(new RegExp(`<!--\\s*COMPONENT:\\s*\\{[^}]*"id"\\s*:\\s*"${component.id}"[^}]*\\}\\s*-->`, 'gs'), '');
+    
+    return updatedHtml;
+  }
+
+  /**
+   * Update component in HTML source code
+   */
+  private updateComponentInHTML(htmlContent: string, component: ComponentInstance): string {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    
+    // Find the component element
+    let element = doc.getElementById(component.id) || 
+                  doc.querySelector(`[data-component-id="${component.id}"]`);
+    
+    if (element) {
+      // Update data attributes
+      element.setAttribute('data-component-id', component.id);
+      element.setAttribute('data-component-type', component.type);
+      element.setAttribute('data-x', component.x.toString());
+      element.setAttribute('data-y', component.y.toString());
+      element.setAttribute('data-width', component.width.toString());
+      element.setAttribute('data-height', component.height.toString());
+      element.setAttribute('data-z-index', component.zIndex.toString());
+      
+      // Update parameters as data attributes
+      Object.entries(component.parameters).forEach(([key, value]) => {
+        element!.setAttribute(`data-param-${key}`, value.toString());
+      });
+      
+      // Update content based on component type
+      this.updateElementContent(element, component);
+    } else {
+      // Component doesn't exist in HTML, add it
+      this.addComponentToHTML(doc, component);
+    }
+    
+    return doc.documentElement.outerHTML;
+  }
+
+  /**
+   * Update element content based on component parameters
+   */
+  private updateElementContent(element: Element, component: ComponentInstance): void {
+    const params = component.parameters;
+    
+    // Update text content
+    if (params['text'] || params['content']) {
+      element.textContent = params['text'] || params['content'];
+    }
+    
+    // Update specific element attributes
+    if (element.tagName === 'IMG' && params['src']) {
+      element.setAttribute('src', params['src']);
+      if (params['alt']) element.setAttribute('alt', params['alt']);
+    }
+    
+    if (element.tagName === 'A' && params['href']) {
+      element.setAttribute('href', params['href']);
+      if (params['target']) element.setAttribute('target', params['target']);
+    }
+    
+    // Update inline styles
+    let styleString = '';
+    if (params['backgroundColor']) styleString += `background-color: ${params['backgroundColor']}; `;
+    if (params['textColor']) styleString += `color: ${params['textColor']}; `;
+    if (params['fontSize']) styleString += `font-size: ${params['fontSize']}; `;
+    if (params['fontFamily']) styleString += `font-family: ${params['fontFamily']}; `;
+    
+    if (styleString) {
+      element.setAttribute('style', styleString);
+    }
+  }
+
+  /**
+   * Add new component to HTML
+   */
+  private addComponentToHTML(doc: Document, component: ComponentInstance): void {
+    const element = this.createElementForComponent(doc, component);
+    
+    // Add to body or find appropriate container
+    const body = doc.body || doc.querySelector('body');
+    if (body) {
+      body.appendChild(element);
+    }
+  }
+
+  /**
+   * Create HTML element for component
+   */
+  private createElementForComponent(doc: Document, component: ComponentInstance): Element {
+    let tagName = 'div';
+    
+    // Choose appropriate tag based on component type
+    switch (component.type) {
+      case 'button': tagName = 'button'; break;
+      case 'image': tagName = 'img'; break;
+      case 'heading': tagName = 'h2'; break;
+      case 'text': tagName = 'p'; break;
+      case 'navigation': tagName = 'nav'; break;
+      case 'header': tagName = 'header'; break;
+      case 'footer': tagName = 'footer'; break;
+      default: tagName = 'div'; break;
+    }
+    
+    const element = doc.createElement(tagName);
+    
+    // Set basic attributes
+    element.id = component.id;
+    element.setAttribute('data-component-id', component.id);
+    element.setAttribute('data-component-type', component.type);
+    element.setAttribute('data-x', component.x.toString());
+    element.setAttribute('data-y', component.y.toString());
+    element.setAttribute('data-width', component.width.toString());
+    element.setAttribute('data-height', component.height.toString());
+    element.setAttribute('data-z-index', component.zIndex.toString());
+    
+    // Add parameters as data attributes
+    Object.entries(component.parameters).forEach(([key, value]) => {
+      element.setAttribute(`data-param-${key}`, value.toString());
+    });
+    
+    // Set content
+    this.updateElementContent(element, component);
+    
+    return element;
+  }
+
+  /**
+   * Update component styling in CSS
+   */
+  private updateComponentInCSS(cssContent: string, component: ComponentInstance): string {
+    const componentSelector = `#${component.id}`;
+    const params = component.parameters;
+    
+    // Build CSS rules
+    let cssRules = '';
+    if (params['backgroundColor']) cssRules += `  background-color: ${params['backgroundColor']};\n`;
+    if (params['textColor']) cssRules += `  color: ${params['textColor']};\n`;
+    if (params['fontSize']) cssRules += `  font-size: ${params['fontSize']};\n`;
+    if (params['fontFamily']) cssRules += `  font-family: ${params['fontFamily']};\n`;
+    if (params['borderRadius']) cssRules += `  border-radius: ${params['borderRadius']};\n`;
+    if (params['padding']) cssRules += `  padding: ${params['padding']};\n`;
+    if (params['margin']) cssRules += `  margin: ${params['margin']};\n`;
+    
+    // Add positioning
+    cssRules += `  position: absolute;\n`;
+    cssRules += `  left: ${component.x}px;\n`;
+    cssRules += `  top: ${component.y}px;\n`;
+    cssRules += `  width: ${component.width}px;\n`;
+    cssRules += `  height: ${component.height}px;\n`;
+    cssRules += `  z-index: ${component.zIndex};\n`;
+    
+    if (!cssRules) return cssContent;
+    
+    const newRule = `${componentSelector} {\n${cssRules}}\n`;
+    
+    // Check if rule already exists
+    const existingRuleRegex = new RegExp(`${componentSelector}\\s*\\{[^}]*\\}`, 'g');
+    
+    if (existingRuleRegex.test(cssContent)) {
+      // Replace existing rule
+      return cssContent.replace(existingRuleRegex, newRule);
+    } else {
+      // Add new rule
+      return cssContent + '\n' + newRule;
+    }
+  }
+
+  /**
+   * Override component update to sync with source code
+   */
+  updateComponentInstance(updatedInstance: ComponentInstance): void {
+    const currentPage = this.pages.find(p => p.id === this.currentPageId);
+    if (currentPage) {
+      const componentIndex = currentPage.components.findIndex(c => c.id === updatedInstance.id);
+      if (componentIndex > -1) {
+        currentPage.components[componentIndex] = updatedInstance;
+        
+        // Update source code
+        this.updateWebsiteSourceAfterModification(updatedInstance);
+        
+        this.updateCurrentPageComponents();
+        this.pageDataChange.emit(this.pages);
+      }
+    }
   }
 }

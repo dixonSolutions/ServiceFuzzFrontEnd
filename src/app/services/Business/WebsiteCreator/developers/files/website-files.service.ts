@@ -46,6 +46,11 @@ interface CacheConfig {
 export class WebsiteFilesService {
   private readonly apiBaseUrl = 'https://servicefuzzapi-atf8b4dqawc8dsa9.australiaeast-01.azurewebsites.net';
   
+  // DEBUG FLAG: Set to false to re-enable caching
+  // When true: Always fetches from API, extensive logging, no caching
+  // When false: Normal caching behavior with memory and browser storage
+  private readonly DEBUG_DISABLE_CACHE = true;
+  
   // Cache configuration
   private readonly cacheConfig: CacheConfig = {
     memoryTTL: 5 * 60 * 1000, // 5 minutes
@@ -238,77 +243,121 @@ export class WebsiteFilesService {
   // ===================== API METHODS WITH CACHING =====================
 
   /**
-   * Get all files for workspace (with caching)
+   * Get all files for workspace (with debug cache control)
    */
   getFiles(workspaceId: string): Observable<WebsiteFile[]> {
-    // Check if we have valid cache
-    if (this.isCacheValid(workspaceId)) {
-      const cached = this.memoryCache.get(workspaceId)!;
-      console.log(`⚡ Serving files for workspace ${workspaceId} from memory cache`);
-      return of(cached.files);
-    }
+    console.log(`🚀 [DEBUG] getFiles called for workspace: ${workspaceId}`);
+    console.log(`🚀 [DEBUG] Cache disabled flag: ${this.DEBUG_DISABLE_CACHE}`);
+    
+    if (!this.DEBUG_DISABLE_CACHE) {
+      // Normal caching behavior when debug flag is false
+      if (this.isCacheValid(workspaceId)) {
+        const cached = this.memoryCache.get(workspaceId)!;
+        console.log(`⚡ Serving files for workspace ${workspaceId} from memory cache`);
+        return of(cached.files);
+      }
 
-    // Check if there's already a pending request
-    if (this.pendingRequests.has(workspaceId)) {
-      console.log(`⏳ Reusing pending request for workspace ${workspaceId}`);
-      return this.pendingRequests.get(workspaceId)!;
+      if (this.pendingRequests.has(workspaceId)) {
+        console.log(`⏳ Reusing pending request for workspace ${workspaceId}`);
+        return this.pendingRequests.get(workspaceId)!;
+      }
+    } else {
+      console.log(`🚀 [DEBUG] Cache disabled - always fetching from API`);
     }
 
     // Make API request
     const jwtToken = this.dataSvr.jwtToken;
+    console.log(`🚀 [DEBUG] JWT Token available: ${!!jwtToken}`);
+    console.log(`🚀 [DEBUG] JWT Token length: ${jwtToken?.length || 0}`);
+    
     if (!jwtToken) {
+      console.error(`🚀 [DEBUG] No JWT token available for workspace ${workspaceId}`);
       throw new Error('No JWT token available. User may not be authenticated.');
     }
 
-    console.log(`🌐 Fetching files for workspace ${workspaceId} from API`);
+    const apiUrl = `${this.apiBaseUrl}/api/WebsiteFiles/workspace/${workspaceId}`;
+    console.log(`🚀 [DEBUG] Making API request to: ${apiUrl}`);
+    console.log(`🚀 [DEBUG] Request timestamp: ${new Date().toISOString()}`);
 
-    const request = this.http.get<WebsiteFile[]>(
-      `${this.apiBaseUrl}/api/WebsiteFiles/workspace/${workspaceId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${jwtToken}`
-        }
+    const request = this.http.get<WebsiteFile[]>(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`
       }
-    ).pipe(
+    }).pipe(
       tap(files => {
-        // Cache the response
-        const cacheData: CachedWorkspaceData = {
-          files,
-          lastUpdated: Date.now(),
-          version: 1
-        };
+        console.log(`🚀 [DEBUG] API Response received for workspace ${workspaceId}`);
+        console.log(`🚀 [DEBUG] Files count: ${files?.length || 0}`);
+        console.log(`🚀 [DEBUG] Response timestamp: ${new Date().toISOString()}`);
         
-        this.memoryCache.set(workspaceId, cacheData);
-        this.saveToBrowserCache(workspaceId, cacheData);
+        if (files && files.length > 0) {
+          console.log(`🚀 [DEBUG] ALL FILE PATHS:`, files.map(f => f.fileName));
+        }
         
-        // Update reactive subject
+        // Cache the response (only if debug flag allows it)
+        if (!this.DEBUG_DISABLE_CACHE) {
+          const cacheData: CachedWorkspaceData = {
+            files,
+            lastUpdated: Date.now(),
+            version: 1
+          };
+          this.memoryCache.set(workspaceId, cacheData);
+          this.saveToBrowserCache(workspaceId, cacheData);
+          console.log(`💾 Cached ${files.length} files for workspace ${workspaceId}`);
+        } else {
+          console.log(`🚀 [DEBUG] Caching skipped due to debug flag`);
+        }
+        
+        // Update reactive subject (keep this for UI updates)
         this.getCacheSubject(workspaceId).next(files);
         
-        console.log(`💾 Cached ${files.length} files for workspace ${workspaceId}`);
+        console.log(`🚀 [DEBUG] Files loaded successfully for workspace ${workspaceId}`);
       }),
-      catchError(this.handleError),
-      shareReplay(1) // Share the result with multiple subscribers
+      catchError(error => {
+        console.error(`🚀 [DEBUG] API Error for workspace ${workspaceId}:`, error);
+        console.error(`🚀 [DEBUG] Error status: ${error.status}`);
+        console.error(`🚀 [DEBUG] Error message: ${error.message}`);
+        console.error(`🚀 [DEBUG] Error timestamp: ${new Date().toISOString()}`);
+        return this.handleError(error);
+      })
     );
 
-    // Store pending request
-    this.pendingRequests.set(workspaceId, request);
-    
-    // Clean up pending request when complete
-    request.subscribe({
-      complete: () => this.pendingRequests.delete(workspaceId),
-      error: () => this.pendingRequests.delete(workspaceId)
-    });
+    // Pending request tracking (only if debug flag allows it)
+    if (!this.DEBUG_DISABLE_CACHE) {
+      this.pendingRequests.set(workspaceId, request);
+      request.subscribe({
+        complete: () => this.pendingRequests.delete(workspaceId),
+        error: () => this.pendingRequests.delete(workspaceId)
+      });
+    } else {
+      console.log(`🚀 [DEBUG] Pending request tracking skipped due to debug flag`);
+    }
 
     return request;
   }
 
   /**
-   * Get files as reactive stream (always returns cached data if available)
+   * Get files as reactive stream (with debug cache control)
    */
   getFiles$(workspaceId: string): Observable<WebsiteFile[]> {
-    // First, trigger a load if not cached
-    if (!this.isCacheValid(workspaceId)) {
-      this.getFiles(workspaceId).subscribe(); // Trigger load but don't wait
+    console.log(`🚀 [DEBUG] getFiles$ called for workspace: ${workspaceId}`);
+    console.log(`🚀 [DEBUG] Cache disabled flag: ${this.DEBUG_DISABLE_CACHE}`);
+    
+    if (this.DEBUG_DISABLE_CACHE) {
+      // Always trigger fresh load for debugging
+      console.log(`🚀 [DEBUG] Triggering fresh API load for reactive stream`);
+      this.getFiles(workspaceId).subscribe({
+        next: (files) => {
+          console.log(`🚀 [DEBUG] Reactive stream updated with ${files?.length || 0} files`);
+        },
+        error: (error) => {
+          console.error(`🚀 [DEBUG] Error in reactive stream update:`, error);
+        }
+      });
+    } else {
+      // Normal behavior: trigger load if not cached
+      if (!this.isCacheValid(workspaceId)) {
+        this.getFiles(workspaceId).subscribe();
+      }
     }
     
     return this.getCacheSubject(workspaceId).asObservable();

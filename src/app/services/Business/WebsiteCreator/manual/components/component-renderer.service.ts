@@ -1,12 +1,336 @@
 import { Injectable } from '@angular/core';
 import { ComponentType, ComponentInstance, ComponentRenderContext, ComponentParameter } from '../../../../../models/workspace.models';
+import { ComponentDefinition } from '../website-builder';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ComponentRendererService {
 
-  constructor() { }
+  // Enhanced Component System v3.0 - Built on existing infrastructure
+  private registeredComponents = new Map<string, ComponentDefinition>();
+  private componentInstances = new Map<string, ComponentInstance>();
+  private renderCache = new Map<string, ComponentRenderContext>();
+  private eventBus = new EventTarget();
+  
+  // Performance tracking
+  private renderStats = {
+    totalRenders: 0,
+    cacheHits: 0,
+    renderTime: 0
+  };
+
+  constructor() { 
+    console.log('🚀 Enhanced Component System v3.0 initialized');
+    this.initializeEventSystem();
+  }
+
+  // ===================== ENHANCED COMPONENT SYSTEM v3.0 =====================
+
+  /**
+   * Initialize the event system for component communication
+   */
+  private initializeEventSystem(): void {
+    // Component system ready event
+    setTimeout(() => {
+      this.dispatchEvent('componentSystemReady', { 
+        version: '3.0',
+        features: ['parameter-binding', 'event-system', 'fast-rendering', 'caching']
+      });
+    }, 0);
+  }
+
+  /**
+   * Register a component with enhanced schema (from guide)
+   */
+  registerComponent(type: string, definition: {
+    schema: { [key: string]: ComponentParameter };
+    template: string;
+    styles?: string;
+    metadata: {
+      name: string;
+      category: string;
+      description: string;
+    };
+  }): void {
+    console.log(`🔧 Registering enhanced component: ${type}`);
+    
+    const componentDef: ComponentDefinition = {
+      id: type,
+      name: definition.metadata.name,
+      category: definition.metadata.category,
+      description: definition.metadata.description,
+      parameters: Object.entries(definition.schema).map(([key, param]) => ({
+        name: key,
+        type: param.type,
+        label: param.label || key,
+        defaultValue: param.defaultValue,
+        required: param.required || false,
+        binding: param.binding || 'content'
+      })),
+      template: definition.template,
+      styles: definition.styles || '',
+      icon: 'pi pi-box'
+    };
+
+    this.registeredComponents.set(type, componentDef);
+    
+    this.dispatchEvent('componentRegistered', { 
+      type, 
+      name: definition.metadata.name 
+    });
+  }
+
+  /**
+   * Fast component rendering with caching
+   */
+  renderComponentFast(componentType: ComponentType, instance: ComponentInstance, forceRefresh = false): ComponentRenderContext {
+    const startTime = performance.now();
+    const cacheKey = `${componentType.id}_${instance.id}_${JSON.stringify(instance.parameters)}`;
+    
+    // Check cache first
+    if (!forceRefresh && this.renderCache.has(cacheKey)) {
+      this.renderStats.cacheHits++;
+      console.log(`⚡ Cache hit for component: ${componentType.name}`);
+      return this.renderCache.get(cacheKey)!;
+    }
+
+    // Render component using existing logic
+    const renderContext = this.renderComponent(componentType, instance);
+    
+    // Enhanced template processing with more variables
+    renderContext.renderedHTML = this.processEnhancedTemplate(
+      renderContext.renderedHTML, 
+      instance, 
+      componentType
+    );
+
+    // Cache the result
+    this.renderCache.set(cacheKey, renderContext);
+    
+    // Update stats
+    this.renderStats.totalRenders++;
+    this.renderStats.renderTime += performance.now() - startTime;
+    
+    // Dispatch render event
+    this.dispatchEvent('componentRendered', {
+      componentType: componentType.name,
+      instanceId: instance.id,
+      renderTime: performance.now() - startTime
+    });
+
+    return renderContext;
+  }
+
+  /**
+   * Process enhanced template with more variables (from guide)
+   */
+  private processEnhancedTemplate(template: string, instance: ComponentInstance, componentType: ComponentType): string {
+    const instanceId = `comp_${instance.id}`;
+    const componentId = instance.id;
+    const componentName = this.toPascalCase(componentType.name);
+    const componentClass = this.toKebabCase(componentType.name);
+    const parametersJson = JSON.stringify(instance.parameters || {});
+
+    let processed = template
+      .replace(/\{\{instanceId\}\}/g, instanceId)
+      .replace(/\{\{componentId\}\}/g, componentId)
+      .replace(/\{\{componentName\}\}/g, componentName)
+      .replace(/\{\{componentClass\}\}/g, componentClass)
+      .replace(/\{\{parametersJson\}\}/g, parametersJson);
+
+    // Process individual parameters
+    if (instance.parameters) {
+      Object.entries(instance.parameters).forEach(([key, value]) => {
+        const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+        processed = processed.replace(regex, String(value || ''));
+      });
+    }
+
+    return processed;
+  }
+
+  /**
+   * Scan DOM and render components (from guide)
+   */
+  scanAndRenderComponents(container?: HTMLElement): void {
+    const root = container || document;
+    const componentElements = root.querySelectorAll('[data-component-type]');
+    
+    console.log(`🔍 Scanning for components, found: ${componentElements.length}`);
+    
+    componentElements.forEach((element) => {
+      const componentType = element.getAttribute('data-component-type');
+      const parametersAttr = element.getAttribute('data-parameters');
+      
+      if (componentType) {
+        try {
+          const parameters = parametersAttr ? JSON.parse(parametersAttr) : {};
+          this.renderComponentInDOM(element as HTMLElement, componentType, parameters);
+        } catch (error) {
+          console.error(`❌ Error rendering component ${componentType}:`, error);
+        }
+      }
+    });
+  }
+
+  /**
+   * Render component directly in DOM element
+   */
+  private renderComponentInDOM(element: HTMLElement, componentType: string, parameters: any): void {
+    const componentDef = this.registeredComponents.get(componentType);
+    if (!componentDef) {
+      console.warn(`❌ Component type not registered: ${componentType}`);
+      return;
+    }
+
+    // Create mock instance for rendering
+    const instance: ComponentInstance = {
+      id: `dom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      componentTypeId: componentType,
+      xPosition: 0,
+      yPosition: 0,
+      width: 0,
+      height: 0,
+      zIndex: 0,
+      parameters
+    };
+
+    // Convert to ComponentType format
+    const typeObj: ComponentType = {
+      id: componentType,
+      name: componentDef.name,
+      category: componentDef.category,
+      description: componentDef.description,
+      htmlTemplate: componentDef.template,
+      cssTemplate: componentDef.styles || '',
+      parametersSchema: JSON.stringify(componentDef.parameters),
+      defaultWidth: 300,
+      defaultHeight: 200,
+      loadingPriority: 5,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const renderContext = this.renderComponentFast(typeObj, instance);
+    
+    // Apply to DOM
+    element.innerHTML = renderContext.renderedHTML;
+    element.setAttribute('data-instance-id', instance.id);
+    
+    // Apply styles if any
+    if (renderContext.appliedCSS) {
+      this.injectComponentStyles(renderContext.appliedCSS, instance.id);
+    }
+
+    this.dispatchEvent('componentReady', {
+      instanceId: instance.id,
+      componentType,
+      element
+    });
+  }
+
+  /**
+   * Inject component-specific styles
+   */
+  private injectComponentStyles(css: string, instanceId: string): void {
+    const styleId = `component-styles-${instanceId}`;
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+    
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+    
+    styleElement.textContent = css;
+  }
+
+  /**
+   * Clear render cache for efficient re-rendering
+   */
+  clearRenderCache(componentType?: string): void {
+    if (componentType) {
+      // Clear cache for specific component type
+      for (const [key] of this.renderCache) {
+        if (key.startsWith(componentType)) {
+          this.renderCache.delete(key);
+        }
+      }
+    } else {
+      // Clear all cache
+      this.renderCache.clear();
+    }
+    
+    console.log(`🧹 Render cache cleared${componentType ? ` for ${componentType}` : ''}`);
+  }
+
+  /**
+   * Re-render all components on page (fast refresh)
+   */
+  refreshAllComponents(forceRefresh = false): void {
+    console.log('🔄 Refreshing all components...');
+    
+    if (forceRefresh) {
+      this.clearRenderCache();
+    }
+    
+    this.scanAndRenderComponents();
+    
+    this.dispatchEvent('allComponentsRefreshed', {
+      timestamp: Date.now(),
+      forceRefresh
+    });
+  }
+
+  /**
+   * Get component performance stats
+   */
+  getPerformanceStats(): any {
+    return {
+      ...this.renderStats,
+      cacheSize: this.renderCache.size,
+      registeredComponents: this.registeredComponents.size,
+      averageRenderTime: this.renderStats.totalRenders > 0 
+        ? this.renderStats.renderTime / this.renderStats.totalRenders 
+        : 0
+    };
+  }
+
+  /**
+   * Event system for component communication
+   */
+  private dispatchEvent(eventType: string, detail: any): void {
+    const event = new CustomEvent(eventType, { detail });
+    this.eventBus.dispatchEvent(event);
+    
+    // Also dispatch on window for global listening
+    window.dispatchEvent(event);
+  }
+
+  /**
+   * Listen to component events
+   */
+  addEventListener(eventType: string, callback: (event: CustomEvent) => void): void {
+    this.eventBus.addEventListener(eventType, callback as EventListener);
+  }
+
+  /**
+   * Remove event listener
+   */
+  removeEventListener(eventType: string, callback: (event: CustomEvent) => void): void {
+    this.eventBus.removeEventListener(eventType, callback as EventListener);
+  }
+
+  // Utility methods
+  private toPascalCase(str: string): string {
+    return str.replace(/(?:^|[\s-_])+(.)/g, (_, char) => char.toUpperCase());
+  }
+
+  private toKebabCase(str: string): string {
+    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+  }
 
   /**
    * Render a component with its parameters
