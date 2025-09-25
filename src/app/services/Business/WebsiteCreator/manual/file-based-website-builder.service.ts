@@ -141,8 +141,8 @@ export class FileBasedWebsiteBuilderService {
       const homePage = await this.pagesService.createPage(workspaceId, {
         pageName: 'Home',
         route: '/',
-        title: 'Welcome to My Website',
-        metaDescription: 'A beautiful website built with ServiceFuzz',
+        title: '',
+        metaDescription: '',
         isHomePage: true
       }).toPromise();
 
@@ -1112,9 +1112,9 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
       generate: (params: any, componentId: string) => `
         <section class="hero component" data-component-id="${componentId}">
           <div class="container">
-            <h1>${params.title || 'Welcome to Our Website'}</h1>
-            <p>${params.subtitle || 'Discover amazing products and services'}</p>
-            <a href="${params.buttonLink || '#'}" class="btn">${params.buttonText || 'Get Started'}</a>
+            <h1>${params.title || ''}</h1>
+            <p>${params.subtitle || ''}</p>
+            <a href="${params.buttonLink || '#'}" class="btn">${params.buttonText || ''}</a>
           </div>
         </section>
       `
@@ -1125,12 +1125,12 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
       componentType: 'contact-form',
       generate: (params: any, componentId: string) => `
         <div class="contact-form component" data-component-id="${componentId}">
-          <h2>${params.title || 'Contact Us'}</h2>
+          <h2>${params.title || ''}</h2>
           <form>
             <input type="text" name="name" placeholder="Your Name" required />
             <input type="email" name="email" placeholder="Your Email" required />
             <textarea name="message" placeholder="Your Message" rows="5" required></textarea>
-            <button type="submit">${params.submitText || 'Send Message'}</button>
+            <button type="submit">${params.submitText || ''}</button>
           </form>
         </div>
       `
@@ -1141,8 +1141,8 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
       componentType: 'text-block',
       generate: (params: any, componentId: string) => `
         <div class="text-block component" data-component-id="${componentId}">
-          <h2>${params.heading || 'Heading'}</h2>
-          <p>${params.content || 'Your content goes here...'}</p>
+          <h2>${params.heading || ''}</h2>
+          <p>${params.content || ''}</p>
         </div>
       `
     });
@@ -1158,7 +1158,7 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
         
         return `
           <div class="image-gallery component" data-component-id="${componentId}">
-            <h2>${params.title || 'Gallery'}</h2>
+            <h2>${params.title || ''}</h2>
             <div class="gallery-grid">
               ${imageHtml}
             </div>

@@ -433,11 +433,15 @@ export class EnhancedWebsiteBuilderService {
         componentType: componentTypeId,
         xPosition: position.x,
         yPosition: position.y,
-        width: componentType.defaultWidth,
-        height: componentType.defaultHeight,
+        width: componentType.defaultWidth || 300,
+        height: componentType.defaultHeight || 200,
         zIndex: 1,
-        parameters: componentType.defaultParameters
+        parameters: typeof componentType.defaultParameters === 'string' 
+          ? componentType.defaultParameters 
+          : JSON.stringify(componentType.defaultParameters || {})
       };
+      
+      console.log('🚀 Creating component with payload:', createRequest);
 
       const instanceId = await this.createComponent(createRequest);
 
@@ -450,10 +454,12 @@ export class EnhancedWebsiteBuilderService {
         componentType: componentTypeId,
         xPosition: position.x,
         yPosition: position.y,
-        width: componentType.defaultWidth,
-        height: componentType.defaultHeight,
+        width: componentType.defaultWidth || 300,
+        height: componentType.defaultHeight || 200,
         zIndex: 1,
-        parameters: componentType.defaultParameters,
+        parameters: typeof componentType.defaultParameters === 'string' 
+          ? componentType.defaultParameters 
+          : JSON.stringify(componentType.defaultParameters || {}),
         createdAt: new Date(),
         updatedAt: new Date()
       };
@@ -482,6 +488,15 @@ export class EnhancedWebsiteBuilderService {
     }
 
     try {
+      console.log('🚀 Sending component creation request:', {
+        url: `${this.apiBaseUrl}/api/BusinessWebsite/workspaces/components`,
+        payload: request,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken ? 'TOKEN_PRESENT' : 'NO_TOKEN'}`
+        }
+      });
+
       const response = await this.http.post<{componentId: string}>(
         `${this.apiBaseUrl}/api/BusinessWebsite/workspaces/components`,
         request,
@@ -493,9 +508,16 @@ export class EnhancedWebsiteBuilderService {
         }
       ).toPromise();
 
+      console.log('✅ Component creation response:', response);
       return response?.componentId || '';
-    } catch (error) {
-      console.error('Error creating component:', error);
+    } catch (error: any) {
+      console.error('❌ Error creating component:', error);
+      console.error('❌ Error details:', {
+        status: error?.status,
+        statusText: error?.statusText,
+        message: error?.message,
+        error: error?.error
+      });
       throw error;
     }
   }

@@ -735,32 +735,11 @@ export class WebsiteFilesService {
     {{page.css}}
 </head>
 <body>
-    <header class="site-header">
-        <div class="container">
-            <nav class="main-nav">
-                <div class="logo">
-                    <h1>Your Website</h1>
-                </div>
-                <ul class="nav-menu">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/contact">Contact</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
     <main class="main-content">
         <div class="container">
             {{components}}
         </div>
     </main>
-
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2024 Your Website. All rights reserved.</p>
-        </div>
-    </footer>
 
     <script src="js/script.js"></script>
     {{global.js}}
@@ -797,8 +776,6 @@ body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; }
 .hero .btn { display: inline-block; padding: 12px 30px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border: 2px solid white; border-radius: 25px; transition: all 0.3s ease; }
 .hero .btn:hover { background: white; color: #667eea; }
 
-/* Footer */
-.site-footer { background: #2c3e50; color: white; text-align: center; padding: 2rem 0; margin-top: 3rem; }
 
 /* Responsive */
 @media (max-width: 768px) {

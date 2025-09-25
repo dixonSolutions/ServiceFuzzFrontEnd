@@ -379,11 +379,19 @@ export class ComponentRendererService {
     // Process the HTML template with parameter substitution
     const processedHTML = this.processTemplate(componentType.htmlTemplate, effectiveParameters);
     
+    // Process CSS template if available
+    let appliedCSS = '';
+    if (componentType.cssTemplate) {
+      appliedCSS = this.processTemplate(componentType.cssTemplate, effectiveParameters);
+      // Replace instance-specific placeholders
+      appliedCSS = appliedCSS.replace(/\{\{instanceId\}\}/g, instance.id);
+    }
+
     return {
       component: instance,
       componentType: componentType,
       renderedHTML: processedHTML,
-      appliedCSS: '',
+      appliedCSS: appliedCSS,
       parameters: effectiveParameters
     };
   }

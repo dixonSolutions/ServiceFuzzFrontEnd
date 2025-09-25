@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef, Injector } from '@angular/core';
+import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef, Injector, SimpleChanges } from '@angular/core';
 import { ComponentDefinition, ComponentParameter, ComponentInstance, WebsiteBuilderService } from '../../services/Business/WebsiteCreator/manual/website-builder';
 import { ComponentType, ComponentRenderContext, WorkspaceComponentResponseDto } from '../../models/workspace.models';
 import { ComponentRendererService } from '../../services/Business/WebsiteCreator/manual/components/component-renderer.service';
@@ -92,14 +92,29 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     console.log('🚀 Canvas component initialized with Enhanced v3.0 system');
     this.initializeCanvas();
-    this.setupEnhancedComponentSystem();
+    
+    // Setup component system - it will handle the case where workspace ID is not yet available
+    this.setupEnhancedComponentSystem().catch(error => {
+      console.error('❌ Error setting up enhanced component system:', error);
+    });
   }
 
-  ngOnChanges(): void {
-    // Reinitialize enhanced system if workspace ID changes
-    if (this.currentWorkspaceId) {
-      console.log('🔄 Canvas: Workspace ID changed, reinitializing enhanced system:', this.currentWorkspaceId);
-      this.initializeEnhancedSystem();
+  ngOnChanges(changes: SimpleChanges): void {
+    // Check if workspace ID changed and is now available
+    if (changes['currentWorkspaceId'] && this.currentWorkspaceId) {
+      console.log('🔄 Canvas: Workspace ID changed, setting up enhanced system:', this.currentWorkspaceId);
+      
+      // Setup component system if not already done
+      if (!this.apiComponentTypesLoaded) {
+        console.log('🔄 Canvas: API component types not loaded yet, setting up system...');
+        this.setupEnhancedComponentSystem().catch(error => {
+          console.error('❌ Error setting up enhanced component system:', error);
+        });
+      } else {
+        console.log('✅ Canvas: API component types already loaded, initializing enhanced system...');
+        // Initialize enhanced system
+        this.initializeEnhancedSystem();
+      }
     }
   }
 
@@ -113,7 +128,7 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
   /**
    * Setup enhanced component system with event listeners
    */
-  private setupEnhancedComponentSystem(): void {
+  private async setupEnhancedComponentSystem(): Promise<void> {
     console.log('🔧 Setting up Enhanced Component System v3.0...');
 
     // Listen for component system events
@@ -130,109 +145,100 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
       this.cdr.detectChanges(); // Trigger Angular change detection
     });
 
-    // Register sample components from the guide
-    this.registerSampleComponents();
+    // Register components dynamically from API and detected patterns
+    await this.registerDynamicComponents();
   }
 
   /**
-   * Register sample components based on the guide
+   * Register components dynamically from API ONLY
+   * NO HARDCODED COMPONENTS - Everything must be 100% dynamic and scalable
    */
-  private registerSampleComponents(): void {
-    // Hero Section Component
-    this.componentRenderer.registerComponent('hero-section', {
-      schema: {
-        title: {
-          name: 'title',
-          type: 'text',
-          label: 'Hero Title',
-          defaultValue: 'Welcome to Our Business',
-          binding: 'content'
-        },
-        subtitle: {
-          name: 'subtitle',
-          type: 'text',
-          label: 'Hero Subtitle',
-          defaultValue: 'We provide excellent services',
-          binding: 'content'
-        },
-        backgroundImage: {
-          name: 'backgroundImage',
-          type: 'image-asset',
-          label: 'Background Image',
-          defaultValue: '',
-          binding: 'css-variable'
-        },
-        buttonText: {
-          name: 'buttonText',
-          type: 'text',
-          label: 'Button Text',
-          defaultValue: 'Get Started',
-          binding: 'content'
-        },
-        buttonColor: {
-          name: 'buttonColor',
-          type: 'color',
-          label: 'Button Color',
-          defaultValue: '#3b82f6',
-          binding: 'css-variable'
-        }
-      },
-      template: `
-        <section class="hero-section" data-instance-id="{{instanceId}}">
-          <div class="hero-content">
-            <h1 class="hero-title">{{title}}</h1>
-            <p class="hero-subtitle">{{subtitle}}</p>
-            <button class="hero-button">{{buttonText}}</button>
-          </div>
-        </section>
-      `,
-      styles: `
-        [data-instance-id="{{instanceId}}"] .hero-section {
-          background-image: url(var(--backgroundImage));
-          background-size: cover;
-          background-position: center;
-          padding: 4rem 2rem;
-          text-align: center;
-          color: white;
-          min-height: 400px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        [data-instance-id="{{instanceId}}"] .hero-content {
-          max-width: 600px;
-        }
-        [data-instance-id="{{instanceId}}"] .hero-title {
-          font-size: 3rem;
-          font-weight: bold;
-          margin-bottom: 1rem;
-        }
-        [data-instance-id="{{instanceId}}"] .hero-subtitle {
-          font-size: 1.25rem;
-          margin-bottom: 2rem;
-        }
-        [data-instance-id="{{instanceId}}"] .hero-button {
-          background-color: var(--buttonColor);
-          color: white;
-          padding: 1rem 2rem;
-          border: none;
-          border-radius: 0.5rem;
-          font-size: 1.1rem;
-          cursor: pointer;
-          transition: opacity 0.2s;
-        }
-        [data-instance-id="{{instanceId}}"] .hero-button:hover {
-          opacity: 0.9;
-        }
-      `,
-      metadata: {
-        name: 'Hero Section',
-        category: 'layout',
-        description: 'A hero section with title, subtitle, and call-to-action button'
+  private async registerDynamicComponents(): Promise<void> {
+    console.log('🔧 Registering components dynamically from API only - NO HARDCODED COMPONENTS...');
+    
+    try {
+      // First, ensure API component types are loaded
+      console.log('📡 Loading API component types...');
+      const apiComponentTypes = await this.websiteBuilder.loadAndCacheApiComponentTypes().toPromise();
+      
+      if (!apiComponentTypes || apiComponentTypes.length === 0) {
+        console.warn('⚠️ No API component types found - this might indicate an API issue');
+        return;
       }
-    });
-
-    console.log('✅ Sample components registered');
+      
+      console.log(`📡 Found ${apiComponentTypes.length} API component types`);
+      
+      // Register each API component type with the enhanced renderer
+      apiComponentTypes.forEach(apiComponent => {
+        try {
+          // Parse the parameters schema dynamically
+          let schema: any = {};
+          if (apiComponent.parametersSchema) {
+            const parsedSchema = typeof apiComponent.parametersSchema === 'string' 
+              ? JSON.parse(apiComponent.parametersSchema) 
+              : apiComponent.parametersSchema;
+            
+            // Convert API schema format to enhanced component system format
+            if (Array.isArray(parsedSchema)) {
+              parsedSchema.forEach((param: any) => {
+                schema[param.name] = {
+                  name: param.name,
+                  type: param.type || 'text',
+                  label: param.label || param.name,
+                  defaultValue: param.defaultValue || '',
+                  binding: param.binding || 'content',
+                  required: param.required || false
+                };
+              });
+            } else if (parsedSchema.parameters) {
+              parsedSchema.parameters.forEach((param: any) => {
+                schema[param.name] = {
+                  name: param.name,
+                  type: param.type || 'text',
+                  label: param.label || param.name,
+                  defaultValue: param.defaultValue || '',
+                  binding: param.binding || 'content',
+                  required: param.required || false
+                };
+              });
+            }
+          }
+          
+          // Register with enhanced component renderer
+          this.componentRenderer.registerComponent(apiComponent.id, {
+            schema: schema,
+            template: apiComponent.htmlTemplate || `<div class="dynamic-component" data-type="${apiComponent.id}" data-instance-id="{{instanceId}}">{{content}}</div>`,
+            styles: apiComponent.cssTemplate || `[data-instance-id="{{instanceId}}"] .dynamic-component { display: block; }`,
+            metadata: {
+              name: apiComponent.name,
+              category: apiComponent.category || 'api',
+              description: apiComponent.description || ''
+            }
+          });
+          
+          console.log(`✅ Registered API component: ${apiComponent.name} (${apiComponent.id})`);
+        } catch (error) {
+          console.warn(`⚠️ Failed to register API component ${apiComponent.id}:`, error);
+        }
+      });
+      
+      console.log('✅ Dynamic component registration completed - ALL FROM API');
+      
+      // Mark API component types as loaded
+      this.apiComponentTypesLoaded = true;
+      
+      // Trigger component rendering now that types are available if workspace is ready
+      if (this.currentWorkspaceId) {
+        console.log('🔄 Workspace ID available, triggering component rendering...');
+        this.updateComponentRenderContexts();
+      } else {
+        console.log('⏳ Workspace ID not available yet, deferring component rendering...');
+      }
+      
+    } catch (error) {
+      console.error('❌ Error during dynamic component registration:', error);
+      console.error('❌ This might be due to API connectivity issues or authentication problems');
+    }
   }
 
   /**
@@ -371,6 +377,260 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
+   * Detect HTML patterns and convert them to editable components
+   * 100% DYNAMIC - NO HARDCODED COMPONENT TYPES
+   */
+  private detectHtmlPatterns(doc: Document): NodeListOf<Element> {
+    console.log(`🔍 Starting 100% dynamic HTML pattern detection...`);
+    
+    // First, let's see what's actually in the document
+    const bodyContent = doc.body?.innerHTML || '';
+    console.log(`📄 Document body content preview:`, bodyContent.substring(0, 1000));
+    
+    const detectedElements: Element[] = [];
+    
+    // Strategy 1: Analyze ALL elements dynamically without hardcoded types
+    const allElements = doc.querySelectorAll('*:not([data-component-id])');
+    console.log(`🔍 Analyzing ${allElements.length} elements dynamically...`);
+    
+    allElements.forEach(element => {
+      // Skip script, style, meta, and other non-content elements
+      const skipTags = ['script', 'style', 'meta', 'link', 'title', 'head', 'html', 'body'];
+      if (skipTags.includes(element.tagName.toLowerCase())) {
+        return;
+      }
+      
+      // Analyze element characteristics dynamically
+      const analysis = this.analyzeElementDynamically(element);
+      
+      if (analysis.shouldBeComponent) {
+        const dynamicComponentType = this.generateDynamicComponentType(element, analysis);
+        console.log(`📝 Dynamically detected component: ${dynamicComponentType} for element:`, element.tagName, element.className);
+        
+        this.markAsComponent(element, dynamicComponentType);
+        detectedElements.push(element);
+      }
+    });
+    
+    console.log(`🔍 Detected ${detectedElements.length} HTML patterns as components dynamically`);
+    
+    // Return the marked elements from the document
+    const markedElements = doc.querySelectorAll('[data-component-id]');
+    console.log(`✅ Returning ${markedElements.length} marked elements for processing`);
+    
+    return markedElements;
+  }
+  
+  /**
+   * Analyze an element dynamically to determine if it should be a component
+   */
+  private analyzeElementDynamically(element: Element): any {
+    const textContent = element.textContent?.trim() || '';
+    const hasSignificantContent = textContent.length > 50;
+    const hasChildren = element.children.length > 0;
+    const hasClasses = element.className && element.className.length > 0;
+    const hasId = element.id && element.id.length > 0;
+    const tagName = element.tagName.toLowerCase();
+    
+    // Semantic HTML elements are always components
+    const semanticTags = ['header', 'main', 'section', 'article', 'aside', 'footer', 'nav', 'form'];
+    const isSemanticElement = semanticTags.includes(tagName);
+    
+    // Elements with significant content and structure
+    const hasStructure = hasChildren && hasSignificantContent;
+    
+    // Elements with meaningful classes or IDs
+    const hasMeaningfulAttributes = hasClasses || hasId;
+    
+    return {
+      shouldBeComponent: isSemanticElement || hasStructure || (hasMeaningfulAttributes && hasSignificantContent),
+      isSemanticElement,
+      hasStructure,
+      hasMeaningfulAttributes,
+      textContent,
+      hasChildren,
+      hasClasses,
+      hasId,
+      tagName
+    };
+  }
+  
+  /**
+   * Generate a dynamic component type based on element analysis
+   */
+  private generateDynamicComponentType(element: Element, analysis: any): string {
+    // Use semantic tag name if available
+    if (analysis.isSemanticElement) {
+      return `dynamic-${analysis.tagName}`;
+    }
+    
+    // Use class name if meaningful
+    if (analysis.hasClasses) {
+      const firstClass = element.className.split(' ')[0];
+      if (firstClass && firstClass.length > 0) {
+        return `dynamic-${firstClass.replace(/[^a-zA-Z0-9-]/g, '')}`;
+      }
+    }
+    
+    // Use ID if available
+    if (analysis.hasId) {
+      return `dynamic-${element.id.replace(/[^a-zA-Z0-9-]/g, '')}`;
+    }
+    
+    // Generate based on content analysis
+    const hasHeadings = element.querySelector('h1, h2, h3, h4, h5, h6');
+    const hasImages = element.querySelector('img');
+    const hasLinks = element.querySelector('a[href]');
+    const hasForms = element.querySelector('form, input, textarea, button');
+    
+    if (hasHeadings && hasImages) {
+      return 'dynamic-media-content';
+    } else if (hasHeadings) {
+      return 'dynamic-text-content';
+    } else if (hasImages) {
+      return 'dynamic-image-content';
+    } else if (hasForms) {
+      return 'dynamic-form-content';
+    } else if (hasLinks) {
+      return 'dynamic-navigation-content';
+    }
+    
+    // Fallback to generic content block
+    return `dynamic-content-${analysis.tagName}`;
+  }
+  
+  /**
+   * Mark an element as a component with proper attributes
+   */
+  private markAsComponent(element: Element, componentType: string): void {
+    const componentId = `detected_${componentType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    element.setAttribute('data-component-id', componentId);
+    element.setAttribute('data-component-type', componentType);
+    element.classList.add('component-instance');
+    
+    // Extract parameters from the element content
+    this.extractAndMarkParameters(element, componentType);
+  }
+  
+  /**
+   * Extract editable parameters from HTML element dynamically
+   * 100% DYNAMIC - NO HARDCODED PARAMETER TYPES
+   */
+  private extractAndMarkParameters(element: Element, componentType: string): void {
+    const params: any = {};
+    
+    // Dynamic parameter extraction based on element analysis
+    const parameterAnalysis = this.analyzeElementForParameters(element);
+    
+    // Extract text content parameters
+    parameterAnalysis.textElements.forEach((textEl: Element, index: number) => {
+      const paramName = this.generateParameterName(textEl, index, 'text');
+      const paramValue = textEl.textContent?.trim() || '';
+      
+      if (paramValue) {
+        params[paramName] = paramValue;
+        textEl.setAttribute(`data-param-${paramName}`, paramValue);
+        console.log(`📝 Extracted text parameter: ${paramName} = "${paramValue.substring(0, 50)}..."`);
+      }
+    });
+    
+    // Extract link parameters
+    parameterAnalysis.linkElements.forEach((linkEl: Element, index: number) => {
+      const paramName = this.generateParameterName(linkEl, index, 'link');
+      const linkText = linkEl.textContent?.trim() || '';
+      const linkUrl = linkEl.getAttribute('href') || '#';
+      
+      if (linkText) {
+        params[`${paramName}_text`] = linkText;
+        params[`${paramName}_url`] = linkUrl;
+        linkEl.setAttribute(`data-param-${paramName}_text`, linkText);
+        linkEl.setAttribute(`data-param-${paramName}_url`, linkUrl);
+        console.log(`🔗 Extracted link parameter: ${paramName} = "${linkText}" -> "${linkUrl}"`);
+      }
+    });
+    
+    // Extract image parameters
+    parameterAnalysis.imageElements.forEach((imgEl: Element, index: number) => {
+      const paramName = this.generateParameterName(imgEl, index, 'image');
+      const imgSrc = imgEl.getAttribute('src') || '';
+      const imgAlt = imgEl.getAttribute('alt') || '';
+      
+      if (imgSrc) {
+        params[`${paramName}_src`] = imgSrc;
+        params[`${paramName}_alt`] = imgAlt;
+        imgEl.setAttribute(`data-param-${paramName}_src`, imgSrc);
+        imgEl.setAttribute(`data-param-${paramName}_alt`, imgAlt);
+        console.log(`🖼️ Extracted image parameter: ${paramName} = "${imgSrc}"`);
+      }
+    });
+    
+    // Extract form parameters
+    parameterAnalysis.formElements.forEach((formEl: Element, index: number) => {
+      const paramName = this.generateParameterName(formEl, index, 'form');
+      const formAction = formEl.getAttribute('action') || '';
+      const formMethod = formEl.getAttribute('method') || 'POST';
+      
+      params[`${paramName}_action`] = formAction;
+      params[`${paramName}_method`] = formMethod;
+      formEl.setAttribute(`data-param-${paramName}_action`, formAction);
+      formEl.setAttribute(`data-param-${paramName}_method`, formMethod);
+      console.log(`📋 Extracted form parameter: ${paramName} action="${formAction}" method="${formMethod}"`);
+    });
+    
+    // Extract style parameters (colors, fonts, etc.)
+    const computedStyle = window.getComputedStyle(element);
+    if (computedStyle.backgroundColor && computedStyle.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+      params.backgroundColor = computedStyle.backgroundColor;
+      element.setAttribute('data-param-backgroundColor', computedStyle.backgroundColor);
+    }
+    if (computedStyle.color) {
+      params.textColor = computedStyle.color;
+      element.setAttribute('data-param-textColor', computedStyle.color);
+    }
+    
+    // Store parameters as data attribute for later extraction
+    element.setAttribute('data-component-params', JSON.stringify(params));
+    
+    console.log(`🏷️ Dynamically extracted ${Object.keys(params).length} parameters for ${componentType}:`, params);
+  }
+  
+  /**
+   * Analyze element for extractable parameters
+   */
+  private analyzeElementForParameters(element: Element): any {
+    return {
+      textElements: Array.from(element.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div')).filter(el => {
+        const text = el.textContent?.trim() || '';
+        return text.length > 0 && text.length < 500 && !el.querySelector('*'); // Only leaf text elements
+      }),
+      linkElements: Array.from(element.querySelectorAll('a[href]')),
+      imageElements: Array.from(element.querySelectorAll('img[src]')),
+      formElements: Array.from(element.querySelectorAll('form')),
+      inputElements: Array.from(element.querySelectorAll('input, textarea, select, button'))
+    };
+  }
+  
+  /**
+   * Generate a dynamic parameter name based on element characteristics
+   */
+  private generateParameterName(element: Element, index: number, type: string): string {
+    // Try to use meaningful class names or IDs
+    if (element.id) {
+      return `${type}_${element.id.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    }
+    
+    if (element.className) {
+      const firstClass = element.className.split(' ')[0];
+      if (firstClass) {
+        return `${type}_${firstClass.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      }
+    }
+    
+    // Use tag name and index as fallback
+    return `${type}_${element.tagName.toLowerCase()}_${index}`;
+  }
+
+  /**
    * Parse components from website source code
    */
   private async parseComponentsFromSource(htmlContent: string, allFiles: any[]): Promise<ComponentInstance[]> {
@@ -384,20 +644,27 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
       
       // Look for component markers in the HTML
       // Components can be marked with data attributes or specific class patterns
-      const componentElements = doc.querySelectorAll('[data-component-id], [data-component-type], .component-instance');
+      let componentElements = doc.querySelectorAll('[data-component-id], [data-component-type], .component-instance');
+      
+      // If no marked components found, try to detect common HTML patterns
+      if (componentElements.length === 0) {
+        console.log(`🚀 [DEBUG] No marked components found, detecting HTML patterns...`);
+        componentElements = this.detectHtmlPatterns(doc);
+      }
       
       console.log(`🚀 [DEBUG] Found ${componentElements.length} potential component elements`);
       console.log(`🚀 [DEBUG] HTML content preview:`, htmlContent.substring(0, 500));
       
       // Check if this is a template file with placeholders
       if (htmlContent.includes('{{components}}') || htmlContent.includes('{{page.')) {
-        console.log(`🚀 [DEBUG] Detected template file with placeholders - creating default components`);
+        console.log(`🚀 [DEBUG] Detected template file with placeholders - returning empty components for actual rendering`);
         console.log(`🚀 [DEBUG] Template content contains:`, {
           hasComponentsPlaceholder: htmlContent.includes('{{components}}'),
           hasPagePlaceholder: htmlContent.includes('{{page.'),
           contentLength: htmlContent.length
         });
-        return this.createDefaultComponentsForPage();
+        // Return empty array instead of creating placeholder components
+        return [];
       }
       
       for (let i = 0; i < componentElements.length; i++) {
@@ -617,145 +884,6 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  /**
-   * Create default components for template pages
-   */
-  private createDefaultComponentsForPage(): ComponentInstance[] {
-    const components: ComponentInstance[] = [];
-    const pageId = this.currentPageId;
-    
-    console.log(`🚀 [DEBUG] Creating default components for page: ${pageId}`);
-    
-    switch (pageId) {
-      case 'home':
-        components.push(
-          {
-            id: `hero-${Date.now()}`,
-            type: 'hero-section',
-            x: 0,
-            y: 80,
-            width: 1200,
-            height: 400,
-            zIndex: 1,
-            parameters: {
-              title: 'Welcome to Our Website',
-              subtitle: 'Discover amazing products and services',
-              buttonText: 'Get Started',
-              backgroundColor: '#f8f9fa',
-              textColor: '#333'
-            }
-          },
-          {
-            id: `features-${Date.now()}`,
-            type: 'card',
-            x: 0,
-            y: 500,
-            width: 1200,
-            height: 300,
-            zIndex: 2,
-            parameters: {
-              title: 'Our Features',
-              content: 'Explore what makes us special',
-              backgroundColor: '#ffffff',
-              textColor: '#333'
-            }
-          }
-        );
-        break;
-        
-      case 'about':
-        components.push(
-          {
-            id: `about-header-${Date.now()}`,
-            type: 'header',
-            x: 0,
-            y: 80,
-            width: 1200,
-            height: 200,
-            zIndex: 1,
-            parameters: {
-              title: 'About Us',
-              subtitle: 'Learn more about our story',
-              backgroundColor: '#e9ecef',
-              textColor: '#333'
-            }
-          },
-          {
-            id: `about-content-${Date.now()}`,
-            type: 'text',
-            x: 0,
-            y: 300,
-            width: 1200,
-            height: 400,
-            zIndex: 2,
-            parameters: {
-              content: 'We are a company dedicated to providing excellent products and services. Our team is passionate about innovation and customer satisfaction.',
-              fontSize: '16px',
-              textColor: '#666'
-            }
-          }
-        );
-        break;
-        
-      case 'shop':
-        components.push(
-          {
-            id: `shop-header-${Date.now()}`,
-            type: 'header',
-            x: 0,
-            y: 80,
-            width: 1200,
-            height: 200,
-            zIndex: 1,
-            parameters: {
-              title: 'Our Shop',
-              subtitle: 'Browse our amazing products',
-              backgroundColor: '#f8f9fa',
-              textColor: '#333'
-            }
-          },
-          {
-            id: `product-grid-${Date.now()}`,
-            type: 'gallery',
-            x: 0,
-            y: 300,
-            width: 1200,
-            height: 600,
-            zIndex: 2,
-            parameters: {
-              title: 'Featured Products',
-              layout: 'grid',
-              columns: 3
-            }
-          }
-        );
-        break;
-        
-      default:
-        // Generic page components
-        components.push(
-          {
-            id: `page-header-${Date.now()}`,
-            type: 'header',
-            x: 0,
-            y: 80,
-            width: 1200,
-            height: 200,
-            zIndex: 1,
-            parameters: {
-              title: pageId.charAt(0).toUpperCase() + pageId.slice(1),
-              subtitle: `Welcome to the ${pageId} page`,
-              backgroundColor: '#f8f9fa',
-              textColor: '#333'
-            }
-          }
-        );
-        break;
-    }
-    
-    console.log(`🚀 [DEBUG] Created ${components.length} default components for ${pageId} page`);
-    return components;
-  }
 
   /**
    * Add components to template source code
@@ -815,8 +943,8 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
         html = `
     <section id="${component.id}" data-component-id="${component.id}" data-component-type="${component.type}" class="hero-section">
       <div class="hero-content">
-        <h1 data-param-title="${params['title'] || ''}">${params['title'] || 'Hero Title'}</h1>
-        <p data-param-subtitle="${params['subtitle'] || ''}">${params['subtitle'] || 'Hero subtitle'}</p>
+        <h1 data-param-title="${params['title'] || ''}">${params['title'] || ''}</h1>
+        <p data-param-subtitle="${params['subtitle'] || ''}">${params['subtitle'] || ''}</p>
         ${params['buttonText'] ? `<button data-param-buttonText="${params['buttonText']}" class="hero-button">${params['buttonText']}</button>` : ''}
       </div>
     </section>`;
@@ -825,7 +953,7 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
       case 'header':
         html = `
     <header id="${component.id}" data-component-id="${component.id}" data-component-type="${component.type}" class="page-header">
-      <h1 data-param-title="${params['title'] || ''}">${params['title'] || 'Header Title'}</h1>
+      <h1 data-param-title="${params['title'] || ''}">${params['title'] || ''}</h1>
       ${params['subtitle'] ? `<p data-param-subtitle="${params['subtitle']}" class="header-subtitle">${params['subtitle']}</p>` : ''}
     </header>`;
         break;
@@ -833,7 +961,7 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
       case 'text':
         html = `
     <div id="${component.id}" data-component-id="${component.id}" data-component-type="${component.type}" class="text-content">
-      <p data-param-content="${params['content'] || ''}">${params['content'] || 'Text content'}</p>
+      <p data-param-content="${params['content'] || ''}">${params['content'] || ''}</p>
     </div>`;
         break;
         
@@ -972,10 +1100,10 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
    */
   private getPageTitle(): string {
     switch (this.currentPageId) {
-      case 'home': return 'Home - Your Website';
-      case 'about': return 'About Us - Your Website';
-      case 'shop': return 'Shop - Your Website';
-      default: return `${this.currentPageId.charAt(0).toUpperCase() + this.currentPageId.slice(1)} - Your Website`;
+      case 'home': return 'Home';
+      case 'about': return 'About';
+      case 'shop': return 'Shop';
+      default: return this.currentPageId.charAt(0).toUpperCase() + this.currentPageId.slice(1);
     }
   }
 
@@ -1330,6 +1458,43 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
   }
 
   // Enhanced Component Rendering Methods v3.0
+  /**
+   * Update render context for a single component (for parameter updates)
+   */
+  private updateSingleComponentRenderContext(component: ComponentInstance): void {
+    if (!this.apiComponentTypesLoaded) {
+      console.log('⏳ API component types not ready yet; deferring single component render');
+      return;
+    }
+
+    const componentType = this.getApiComponentType(component.type);
+    if (componentType) {
+      // Remove existing render context for this component
+      const existingIndex = this.componentRenderContexts.findIndex(ctx => ctx.component.id === component.id);
+      
+      // Convert instance and render using FAST rendering
+      const modelComponent = this.convertToModelComponent(component);
+      const renderContext = this.componentRenderer.renderComponentFast(componentType, modelComponent, true); // Force refresh
+      
+      // Apply styles immediately if available
+      if (renderContext.appliedCSS) {
+        this.injectComponentStyles(renderContext.appliedCSS, component.id);
+      }
+      
+      if (existingIndex > -1) {
+        // Replace existing render context
+        this.componentRenderContexts[existingIndex] = renderContext;
+      } else {
+        // Add new render context
+        this.componentRenderContexts.push(renderContext);
+      }
+      
+      console.log('✅ Updated single component render context with styles:', component.id, component.type);
+    } else {
+      console.warn('❌ Component type not found for single update:', component.type);
+    }
+  }
+
   private updateComponentRenderContexts(): void {
     // Defer rendering until API component types are ready
     if (!this.apiComponentTypesLoaded) {
@@ -1356,6 +1521,11 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
           // Convert instance and render using FAST rendering
           const modelComponent = this.convertToModelComponent(component);
           const renderContext = this.componentRenderer.renderComponentFast(componentType, modelComponent);
+          
+          // Apply styles immediately if available
+          if (renderContext.appliedCSS) {
+            this.injectComponentStyles(renderContext.appliedCSS, component.id);
+          }
           
           // Check if this is a dynamic component (like accordion)
           const isDynamic = this.componentRenderer.isDynamicComponent(componentType);
@@ -1705,6 +1875,13 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
         throw new Error('No current page selected');
       }
 
+      console.log('🎯 Adding component via enhanced system:', {
+        componentTypeId,
+        workspaceId: this.currentWorkspaceId,
+        pageId: currentPageId,
+        position: { x, y }
+      });
+
       const instanceId = await this.enhancedWebsiteBuilder.addComponentToPage(
         this.currentWorkspaceId,
         currentPageId,
@@ -1714,9 +1891,29 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
 
       console.log('✅ Component added via enhanced system:', instanceId);
       this.toastService.success('Component added successfully', 'Success');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error adding component via enhanced system:', error);
-      this.toastService.error('Failed to add component', 'Error');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to add component';
+      if (error?.status === 400) {
+        errorMessage = 'Invalid component data. Please check the component configuration.';
+      } else if (error?.status === 401) {
+        errorMessage = 'Authentication failed. Please log in again.';
+      } else if (error?.status === 403) {
+        errorMessage = 'Permission denied. You may not have access to this workspace.';
+      } else if (error?.status === 404) {
+        errorMessage = 'Component type not found. Please refresh and try again.';
+      } else if (error?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      }
+      
+      this.toastService.error(errorMessage, 'Error');
+      
+      // Fallback to legacy system if enhanced system fails
+      console.log('🔄 Falling back to legacy system...');
+      const component = { id: componentTypeId, defaultWidth: 300, defaultHeight: 200 };
+      this.addComponentUsingLegacySystem(component, x, y);
     }
   }
 
@@ -2032,6 +2229,16 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
   deleteComponentHandler(event: Event, instanceId: string): void {
     event.stopPropagation();
     
+    console.log('🗑️ Deleting component:', instanceId);
+    
+    // Try enhanced system first
+    if (this.currentWorkspaceId && this.apiComponentTypesLoaded) {
+      this.deleteComponentUsingEnhancedSystem(instanceId);
+      return;
+    }
+    
+    // Fallback to legacy system
+    console.log('⚠️ Using legacy deletion system for component:', instanceId);
     const currentPage = this.pages.find(p => p.id === this.currentPageId);
     if (currentPage) {
       const componentIndex = currentPage.components.findIndex(c => c.id === instanceId);
@@ -2045,12 +2252,84 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
           this.componentInstanceSelectionChange.emit(null);
         }
 
+        // Remove component styles
+        this.removeComponentStyles(instanceId);
+        
+        // Remove from render contexts
+        const renderContextIndex = this.componentRenderContexts.findIndex(ctx => ctx.component.id === instanceId);
+        if (renderContextIndex > -1) {
+          this.componentRenderContexts.splice(renderContextIndex, 1);
+        }
+        
+        // Clear render cache for this component
+        this.componentRenderer.clearRenderCache(deletedComponent.type);
+
         // Update source code to remove the component
         this.updateWebsiteSourceAfterDelete(deletedComponent);
         
         this.updateCurrentPageComponents();
         this.pageDataChange.emit(this.pages);
+        
+        // Force change detection
+        this.cdr.detectChanges();
+        
+        console.log('✅ Component deleted successfully:', instanceId);
+        this.toastService.success('Component deleted successfully', 'Success');
       }
+    }
+  }
+
+  /**
+   * Delete component using enhanced system
+   */
+  private async deleteComponentUsingEnhancedSystem(instanceId: string): Promise<void> {
+    try {
+      console.log('🗑️ Deleting component using enhanced system:', instanceId);
+      
+      // Find the component in current workspace components
+      const component = this.currentWorkspaceComponents.find(c => c.id === instanceId);
+      if (!component) {
+        console.error('❌ Component not found in workspace components:', instanceId);
+        this.toastService.error('Component not found', 'Error');
+        return;
+      }
+      
+      // Delete from backend
+      await this.enhancedWebsiteBuilder.deleteComponent(instanceId);
+      
+      // Remove from local state
+      this.currentWorkspaceComponents = this.currentWorkspaceComponents.filter(c => c.id !== instanceId);
+      
+      // Clear selection if deleted component was selected
+      if (this.selectedComponentInstance?.id === instanceId) {
+        this.selectedComponentInstance = null;
+        this.componentInstanceSelectionChange.emit(null);
+      }
+
+      // Remove component styles
+      this.removeComponentStyles(instanceId);
+      
+      // Remove from render contexts
+      this.componentRenderContexts = this.componentRenderContexts.filter(ctx => ctx.component.id !== instanceId);
+      
+      // Clear render cache for this component type
+      this.componentRenderer.clearRenderCache(component.componentType);
+      
+      // Remove from DOM
+      const element = document.querySelector(`[data-instance-id="${instanceId}"]`);
+      if (element) {
+        element.remove();
+      }
+      
+      // Force change detection
+      this.cdr.detectChanges();
+      
+      console.log('✅ Component deleted successfully using enhanced system:', instanceId);
+      this.toastService.success('Component deleted successfully', 'Success');
+      
+    } catch (error) {
+      console.error('❌ Error deleting component using enhanced system:', error);
+      this.toastService.error('Failed to delete component', 'Error');
     }
   }
 
@@ -2496,33 +2775,96 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
    * Update element content based on component parameters
    */
   private updateElementContent(element: Element, component: ComponentInstance): void {
-    const params = component.parameters;
-    
-    // Update text content
-    if (params['text'] || params['content']) {
-      element.textContent = params['text'] || params['content'];
-    }
-    
-    // Update specific element attributes
-    if (element.tagName === 'IMG' && params['src']) {
-      element.setAttribute('src', params['src']);
-      if (params['alt']) element.setAttribute('alt', params['alt']);
-    }
-    
-    if (element.tagName === 'A' && params['href']) {
-      element.setAttribute('href', params['href']);
-      if (params['target']) element.setAttribute('target', params['target']);
-    }
-    
-    // Update inline styles
-    let styleString = '';
-    if (params['backgroundColor']) styleString += `background-color: ${params['backgroundColor']}; `;
-    if (params['textColor']) styleString += `color: ${params['textColor']}; `;
-    if (params['fontSize']) styleString += `font-size: ${params['fontSize']}; `;
-    if (params['fontFamily']) styleString += `font-family: ${params['fontFamily']}; `;
-    
-    if (styleString) {
+    try {
+      const params = component.parameters;
+      
+      // Get the component type and re-render the content
+      const componentType = this.getApiComponentType(component.type);
+      if (componentType) {
+        const modelComponent = this.convertToModelComponent(component);
+        const renderContext = this.componentRenderer.renderComponentFast(componentType, modelComponent, true);
+        
+        // Update the element's inner HTML with the new rendered content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = renderContext.renderedHTML;
+        const newContent = tempDiv.firstElementChild;
+        
+        if (newContent) {
+          // Preserve the outer element but update its content
+          element.innerHTML = newContent.innerHTML;
+          
+          // Copy any new attributes from the rendered content (except positioning ones)
+          Array.from(newContent.attributes).forEach(attr => {
+            if (!['id', 'data-component-id', 'data-instance-id', 'style', 'data-x', 'data-y', 'data-width', 'data-height', 'data-z-index'].includes(attr.name)) {
+              element.setAttribute(attr.name, attr.value);
+            }
+          });
+          
+          // Re-inject component styles if available
+          if (renderContext.appliedCSS) {
+            this.injectComponentStyles(renderContext.appliedCSS, component.id);
+            console.log('💄 Re-injected styles for component:', component.id);
+          }
+          
+          console.log('✅ Updated element content using enhanced rendering:', component.id);
+          return;
+        }
+      }
+      
+      // Fallback to legacy parameter-based updates
+      console.log('⚠️ Using fallback content update for:', component.type);
+      
+      // Update text content
+      if (params['text'] || params['content'] || params['title']) {
+        element.textContent = params['text'] || params['content'] || params['title'];
+      }
+      
+      // Update specific element attributes
+      if (element.tagName === 'IMG' && params['src']) {
+        element.setAttribute('src', params['src']);
+        if (params['alt']) element.setAttribute('alt', params['alt']);
+      }
+      
+      if (element.tagName === 'A' && params['href']) {
+        element.setAttribute('href', params['href']);
+        if (params['target']) element.setAttribute('target', params['target']);
+      }
+      
+      // Update inline styles with enhanced parameter support
+      let styleString = element.getAttribute('style') || '';
+      
+      // Color parameters
+      if (params['backgroundColor']) styleString = this.updateStyleProperty(styleString, 'background-color', params['backgroundColor']);
+      if (params['textColor']) styleString = this.updateStyleProperty(styleString, 'color', params['textColor']);
+      
+      // Typography parameters
+      if (params['fontSize']) styleString = this.updateStyleProperty(styleString, 'font-size', params['fontSize'] + (typeof params['fontSize'] === 'number' ? 'px' : ''));
+      if (params['fontFamily']) styleString = this.updateStyleProperty(styleString, 'font-family', params['fontFamily']);
+      if (params['lineHeight']) styleString = this.updateStyleProperty(styleString, 'line-height', params['lineHeight']);
+      if (params['textAlign']) styleString = this.updateStyleProperty(styleString, 'text-align', params['textAlign']);
+      
+      // Layout parameters
+      if (params['padding']) styleString = this.updateStyleProperty(styleString, 'padding', params['padding'] + (typeof params['padding'] === 'number' ? 'px' : ''));
+      if (params['borderRadius']) styleString = this.updateStyleProperty(styleString, 'border-radius', params['borderRadius'] + (typeof params['borderRadius'] === 'number' ? 'px' : ''));
+      
       element.setAttribute('style', styleString);
+      
+    } catch (error) {
+      console.error('❌ Error updating element content:', error);
+    }
+  }
+
+  /**
+   * Update a specific CSS property in a style string
+   */
+  private updateStyleProperty(styleString: string, property: string, value: string): string {
+    const regex = new RegExp(`${property}\\s*:\\s*[^;]+;?`, 'i');
+    const newProperty = `${property}: ${value};`;
+    
+    if (regex.test(styleString)) {
+      return styleString.replace(regex, newProperty);
+    } else {
+      return styleString + (styleString.endsWith(';') ? ' ' : '; ') + newProperty;
     }
   }
 
@@ -2622,6 +2964,36 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
+   * Inject component-specific styles into the document
+   */
+  private injectComponentStyles(css: string, instanceId: string): void {
+    const styleId = `component-styles-${instanceId}`;
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+    
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+    
+    styleElement.textContent = css;
+    console.log('💄 Injected styles for component:', instanceId);
+  }
+
+  /**
+   * Remove component-specific styles from the document
+   */
+  private removeComponentStyles(instanceId: string): void {
+    const styleId = `component-styles-${instanceId}`;
+    const styleElement = document.getElementById(styleId);
+    
+    if (styleElement) {
+      styleElement.remove();
+      console.log('🧹 Removed styles for component:', instanceId);
+    }
+  }
+
+  /**
    * Override component update to sync with source code
    */
   updateComponentInstance(updatedInstance: ComponentInstance): void {
@@ -2631,11 +3003,30 @@ export class Canvas implements OnInit, OnChanges, OnDestroy {
       if (componentIndex > -1) {
         currentPage.components[componentIndex] = updatedInstance;
         
+        // Update the current page components array
+        const currentComponentIndex = this.currentPageComponents.findIndex(c => c.id === updatedInstance.id);
+        if (currentComponentIndex > -1) {
+          this.currentPageComponents[currentComponentIndex] = updatedInstance;
+        }
+        
+        // Clear render cache for this component to force re-render
+        this.componentRenderer.clearRenderCache(updatedInstance.type);
+        
+        // Update the specific component's render context
+        this.updateSingleComponentRenderContext(updatedInstance);
+        
+        // Force re-render of all component contexts to ensure consistency
+        this.updateComponentRenderContexts();
+        
+        // Trigger Angular change detection
+        this.cdr.detectChanges();
+        
         // Update source code
         this.updateWebsiteSourceAfterModification(updatedInstance);
         
-        this.updateCurrentPageComponents();
         this.pageDataChange.emit(this.pages);
+        
+        console.log('✅ Component instance updated and view refreshed:', updatedInstance.id);
       }
     }
   }

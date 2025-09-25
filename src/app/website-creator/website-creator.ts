@@ -2366,29 +2366,29 @@ ${response.content}
         return `
           <section class="hero component" data-component-id="${component.id}" style="${style}">
             <div class="container">
-              <h1>${component.parameters?.title || 'Welcome'}</h1>
-              <p>${component.parameters?.subtitle || 'Subtitle'}</p>
-              <a href="${component.parameters?.buttonLink || '#'}" class="btn">${component.parameters?.buttonText || 'Button'}</a>
+              <h1>${component.parameters?.title || ''}</h1>
+              <p>${component.parameters?.subtitle || ''}</p>
+              <a href="${component.parameters?.buttonLink || '#'}" class="btn">${component.parameters?.buttonText || ''}</a>
             </div>
           </section>
         `;
       case 'contact-form':
         return `
           <div class="contact-form component" data-component-id="${component.id}" style="${style}">
-            <h2>${component.parameters?.title || 'Contact Us'}</h2>
+            <h2>${component.parameters?.title || ''}</h2>
             <form>
               <input type="text" name="name" placeholder="Your Name" required />
               <input type="email" name="email" placeholder="Your Email" required />
               <textarea name="message" placeholder="Your Message" rows="5" required></textarea>
-              <button type="submit">${component.parameters?.submitText || 'Send Message'}</button>
+              <button type="submit">${component.parameters?.submitText || ''}</button>
             </form>
           </div>
         `;
       case 'text-block':
         return `
           <div class="text-block component" data-component-id="${component.id}" style="${style}">
-            <h2>${component.parameters?.heading || 'Heading'}</h2>
-            <p>${component.parameters?.content || 'Content goes here...'}</p>
+            <h2>${component.parameters?.heading || ''}</h2>
+            <p>${component.parameters?.content || ''}</p>
           </div>
         `;
       default:
