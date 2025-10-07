@@ -7,13 +7,16 @@ import { DataSvrService } from '../services/Other/data-svr.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable, Subscription } from 'rxjs';
-import { map, shareReplay, filter } from 'rxjs/operators';
+import { map, shareReplay, filter, takeUntil } from 'rxjs/operators';
 import { MatSidenav } from '@angular/material/sidenav';
 import { ManageBusinessesService } from '../services/Business/Manage/manage-businesses.service';
+import { BillingService } from '../services/Business/Billing/billing.service';
 import { SubscriptionStatus } from '../models/subscription-status';
+import { BillingProfile, BillingError } from '../models/billing.models';
 import { BusinessRegistrationDto } from '../models/business-registration-dto';
 import { MenuItem, MegaMenuItem } from 'primeng/api';
 import { UniversalSearchService } from '../services/Business/Manage/ViewSearchEdit/universal-search.service';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-topbar',
@@ -23,6 +26,7 @@ import { UniversalSearchService } from '../services/Business/Manage/ViewSearchEd
 })
 export class TopbarComponent implements OnInit, OnDestroy {
   @ViewChild('mobileDrawer') mobileDrawer!: MatSidenav;
+  private destroy$ = new Subject<void>();
 
   // Window reference for debug info
   window = window;
@@ -37,11 +41,16 @@ export class TopbarComponent implements OnInit, OnDestroy {
   selectedBusinessForStaff: BusinessRegistrationDto | null = null;
   private hasAttemptedLoadBusinesses = false;
   private authWatchIntervalId: any;
-  private hasAttemptedLoadSubscription = false;
 
-  // Subscription status indicator state
+  // New billing system properties
+  billingProfile: BillingProfile | null = null;
+  billingError: BillingError | null = null;
+  isBillingLoading = false;
+
+  // Legacy subscription status (kept for backward compatibility)
   subscriptionStatus: SubscriptionStatus | null = null;
   isLoadingSubscription: boolean = false;
+  private hasAttemptedLoadSubscription = false;
 
   // Router subscription for active state detection
   private routerSubscription: Subscription = new Subscription();
@@ -82,6 +91,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private router: Router,
     private breakpointObserver: BreakpointObserver,
     private manageBusinessesService: ManageBusinessesService,
+    private billingService: BillingService,
     private universalSearchService: UniversalSearchService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -93,7 +103,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
       // The restoration is handled automatically by the DataSvrService constructor
     }
     
-    // Load subscription status once when authenticated
+    // Initialize billing listeners
+    this.initializeBillingListeners();
+    
+    // Load subscription status once when authenticated (legacy support)
     if (this.data.currentUser && !this.hasAttemptedLoadSubscription) {
       this.hasAttemptedLoadSubscription = true;
       this.loadSubscriptionStatus();
@@ -114,6 +127,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
       } else if (!this.data.currentUser && (this.subscriptionStatus || this.hasAttemptedLoadSubscription)) {
         // Reset state on logout
         this.subscriptionStatus = null;
+        this.billingProfile = null;
         this.hasAttemptedLoadSubscription = false;
       }
     }, 1000);
@@ -130,10 +144,51 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    
     if (this.authWatchIntervalId) {
       clearInterval(this.authWatchIntervalId);
     }
     this.routerSubscription.unsubscribe();
+  }
+
+  private initializeBillingListeners(): void {
+    // Listen for billing profile changes
+    this.billingService.billingProfile$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((profile: BillingProfile | null) => {
+        this.billingProfile = profile;
+        this.cdr.detectChanges();
+      });
+
+    // Listen for billing errors
+    this.billingService.lastError$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((error: BillingError | null) => {
+        this.billingError = error;
+        this.cdr.detectChanges();
+      });
+
+    // Listen for loading state
+    this.billingService.isLoading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((loading: boolean) => {
+        this.isBillingLoading = loading;
+        this.cdr.detectChanges();
+      });
+
+    // Load billing data when user is authenticated
+    this.data.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user: any) => {
+      if (user) {
+        // Load billing profile
+        this.billingService.getBillingProfile().subscribe();
+      } else {
+        // Clear billing data on logout
+        this.billingProfile = null;
+        this.billingError = null;
+      }
+    });
   }
 
   isRouteActive(route: string): boolean {
@@ -247,18 +302,80 @@ export class TopbarComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Subscription indicator helpers
+  // Subscription indicator helpers - Updated to use new billing system
   get isTrialing(): boolean {
+    // Use new billing system first, fall back to legacy
+    if (this.billingProfile) {
+      return this.billingProfile.billingStatus === 'trialing';
+    }
+    // Legacy fallback
     const s = this.subscriptionStatus?.status?.toLowerCase() || '';
     return this.subscriptionStatus?.isSubscribed === true && s.includes('trial');
   }
+
   get isActiveSubscribedNoTrial(): boolean {
+    // Use new billing system first, fall back to legacy
+    if (this.billingProfile) {
+      return this.billingProfile.billingStatus === 'active';
+    }
+    // Legacy fallback
     const s = this.subscriptionStatus?.status?.toLowerCase() || '';
     return this.subscriptionStatus?.isSubscribed === true && s === 'active';
   }
+
   get hasNoSubscription(): boolean {
+    // Use new billing system first, fall back to legacy
+    if (this.billingProfile) {
+      return ['canceled', 'incomplete'].includes(this.billingProfile.billingStatus);
+    }
+    // Legacy fallback
     const s = (this.subscriptionStatus?.status || '').toLowerCase();
     return !this.subscriptionStatus?.isSubscribed || s.includes('no active subscription');
+  }
+
+  get subscriptionDisplayText(): string {
+    if (this.billingProfile) {
+      switch (this.billingProfile.billingStatus) {
+        case 'active': return 'Subscribed';
+        case 'trialing': return 'Trial';
+        case 'past_due': return 'Past Due';
+        case 'canceled': return 'Subscribe';
+        case 'incomplete': return 'Setup';
+        default: return 'Subscribe';
+      }
+    }
+    // Legacy fallback
+    return this.isTrialing ? 'Trialing' : (this.isActiveSubscribedNoTrial ? 'Subscribed' : 'Subscribe');
+  }
+
+  get subscriptionIcon(): string {
+    if (this.billingProfile) {
+      switch (this.billingProfile.billingStatus) {
+        case 'active': return 'pi pi-check-circle';
+        case 'trialing': return 'pi pi-clock';
+        case 'past_due': return 'pi pi-exclamation-triangle';
+        case 'canceled': return 'pi pi-exclamation-triangle';
+        case 'incomplete': return 'pi pi-cog';
+        default: return 'pi pi-exclamation-triangle';
+      }
+    }
+    // Legacy fallback
+    return this.isTrialing ? 'pi pi-clock' : (this.isActiveSubscribedNoTrial ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle');
+  }
+
+  get subscriptionSeverity(): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'help' | 'contrast' | undefined {
+    if (this.billingProfile) {
+      switch (this.billingProfile.billingStatus) {
+        case 'active': return 'success';
+        case 'trialing': return 'info';
+        case 'past_due': return 'warning';
+        case 'canceled': return 'danger';
+        case 'incomplete': return 'warning';
+        default: return 'warning';
+      }
+    }
+    // Legacy fallback
+    return this.isTrialing ? 'secondary' : (this.isActiveSubscribedNoTrial ? 'success' : 'warning');
   }
 
   navigateToBusinessSettings(): void {

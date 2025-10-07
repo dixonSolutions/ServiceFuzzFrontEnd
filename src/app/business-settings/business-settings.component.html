@@ -1,66 +1,288 @@
 <p-toast></p-toast>
 <div class="settings-container">
   <!-- Not Signed In Message -->
-  <mat-card class="message-card" *ngIf="!data.currentUser">
-    <mat-card-content class="message-content">
-      <mat-icon class="message-icon">account_circle</mat-icon>
+  <div class="auth-required-card" *ngIf="!data.currentUser">
+    <p-card>
+      <div class="auth-prompt">
+        <i class="pi pi-user" style="font-size: 3rem; color: #3b82f6; margin-bottom: 1rem;"></i>
       <h2>Please Sign In</h2>
-      <p>You need to be signed in to view your business settings.</p>
-      <button mat-raised-button color="primary" [routerLink]="['/sign']" [queryParams]="{redirect: '/business/settings'}">
-        <mat-icon>login</mat-icon>
-        Sign In
-      </button>
-    </mat-card-content>
-  </mat-card>
+        <p>You need to be signed in to view your billing settings.</p>
+        <p-button 
+          label="Sign In" 
+          icon="pi pi-sign-in" 
+          [routerLink]="['/sign-in-or-sign-up']"
+          styleClass="p-button-lg"
+        ></p-button>
+      </div>
+    </p-card>
+  </div>
 
-  <!-- Subscription Status -->
-  <div class="subscription-section" *ngIf="data.currentUser">
-    <p-card class="subscription-card" [header]="'Subscription'" [subheader]="isTrialing ? 'Trialing' : (isActiveSubscribedNoTrial ? 'Active' : (hasNoSubscription ? 'Not Subscribed' : ''))">
-        <div class="subscription-info" *ngIf="subscriptionStatus && !isLoadingSubscription">
-          <!-- State 1: Subscribed + trialing -->
-          <ng-container *ngIf="isTrialing">
-          <div class="info-row">
-              <span>You are on a free trial. If you don't cancel, you will be charged automatically at the end of the trial.</span>
+  <!-- Main Content -->
+  <div class="billing-content" *ngIf="data.currentUser">
+    
+    <!-- Error Display -->
+    <p-messages 
+      *ngIf="billingError" 
+      severity="error" 
+      [value]="[{severity: 'error', summary: 'Billing Error', detail: billingError.message}]"
+      [closable]="true"
+      (onClose)="dismissBillingError()"
+    ></p-messages>
+
+    <!-- Current Plan Card -->
+    <div class="current-plan-section" *ngIf="billingProfile">
+      <h2 class="section-title">
+        <i class="pi pi-crown"></i>
+        Current Plan
+      </h2>
+      
+      <p-card styleClass="current-plan-card">
+        <ng-template pTemplate="header">
+          <div class="current-plan-header">
+            <div class="plan-info">
+              <h3>{{ billingProfile.plan.name }}</h3>
+              <p class="plan-description">{{ billingProfile.plan.description }}</p>
           </div>
-          <div class="info-row" *ngIf="subscriptionStatus.currentPeriodEnd">
-              <span>Trial ends: {{ subscriptionStatus.currentPeriodEnd | date:'mediumDate' }}</span>
+            <p-tag 
+              [value]="getBillingStatusText(billingProfile.billingStatus)"
+              [severity]="getBillingStatusSeverity(billingProfile.billingStatus)"
+              styleClass="status-tag"
+            ></p-tag>
             </div>
-            <div class="subscribe-options">
-              <button pButton type="button" class="p-button-outlined p-button-danger" label="Cancel Trial" (click)="cancelTrialLocally()"></button>
+        </ng-template>
+
+        <div class="current-plan-content">
+          <div class="plan-details-grid">
+            <div class="detail-item">
+              <label>Monthly Cost</label>
+              <span class="value">{{ formatCurrency(billingProfile.plan.basePrice, billingProfile.plan.currency) }}</span>
           </div>
-          </ng-container>
-
-          <!-- State 2: Subscribed, no trial -->
-          <ng-container *ngIf="isActiveSubscribedNoTrial">
-            <div class="info-row">
-              <span>You are subscribed.</span>
+            
+            <div class="detail-item">
+              <label>Business Count</label>
+              <span class="value">{{ billingProfile.businessCount }}</span>
               </div>
-            <div class="info-row" *ngIf="subscriptionStatus.currentPeriodEnd">
-              <span>Renews on: {{ subscriptionStatus.currentPeriodEnd | date:'mediumDate' }}</span>
+            
+            <div class="detail-item">
+              <label>Next Billing</label>
+              <span class="value">{{ formatDate(billingProfile.nextBillingDate) }}</span>
               </div>
-            <div class="subscribe-options">
-              <button pButton type="button" class="p-button-outlined p-button-danger" label="Unsubscribe" (click)="unsubscribeLocally()"></button>
-              </div>
-          </ng-container>
-
-          <!-- State 3: No subscription or trial -->
-          <ng-container *ngIf="hasNoSubscription">
-            <div class="upgrade-prompt">
-              <h4>Choose how to subscribe</h4>
-            <div class="subscribe-options">
-                <button pButton type="button" [label]="isSubscribing ? 'Redirecting...' : 'Start 30-day free trial'" (click)="startStripeTrial()" [disabled]="isSubscribing"></button>
-                <button pButton type="button" class="p-button-warning" [label]="isSubscribing ? 'Redirecting...' : 'Subscribe Now'" (click)="upgradeToPremium()" [disabled]="isSubscribing"></button>
+            
+            <div class="detail-item" *ngIf="billingProfile.trialEndsAt">
+              <label>Trial Ends</label>
+              <span class="value trial-end" [class.trial-warning]="isTrialExpiringSoon()">
+                {{ formatDate(billingProfile.trialEndsAt) }}
+              </span>
             </div>
           </div>
-          </ng-container>
+
+          <!-- Trial Warning -->
+          <p-message 
+            *ngIf="isTrialExpiringSoon()" 
+            severity="warn" 
+            text="Your trial expires in {{ getDaysUntilTrialEnd() }} days. Subscribe to continue using ServiceFuzz."
+            styleClass="trial-warning-message"
+          ></p-message>
+
+          <!-- Usage Summary -->
+          <div class="usage-summary" *ngIf="usageSummary">
+            <h4>Current Usage</h4>
+            <div class="usage-items">
+              <div class="usage-item">
+                <div class="usage-info">
+                  <i class="pi pi-users"></i>
+                  <span>Staff: {{ usageSummary.totalStaff }}/{{ usageSummary.includedStaff }}</span>
+                </div>
+                <p-progressBar 
+                  [value]="getUsagePercentage(usageSummary.totalStaff, usageSummary.includedStaff)"
+                  styleClass="usage-progress"
+                ></p-progressBar>
+              </div>
+              
+              <div class="usage-item">
+                <div class="usage-info">
+                  <i class="pi pi-desktop"></i>
+                  <span>Workspaces: {{ usageSummary.totalWorkspaces }}/{{ usageSummary.includedWorkspaces }}</span>
+                </div>
+                <p-progressBar 
+                  [value]="getUsagePercentage(usageSummary.totalWorkspaces, usageSummary.includedWorkspaces)"
+                  styleClass="usage-progress"
+                ></p-progressBar>
         </div>
         
-        <!-- Loading State -->
-        <div class="loading-subscription" *ngIf="isLoadingSubscription">
-          <p-progressSpinner styleClass="w-3rem h-3rem" strokeWidth="6"></p-progressSpinner>
-          <p>Checking subscription status...</p>
+              <div class="usage-item">
+                <div class="usage-info">
+                  <i class="pi pi-cloud-upload"></i>
+                  <span>Deployments: {{ usageSummary.totalDeployments }}/{{ usageSummary.includedDeployments }}</span>
+                </div>
+                <p-progressBar 
+                  [value]="getUsagePercentage(usageSummary.totalDeployments, usageSummary.includedDeployments)"
+                  styleClass="usage-progress"
+                ></p-progressBar>
+              </div>
+            </div>
+          </div>
         </div>
     </p-card>
   </div>
 
-  <!-- Legacy free trial and marketing content removed per new subscription UX -->
+    <!-- Available Plans Section -->
+    <div class="available-plans-section">
+      <h2 class="section-title">
+        <i class="pi pi-shopping-cart"></i>
+        Available Plans
+      </h2>
+
+      <!-- Loading State -->
+      <div *ngIf="isBillingLoading && availablePlans.length === 0" class="loading-state">
+        <p-progressSpinner strokeWidth="4" animationDuration="1s"></p-progressSpinner>
+        <p>Loading available plans...</p>
+      </div>
+
+      <!-- Plans Grid -->
+      <div class="plans-grid" *ngIf="availablePlans.length > 0">
+        <p-card 
+          *ngFor="let plan of availablePlans" 
+          styleClass="plan-card"
+          [class.current-plan]="billingProfile?.plan?.id === plan.id"
+        >
+          <ng-template pTemplate="header">
+            <div class="plan-card-header">
+              <div class="plan-title-section">
+                <h3>{{ plan.name }}</h3>
+                <p class="plan-subtitle">{{ plan.description }}</p>
+              </div>
+              <div class="plan-price">
+                <span class="price-amount">{{ formatCurrency(calculateTotalPrice(plan), plan.currency) }}</span>
+                <span class="price-period">/month</span>
+              </div>
+            </div>
+          </ng-template>
+
+          <div class="plan-content">
+            <!-- Business Count Selector -->
+            <div class="business-selector" *ngIf="plan.capabilities && billingProfile?.plan?.id !== plan.id">
+              <label>Number of Businesses</label>
+              <div class="business-counter">
+                <p-button 
+                  icon="pi pi-minus" 
+                  styleClass="p-button-sm p-button-outlined"
+                  (onClick)="onBusinessCountChange(plan.id, (businessCounts[plan.id] || 1) - 1)"
+                  [disabled]="(businessCounts[plan.id] || 1) <= 1"
+                ></p-button>
+                <span class="counter-display">{{ businessCounts[plan.id] || 1 }}</span>
+                <p-button 
+                  icon="pi pi-plus" 
+                  styleClass="p-button-sm p-button-outlined"
+                  (onClick)="onBusinessCountChange(plan.id, (businessCounts[plan.id] || 1) + 1)"
+                  [disabled]="(businessCounts[plan.id] || 1) >= plan.capabilities.maxTotalBusinesses"
+                ></p-button>
+              </div>
+              <small class="business-limit">Max: {{ plan.capabilities.maxTotalBusinesses }} businesses</small>
+            </div>
+
+            <!-- Plan Features -->
+            <div class="plan-features">
+              <h4>What's Included</h4>
+              
+              <!-- Core Features -->
+              <div class="feature-group">
+                <div class="feature-item">
+                  <i class="pi pi-check feature-icon"></i>
+                  <span>{{ plan.includedStaff }} staff members</span>
+                </div>
+                <div class="feature-item">
+                  <i class="pi pi-check feature-icon"></i>
+                  <span>{{ plan.includedWorkspaces }} workspaces</span>
+                </div>
+                <div class="feature-item">
+                  <i class="pi pi-check feature-icon"></i>
+                  <span>{{ plan.includedDeployments }} deployments</span>
+                </div>
+                <div class="feature-item" *ngIf="plan.capabilities">
+                  <i class="pi pi-check feature-icon"></i>
+                  <span>{{ plan.capabilities.maxFreeBusinesses }} free business</span>
+                </div>
+              </div>
+
+              <!-- Premium Features -->
+              <div class="feature-group" *ngIf="plan.capabilities">
+                <div class="feature-item">
+                  <i [class]="'pi pi-' + getFeatureIcon(plan.capabilities.features.teamCollaboration)" 
+                     [class.feature-included]="plan.capabilities.features.teamCollaboration"
+                     [class.feature-excluded]="!plan.capabilities.features.teamCollaboration"
+                     class="feature-icon"></i>
+                  <span>Team collaboration</span>
+                </div>
+                <div class="feature-item">
+                  <i [class]="'pi pi-' + getFeatureIcon(plan.capabilities.features.emailServerHosting)" 
+                     [class.feature-included]="plan.capabilities.features.emailServerHosting"
+                     [class.feature-excluded]="!plan.capabilities.features.emailServerHosting"
+                     class="feature-icon"></i>
+                  <span>Email server hosting</span>
+                </div>
+                <div class="feature-item">
+                  <i [class]="'pi pi-' + getFeatureIcon(plan.capabilities.features.advancedAnalytics)" 
+                     [class.feature-included]="plan.capabilities.features.advancedAnalytics"
+                     [class.feature-excluded]="!plan.capabilities.features.advancedAnalytics"
+                     class="feature-icon"></i>
+                  <span>Advanced analytics</span>
+                </div>
+                <div class="feature-item">
+                  <i [class]="'pi pi-' + getFeatureIcon(plan.capabilities.features.prioritySupport)" 
+                     [class.feature-included]="plan.capabilities.features.prioritySupport"
+                     [class.feature-excluded]="!plan.capabilities.features.prioritySupport"
+                     class="feature-icon"></i>
+                  <span>Priority support</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ng-template pTemplate="footer">
+            <!-- Current Plan Badge -->
+            <div class="current-plan-badge" *ngIf="billingProfile?.plan?.id === plan.id">
+              <i class="pi pi-check-circle"></i>
+              <span>Current Plan</span>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="plan-actions" *ngIf="billingProfile?.plan?.id !== plan.id">
+              <p-button 
+                label="Subscribe Now" 
+                icon="pi pi-credit-card"
+                styleClass="p-button-lg subscribe-btn"
+                (onClick)="onSubscribeToPlan(plan)"
+                [loading]="isSubscribing"
+              ></p-button>
+              
+              <p-button 
+                label="Start Free Trial" 
+                icon="pi pi-play"
+                styleClass="p-button-lg p-button-outlined trial-btn"
+                (onClick)="onStartTrial(plan)"
+                [loading]="isSubscribing"
+              ></p-button>
+            </div>
+          </ng-template>
+        </p-card>
+      </div>
+
+      <!-- No Plans Available -->
+      <div *ngIf="!isBillingLoading && availablePlans.length === 0" class="no-plans-state">
+        <p-card>
+          <div class="no-plans-content">
+            <i class="pi pi-info-circle" style="font-size: 3rem; color: #6b7280; margin-bottom: 1rem;"></i>
+            <h3>No Plans Available</h3>
+            <p>Unable to load available plans. Please try refreshing the page.</p>
+            <p-button 
+              label="Refresh" 
+              icon="pi pi-refresh"
+              (onClick)="refreshBillingData()"
+            ></p-button>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,8 +1,19 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Subject } from 'rxjs';
+import { takeUntil, finalize } from 'rxjs/operators';
 import { DataSvrService } from '../services/Other/data-svr.service';
 import { ManageBusinessesService } from '../services/Business/Manage/manage-businesses.service';
+import { BillingService } from '../services/Business/Billing/billing.service';
 import { SubscriptionStatus } from '../models/subscription-status';
+import { 
+  BillingPlan, 
+  BillingProfile, 
+  UsageSummary, 
+  SubscribeRequest, 
+  ActionCheckRequest,
+  BillingError 
+} from '../models/billing.models';
 import { CheckoutService } from '../services/Main/stripe/checkout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -13,7 +24,8 @@ import { MessageService } from 'primeng/api';
   templateUrl: './business-settings.component.html',
   styleUrl: './business-settings.component.css'
 })
-export class BusinessSettingsComponent implements OnInit {
+export class BusinessSettingsComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   // Loading state for subscription redirect
   isSubscribing: boolean = false;
   
@@ -21,9 +33,24 @@ export class BusinessSettingsComponent implements OnInit {
   isBrowser: boolean = false;
   minDate: Date = new Date();
 
-  // Subscription status properties
+  // Legacy subscription status properties (kept for backward compatibility)
   subscriptionStatus: SubscriptionStatus | null = null;
   isLoadingSubscription: boolean = false;
+
+  // New billing system properties
+  availablePlans: BillingPlan[] = [];
+  billingProfile: BillingProfile | null = null;
+  usageSummary: UsageSummary | null = null;
+  billingError: BillingError | null = null;
+  isBillingLoading = false;
+  selectedPlan: BillingPlan | null = null;
+  businessCounts: { [planId: number]: number } = {};
+  
+  // View states
+  showPricingPlans = false;
+  showUsageDetails = false;
+  totalOverageCost = 0;
+  nextBillingAmount = 0;
   // Derived flags for UI states
   get isTrialing(): boolean {
     const status = this.subscriptionStatus?.status?.toLowerCase() || '';
@@ -42,6 +69,7 @@ export class BusinessSettingsComponent implements OnInit {
   constructor(
     public data: DataSvrService,
     private manageBusinessesService: ManageBusinessesService,
+    private billingService: BillingService,
     private checkoutService: CheckoutService,
     private route: ActivatedRoute,
     private router: Router,
@@ -94,12 +122,243 @@ export class BusinessSettingsComponent implements OnInit {
     return today <= end;
   }
 
+  // New billing system methods
+  togglePricingPlans(): void {
+    this.showPricingPlans = !this.showPricingPlans;
+    if (this.showPricingPlans && this.availablePlans.length === 0) {
+      this.billingService.getAllPlans(true).subscribe();
+    }
+  }
+
+  toggleUsageDetails(): void {
+    this.showUsageDetails = !this.showUsageDetails;
+  }
+
+  onBusinessCountChange(planId: number, count: number): void {
+    const plan = this.availablePlans.find(p => p.id === planId);
+    if (plan && plan.capabilities) {
+      const maxCount = plan.capabilities.maxTotalBusinesses;
+      this.businessCounts[planId] = Math.min(Math.max(1, count), maxCount);
+    }
+  }
+
+  calculateTotalPrice(plan: BillingPlan): number {
+    if (!plan.capabilities) return plan.basePrice;
+    
+    const businessCount = this.businessCounts[plan.id] || 1;
+    const freeBusinesses = plan.capabilities.maxFreeBusinesses;
+    const additionalBusinesses = Math.max(0, businessCount - freeBusinesses);
+    
+    return plan.basePrice + (additionalBusinesses * plan.capabilities.additionalBusinessPrice);
+  }
+
+  onSubscribeToPlan(plan: BillingPlan): void {
+    if (!this.data.currentUser) {
+      this.router.navigate(['/sign-in-or-sign-up']);
+      return;
+    }
+
+    const businessCount = this.businessCounts[plan.id] || 1;
+    const subscribeRequest: SubscribeRequest = {
+      planId: plan.id,
+      businessCount: businessCount,
+      redirectUrl: `${window.location.origin}/business-settings/success`,
+      startTrial: false
+    };
+
+    this.isSubscribing = true;
+    this.billingError = null;
+
+    this.billingService.subscribeToPlan(subscribeRequest)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isSubscribing = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.checkoutUrl) {
+            window.location.href = response.checkoutUrl;
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Subscription Failed',
+              detail: response.errorMessage || 'Subscription failed. Please try again.'
+            });
+          }
+        },
+        error: (error) => {
+          console.error('Subscription error:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Subscription Error',
+            detail: 'An error occurred while processing your subscription.'
+          });
+        }
+      });
+  }
+
+  onStartTrial(plan: BillingPlan): void {
+    if (!this.data.currentUser) {
+      this.router.navigate(['/sign-in-or-sign-up']);
+      return;
+    }
+
+    const businessCount = this.businessCounts[plan.id] || 1;
+    const subscribeRequest: SubscribeRequest = {
+      planId: plan.id,
+      businessCount: businessCount,
+      redirectUrl: `${window.location.origin}/business-settings/success`,
+      startTrial: true
+    };
+
+    this.isSubscribing = true;
+    this.billingError = null;
+
+    this.billingService.subscribeToPlan(subscribeRequest)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isSubscribing = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Trial Started',
+              detail: 'Your free trial has been activated!'
+            });
+            // Refresh billing data
+            this.loadBillingData();
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Trial Failed',
+              detail: response.errorMessage || 'Trial setup failed. Please try again.'
+            });
+          }
+        },
+        error: (error) => {
+          console.error('Trial setup error:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Trial Error',
+            detail: 'An error occurred while setting up your trial.'
+          });
+        }
+      });
+  }
+
+  refreshBillingData(): void {
+    this.billingService.refreshBillingData();
+    this.checkSubscriptionStatus(); // Also refresh legacy data
+  }
+
+  dismissBillingError(): void {
+    this.billingError = null;
+  }
+
+  // Utility methods
+  getUsageStatusClass(percentage: number): string {
+    if (percentage >= 100) return 'usage-over';
+    if (percentage >= 80) return 'usage-warning';
+    return 'usage-normal';
+  }
+
+  getUsageStatusText(percentage: number): string {
+    if (percentage >= 100) return 'Over Limit';
+    if (percentage >= 80) return 'Near Limit';
+    return 'Within Limit';
+  }
+
+  getBillingStatusSeverity(status: string): 'success' | 'info' | 'warning' | 'danger' {
+    switch (status) {
+      case 'active': return 'success';
+      case 'trialing': return 'info';
+      case 'past_due': return 'warning';
+      case 'canceled': return 'danger';
+      case 'incomplete': return 'warning';
+      default: return 'info';
+    }
+  }
+
+  getBillingStatusClass(status: string): string {
+    switch (status) {
+      case 'active': return 'status-active';
+      case 'trialing': return 'status-trial';
+      case 'past_due': return 'status-warning';
+      case 'canceled': return 'status-error';
+      case 'incomplete': return 'status-warning';
+      default: return 'status-unknown';
+    }
+  }
+
+  getBillingStatusText(status: string): string {
+    switch (status) {
+      case 'active': return 'Active';
+      case 'trialing': return 'Free Trial';
+      case 'past_due': return 'Payment Due';
+      case 'canceled': return 'Canceled';
+      case 'incomplete': return 'Setup Incomplete';
+      default: return status;
+    }
+  }
+
+  formatCurrency(amount: number, currency: string = 'AUD'): string {
+    return this.billingService.formatCurrency(amount, currency);
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('en-AU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  getDaysUntilBilling(): number {
+    if (!this.billingProfile?.nextBillingDate) return 0;
+    
+    const nextBilling = new Date(this.billingProfile.nextBillingDate);
+    const today = new Date();
+    const diffTime = nextBilling.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  getDaysUntilTrialEnd(): number {
+    if (!this.billingProfile?.trialEndsAt) return 0;
+    
+    const trialEnd = new Date(this.billingProfile.trialEndsAt);
+    const today = new Date();
+    const diffTime = trialEnd.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  isTrialExpiringSoon(): boolean {
+    return this.billingProfile?.billingStatus === 'trialing' && this.getDaysUntilTrialEnd() <= 7;
+  }
+
+  getUsagePercentage(current: number, included: number): number {
+    return Math.min(100, (current / included) * 100);
+  }
+
+  getFeatureIcon(hasFeature: boolean): string {
+    return hasFeature ? 'check' : 'close';
+  }
+
+  getFeatureClass(hasFeature: boolean): string {
+    return hasFeature ? 'feature-included' : 'feature-excluded';
+  }
+
+  // Legacy methods (kept for backward compatibility)
   async redirectToStripeCheckout(freeTrial: boolean = false): Promise<void> {
     if (this.isSubscribing) return;
     this.isSubscribing = true;
     try {
       const checkoutUrl = await this.checkoutService.getSubscriptionCheckoutUrl(freeTrial);
-      // Redirect the current window to preserve auth context
       window.location.assign(checkoutUrl);
     } catch (error: any) {
       console.error('Failed to create Stripe Checkout session:', error);
@@ -108,32 +367,110 @@ export class BusinessSettingsComponent implements OnInit {
         : 'Could not start checkout. Please try again later.';
       this.data.openSnackBar(message, 'Close', 5000);
     } finally {
-      // Note: after successful assign this code may not run, but safe for error case
       this.isSubscribing = false;
     }
   }
 
   ngOnInit(): void {
+    this.initializeBillingListeners();
+    
     // Handle billing result messages via route param
     this.route.paramMap.subscribe(params => {
       const result = params.get('result');
       if (result === 'success') {
         this.messageService.add({ severity: 'success', summary: 'Subscription active', detail: 'Payment successful. Thank you!' });
-        // Optionally refresh subscription status
+        // Refresh both legacy and new billing data
         this.checkSubscriptionStatus();
+        this.loadBillingData();
       } else if (result === 'cancel') {
         this.messageService.add({ severity: 'info', summary: 'Checkout canceled', detail: 'No charges were made.' });
       }
     });
 
     if (this.data.currentUser?.email) {
-      // Check subscription status first
+      // Load both legacy and new billing data
       this.checkSubscriptionStatus();
+      this.loadBillingData();
     }
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private initializeBillingListeners(): void {
+    // Listen for billing profile changes
+    this.billingService.billingProfile$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(profile => {
+        this.billingProfile = profile;
+        this.calculateBillingAmounts();
+      });
+
+    // Listen for usage changes
+    this.billingService.usageSummary$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(usage => {
+        this.usageSummary = usage;
+        this.calculateBillingAmounts();
+      });
+
+    // Listen for available plans
+    this.billingService.availablePlans$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(plans => {
+        this.availablePlans = plans;
+        // Initialize business counts
+        plans.forEach(plan => {
+          this.businessCounts[plan.id] = plan.capabilities?.maxFreeBusinesses || 1;
+        });
+      });
+
+    // Listen for loading state
+    this.billingService.isLoading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(loading => {
+        this.isBillingLoading = loading;
+      });
+
+    // Listen for errors
+    this.billingService.lastError$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(error => {
+        this.billingError = error;
+      });
+
+    // Listen for overage cost changes
+    this.billingService.getCurrentOverageCost()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(cost => {
+        this.totalOverageCost = cost;
+        this.calculateBillingAmounts();
+      });
+  }
+
+  private loadBillingData(): void {
+    this.billingService.getAllPlans().subscribe();
+    this.billingService.getBillingProfile().subscribe();
+    this.billingService.getUsageSummary().subscribe();
+  }
+
+  private calculateBillingAmounts(): void {
+    if (!this.billingProfile) return;
+    
+    this.nextBillingAmount = this.billingProfile.plan.basePrice;
+    
+    if (this.billingProfile.plan.capabilities && this.billingProfile.businessCount > this.billingProfile.plan.capabilities.maxFreeBusinesses) {
+      const additionalBusinesses = this.billingProfile.businessCount - this.billingProfile.plan.capabilities.maxFreeBusinesses;
+      this.nextBillingAmount += additionalBusinesses * this.billingProfile.plan.capabilities.additionalBusinessPrice;
+    }
+    
+    this.nextBillingAmount += this.totalOverageCost;
+  }
+
   /**
-   * Check the subscription status for the current user
+   * Check the subscription status for the current user (legacy method)
    */
   private checkSubscriptionStatus(): void {
     if (!this.data.currentUser?.email) {

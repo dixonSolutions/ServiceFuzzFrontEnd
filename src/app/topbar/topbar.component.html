@@ -178,12 +178,11 @@
   <div class="toolbar-right">
     <!-- Subscription indicator -->
     <p-button 
-      *ngIf="data.currentUser && subscriptionStatus" 
+      *ngIf="data.currentUser && (billingProfile || subscriptionStatus)" 
       (onClick)="navigateToBusinessSettings()" 
       [text]="true"
-      [label]="isTrialing ? 'Trialing' : (isActiveSubscribedNoTrial ? 'Subscribed' : 'Subscribe')"
-      [icon]="isTrialing ? 'pi pi-clock' : (isActiveSubscribedNoTrial ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle')"
-      [severity]="isTrialing ? 'secondary' : (isActiveSubscribedNoTrial ? 'success' : 'warn')"
+      [label]="subscriptionDisplayText"
+      [icon]="subscriptionIcon"
       size="small">
     </p-button>
     
