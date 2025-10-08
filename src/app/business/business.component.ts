@@ -12,6 +12,7 @@ import { Subscription } from 'rxjs';
 import { BusinessSpecificAdr } from '../models/business-specific-adr';
 import { S2CareaSpecification } from '../models/s2c-area-specification';
 import { StaffMember, defaultStaffMember } from '../models/staff-member';
+import { MenuItem } from 'primeng/api';
 import { 
   BusinessSchedule, 
   ScheduleCycle, 
@@ -46,6 +47,16 @@ export class BusinessComponent implements OnInit, OnDestroy {
   currentStep = 0;
   maxSteps = 6; // 0: Basic, 1: Services, 2: Places, 3: Schedules, 4: Assignment, 5: Stripe
   registration: BusinessRegistration;
+  
+  // PrimeNG Steps
+  stepItems: MenuItem[] = [
+    { label: 'Basic Information', icon: 'pi pi-building' },
+    { label: 'Services', icon: 'pi pi-briefcase' },
+    { label: 'Places', icon: 'pi pi-map-marker' },
+    { label: 'Schedules', icon: 'pi pi-calendar' },
+    { label: 'Service Assignment', icon: 'pi pi-link' },
+    { label: 'Payment Setup', icon: 'pi pi-credit-card' }
+  ];
   
   // UI State
   isSubmitting = false;
@@ -410,8 +421,24 @@ export class BusinessComponent implements OnInit, OnDestroy {
     console.log('🏠 Area form valid:', this.areaPlaceForm.valid);
     
     if (this.placeType === 'specific' && this.specificPlaceForm.valid) {
+      const formValue = this.specificPlaceForm.value;
+      
+      // Check for duplicate specific address
+      const isDuplicate = this.specificPlaces.some(existing => 
+        existing.streetAdr === formValue.streetAdr &&
+        existing.city === formValue.city &&
+        existing.state === formValue.state &&
+        existing.country === formValue.country
+      );
+      
+      if (isDuplicate) {
+        this.data.openSnackBar('This specific address already exists', 'Close', 3000);
+        console.warn('⚠️ Attempted to add duplicate specific place');
+        return;
+      }
+      
       const place: BusinessSpecificAdr = {
-        ...this.specificPlaceForm.value,
+        ...formValue,
         placeID: this.data.generateId(),
         businessID: ''
       };
@@ -431,8 +458,24 @@ export class BusinessComponent implements OnInit, OnDestroy {
       this.syncPlacesToRegistration();
       
     } else if (this.placeType === 'area' && this.areaPlaceForm.valid) {
+      const formValue = this.areaPlaceForm.value;
+      
+      // Check for duplicate area specification
+      const isDuplicate = this.areaPlaces.some(existing => 
+        existing.country === formValue.country &&
+        existing.state === formValue.state &&
+        existing.city === formValue.city &&
+        existing.suburbPostcode === formValue.suburbPostcode
+      );
+      
+      if (isDuplicate) {
+        this.data.openSnackBar('This service area already exists', 'Close', 3000);
+        console.warn('⚠️ Attempted to add duplicate area place');
+        return;
+      }
+      
       const area: S2CareaSpecification = {
-        ...this.areaPlaceForm.value,
+        ...formValue,
         placeID: this.data.generateId(),
         businessID: ''
       };
@@ -1045,47 +1088,79 @@ export class BusinessComponent implements OnInit, OnDestroy {
     console.log('🏠 Specific places to sync:', this.specificPlaces.length);
     console.log('🏠 Area places to sync:', this.areaPlaces.length);
     
-    // Convert specificPlaces and areaPlaces to BusinessPlace objects and sync to registration.places
-    const allPlaces: BusinessPlace[] = [
-      ...this.specificPlaces.map(sp => {
-        const existing = this.registration.places.find(p => p.placeID === sp.placeID);
-        return {
-          placeID: sp.placeID || this.data.generateId(),
-          placeName: sp.streetAdr ? `${sp.streetAdr}, ${sp.city}` : 'Specific Place',
-          placeDescription: '',
-          placeAddress: sp.streetAdr || '',
-          placeCity: sp.city || '',
-          placeState: sp.state || '',
-          placeZipCode: sp.suburbPostcode || '',
-          placeCountry: sp.country || '',
-          placePhone: '',
-          placeEmail: '',
-          businessID: sp.businessID || '',
-          isActive: true,
-          assignedServiceIDs: existing ? existing.assignedServiceIDs : [],
-        };
-      }),
-      ...this.areaPlaces.map(ap => {
-        const existing = this.registration.places.find(p => p.placeID === ap.placeID);
-        return {
-          placeID: ap.placeID || this.data.generateId(),
-          placeName: ap.city ? `${ap.city} Area` : (ap.state ? `${ap.state} Area` : (ap.country || 'Area Place')),
-          placeDescription: '',
-          placeAddress: '',
-          placeCity: ap.city || '',
-          placeState: ap.state || '',
-          placeZipCode: ap.suburbPostcode || '',
-          placeCountry: ap.country || '',
-          placePhone: '',
-          placeEmail: '',
-          businessID: ap.businessID || '',
-          isActive: true,
-          assignedServiceIDs: existing ? existing.assignedServiceIDs : [],
-        };
-      })
-    ];
+    // Create a map to track existing place IDs to prevent duplicates
+    const existingPlaceIds = new Set<string>();
+    const allPlaces: BusinessPlace[] = [];
     
-    console.log('🔄 Total places after sync:', allPlaces.length);
+    // Process specific places
+    for (const sp of this.specificPlaces) {
+      // Ensure place has an ID
+      if (!sp.placeID) {
+        sp.placeID = this.data.generateId();
+        console.warn('⚠️ Specific place missing ID, generated new one:', sp.placeID);
+      }
+      
+      // Skip if we've already processed this place ID (prevents duplicates)
+      if (existingPlaceIds.has(sp.placeID)) {
+        console.warn('⚠️ Duplicate specific place ID detected, skipping:', sp.placeID);
+        continue;
+      }
+      
+      existingPlaceIds.add(sp.placeID);
+      const existing = this.registration.places.find(p => p.placeID === sp.placeID);
+      
+      allPlaces.push({
+        placeID: sp.placeID,
+        placeName: sp.streetAdr ? `${sp.streetAdr}, ${sp.city}` : 'Specific Place',
+        placeDescription: '',
+        placeAddress: sp.streetAdr || '',
+        placeCity: sp.city || '',
+        placeState: sp.state || '',
+        placeZipCode: sp.suburbPostcode || '',
+        placeCountry: sp.country || '',
+        placePhone: '',
+        placeEmail: '',
+        businessID: sp.businessID || '',
+        isActive: true,
+        assignedServiceIDs: existing ? existing.assignedServiceIDs : [],
+      });
+    }
+    
+    // Process area places
+    for (const ap of this.areaPlaces) {
+      // Ensure place has an ID
+      if (!ap.placeID) {
+        ap.placeID = this.data.generateId();
+        console.warn('⚠️ Area place missing ID, generated new one:', ap.placeID);
+      }
+      
+      // Skip if we've already processed this place ID (prevents duplicates)
+      if (existingPlaceIds.has(ap.placeID)) {
+        console.warn('⚠️ Duplicate area place ID detected, skipping:', ap.placeID);
+        continue;
+      }
+      
+      existingPlaceIds.add(ap.placeID);
+      const existing = this.registration.places.find(p => p.placeID === ap.placeID);
+      
+      allPlaces.push({
+        placeID: ap.placeID,
+        placeName: ap.city ? `${ap.city} Area` : (ap.state ? `${ap.state} Area` : (ap.country || 'Area Place')),
+        placeDescription: '',
+        placeAddress: '',
+        placeCity: ap.city || '',
+        placeState: ap.state || '',
+        placeZipCode: ap.suburbPostcode || '',
+        placeCountry: ap.country || '',
+        placePhone: '',
+        placeEmail: '',
+        businessID: ap.businessID || '',
+        isActive: true,
+        assignedServiceIDs: existing ? existing.assignedServiceIDs : [],
+      });
+    }
+    
+    console.log('🔄 Total unique places after deduplication:', allPlaces.length);
     this.registration.places = allPlaces;
     this.data.updateBusinessRegistration(this.registration);
     console.log('✅ Places synced to registration.places');

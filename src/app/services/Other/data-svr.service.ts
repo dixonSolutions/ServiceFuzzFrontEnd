@@ -289,7 +289,15 @@ export class DataSvrService {
   }
 
   public generateId(): string {
-    return 'temp_' + Math.random().toString(36).substr(2, 9);
+    // Use crypto.randomUUID() if available, otherwise fall back to timestamp + random
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback: timestamp + random for better uniqueness
+    const timestamp = Date.now().toString(36);
+    const random1 = Math.random().toString(36).substring(2, 15);
+    const random2 = Math.random().toString(36).substring(2, 15);
+    return `${timestamp}-${random1}-${random2}`;
   }
 
   // Public getters and setters for state management

@@ -2,581 +2,803 @@
 <div class="business-registration-container">
   <!-- Not Signed In Message -->
   <div *ngIf="!data.currentUser" class="sign-in-message">
-    <mat-card>
-      <mat-card-content>
+    <p-card>
+      <ng-template pTemplate="content">
         <div class="message-content">
-          <mat-icon class="warning-icon">info</mat-icon>
+          <i class="pi pi-info-circle warning-icon" style="font-size: 3rem; color: var(--primary-color);"></i>
           <h2>Please Sign In</h2>
           <p>You need to be signed in to register your business.</p>
-          <button mat-raised-button color="primary" [routerLink]="['/sign']" [queryParams]="{redirect: '/business/add'}">
-            Sign In
-          </button>
+          <p-button label="Sign In" icon="pi pi-sign-in" [routerLink]="['/sign']" [queryParams]="{redirect: '/business/add'}"></p-button>
         </div>
-      </mat-card-content>
-    </mat-card>
+      </ng-template>
+    </p-card>
   </div>
 
   <!-- Business Registration Stepper -->
   <div *ngIf="data.currentUser" class="registration-content">
-    <mat-card class="stepper-card">
-      <mat-card-header>
-        <mat-card-title>Business Registration</mat-card-title>
-        <mat-card-subtitle style="color: white;">Register your business in 10 minutes and start earning! <i class="pi pi-clock" style="color: #FFD700; margin-left: 8px; font-size: 1.2em;"></i></mat-card-subtitle>
-      </mat-card-header>
-
-      <!-- AI Form Filling Section (now inside the card, above the stepper) -->
-      <div class="ai-section">
-        <button mat-raised-button color="primary" (click)="toggleAISection()">
-          {{ showAISection ? 'Hide AI Assistant' : '✨AI Assistant✨' }}
-        </button>
-        <div class="ai-input-container" *ngIf="showAISection">
-          <mat-form-field class="full-width">
-            <mat-label>Describe what you want for this section</mat-label>
-            <textarea matInput [(ngModel)]="aiDescription" 
-                      [placeholder]="getAIPlaceholder()"
-                      rows="3">
-            </textarea>
-          </mat-form-field>
-          <button mat-raised-button color="primary" 
-                  (click)="fillFormWithAI()" 
-                  [disabled]="isAILoading || !aiDescription.trim()">
-            <mat-spinner diameter="20" *ngIf="isAILoading"></mat-spinner>
-            <span *ngIf="!isAILoading">{{ getAIButtonText() }}</span>
-          </button>
+    <p-card class="stepper-card">
+      <ng-template pTemplate="header">
+        <div class="card-header-custom">
+          <h2>Business Registration</h2>
+          <p style="color: #ffffff; margin-top: 0.5rem;">Register your business in 10 minutes and start earning! <i class="pi pi-clock" style="color: #FFD700; margin-left: 8px; font-size: 1.2em;"></i></p>
         </div>
-        <mat-divider *ngIf="showAISection"></mat-divider>
-      </div>
+      </ng-template>
 
-        <mat-card-content>
-        <!-- Lock timeline interaction to Next/Previous only by disabling header clicks -->
-        <mat-stepper #stepper [selectedIndex]="currentStep" orientation="horizontal" linear="true">
+      <!-- AI Form Filling Section -->
+      <ng-template pTemplate="content">
+        <div class="ai-section">
+          <p-button 
+            [label]="showAISection ? 'Hide AI Assistant' : '✨AI Assistant✨'" 
+            icon="pi pi-sparkles"
+            (onClick)="toggleAISection()">
+          </p-button>
+          <div class="ai-input-container" *ngIf="showAISection">
+            <div class="field">
+              <textarea 
+                pTextarea
+                id="aiDescription"
+                [(ngModel)]="aiDescription" 
+                [placeholder]="getAIPlaceholder()"
+                rows="3"
+                class="w-full">
+              </textarea>
+            </div>
+            <p-button 
+              [label]="getAIButtonText()"
+              icon="pi pi-sparkles"
+              (onClick)="fillFormWithAI()" 
+              [disabled]="isAILoading || !aiDescription.trim()"
+              [loading]="isAILoading">
+            </p-button>
+          </div>
+          <p-divider *ngIf="showAISection"></p-divider>
+        </div>
+
+        <!-- PrimeNG Steps -->
+        <p-steps [model]="stepItems" [readonly]="true" [activeIndex]="currentStep" class="custom-steps"></p-steps>
+
+        <!-- Step Content -->
+        <div class="step-content">
           
           <!-- Step 1: Basic Information -->
-          <mat-step [completed]="basicInfoForm.valid" label="Basic Information" [class.current-step]="currentStep === 0">
-            <form [formGroup]="basicInfoForm" class="step-form">
-              <h3>Business Information</h3>
-              <div class="form-row">
-                <mat-form-field class="full-width">
-                  <mat-label>Business Name</mat-label>
-                  <input matInput formControlName="bussinessName" placeholder="Enter your business name">
-                  <mat-icon matSuffix>business</mat-icon>
-                  <mat-error *ngIf="basicInfoForm.get('bussinessName')?.hasError('required')">
+          <div *ngIf="currentStep === 0" class="step-form">
+            <form [formGroup]="basicInfoForm">
+              <h3><i class="pi pi-building"></i> Business Information</h3>
+              
+              <div class="formgrid grid">
+                <div class="field col-12">
+                  <p-floatLabel>
+                    <input 
+                      pInputText 
+                      id="bussinessName"
+                      formControlName="bussinessName" 
+                      class="w-full"
+                      [class.ng-invalid]="basicInfoForm.get('bussinessName')?.invalid && basicInfoForm.get('bussinessName')?.touched"/>
+                    <label for="bussinessName">Business Name <span class="required">*</span></label>
+                  </p-floatLabel>
+                  <small 
+                    class="p-error" 
+                    *ngIf="basicInfoForm.get('bussinessName')?.hasError('required') && basicInfoForm.get('bussinessName')?.touched">
                     Business name is required
-                  </mat-error>
-                  <mat-error *ngIf="basicInfoForm.get('bussinessName')?.hasError('minlength')">
+                  </small>
+                  <small 
+                    class="p-error" 
+                    *ngIf="basicInfoForm.get('bussinessName')?.hasError('minlength') && basicInfoForm.get('bussinessName')?.touched">
                     Business name must be at least 2 characters
-                  </mat-error>
-                </mat-form-field>
-              </div>
+                  </small>
+                </div>
 
-              <div class="form-row">
-                <mat-form-field class="full-width">
-                  <mat-label>Business Description</mat-label>
-                  <textarea matInput formControlName="bussinessDescription" 
-                            placeholder="Describe your business" rows="4">
-                  </textarea>
-                  <mat-icon matSuffix>description</mat-icon>
-                  <mat-error *ngIf="basicInfoForm.get('bussinessDescription')?.hasError('required')">
+                <div class="field col-12">
+                  <p-floatLabel>
+                    <textarea 
+                      pTextarea
+                      id="bussinessDescription"
+                      formControlName="bussinessDescription" 
+                      rows="4"
+                      class="w-full"
+                      [class.ng-invalid]="basicInfoForm.get('bussinessDescription')?.invalid && basicInfoForm.get('bussinessDescription')?.touched">
+                    </textarea>
+                    <label for="bussinessDescription">Business Description <span class="required">*</span></label>
+                  </p-floatLabel>
+                  <small 
+                    class="p-error" 
+                    *ngIf="basicInfoForm.get('bussinessDescription')?.hasError('required') && basicInfoForm.get('bussinessDescription')?.touched">
                     Business description is required
-                  </mat-error>
-                  <mat-error *ngIf="basicInfoForm.get('bussinessDescription')?.hasError('minlength')">
-                    Description must be at least 10 characters
-                  </mat-error>
-                </mat-form-field>
-              </div>
+                  </small>
+                </div>
 
-              <div class="form-row">
-                <mat-form-field class="half-width">
-                  <mat-label>Business Phone</mat-label>
-                  <input matInput formControlName="bussinessPhone" 
-                         placeholder="Enter business phone number">
-                  <mat-icon matSuffix>phone</mat-icon>
-                  <mat-error *ngIf="basicInfoForm.get('bussinessPhone')?.hasError('required')">
+                <div class="field col-12 md:col-6">
+                  <p-floatLabel>
+                    <input 
+                      pInputText 
+                      id="bussinessPhone"
+                      formControlName="bussinessPhone" 
+                      class="w-full"
+                      [class.ng-invalid]="basicInfoForm.get('bussinessPhone')?.invalid && basicInfoForm.get('bussinessPhone')?.touched"/>
+                    <label for="bussinessPhone">Business Phone <span class="required">*</span></label>
+                  </p-floatLabel>
+                  <small 
+                    class="p-error" 
+                    *ngIf="basicInfoForm.get('bussinessPhone')?.hasError('required') && basicInfoForm.get('bussinessPhone')?.touched">
                     Phone number is required
-                  </mat-error>
-                  <mat-error *ngIf="basicInfoForm.get('bussinessPhone')?.hasError('pattern')">
+                  </small>
+                  <small 
+                    class="p-error" 
+                    *ngIf="basicInfoForm.get('bussinessPhone')?.hasError('pattern') && basicInfoForm.get('bussinessPhone')?.touched">
                     Please enter a valid phone number
-                  </mat-error>
-                </mat-form-field>
+                  </small>
+                </div>
 
-                <mat-form-field class="half-width">
-                  <mat-label>Business Email</mat-label>
-                  <input matInput formControlName="bussinessEmail" 
-                         placeholder="Enter business email" type="email">
-                  <mat-icon matSuffix>email</mat-icon>
-                  <mat-error *ngIf="basicInfoForm.get('bussinessEmail')?.hasError('required')">
+                <div class="field col-12 md:col-6">
+                  <p-floatLabel>
+                    <input 
+                      pInputText 
+                      id="bussinessEmail"
+                      formControlName="bussinessEmail" 
+                      type="email"
+                      class="w-full"
+                      [class.ng-invalid]="basicInfoForm.get('bussinessEmail')?.invalid && basicInfoForm.get('bussinessEmail')?.touched"/>
+                    <label for="bussinessEmail">Business Email <span class="required">*</span></label>
+                  </p-floatLabel>
+                  <small 
+                    class="p-error" 
+                    *ngIf="basicInfoForm.get('bussinessEmail')?.hasError('required') && basicInfoForm.get('bussinessEmail')?.touched">
                     Business email is required
-                  </mat-error>
-                  <mat-error *ngIf="basicInfoForm.get('bussinessEmail')?.hasError('email')">
+                  </small>
+                  <small 
+                    class="p-error" 
+                    *ngIf="basicInfoForm.get('bussinessEmail')?.hasError('email') && basicInfoForm.get('bussinessEmail')?.touched">
                     Please enter a valid email address
-                  </mat-error>
-                </mat-form-field>
-              </div>
-
-              <div class="form-row">
-                <mat-form-field class="full-width">
-                  <mat-label>Owner Email</mat-label>
-                  <input matInput formControlName="ownerEmail" readonly>
-                  <mat-icon matSuffix>person</mat-icon>
-                </mat-form-field>
-              </div>
-
-              <!-- Business Type Selection -->
-              <div class="form-row">
-                <div class="form-field-wrapper">
-                  <label class="form-label">Business Operation Type</label>
-                  <mat-radio-group formControlName="operationType" class="operation-type-selection">
-                    <mat-radio-button value="solo">I work alone</mat-radio-button>
-                    <mat-radio-button value="with_staff">I work with staff</mat-radio-button>
-                  </mat-radio-group>
-                  <mat-hint class="form-hint">Choose whether you work alone or have team members</mat-hint>
+                  </small>
                 </div>
-              </div>
 
-              <!-- Staff Section (Conditional) -->
-              <div *ngIf="showStaffSection" class="staff-section">
-                <mat-divider></mat-divider>
-                <h4>Staff Management</h4>
-                <p class="staff-description">Add team members who will help provide services. You can manage their access levels and roles.</p>
+                <div class="field col-12">
+                  <p-floatLabel>
+                    <input 
+                      pInputText 
+                      id="ownerEmail"
+                      formControlName="ownerEmail" 
+                      [readonly]="true"
+                      class="w-full"/>
+                    <label for="ownerEmail">Owner Email</label>
+                  </p-floatLabel>
+                </div>
 
-                <!-- Staff Form -->
-                <mat-card class="staff-form-card">
-                  <mat-card-header>
-                    <mat-card-title>{{ editingStaffIndex !== null ? 'Edit Staff Member' : 'Add Staff Member' }}</mat-card-title>
-                  </mat-card-header>
-                  <mat-card-content>
-                    <form [formGroup]="staffForm" class="staff-form">
-                      <div class="form-row">
-                        <mat-form-field class="half-width">
-                          <mat-label>First Name</mat-label>
-                          <input matInput formControlName="firstName" placeholder="Enter first name" maxlength="2000">
-                          <mat-icon matSuffix>person</mat-icon>
-                          <mat-error *ngIf="staffForm.get('firstName')?.hasError('required')">
-                            First name is required
-                          </mat-error>
-                          <mat-error *ngIf="staffForm.get('firstName')?.hasError('maxlength')">
-                            First name cannot exceed 2000 characters
-                          </mat-error>
-                        </mat-form-field>
-
-                        <mat-form-field class="half-width">
-                          <mat-label>Last Name</mat-label>
-                          <input matInput formControlName="lastName" placeholder="Enter last name" maxlength="2000">
-                          <mat-icon matSuffix>person</mat-icon>
-                          <mat-error *ngIf="staffForm.get('lastName')?.hasError('required')">
-                            Last name is required
-                          </mat-error>
-                          <mat-error *ngIf="staffForm.get('lastName')?.hasError('maxlength')">
-                            Last name cannot exceed 2000 characters
-                          </mat-error>
-                        </mat-form-field>
-                      </div>
-
-                      <div class="form-row">
-                        <mat-form-field class="half-width">
-                          <mat-label>Email</mat-label>
-                          <input matInput formControlName="email" placeholder="Enter email address" type="email" maxlength="2000">
-                          <mat-icon matSuffix>email</mat-icon>
-                          <mat-error *ngIf="staffForm.get('email')?.hasError('required')">
-                            Email is required
-                          </mat-error>
-                          <mat-error *ngIf="staffForm.get('email')?.hasError('email')">
-                            Please enter a valid email address
-                          </mat-error>
-                          <mat-error *ngIf="staffForm.get('email')?.hasError('maxlength')">
-                            Email cannot exceed 2000 characters
-                          </mat-error>
-                        </mat-form-field>
-
-                        <mat-form-field class="half-width">
-                          <mat-label>Role</mat-label>
-                          <input matInput formControlName="role" placeholder="e.g., Stylist, Receptionist, Manager">
-                          <mat-icon matSuffix>work</mat-icon>
-                          <mat-error *ngIf="staffForm.get('role')?.hasError('required')">
-                            Role is required
-                          </mat-error>
-                        </mat-form-field>
-                      </div>
-
-                      <div class="form-row">
-                        <mat-checkbox formControlName="accessAll" class="access-checkbox">
-                          <strong>Full Access</strong>
-                          <p class="checkbox-description">Allow this staff member to access all business functions and data</p>
-                        </mat-checkbox>
-                      </div>
-                    </form>
-                  </mat-card-content>
-                  <mat-card-actions>
-                    <button mat-raised-button color="primary" (click)="addStaffMember()" 
-                            [disabled]="!staffForm.valid">
-                      {{ editingStaffIndex !== null ? 'Update Staff Member' : 'Add Staff Member' }}
-                    </button>
-                    <button mat-button *ngIf="editingStaffIndex !== null" (click)="cancelStaffEdit()">
-                      Cancel
-                    </button>
-                  </mat-card-actions>
-                </mat-card>
-
-                <!-- Staff List -->
-                <div class="staff-list" *ngIf="staffMembers.length > 0">
-                  <h4>Staff Members ({{ getStaffSummary() }})</h4>
-                  <div class="staff-grid">
-                    <mat-card *ngFor="let staff of staffMembers; let i = index" class="staff-card" 
-                              [class.inactive]="!staff.isActive">
-                      <mat-card-header>
-                        <mat-card-title>{{ staff.firstName }} {{ staff.lastName }}</mat-card-title>
-                        <mat-card-subtitle>{{ staff.role }}</mat-card-subtitle>
-                      </mat-card-header>
-                      <mat-card-content>
-                        <p><mat-icon class="inline-icon">email</mat-icon> {{ staff.email }}</p>
-                        <div class="staff-badges">
-                          <mat-chip-set>
-                            <mat-chip [color]="staff.accessAll ? 'primary' : 'accent'" [selected]="staff.accessAll">
-                              {{ staff.accessAll ? 'Full Access' : 'Limited Access' }}
-                            </mat-chip>
-                            <mat-chip [color]="staff.isActive ? 'primary' : 'warn'" [selected]="staff.isActive">
-                              {{ staff.isActive ? 'Active' : 'Inactive' }}
-                            </mat-chip>
-                          </mat-chip-set>
-                        </div>
-                      </mat-card-content>
-                      <mat-card-actions>
-                        <button mat-icon-button color="primary" (click)="editStaffMember(i)" 
-                                matTooltip="Edit staff member">
-                          <mat-icon>edit</mat-icon>
-                        </button>
-                        <button mat-icon-button [color]="staff.isActive ? 'warn' : 'primary'" 
-                                (click)="toggleStaffActive(i)"
-                                [matTooltip]="staff.isActive ? 'Deactivate staff member' : 'Activate staff member'">
-                          <mat-icon>{{ staff.isActive ? 'person_off' : 'person' }}</mat-icon>
-                        </button>
-                        <button mat-icon-button color="warn" (click)="deleteStaffMember(i)" 
-                                matTooltip="Remove staff member">
-                          <mat-icon>delete</mat-icon>
-                        </button>
-                      </mat-card-actions>
-                    </mat-card>
+                <!-- Business Type Selection -->
+                <div class="field col-12">
+                  <label>Business Operation Type <span class="required">*</span></label>
+                  <div class="operation-type-selection">
+                    <p-radioButton 
+                      name="operationType" 
+                      value="solo" 
+                      formControlName="operationType" 
+                      inputId="solo">
+                    </p-radioButton>
+                    <label for="solo" class="ml-2 mr-4">I work alone</label>
+                    
+                    <p-radioButton 
+                      name="operationType" 
+                      value="with_staff" 
+                      formControlName="operationType" 
+                      inputId="with_staff">
+                    </p-radioButton>
+                    <label for="with_staff" class="ml-2">I work with staff</label>
                   </div>
+                  <small class="p-hint">Choose whether you work alone or have team members</small>
                 </div>
 
-                <div *ngIf="staffMembers.length === 0" class="no-staff-message">
-                  <mat-icon>group_add</mat-icon>
-                  <p>No staff members added yet. Add your first team member above.</p>
-                  <p class="note">You can add staff members later if you're unsure right now.</p>
+                <!-- Staff Section (Conditional) -->
+                <div *ngIf="showStaffSection" class="field col-12">
+                  <p-divider></p-divider>
+                  <h4><i class="pi pi-users"></i> Staff Management</h4>
+                  <p class="staff-description">Add team members who will help provide services. You can manage their access levels and roles.</p>
+
+                  <!-- Staff Form -->
+                  <p-card class="staff-form-card mt-3">
+                    <ng-template pTemplate="header">
+                      <div class="card-header-title">
+                        {{ editingStaffIndex !== null ? 'Edit Staff Member' : 'Add Staff Member' }}
+                      </div>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                      <form [formGroup]="staffForm" class="formgrid grid">
+                        <div class="field col-12 md:col-6">
+                          <p-floatLabel>
+                            <input 
+                              pInputText 
+                              id="firstName"
+                              formControlName="firstName" 
+                              maxlength="2000"
+                              class="w-full"/>
+                            <label for="firstName">First Name <span class="required">*</span></label>
+                          </p-floatLabel>
+                          <small class="p-error" *ngIf="staffForm.get('firstName')?.hasError('required') && staffForm.get('firstName')?.touched">
+                            First name is required
+                          </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                          <p-floatLabel>
+                            <input 
+                              pInputText 
+                              id="lastName"
+                              formControlName="lastName" 
+                              maxlength="2000"
+                              class="w-full"/>
+                            <label for="lastName">Last Name <span class="required">*</span></label>
+                          </p-floatLabel>
+                          <small class="p-error" *ngIf="staffForm.get('lastName')?.hasError('required') && staffForm.get('lastName')?.touched">
+                            Last name is required
+                          </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                          <p-floatLabel>
+                            <input 
+                              pInputText 
+                              id="staffEmail"
+                              formControlName="email" 
+                              type="email"
+                              maxlength="2000"
+                              class="w-full"/>
+                            <label for="staffEmail">Email <span class="required">*</span></label>
+                          </p-floatLabel>
+                          <small class="p-error" *ngIf="staffForm.get('email')?.hasError('required') && staffForm.get('email')?.touched">
+                            Email is required
+                          </small>
+                          <small class="p-error" *ngIf="staffForm.get('email')?.hasError('email') && staffForm.get('email')?.touched">
+                            Please enter a valid email address
+                          </small>
+                        </div>
+
+                        <div class="field col-12 md:col-6">
+                          <p-floatLabel>
+                            <input 
+                              pInputText 
+                              id="role"
+                              formControlName="role" 
+                              class="w-full"/>
+                            <label for="role">Role <span class="required">*</span></label>
+                          </p-floatLabel>
+                          <small class="p-error" *ngIf="staffForm.get('role')?.hasError('required') && staffForm.get('role')?.touched">
+                            Role is required
+                          </small>
+                        </div>
+
+                        <div class="field col-12">
+                          <div class="flex align-items-center">
+                            <p-checkbox 
+                              formControlName="accessAll" 
+                              [binary]="true" 
+                              inputId="accessAll">
+                            </p-checkbox>
+                            <label for="accessAll" class="ml-2">
+                              <strong>Full Access</strong>
+                              <p class="checkbox-description m-0">Allow this staff member to access all business functions and data</p>
+                            </label>
+                          </div>
+                        </div>
+                      </form>
+                    </ng-template>
+                    <ng-template pTemplate="footer">
+                      <p-button 
+                        [label]="editingStaffIndex !== null ? 'Update Staff Member' : 'Add Staff Member'"
+                        icon="pi pi-plus"
+                        (onClick)="addStaffMember()" 
+                        [disabled]="!staffForm.valid">
+                      </p-button>
+                      <p-button 
+                        *ngIf="editingStaffIndex !== null"
+                        label="Cancel"
+                        icon="pi pi-times"
+                        severity="secondary"
+                        (onClick)="cancelStaffEdit()">
+                      </p-button>
+                    </ng-template>
+                  </p-card>
+
+                  <!-- Staff List -->
+                  <div class="staff-list mt-4" *ngIf="staffMembers.length > 0">
+                    <h4><i class="pi pi-users"></i> Staff Members ({{ getStaffSummary() }})</h4>
+                    <div class="staff-grid">
+                      <p-card *ngFor="let staff of staffMembers; let i = index" class="staff-card" 
+                              [ngClass]="{'inactive': !staff.isActive}">
+                        <ng-template pTemplate="header">
+                          <div class="staff-card-header">
+                            <h5>{{ staff.firstName }} {{ staff.lastName }}</h5>
+                            <p class="staff-role">{{ staff.role }}</p>
+                          </div>
+                        </ng-template>
+                        <ng-template pTemplate="content">
+                          <p><i class="pi pi-envelope mr-2"></i> {{ staff.email }}</p>
+                          <div class="staff-badges mt-2">
+                            <p-chip 
+                              [label]="staff.accessAll ? 'Full Access' : 'Limited Access'"
+                              [styleClass]="staff.accessAll ? 'custom-chip-primary' : 'custom-chip-secondary'">
+                            </p-chip>
+                            <p-chip 
+                              [label]="staff.isActive ? 'Active' : 'Inactive'"
+                              [styleClass]="staff.isActive ? 'custom-chip-success' : 'custom-chip-danger'">
+                            </p-chip>
+                          </div>
+                        </ng-template>
+                        <ng-template pTemplate="footer">
+                          <div class="flex gap-2">
+                            <p-button 
+                              icon="pi pi-pencil" 
+                              severity="secondary"
+                              size="small"
+                              (onClick)="editStaffMember(i)" 
+                              pTooltip="Edit staff member">
+                            </p-button>
+                            <p-button 
+                              [icon]="staff.isActive ? 'pi pi-user-minus' : 'pi pi-user-plus'"
+                              [severity]="staff.isActive ? 'danger' : 'success'"
+                              size="small"
+                              (onClick)="toggleStaffActive(i)"
+                              [pTooltip]="staff.isActive ? 'Deactivate staff member' : 'Activate staff member'">
+                            </p-button>
+                            <p-button 
+                              icon="pi pi-trash" 
+                              severity="danger"
+                              size="small"
+                              (onClick)="deleteStaffMember(i)" 
+                              pTooltip="Remove staff member">
+                            </p-button>
+                          </div>
+                        </ng-template>
+                      </p-card>
+                    </div>
+                  </div>
+
+                  <div *ngIf="staffMembers.length === 0" class="no-staff-message">
+                    <i class="pi pi-users" style="font-size: 3rem; color: var(--text-color-secondary);"></i>
+                    <p>No staff members added yet. Add your first team member above.</p>
+                    <p class="note">You can add staff members later if you're unsure right now.</p>
+                  </div>
                 </div>
               </div>
             </form>
-          </mat-step>
+          </div>
 
           <!-- Step 2: Services -->
-          <mat-step [completed]="registration.services.length > 0" label="Services">
+          <div *ngIf="currentStep === 1" class="step-form">
             <div class="services-section">
-              <h3>Business Services</h3>
+              <h3><i class="pi pi-briefcase"></i> Business Services</h3>
               
               <!-- Service Form -->
-              <mat-card class="form-card">
-                <mat-card-header>
-                  <mat-card-title>{{ editingServiceId ? 'Edit Service' : 'Add New Service' }}</mat-card-title>
-                </mat-card-header>
-                <mat-card-content>
-                  <form [formGroup]="serviceForm" class="service-form">
-                    <div class="form-row">
-                      <mat-form-field class="half-width">
-                        <mat-label>Service Name</mat-label>
-                        <input matInput formControlName="serviceName" placeholder="e.g., Hair Cut">
-                        <mat-error *ngIf="serviceForm.get('serviceName')?.hasError('required')">
-                          Service name is required
-                        </mat-error>
-                      </mat-form-field>
-
-                      <mat-form-field class="half-width">
-                        <mat-label>Duration (minutes)</mat-label>
-                        <input matInput type="number" formControlName="duration" placeholder="30">
-                        <mat-error *ngIf="serviceForm.get('duration')?.hasError('required')">
-                          Duration is required
-                        </mat-error>
-                        <mat-error *ngIf="serviceForm.get('duration')?.hasError('min')">
-                          Duration must be at least 5 minutes
-                        </mat-error>
-                      </mat-form-field>
+              <p-card class="form-card">
+                <ng-template pTemplate="header">
+                  <div class="card-header-title">
+                    {{ editingServiceId ? 'Edit Service' : 'Add New Service' }}
+                  </div>
+                </ng-template>
+                <ng-template pTemplate="content">
+                  <form [formGroup]="serviceForm" class="formgrid grid">
+                    <div class="field col-12 md:col-6">
+                      <p-floatLabel>
+                        <input 
+                          pInputText 
+                          id="serviceName"
+                          formControlName="serviceName" 
+                          class="w-full"/>
+                        <label for="serviceName">Service Name <span class="required">*</span></label>
+                      </p-floatLabel>
+                      <small class="p-error" *ngIf="serviceForm.get('serviceName')?.hasError('required') && serviceForm.get('serviceName')?.touched">
+                        Service name is required
+                      </small>
                     </div>
 
-                    <div class="form-row">
-                      <mat-form-field class="full-width">
-                        <mat-label>Service Description</mat-label>
-                        <textarea matInput formControlName="serviceDescription" 
-                                  placeholder="Describe the service" rows="3">
+                    <div class="field col-12 md:col-6">
+                      <label class="field-label">Duration (minutes) <span class="required">*</span></label>
+                      <p-inputNumber 
+                        id="duration"
+                        formControlName="duration" 
+                        [showButtons]="true"
+                        [min]="5"
+                        [step]="5"
+                        suffix=" min"
+                        placeholder="30"
+                        class="w-full">
+                      </p-inputNumber>
+                      <small class="p-error" *ngIf="serviceForm.get('duration')?.hasError('required') && serviceForm.get('duration')?.touched">
+                        Duration is required
+                      </small>
+                      <small class="p-error" *ngIf="serviceForm.get('duration')?.hasError('min') && serviceForm.get('duration')?.touched">
+                        Duration must be at least 5 minutes
+                      </small>
+                    </div>
+
+                    <div class="field col-12">
+                      <p-floatLabel>
+                        <textarea 
+                          pTextarea
+                          id="serviceDescription"
+                          formControlName="serviceDescription" 
+                          rows="3"
+                          class="w-full">
                         </textarea>
-                        <mat-error *ngIf="serviceForm.get('serviceDescription')?.hasError('required')">
-                          Service description is required
-                        </mat-error>
-                      </mat-form-field>
+                        <label for="serviceDescription">Service Description <span class="required">*</span></label>
+                      </p-floatLabel>
+                      <small class="p-error" *ngIf="serviceForm.get('serviceDescription')?.hasError('required') && serviceForm.get('serviceDescription')?.touched">
+                        Service description is required
+                      </small>
                     </div>
 
-                    <div class="form-row">
-                      <mat-form-field class="half-width">
-                        <mat-label>Price</mat-label>
-                        <input matInput type="number" formControlName="servicePrice" placeholder="0.00">
-                        <mat-error *ngIf="serviceForm.get('servicePrice')?.hasError('required')">
-                          Price is required
-                        </mat-error>
-                        <mat-error *ngIf="serviceForm.get('servicePrice')?.hasError('min')">
-                          Price must be 0 or greater
-                        </mat-error>
-                      </mat-form-field>
-
-                      <mat-form-field class="half-width">
-                        <mat-label>Currency</mat-label>
-                        <mat-select formControlName="servicePriceCurrencyUnit">
-                          <mat-option *ngFor="let currency of currencies" [value]="currency">
-                            {{ currency }}
-                          </mat-option>
-                        </mat-select>
-                      </mat-form-field>
+                    <div class="field col-12 md:col-6">
+                      <label class="field-label">Price <span class="required">*</span></label>
+                      <p-inputNumber 
+                        id="servicePrice"
+                        formControlName="servicePrice" 
+                        mode="currency"
+                        [currency]="serviceForm.get('servicePriceCurrencyUnit')?.value || 'USD'"
+                        locale="en-US"
+                        [min]="0"
+                        placeholder="0.00"
+                        class="w-full">
+                      </p-inputNumber>
+                      <small class="p-error" *ngIf="serviceForm.get('servicePrice')?.hasError('required') && serviceForm.get('servicePrice')?.touched">
+                        Price is required
+                      </small>
                     </div>
 
-                    <div class="form-row">
-                      <mat-form-field class="full-width">
-                        <mat-label>Image URL (optional)</mat-label>
-                        <input matInput formControlName="serviceImageUrl" placeholder="https://example.com/image.jpg">
-                      </mat-form-field>
+                    <div class="field col-12 md:col-6">
+                      <label class="field-label">Currency <span class="required">*</span></label>
+                      <p-dropdown 
+                        id="servicePriceCurrencyUnit"
+                        formControlName="servicePriceCurrencyUnit"
+                        [options]="currencies"
+                        placeholder="Select Currency"
+                        class="w-full">
+                      </p-dropdown>
+                    </div>
+
+                    <div class="field col-12">
+                      <p-floatLabel>
+                        <input 
+                          pInputText 
+                          id="serviceImageUrl"
+                          formControlName="serviceImageUrl" 
+                          class="w-full"/>
+                        <label for="serviceImageUrl">Image URL (optional)</label>
+                      </p-floatLabel>
                     </div>
                   </form>
-                </mat-card-content>
-                <mat-card-actions>
-                  <button mat-raised-button color="primary" (click)="addService()" 
-                          [disabled]="!serviceForm.valid">
-                    {{ editingServiceId ? 'Update Service' : 'Add Service' }}
-                  </button>
-                  <button mat-button *ngIf="editingServiceId" (click)="editingServiceId = null; serviceForm.reset()">
-                    Cancel
-                  </button>
-                </mat-card-actions>
-              </mat-card>
+                </ng-template>
+                <ng-template pTemplate="footer">
+                  <p-button 
+                    [label]="editingServiceId ? 'Update Service' : 'Add Service'"
+                    icon="pi pi-plus"
+                    (onClick)="addService()" 
+                    [disabled]="!serviceForm.valid">
+                  </p-button>
+                  <p-button 
+                    *ngIf="editingServiceId"
+                    label="Cancel"
+                    icon="pi pi-times"
+                    severity="secondary"
+                    (onClick)="editingServiceId = null; serviceForm.reset()">
+                  </p-button>
+                </ng-template>
+              </p-card>
 
               <!-- Services List -->
-              <div class="services-list" *ngIf="registration.services.length > 0">
-                <h4>Added Services ({{ registration.services.length }})</h4>
+              <div class="services-list mt-4" *ngIf="registration.services.length > 0">
+                <h4><i class="pi pi-list"></i> Added Services ({{ registration.services.length }})</h4>
                 <div class="services-grid">
-                  <mat-card *ngFor="let service of registration.services" class="service-card">
-                    <mat-card-header>
-                      <mat-card-title>{{ service.serviceName || 'Unnamed Service' }}</mat-card-title>
-                      <mat-card-subtitle>
-                        {{ service.serviceEstimatedTime || '30 minutes' }} • {{ service.servicePrice !== undefined && service.servicePrice !== null ? service.servicePrice : 0 }} {{ service.servicePriceCurrencyUnit || 'USD' }}
-                      </mat-card-subtitle>
-                    </mat-card-header>
-                    <mat-card-content>
+                  <p-card *ngFor="let service of registration.services" class="service-card">
+                    <ng-template pTemplate="header">
+                      <div class="service-card-header">
+                        <h5>{{ service.serviceName || 'Unnamed Service' }}</h5>
+                        <p class="service-details">
+                          <i class="pi pi-clock mr-1"></i> {{ service.serviceEstimatedTime || '30 minutes' }} • 
+                          <i class="pi pi-dollar ml-2 mr-1"></i> {{ service.servicePrice !== undefined && service.servicePrice !== null ? service.servicePrice : 0 }} {{ service.servicePriceCurrencyUnit || 'USD' }}
+                        </p>
+                      </div>
+                    </ng-template>
+                    <ng-template pTemplate="content">
                       <p>{{ service.serviceDescription || 'No description provided.' }}</p>
-                    </mat-card-content>
-                    <mat-card-actions>
-                      <button mat-icon-button color="primary" (click)="editService(service)">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button mat-icon-button color="warn" (click)="deleteService(service.serviceID!)">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </mat-card-actions>
-                  </mat-card>
+                    </ng-template>
+                    <ng-template pTemplate="footer">
+                      <div class="flex gap-2">
+                        <p-button 
+                          icon="pi pi-pencil" 
+                          severity="secondary"
+                          size="small"
+                          (onClick)="editService(service)">
+                        </p-button>
+                        <p-button 
+                          icon="pi pi-trash" 
+                          severity="danger"
+                          size="small"
+                          (onClick)="deleteService(service.serviceID!)">
+                        </p-button>
+                      </div>
+                    </ng-template>
+                  </p-card>
                 </div>
               </div>
             </div>
-          </mat-step>
+          </div>
 
           <!-- Step 3: Places -->
-          <mat-step [completed]="registration.places.length > 0" label="Places">
+          <div *ngIf="currentStep === 2" class="step-form">
             <div class="places-section">
-              <h3>Business Locations</h3>
+              <h3><i class="pi pi-map-marker"></i> Business Locations</h3>
               
               <!-- Location Type Selection -->
-              <mat-card class="form-card location-type-card">
-                <mat-card-header>
-                  <mat-card-title>Location Type</mat-card-title>
-                  <mat-card-subtitle>Choose how you provide services to customers</mat-card-subtitle>
-                </mat-card-header>
-                <mat-card-content>
-                  <mat-radio-group [(ngModel)]="locationType" (ngModelChange)="setLocationType($event)" class="location-type-group">
-                    <mat-radio-button *ngFor="let option of locationTypeOptions" [value]="option.value" class="location-type-option">
-                      <div class="location-option-content">
+              <p-card class="form-card location-type-card">
+                <ng-template pTemplate="header">
+                  <div class="card-header-title">
+                    <i class="pi pi-map"></i> Location Type
+                  </div>
+                  <p class="card-subtitle">Choose how you provide services to customers</p>
+                </ng-template>
+                <ng-template pTemplate="content">
+                  <div class="location-type-selection">
+                    <div *ngFor="let option of locationTypeOptions" class="location-type-option">
+                      <p-radioButton 
+                        name="locationType" 
+                        [value]="option.value" 
+                        [(ngModel)]="locationType"
+                        (ngModelChange)="setLocationType($event)"
+                        [inputId]="'loc_' + option.value">
+                      </p-radioButton>
+                      <label [for]="'loc_' + option.value" class="ml-2">
                         <h4>{{ option.label }}</h4>
                         <p>{{ option.description }}</p>
-                      </div>
-                    </mat-radio-button>
-                  </mat-radio-group>
-                </mat-card-content>
-              </mat-card>
+                      </label>
+                    </div>
+                  </div>
+                </ng-template>
+              </p-card>
               
               <!-- Google Maps Integration -->
-              <mat-expansion-panel class="maps-accordion">
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    <mat-icon>map</mat-icon>
-                    Search Location on Google Maps
-                  </mat-panel-title>
-                  <mat-panel-description>
-                    Search and explore addresses without leaving this page
-                  </mat-panel-description>
-                </mat-expansion-panel-header>
-                
-                <div class="maps-content">
-                  <p class="maps-instruction">
-                    Use the map below to search for your business address or service area. 
-                    You can search, zoom, and navigate to find the exact location, then manually enter the details in the form below.
-                  </p>
-                  
-                  <div class="maps-iframe-container">
-                    <iframe 
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387190.2799160891!2d-74.25987368715491!3d40.697670063849574!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2sus!4v1635959999999!5m2!1sen!2sus"
-                      width="100%" 
-                      height="400" 
-                      style="border:0; border-radius: 8px;" 
-                      allowfullscreen="" 
-                      loading="lazy" 
-                      referrerpolicy="no-referrer-when-downgrade">
-                    </iframe>
-                  </div>
-                  
-                  <div class="maps-help">
-                    <mat-icon>info</mat-icon>
-                    <span>Use the search box in the map above to find your location, then fill out the address form below.</span>
-                  </div>
-                </div>
-              </mat-expansion-panel>
+              <p-accordion class="mt-3">
+                <p-accordionTab header="Search Location on Google Maps" [iconPos]="'start'">
+                  <ng-template pTemplate="header">
+                    <i class="pi pi-map mr-2"></i>
+                    <span>Search Location on Google Maps</span>
+                  </ng-template>
+                  <ng-template pTemplate="content">
+                    <div class="maps-content">
+                      <p class="maps-instruction">
+                        Use the map below to search for your business address or service area. 
+                        You can search, zoom, and navigate to find the exact location, then manually enter the details in the form below.
+                      </p>
+                      
+                      <div class="maps-iframe-container">
+                        <iframe 
+                          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387190.2799160891!2d-74.25987368715491!3d40.697670063849574!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2sus!4v1635959999999!5m2!1sen!2sus"
+                          width="100%" 
+                          height="400" 
+                          style="border:0; border-radius: 8px;" 
+                          allowfullscreen="" 
+                          loading="lazy" 
+                          referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                      </div>
+                      
+                      <div class="maps-help mt-3">
+                        <i class="pi pi-info-circle"></i>
+                        <span class="ml-2">Use the search box in the map above to find your location, then fill out the address form below.</span>
+                      </div>
+                    </div>
+                  </ng-template>
+                </p-accordionTab>
+              </p-accordion>
 
               <!-- Manual Place Form -->
-              <mat-card class="form-card">
-                <mat-card-header>
-                  <mat-card-title>
-                    <mat-icon>edit_location</mat-icon>
-                    {{ editingPlaceId ? 'Edit Place' : 'Add Place Manually' }}
-                  </mat-card-title>
-                  <mat-card-subtitle>Or enter address details manually</mat-card-subtitle>
-                </mat-card-header>
-                <mat-card-content>
-                  <mat-form-field class="full-width">
-                    <mat-label>Place Type</mat-label>
-                    <mat-select [(ngModel)]="placeType" name="placeType">
-                      <mat-option value="specific">Specific Address</mat-option>
-                      <mat-option value="area">Area Specification</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <form [formGroup]="specificPlaceForm" class="place-form" *ngIf="placeType === 'specific'">
-                    <div class="form-row">
-                      <mat-form-field class="half-width">
-                        <mat-label>Street Address</mat-label>
-                        <input matInput formControlName="streetAdr" placeholder="Street address">
-                      </mat-form-field>
-                      <mat-form-field class="half-width">
-                        <mat-label>City</mat-label>
-                        <input matInput formControlName="city" placeholder="City">
-                      </mat-form-field>
-                    </div>
-                    <div class="form-row">
-                      <mat-form-field class="half-width">
-                        <mat-label>State/Province</mat-label>
-                        <input matInput formControlName="state" placeholder="State">
-                      </mat-form-field>
-                      <mat-form-field class="half-width">
-                        <mat-label>Country</mat-label>
-                        <mat-select formControlName="country">
-                          <mat-option *ngFor="let country of countries" [value]="country">{{ country }}</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                    </div>
-                    <div class="form-row">
-                      <mat-form-field class="half-width">
-                        <mat-label>Suburb/Postcode</mat-label>
-                        <input matInput formControlName="suburbPostcode" placeholder="Suburb or Postcode">
-                      </mat-form-field>
-                    </div>
-                  </form>
-                  <form [formGroup]="areaPlaceForm" class="place-form" *ngIf="placeType === 'area'">
-                    <div class="form-row">
-                      <mat-form-field class="half-width">
-                        <mat-label>Country</mat-label>
-                        <mat-select formControlName="country">
-                          <mat-option *ngFor="let country of countries" [value]="country">{{ country }}</mat-option>
-                        </mat-select>
-                      </mat-form-field>
-                      <mat-form-field class="half-width">
-                        <mat-label>State/Province</mat-label>
-                        <input matInput formControlName="state" placeholder="State">
-                      </mat-form-field>
-                    </div>
-                    <div class="form-row">
-                      <mat-form-field class="half-width">
-                        <mat-label>City</mat-label>
-                        <input matInput formControlName="city" placeholder="City">
-                      </mat-form-field>
-                      <mat-form-field class="half-width">
-                        <mat-label>Suburb/Postcode</mat-label>
-                        <input matInput formControlName="suburbPostcode" placeholder="Suburb or Postcode">
-                      </mat-form-field>
-                    </div>
-                  </form>
-                </mat-card-content>
-                <mat-card-actions>
-                  <button mat-raised-button color="primary" (click)="addPlace()" 
-                          [disabled]="(placeType === 'specific' && !specificPlaceForm.valid) || (placeType === 'area' && !areaPlaceForm.valid)">
-                    {{ editingPlaceId ? 'Update Place' : 'Add Place' }}
-                  </button>
-                  <button mat-button *ngIf="editingPlaceId" (click)="editingPlaceId = null; specificPlaceForm.reset(); areaPlaceForm.reset()">
-                    Cancel
-                  </button>
-                </mat-card-actions>
-              </mat-card>
+              <p-card class="form-card mt-3">
+                <ng-template pTemplate="header">
+                  <div class="card-header-title">
+                    <i class="pi pi-pencil"></i> {{ editingPlaceId ? 'Edit Place' : 'Add Place Manually' }}
+                  </div>
+                  <p class="card-subtitle">Or enter address details manually</p>
+                </ng-template>
+                <ng-template pTemplate="content">
+                  <div class="field">
+                    <label for="placeType">Place Type</label>
+                    <p-dropdown 
+                      id="placeType"
+                      [(ngModel)]="placeType" 
+                      [options]="[
+                        {label: 'Specific Address', value: 'specific'},
+                        {label: 'Area Specification', value: 'area'}
+                      ]"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Select Place Type"
+                      class="w-full">
+                    </p-dropdown>
+                  </div>
 
-              <!-- Places List (Step 3) -->
-              <div class="places-list-section">
-                <h4>Specific Address Locations</h4>
-                <div class="places-list">
-                  <mat-card *ngFor="let place of getSpecificLocationPlaces()" class="place-card">
-                    <mat-card-header>
-                      <mat-card-title>{{ place.placeName }}</mat-card-title>
-                      <mat-card-subtitle>{{ place.placeCity }}, {{ place.placeState }}</mat-card-subtitle>
-                    </mat-card-header>
-                    <mat-card-content>
-                      <p>{{ place.placeZipCode }}</p>
-                    </mat-card-content>
-                    <mat-card-actions>
-                      <button mat-icon-button color="primary" (click)="editSpecificPlace(getSpecificPlaceById(place.placeID)!)" 
-                              [disabled]="!getSpecificPlaceById(place.placeID)">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button mat-icon-button color="warn" (click)="deleteSpecificPlace(getSpecificPlaceById(place.placeID)!)"
-                              [disabled]="!getSpecificPlaceById(place.placeID)">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </mat-card-actions>
-                  </mat-card>
+                  <form [formGroup]="specificPlaceForm" class="formgrid grid" *ngIf="placeType === 'specific'">
+                    <div class="field col-12 md:col-6">
+                      <p-floatLabel>
+                        <input 
+                          pInputText 
+                          id="streetAdr"
+                          formControlName="streetAdr" 
+                          class="w-full"/>
+                        <label for="streetAdr">Street Address <span class="required">*</span></label>
+                      </p-floatLabel>
+                    </div>
+                    <div class="field col-12 md:col-6">
+                      <p-floatLabel>
+                        <input 
+                          pInputText 
+                          id="city"
+                          formControlName="city" 
+                          class="w-full"/>
+                        <label for="city">City <span class="required">*</span></label>
+                      </p-floatLabel>
+                    </div>
+                    <div class="field col-12 md:col-6">
+                      <p-floatLabel>
+                        <input 
+                          pInputText 
+                          id="state"
+                          formControlName="state" 
+                          class="w-full"/>
+                        <label for="state">State/Province <span class="required">*</span></label>
+                      </p-floatLabel>
+                    </div>
+                    <div class="field col-12 md:col-6">
+                      <label class="field-label">Country <span class="required">*</span></label>
+                      <p-dropdown 
+                        id="country"
+                        formControlName="country"
+                        [options]="countries"
+                        placeholder="Select Country"
+                        class="w-full">
+                      </p-dropdown>
+                    </div>
+                    <div class="field col-12 md:col-6">
+                      <p-floatLabel>
+                        <input 
+                          pInputText 
+                          id="suburbPostcode"
+                          formControlName="suburbPostcode" 
+                          class="w-full"/>
+                        <label for="suburbPostcode">Suburb/Postcode</label>
+                      </p-floatLabel>
+                    </div>
+                  </form>
+
+                  <form [formGroup]="areaPlaceForm" class="formgrid grid" *ngIf="placeType === 'area'">
+                    <div class="field col-12 md:col-6">
+                      <label class="field-label">Country <span class="required">*</span></label>
+                      <p-dropdown 
+                        id="areaCountry"
+                        formControlName="country"
+                        [options]="countries"
+                        placeholder="Select Country"
+                        class="w-full">
+                      </p-dropdown>
+                    </div>
+                    <div class="field col-12 md:col-6">
+                      <p-floatLabel>
+                        <input 
+                          pInputText 
+                          id="areaState"
+                          formControlName="state" 
+                          class="w-full"/>
+                        <label for="areaState">State/Province</label>
+                      </p-floatLabel>
+                    </div>
+                    <div class="field col-12 md:col-6">
+                      <p-floatLabel>
+                        <input 
+                          pInputText 
+                          id="areaCity"
+                          formControlName="city" 
+                          class="w-full"/>
+                        <label for="areaCity">City</label>
+                      </p-floatLabel>
+                    </div>
+                    <div class="field col-12 md:col-6">
+                      <p-floatLabel>
+                        <input 
+                          pInputText 
+                          id="areaSuburbPostcode"
+                          formControlName="suburbPostcode" 
+                          class="w-full"/>
+                        <label for="areaSuburbPostcode">Suburb/Postcode</label>
+                      </p-floatLabel>
+                    </div>
+                  </form>
+                </ng-template>
+                <ng-template pTemplate="footer">
+                  <p-button 
+                    [label]="editingPlaceId ? 'Update Place' : 'Add Place'"
+                    icon="pi pi-plus"
+                    (onClick)="addPlace()" 
+                    [disabled]="(placeType === 'specific' && !specificPlaceForm.valid) || (placeType === 'area' && !areaPlaceForm.valid)">
+                  </p-button>
+                  <p-button 
+                    *ngIf="editingPlaceId"
+                    label="Cancel"
+                    icon="pi pi-times"
+                    severity="secondary"
+                    (onClick)="editingPlaceId = null; specificPlaceForm.reset(); areaPlaceForm.reset()">
+                  </p-button>
+                </ng-template>
+              </p-card>
+
+              <!-- Places List -->
+              <div class="places-list-section mt-4">
+                <h4><i class="pi pi-map-marker"></i> Specific Address Locations</h4>
+                <div class="places-grid">
+                  <p-card *ngFor="let place of getSpecificLocationPlaces()" class="place-card">
+                    <ng-template pTemplate="header">
+                      <div class="place-card-header">
+                        <h5>{{ place.placeName }}</h5>
+                        <p>{{ place.placeCity }}, {{ place.placeState }}</p>
+                      </div>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                      <p><i class="pi pi-map mr-2"></i>{{ place.placeZipCode }}</p>
+                    </ng-template>
+                    <ng-template pTemplate="footer">
+                      <div class="flex gap-2">
+                        <p-button 
+                          icon="pi pi-pencil" 
+                          severity="secondary"
+                          size="small"
+                          (onClick)="editSpecificPlace(getSpecificPlaceById(place.placeID)!)" 
+                          [disabled]="!getSpecificPlaceById(place.placeID)">
+                        </p-button>
+                        <p-button 
+                          icon="pi pi-trash" 
+                          severity="danger"
+                          size="small"
+                          (onClick)="deleteSpecificPlace(getSpecificPlaceById(place.placeID)!)"
+                          [disabled]="!getSpecificPlaceById(place.placeID)">
+                        </p-button>
+                      </div>
+                    </ng-template>
+                  </p-card>
                 </div>
-                <h4>Area Specification Locations</h4>
-                <div class="places-list">
-                  <mat-card *ngFor="let place of getAreaSpecificationPlaces()" class="place-card">
-                    <mat-card-header>
-                      <mat-card-title>{{ place.placeName }}</mat-card-title>
-                      <mat-card-subtitle>{{ place.placeCity }}, {{ place.placeState }}</mat-card-subtitle>
-                    </mat-card-header>
-                    <mat-card-content>
-                      <p>{{ place.placeZipCode }}</p>
-                    </mat-card-content>
-                    <mat-card-actions>
-                      <button mat-icon-button color="primary" (click)="editAreaPlace(getAreaPlaceById(place.placeID)!)"
-                              [disabled]="!getAreaPlaceById(place.placeID)">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button mat-icon-button color="warn" (click)="deleteAreaPlace(getAreaPlaceById(place.placeID)!)"
-                              [disabled]="!getAreaPlaceById(place.placeID)">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </mat-card-actions>
-                  </mat-card>
+
+                <h4 class="mt-4"><i class="pi pi-globe"></i> Area Specification Locations</h4>
+                <div class="places-grid">
+                  <p-card *ngFor="let place of getAreaSpecificationPlaces()" class="place-card">
+                    <ng-template pTemplate="header">
+                      <div class="place-card-header">
+                        <h5>{{ place.placeName }}</h5>
+                        <p>{{ place.placeCity }}, {{ place.placeState }}</p>
+                      </div>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                      <p><i class="pi pi-map mr-2"></i>{{ place.placeZipCode }}</p>
+                    </ng-template>
+                    <ng-template pTemplate="footer">
+                      <div class="flex gap-2">
+                        <p-button 
+                          icon="pi pi-pencil" 
+                          severity="secondary"
+                          size="small"
+                          (onClick)="editAreaPlace(getAreaPlaceById(place.placeID)!)"
+                          [disabled]="!getAreaPlaceById(place.placeID)">
+                        </p-button>
+                        <p-button 
+                          icon="pi pi-trash" 
+                          severity="danger"
+                          size="small"
+                          (onClick)="deleteAreaPlace(getAreaPlaceById(place.placeID)!)"
+                          [disabled]="!getAreaPlaceById(place.placeID)">
+                        </p-button>
+                      </div>
+                    </ng-template>
+                  </p-card>
                 </div>
               </div>
             </div>
-          </mat-step>
+          </div>
 
-          <!-- Step 4: Business Schedules -->
-          <mat-step [completed]="businessSchedules.length > 0" label="Schedules">
+          <!-- Step 4: Business Schedules (Already using PrimeNG) -->
+          <div *ngIf="currentStep === 3" class="step-form">
             <div class="schedules-section">
               <div class="schedule-header">
                 <h3><i class="pi pi-calendar"></i> Business Operating Hours</h3>
@@ -619,8 +841,6 @@
                   </ng-template>
                 </p-card>
               </div>
-
-
 
               <!-- Current Schedules Timeline -->
               <div class="schedules-display" *ngIf="businessSchedules.length > 0">
@@ -804,12 +1024,12 @@
                 <span>{{ getScheduleSummary() }} ready for your customers</span>
               </div>
             </div>
-          </mat-step>
+          </div>
 
           <!-- Step 5: Service Assignment -->
-          <mat-step label="Service Assignment">
+          <div *ngIf="currentStep === 4" class="step-form">
             <div class="assignment-section">
-              <h3>Assign Services to Places</h3>
+              <h3><i class="pi pi-link"></i> Assign Services to Places</h3>
               <p>Drag and drop services to assign them to specific locations.</p>
               
               <div class="assignment-container">
@@ -829,12 +1049,12 @@
                          [cdkDragData]="service.serviceID"
                          [attr.data-service-id]="service.serviceID"
                          [attr.data-service-name]="service.serviceName">
-                      <mat-card class="draggable-service">
-                        <mat-card-content>
+                      <p-card class="draggable-service">
+                        <ng-template pTemplate="content">
                           <h5>{{ service.serviceName }}</h5>
                           <p>{{ service.serviceEstimatedTime }} • {{ service.servicePrice }} {{ service.servicePriceCurrencyUnit }}</p>
-                        </mat-card-content>
-                      </mat-card>
+                        </ng-template>
+                      </p-card>
                     </div>
                   </div>
                 </div>
@@ -844,12 +1064,14 @@
                   <h4>Specific Address Locations</h4>
                   <div class="places-list">
                     <div *ngFor="let place of getSpecificLocationPlaces()" class="place-assignment">
-                      <mat-card class="place-card">
-                        <mat-card-header>
-                          <mat-card-title>{{ place.placeName }}</mat-card-title>
-                          <mat-card-subtitle>{{ place.placeCity }}, {{ place.placeState }}</mat-card-subtitle>
-                        </mat-card-header>
-                        <mat-card-content>
+                      <p-card class="place-card">
+                        <ng-template pTemplate="header">
+                          <div class="place-card-header">
+                            <h5>{{ place.placeName }}</h5>
+                            <p>{{ place.placeCity }}, {{ place.placeState }}</p>
+                          </div>
+                        </ng-template>
+                        <ng-template pTemplate="content">
                           <div class="assigned-services"
                                cdkDropList
                                [id]="'assigned-services-' + place.placeID"
@@ -862,31 +1084,33 @@
                                  [cdkDragData]="service.serviceID"
                                  [attr.data-service-id]="service.serviceID"
                                  [attr.data-service-name]="service.serviceName">
-                              <mat-chip color="primary" selected>
-                                {{ service.serviceName }}
-                                <mat-icon matChipRemove (click)="removeServiceFromPlace(service.serviceID!, place.placeID)">
-                                  cancel
-                                </mat-icon>
-                              </mat-chip>
+                              <p-chip 
+                                [label]="service.serviceName"
+                                [removable]="true"
+                                (onRemove)="removeServiceFromPlace(service.serviceID!, place.placeID)"
+                                styleClass="custom-chip-primary">
+                              </p-chip>
                             </div>
                             <div *ngIf="getAssignedServices(place.placeID).length === 0" class="drop-zone">
                               Drop services here
                             </div>
                           </div>
-                        </mat-card-content>
-                      </mat-card>
+                        </ng-template>
+                      </p-card>
                     </div>
                   </div>
 
                   <h4>Area Specification Locations</h4>
                   <div class="places-list">
                     <div *ngFor="let place of getAreaSpecificationPlaces()" class="place-assignment">
-                      <mat-card class="place-card">
-                        <mat-card-header>
-                          <mat-card-title>{{ place.placeName }}</mat-card-title>
-                          <mat-card-subtitle>{{ place.placeCity }}, {{ place.placeState }}</mat-card-subtitle>
-                        </mat-card-header>
-                        <mat-card-content>
+                      <p-card class="place-card">
+                        <ng-template pTemplate="header">
+                          <div class="place-card-header">
+                            <h5>{{ place.placeName }}</h5>
+                            <p>{{ place.placeCity }}, {{ place.placeState }}</p>
+                          </div>
+                        </ng-template>
+                        <ng-template pTemplate="content">
                           <div class="assigned-services"
                                cdkDropList
                                [id]="'assigned-services-' + place.placeID"
@@ -899,28 +1123,28 @@
                                  [cdkDragData]="service.serviceID"
                                  [attr.data-service-id]="service.serviceID"
                                  [attr.data-service-name]="service.serviceName">
-                              <mat-chip color="primary" selected>
-                                {{ service.serviceName }}
-                                <mat-icon matChipRemove (click)="removeServiceFromPlace(service.serviceID!, place.placeID)">
-                                  cancel
-                                </mat-icon>
-                              </mat-chip>
+                              <p-chip 
+                                [label]="service.serviceName"
+                                [removable]="true"
+                                (onRemove)="removeServiceFromPlace(service.serviceID!, place.placeID)"
+                                styleClass="custom-chip-primary">
+                              </p-chip>
                             </div>
                             <div *ngIf="getAssignedServices(place.placeID).length === 0" class="drop-zone">
                               Drop services here
                             </div>
                           </div>
-                        </mat-card-content>
-                      </mat-card>
+                        </ng-template>
+                      </p-card>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </mat-step>
+          </div>
 
-          <!-- Step 6: Payment Setup (Stripe) - moved to the end -->
-          <mat-step [completed]="isStripeStepComplete()" label="Payment Setup">
+          <!-- Step 6: Payment Setup (Stripe) -->
+          <div *ngIf="currentStep === 5" class="step-form">
             <div class="stripe-section">
               <app-stripe-account-setup
                 [businessEmail]="getBusinessEmail()"
@@ -929,44 +1153,53 @@
                 (skipStripeSetup)="onSkipStripeSetup()">
               </app-stripe-account-setup>
             </div>
-          </mat-step>
-        </mat-stepper>
+          </div>
+
+        </div>
 
         <!-- Registration Status -->
-        <div class="registration-status" *ngIf="registrationError || isRegistering">
-          <div class="registration-error" *ngIf="registrationError">
-            <mat-icon>error</mat-icon>
-            <span>{{ registrationError }}</span>
-          </div>
+        <div class="registration-status mt-4" *ngIf="registrationError || isRegistering">
+          <p-message 
+            *ngIf="registrationError"
+            severity="error" 
+            [text]="registrationError">
+          </p-message>
           
           <div class="registration-progress" *ngIf="isRegistering && !registrationError">
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <p-progressBar mode="indeterminate"></p-progressBar>
             <p>Registering your business...</p>
           </div>
         </div>
 
         <!-- Navigation Buttons -->
-        <div class="navigation-buttons">
-          <button mat-button (click)="previousStep()" [disabled]="currentStep === 0 || isRegistering">
-            Previous
-          </button>
+        <div class="navigation-buttons mt-4">
+          <p-button 
+            label="Previous"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            (onClick)="previousStep()" 
+            [disabled]="currentStep === 0 || isRegistering">
+          </p-button>
           
-          <button mat-raised-button color="primary" (click)="nextStep()" 
-                  *ngIf="currentStep < maxSteps - 1 && currentStep !== 4"
-                  [disabled]="isRegistering">
-            Next
-          </button>
+          <p-button 
+            *ngIf="currentStep < maxSteps - 1 && currentStep !== 4"
+            label="Next"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            (onClick)="nextStep()" 
+            [disabled]="isRegistering">
+          </p-button>
           
-          <button mat-raised-button color="accent" (click)="onSubmit()" 
-                  *ngIf="currentStep === 4"
-                  
-                  >
-            <mat-spinner diameter="20" *ngIf="isSubmitting || isRegistering"></mat-spinner>
-            <span *ngIf="!isSubmitting && !isRegistering">Register Business</span>
-            <span *ngIf="isRegistering">Registering...</span>
-          </button>
+          <p-button 
+            *ngIf="currentStep === 4"
+            label="Register Business"
+            icon="pi pi-check"
+            severity="success"
+            [loading]="isSubmitting || isRegistering"
+            (onClick)="onSubmit()">
+          </p-button>
         </div>
-      </mat-card-content>
-    </mat-card>
+      </ng-template>
+    </p-card>
   </div>
 </div>
