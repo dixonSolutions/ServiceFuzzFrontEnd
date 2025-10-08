@@ -178,27 +178,43 @@ export class BillingService {
   /**
    * Get current user's billing profile
    */
-  getBillingProfile(forceRefresh: boolean = false): Observable<BillingProfile> {
+  getBillingProfile(forceRefresh: boolean = false): Observable<BillingProfile | null> {
     if (!forceRefresh && this.profileCache && this.isCacheValid(this.profileCacheTimestamp)) {
       this._billingProfile.next(this.profileCache);
-      return this._billingProfile.asObservable().pipe(
-        map(profile => profile!)
-      );
+      return this._billingProfile.asObservable();
     }
 
     this._isLoading.next(true);
     
-    return this.http.get<BillingProfile>(`${this.apiUrl}/api/billing/profile`, {
+    return this.http.get<any>(`${this.apiUrl}/api/billing/profile`, {
       headers: this.getAuthHeaders()
     }).pipe(
-      tap(profile => {
-        this.profileCache = profile;
-        this.profileCacheTimestamp = Date.now();
-        this._billingProfile.next(profile);
+      tap(response => {
+        // Check if the response indicates no profile exists
+        if (response && response.hasProfile === false) {
+          // User doesn't have a billing profile yet - this is OK
+          this.profileCache = null;
+          this.profileCacheTimestamp = Date.now();
+          this._billingProfile.next(null);
+          this._lastError.next(null); // Clear any previous errors
+        } else {
+          // User has a profile
+          this.profileCache = response;
+          this.profileCacheTimestamp = Date.now();
+          this._billingProfile.next(response);
+        }
         this._isLoading.next(false);
       }),
+      map(response => response.hasProfile === false ? null : response),
       catchError(error => {
         this._isLoading.next(false);
+        // Only treat actual errors (not 404/no profile) as errors
+        if (error.status === 404) {
+          // 404 means no profile exists - this is OK
+          this._billingProfile.next(null);
+          this._lastError.next(null);
+          return throwError(() => null);
+        }
         return this.handleError(error);
       })
     );
@@ -207,12 +223,10 @@ export class BillingService {
   /**
    * Get current usage summary
    */
-  getUsageSummary(forceRefresh: boolean = false): Observable<UsageSummary> {
+  getUsageSummary(forceRefresh: boolean = false): Observable<UsageSummary | null> {
     if (!forceRefresh && this.usageCache && this.isCacheValid(this.usageCacheTimestamp)) {
       this._usageSummary.next(this.usageCache);
-      return this._usageSummary.asObservable().pipe(
-        map(usage => usage!)
-      );
+      return this._usageSummary.asObservable();
     }
 
     this._isLoading.next(true);
@@ -228,6 +242,12 @@ export class BillingService {
       }),
       catchError(error => {
         this._isLoading.next(false);
+        // If there's no billing profile, usage might also not exist - handle gracefully
+        if (error.status === 404) {
+          this._usageSummary.next(null);
+          this._lastError.next(null);
+          return throwError(() => null);
+        }
         return this.handleError(error);
       })
     );
@@ -251,9 +271,19 @@ export class BillingService {
    */
   refreshBillingData(): void {
     this.clearCache();
-    this.getBillingProfile(true).subscribe();
-    this.getUsageSummary(true).subscribe();
-    this.getAllPlans(true).subscribe();
+    // Subscribe with error handling to prevent subscription chain from breaking
+    this.getBillingProfile(true).subscribe({
+      next: () => {},
+      error: () => {} // Silently handle errors - component will show appropriate UI
+    });
+    this.getUsageSummary(true).subscribe({
+      next: () => {},
+      error: () => {} // Silently handle errors
+    });
+    this.getAllPlans(true).subscribe({
+      next: () => {},
+      error: () => {} // Silently handle errors
+    });
   }
 
   /**

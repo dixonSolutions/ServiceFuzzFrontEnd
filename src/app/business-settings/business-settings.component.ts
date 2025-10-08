@@ -166,21 +166,22 @@ export class BusinessSettingsComponent implements OnInit, OnDestroy {
       startTrial: false
     };
 
+    console.log('Subscribing to plan with request:', subscribeRequest);
     this.isSubscribing = true;
     this.billingError = null;
 
     this.billingService.subscribeToPlan(subscribeRequest)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => {
-          this.isSubscribing = false;
-        })
-      )
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          console.log('Subscribe response received:', response);
+          
           if (response.success && response.checkoutUrl) {
+            console.log('Redirecting to checkout URL:', response.checkoutUrl);
+            // Don't set isSubscribing to false before redirect - we're leaving the page
             window.location.href = response.checkoutUrl;
           } else {
+            this.isSubscribing = false;
             this.messageService.add({
               severity: 'error',
               summary: 'Subscription Failed',
@@ -190,6 +191,7 @@ export class BusinessSettingsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Subscription error:', error);
+          this.isSubscribing = false;
           this.messageService.add({
             severity: 'error',
             summary: 'Subscription Error',
@@ -213,26 +215,32 @@ export class BusinessSettingsComponent implements OnInit, OnDestroy {
       startTrial: true
     };
 
+    console.log('Starting trial with request:', subscribeRequest);
     this.isSubscribing = true;
     this.billingError = null;
 
     this.billingService.subscribeToPlan(subscribeRequest)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => {
-          this.isSubscribing = false;
-        })
-      )
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          console.log('Trial response received:', response);
+          this.isSubscribing = false;
+          
           if (response.success) {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Trial Started',
-              detail: 'Your free trial has been activated!'
-            });
-            // Refresh billing data
-            this.loadBillingData();
+            // If there's a checkout URL, redirect to it (for payment method setup)
+            if (response.checkoutUrl) {
+              console.log('Redirecting to checkout URL for trial setup:', response.checkoutUrl);
+              window.location.href = response.checkoutUrl;
+            } else {
+              // Trial activated without needing checkout
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Trial Started',
+                detail: 'Your free trial has been activated!'
+              });
+              // Refresh billing data
+              this.loadBillingData();
+            }
           } else {
             this.messageService.add({
               severity: 'error',
@@ -243,6 +251,7 @@ export class BusinessSettingsComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Trial setup error:', error);
+          this.isSubscribing = false;
           this.messageService.add({
             severity: 'error',
             summary: 'Trial Error',
@@ -451,9 +460,33 @@ export class BusinessSettingsComponent implements OnInit, OnDestroy {
   }
 
   private loadBillingData(): void {
-    this.billingService.getAllPlans().subscribe();
-    this.billingService.getBillingProfile().subscribe();
-    this.billingService.getUsageSummary().subscribe();
+    // Load plans first (always available)
+    this.billingService.getAllPlans().subscribe({
+      next: () => {},
+      error: (err) => console.error('Error loading plans:', err)
+    });
+    
+    // Load billing profile (may not exist for new users)
+    this.billingService.getBillingProfile().subscribe({
+      next: () => {},
+      error: (err) => {
+        // Don't show error for "no profile" - this is expected for new users
+        if (err && err.code !== 'NOT_FOUND') {
+          console.error('Error loading billing profile:', err);
+        }
+      }
+    });
+    
+    // Load usage summary (may not exist for new users)
+    this.billingService.getUsageSummary().subscribe({
+      next: () => {},
+      error: (err) => {
+        // Don't show error for "no usage" - this is expected for new users
+        if (err && err.code !== 'NOT_FOUND') {
+          console.error('Error loading usage summary:', err);
+        }
+      }
+    });
   }
 
   private calculateBillingAmounts(): void {
